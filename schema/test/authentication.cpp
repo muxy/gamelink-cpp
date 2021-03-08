@@ -5,14 +5,26 @@
 template<typename T>
 void SerializeEqual(const T& v, const std::string& in)
 {
-    nlohmann::json parsed = nlohmann::json::parse(in);
+    nlohmann::json expected = nlohmann::json::parse(in);
     nlohmann::json input; 
     to_json(input, v);
 
-    REQUIRE(input["action"] == parsed["action"]);
-    REQUIRE(input["params"]["request_id"] == parsed["params"]["request_id"]);
-    REQUIRE(input["params"]["target"] == parsed["params"]["target"]);
-    REQUIRE(input["data"] == parsed["data"]);
+    REQUIRE(input["action"] == expected["action"]);
+    REQUIRE(input["params"]["request_id"] == expected["params"]["request_id"]);
+    
+    if (expected["params"]["target"].is_string())
+    {
+        REQUIRE(input["params"]["target"] == expected["params"]["target"]);
+    }
+
+    REQUIRE(input["data"] == expected["data"]);
+}
+
+template<typename T>
+void Deserialize(const std::string& in, T& out)
+{
+    nlohmann::json input = nlohmann::json::parse(in);
+    from_json(input, out);
 }
 
 TEST_CASE("Authentication Serialization", "[auth][serialization]")
@@ -25,4 +37,39 @@ TEST_CASE("Authentication Serialization", "[auth][serialization]")
             "target": "authentication"
         }
     })");
+
+    gamelink::schema::AuthenticateWithPINRequest auth("not-a-client-id", "1234");
+    SerializeEqual(auth, R"({
+        "action": "authenticate", 
+        "params": {
+            "request_id": 65535
+        },
+        "data": {
+            "pin": "1234", 
+            "client_id": "not-a-client-id"
+        }
+    })");
+}
+
+TEST_CASE("Authentication Deserialization", "[auth][deserialization]")
+{
+    gamelink::schema::AuthenticateResponse resp;
+    Deserialize(R"({
+        "meta": {
+            "request_id": 152, 
+            "action": "authenticate", 
+            "target": "", 
+            "timestamp": 1583777666077
+        }, 
+        "data": {
+            "jwt": "eyJhbG..."
+        }
+    })", resp);
+
+    REQUIRE(resp.meta.action == "authenticate");
+    REQUIRE(resp.meta.request_id == 152);
+    REQUIRE(resp.meta.target == "");
+    REQUIRE(resp.meta.timestamp == 1583777666077);
+
+    REQUIRE(resp.data.jwt == "eyJhbG...");
 }

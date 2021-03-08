@@ -8,12 +8,43 @@ namespace gamelink
 {
     namespace schema
     {
-        struct SubscribeAuthenticationRequest : SendEnvelope<EmptyBody>
+        namespace bodies
+        {
+            struct AuthenticateWithPINBody
+            {
+                string pin;
+                string client_id;
+            };
+
+            MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithPINBody, 
+                "pin", pin, 
+                "client_id", client_id
+            );
+
+            struct JWTResponseBody
+            {
+                string jwt;
+            };
+
+            MUXY_GAMELINK_SERIALIZE_1(JWTResponseBody, 
+                "jwt", jwt
+            );
+        }
+
+        struct SubscribeAuthenticationRequest : SendEnvelope<bodies::EmptyBody>
         {
             SubscribeAuthenticationRequest();
         };
 
-        struct SubscribeAuthenticationResponse : ReceiveEnvelope<OKResponse>
+        struct SubscribeAuthenticationResponse : ReceiveEnvelope<bodies::OKResponseBody>
+        {};
+        
+        struct AuthenticateWithPINRequest : SendEnvelope<bodies::AuthenticateWithPINBody>
+        {
+            AuthenticateWithPINRequest(const string& clientID, const string& pin);
+        };
+
+        struct AuthenticateResponse : ReceiveEnvelope<bodies::JWTResponseBody>
         {};
     }
 }

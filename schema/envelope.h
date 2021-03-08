@@ -45,6 +45,28 @@ namespace gamelink
             std::vector<Error> errors;
         };
 
+        template<typename T>
+        void to_json(nlohmann::json& out, const ReceiveEnvelope<T>& p)
+        {
+            out["meta"] = p.meta;
+            out["data"] = p.data;
+            if (p.errors.size())
+            {
+                out["errors"] = p.errors;
+            }
+        }
+
+        template<typename T>
+        void from_json(const nlohmann::json& in, ReceiveEnvelope<T>& p)
+        {
+            in.at("meta").get_to(p.meta);
+            in.at("data").get_to(p.data);
+            if (in.contains("errors"))
+            {
+                in.at("errors").get_to(p.errors);
+            }
+        }
+
         struct SendParameters
         {
             SendParameters();
@@ -53,10 +75,23 @@ namespace gamelink
             string target;
         };
 
-        MUXY_GAMELINK_SERIALIZE_2(SendParameters, 
-            "request_id", request_id, 
-            "target", target
-        );
+        inline void to_json(nlohmann::json& out, const SendParameters& p)
+        {
+            out["request_id"] = p.request_id;
+            if (p.target.size()) 
+            {
+                out["target"] = p.target;
+            }
+        }
+
+        inline void from_json(const nlohmann::json& in, SendParameters& p)
+        {
+            in.at("request_id").get_to(p.request_id);
+            if (in.contains("target"))
+            {
+                in.at("target").get_to(p.target);
+            }
+        }
 
         template<typename T>
         struct SendEnvelope
@@ -83,22 +118,26 @@ namespace gamelink
         }
 
         // A few common bodies
-        struct EmptyBody
-        {};
+        namespace bodies
+        {
+            struct EmptyBody
+            {};
 
-        MUXY_GAMELINK_SERIALIZE_2(SendEnvelope<EmptyBody>, 
+            struct OKResponseBody
+            {
+                bool ok;
+            };
+
+            MUXY_GAMELINK_SERIALIZE_1(OKResponseBody, 
+                "ok", ok
+            )
+        }
+
+        // Specialization for empty body serialization
+         MUXY_GAMELINK_SERIALIZE_2(SendEnvelope<bodies::EmptyBody>, 
             "action", action, 
             "params", params
         );
-
-        struct OKResponse
-        {
-            bool ok;
-        };
-
-        MUXY_GAMELINK_SERIALIZE_1(OKResponse, 
-            "ok", ok
-        )
     }
 }
 

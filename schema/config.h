@@ -2,6 +2,7 @@
 #ifndef MUXY_GAMELINK_CONFIG_H
 #define MUXY_GAMELINK_CONFIG_H
 
+// Support custom string types. 
 #ifndef MUXY_GAMELINK_CUSTOM_STRING_TYPE
 #include <string>
 #define MUXY_GAMELINK_CUSTOM_STRING_TYPE std::string
