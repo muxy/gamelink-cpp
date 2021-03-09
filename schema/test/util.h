@@ -1,3 +1,7 @@
+#pragma once
+#ifndef GAMELINK_MUXY_TEST_UTIL_H
+#define GAMELINK_MUXY_TEST_UTIL_H
+
 #include "catch2/catch.hpp"
 #include "nlohmann/json.hpp"
 
@@ -25,3 +29,4 @@ void Deserialize(const std::string& in, T& out)
     nlohmann::json input = nlohmann::json::parse(in);
     from_json(input, out);
 }
+#endif

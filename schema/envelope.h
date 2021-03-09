@@ -8,6 +8,35 @@ namespace gamelink
 {
     namespace schema
     {
+        // A JSON atom reprsents one of the 4 supported base types of json value - 
+        // An integer, double, string, null
+        enum JsonAtomType
+        {
+            JSON_ATOM_NULL, 
+            JSON_ATOM_INT64, 
+            JSON_ATOM_DOUBLE, 
+            JSON_ATOM_STRING, 
+
+            JSON_ATOM_FORCE_32 = 0xFFFFFFFF
+        };
+
+        struct JsonAtom
+        {
+            JsonAtomType type;
+
+            int64_t int64Value;
+            double doubleValue;
+            string stringValue;
+        };
+
+        JsonAtom atomFromInteger(int64_t v);
+        JsonAtom atomFromDouble(double d);
+        JsonAtom atomFromString(const string& str);
+        JsonAtom atomNull();
+
+        void to_json(nlohmann::json& out, const JsonAtom& p);
+        void from_json(const nlohmann::json& in, JsonAtom& p);
+
         struct ReceiveMeta
         {
             ReceiveMeta();

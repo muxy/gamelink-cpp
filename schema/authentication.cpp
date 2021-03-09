@@ -17,5 +17,13 @@ namespace gamelink
             data.pin = pin;
             data.client_id = client;
         }
+
+        AuthenticateWithJWTRequest::AuthenticateWithJWTRequest(const string& client, const string& jwt)
+        {
+            action = string("authenticate");
+            params.target = string("");
+            data.jwt = jwt;
+            data.client_id = client;
+        }
     }
 }

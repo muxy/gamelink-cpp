@@ -3,7 +3,6 @@
 #define MUXY_GAMELINK_SCHEMA_AUTHENTICATION_H
 #include "schema/envelope.h"
 
-
 namespace gamelink
 {
     namespace schema
@@ -18,6 +17,17 @@ namespace gamelink
 
             MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithPINBody, 
                 "pin", pin, 
+                "client_id", client_id
+            );
+
+            struct AuthenticateWithJWTBody
+            {
+                string jwt;
+                string client_id;
+            };
+
+            MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithJWTBody, 
+                "jwt", jwt, 
                 "client_id", client_id
             );
 
@@ -42,6 +52,11 @@ namespace gamelink
         struct AuthenticateWithPINRequest : SendEnvelope<bodies::AuthenticateWithPINBody>
         {
             AuthenticateWithPINRequest(const string& clientID, const string& pin);
+        };
+
+        struct AuthenticateWithJWTRequest : SendEnvelope<bodies::AuthenticateWithJWTBody>
+        {
+            AuthenticateWithJWTRequest(const string& clientID, const string& jwt);
         };
 
         struct AuthenticateResponse : ReceiveEnvelope<bodies::JWTResponseBody>

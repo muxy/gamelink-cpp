@@ -25,6 +25,20 @@ TEST_CASE("Authentication Serialization", "[auth][serialization]")
             "client_id": "not-a-client-id"
         }
     })");
+
+    gamelink::schema::AuthenticateWithJWTRequest jwtAuth("not-a-client-id", "eyJhbG...");
+    jwtAuth.params.request_id = 42;
+
+    SerializeEqual(jwtAuth, R"({
+        "action": "authenticate", 
+        "params": {
+            "request_id": 42
+        },
+        "data": {
+            "jwt": "eyJhbG...",
+            "client_id": "not-a-client-id"
+        }
+    })");
 }
 
 TEST_CASE("Authentication Deserialization", "[auth][deserialization]")
