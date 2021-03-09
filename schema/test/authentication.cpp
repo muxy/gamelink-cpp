@@ -1,31 +1,7 @@
 #include "catch2/catch.hpp"
+#include "util.h"
 
 #include "schema/authentication.h"
-
-template<typename T>
-void SerializeEqual(const T& v, const std::string& in)
-{
-    nlohmann::json expected = nlohmann::json::parse(in);
-    nlohmann::json input; 
-    to_json(input, v);
-
-    REQUIRE(input["action"] == expected["action"]);
-    REQUIRE(input["params"]["request_id"] == expected["params"]["request_id"]);
-    
-    if (expected["params"]["target"].is_string())
-    {
-        REQUIRE(input["params"]["target"] == expected["params"]["target"]);
-    }
-
-    REQUIRE(input["data"] == expected["data"]);
-}
-
-template<typename T>
-void Deserialize(const std::string& in, T& out)
-{
-    nlohmann::json input = nlohmann::json::parse(in);
-    from_json(input, out);
-}
 
 TEST_CASE("Authentication Serialization", "[auth][serialization]")
 {
@@ -70,6 +46,5 @@ TEST_CASE("Authentication Deserialization", "[auth][deserialization]")
     REQUIRE(resp.meta.request_id == 152);
     REQUIRE(resp.meta.target == "");
     REQUIRE(resp.meta.timestamp == 1583777666077);
-
     REQUIRE(resp.data.jwt == "eyJhbG...");
 }

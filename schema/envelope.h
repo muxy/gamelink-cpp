@@ -10,6 +10,8 @@ namespace gamelink
     {
         struct ReceiveMeta
         {
+            ReceiveMeta();
+
             uint16_t request_id;
             string action;
             string target;
@@ -50,6 +52,7 @@ namespace gamelink
         {
             out["meta"] = p.meta;
             out["data"] = p.data;
+
             if (p.errors.size())
             {
                 out["errors"] = p.errors;
@@ -59,12 +62,9 @@ namespace gamelink
         template<typename T>
         void from_json(const nlohmann::json& in, ReceiveEnvelope<T>& p)
         {
-            in.at("meta").get_to(p.meta);
-            in.at("data").get_to(p.data);
-            if (in.contains("errors"))
-            {
-                in.at("errors").get_to(p.errors);
-            }
+            MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, "meta", p, meta);
+            MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, "data", p, data);
+            MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, "errors", p, errors);
         }
 
         struct SendParameters
@@ -86,11 +86,8 @@ namespace gamelink
 
         inline void from_json(const nlohmann::json& in, SendParameters& p)
         {
-            in.at("request_id").get_to(p.request_id);
-            if (in.contains("target"))
-            {
-                in.at("target").get_to(p.target);
-            }
+            MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, "request_id", p, request_id);
+            MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, "target", p, target);
         }
 
         template<typename T>
@@ -112,9 +109,9 @@ namespace gamelink
         template<typename T>
         void from_json(const nlohmann::json& in, SendEnvelope<T>& p)
         {
-            in.at("action").get_to(p.action);
-            in.at("params").get_to(p.params);
-            in.at("data").get_to(p.data);
+            MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, "action", p, action);
+            MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, "params", p, params);
+            MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, "data", p, data);
         }
 
         // A few common bodies
@@ -134,9 +131,14 @@ namespace gamelink
         }
 
         // Specialization for empty body serialization
-         MUXY_GAMELINK_SERIALIZE_2(SendEnvelope<bodies::EmptyBody>, 
+        MUXY_GAMELINK_SERIALIZE_2(SendEnvelope<bodies::EmptyBody>,
             "action", action, 
             "params", params
+        );
+
+        MUXY_GAMELINK_SERIALIZE_2(ReceiveEnvelope<bodies::EmptyBody>,
+            "meta", meta,
+            "errors", errors
         );
     }
 }
