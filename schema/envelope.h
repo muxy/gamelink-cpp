@@ -1,6 +1,6 @@
 #pragma once
-#ifndef MUXY_GAMELINK_SCHEMA_H
-#define MUXY_GAMELINK_SCHEMA_H
+#ifndef MUXY_GAMELINK_SCHEMA_ENVELOPE_H
+#define MUXY_GAMELINK_SCHEMA_ENVELOPE_H
 #include "schema/config.h"
 #include "schema/serialization.h"
 
