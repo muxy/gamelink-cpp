@@ -1,0 +1,10 @@
+*.swp
+Session.vim
+
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+
+demo
+schema_tests
