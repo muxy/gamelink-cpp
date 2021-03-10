@@ -1,77 +1,101 @@
+#pragma once
 #ifndef INCLUDE_MUXY_GAMELINK_HPP
 #define INCLUDE_MUXY_GAMELINK_HPP
 
 #include <fmt/format.h>
 #include <queue>
-#include <nlohmann/json.hpp>
 
-namespace Gamelink {
-	class Send {
-		public:
-			Send(std::string data) {
-				this->data = data;
-			}
+#include "../schema/authentication.h"
 
-            std::string data;
+namespace gamelink
+{
+	class Send
+	{
+	public:
+		Send(std::string data)
+		{
+			this->data = data;
+		}
+
+		std::string data;
 	};
 
-    class SDK {
-        public:
-			SDK() {};
-			~SDK() {
-				// Clean up unsent messages
-				while (HasSends()) {
-					Send* send = _sendQueue.front();
-					_sendQueue.pop();
-					delete send;
-				}
+	class SDK
+	{
+	public:
+		SDK() : _user(NULL) {};
+		~SDK()
+		{
+			// Clean up unsent messages
+			while (HasSends())
+			{
+				Send* send = _sendQueue.front();
+				_sendQueue.pop();
+				delete send;
 			}
+		}
 
-            void ReceiveMessage(std::string message) {
-            }
+		void ReceiveMessage(std::string message)
+		{
+			auto env = schema::ParseEnvelope(message);
 
-			bool HasSends() {
-				return _sendQueue.size() > 0;
+			if (env.meta.action == "authenticate")
+			{
+				// Authentication response
+				schema::AuthenticateResponse authResp;
+				schema::ParseResponse<schema::AuthenticateResponse>(message, authResp);
+				this->_user = new schema::User(authResp.data.jwt);
 			}
+		}
 
-			void ForeachSend(const std::function<void(Send* send)>& networkCallback) {
-				while (HasSends()) {
-					Send* send = _sendQueue.front();
-					_sendQueue.pop();
+		bool HasSends()
+		{
+			return _sendQueue.size() > 0;
+		}
 
-					networkCallback(send);
+		void ForeachSend(const std::function<void(Send* send)>& networkCallback)
+		{
+			while (HasSends())
+			{
+				Send* send = _sendQueue.front();
+				_sendQueue.pop();
 
-					// Clean up send
-					delete send;
-				}
+				networkCallback(send);
+
+				// Clean up send
+				delete send;
 			}
+		}
 
-			void authenticate(const std::string& pin) {
-				auto json = nlohmann::json::parse(fmt::format(R"({{
-                    "action": "authenticate",
-                    "data": {{
-                        "pin": "{}"
-                    }}
-                }})", pin));
+		bool IsAuthenticated()
+		{
+			return _user != NULL;
+		}
 
-				auto send = new Send(json.dump());
-                _sendQueue.push(send);
-			}
+		schema::User* GetUser()
+		{
+			return _user;
+		}
 
-            void subscribeTo(const std::string& target, const std::string& id) {
-			}
+		void AuthenticateWithPIN(const std::string client_id, const std::string pin)
+		{
+			schema::AuthenticateWithPINRequest packet(client_id, pin);
 
-			void unsubscribeFrom(const std::string& target, const std::string& id) {
-			}
+			auto send = new Send(to_string(packet));
+			_sendQueue.push(send);
+		}
 
-            void broadcast(const std::string& message, const std::vector<std::string>& ids) {
-			}
+		void subscribeTo(const std::string& target, const std::string& id) {}
 
-            void createPoll(const std::string& id, const std::string& prompt, const std::vector<std::string>& options) {
-			}
+		void unsubscribeFrom(const std::string& target, const std::string& id) {}
 
-		private:
-			std::queue<Send*> _sendQueue;
+		void broadcast(const std::string& message, const std::vector<std::string>& ids) {}
+
+		void createPoll(const std::string& id, const std::string& prompt, const std::vector<std::string>& options) {}
+
+	private:
+		std::queue<Send*> _sendQueue;
+		schema::User* _user;
 	};
 }
 

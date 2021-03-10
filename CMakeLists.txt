@@ -27,5 +27,5 @@ include_directories(include)
 include_directories(third_party)
 include_directories(${OPENSSL_INCLUDE_DIR} ${LIB_WEBSOCKETS_INCLUDE_DIRS})
 
-add_executable(demo demo.cpp websocket.cpp)
+add_executable(demo demo.cpp websocket.cpp ${SOURCES})
 target_link_libraries(demo ${LIB_WEBSOCKETS_LIBRARIES})
