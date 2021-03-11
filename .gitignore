@@ -9,3 +9,4 @@ cmake_install.cmake
 
 demo
 schema_tests
+sdk_tests
