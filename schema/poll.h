@@ -11,6 +11,13 @@ namespace gamelink
 	{
 		namespace bodies
 		{
+			struct GetPollBody
+			{
+				string pollId;
+
+				MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(GetPollBody, "poll_id", pollId);
+			};
+
 			struct CreatePollBody
 			{
 				string pollId;
@@ -29,16 +36,21 @@ namespace gamelink
 				T userData;
 
 				MUXY_GAMELINK_SERIALIZE_INTRUSIVE_4(CreateUserDataPollBody,
-										  "poll_id",
-										  pollId,
-										  "prompt",
-										  prompt,
-										  "options",
-										  options,
-										  "user_data",
-										  userData);
+													"poll_id",
+													pollId,
+													"prompt",
+													prompt,
+													"options",
+													options,
+													"user_data",
+													userData);
 			};
 		}
+
+		struct GetPollRequest : SendEnvelope<bodies::GetPollBody>
+		{
+			GetPollRequest(const string& pollId);
+		};
 
 		struct CreatePollRequest : SendEnvelope<bodies::CreatePollBody>
 		{

@@ -4,7 +4,6 @@
 
 #include <fmt/format.h>
 #include <queue>
-#include <map>
 
 #include "../schema/authentication.h"
 #include "../schema/poll.h"
@@ -25,7 +24,8 @@ namespace gamelink
 	class SDK
 	{
 	public:
-		SDK() : _user(NULL) {};
+		SDK()
+			: _user(NULL){};
 		~SDK()
 		{
 			// Clean up unsent messages
@@ -93,7 +93,16 @@ namespace gamelink
 
 		void broadcast(const std::string& message, const std::vector<std::string>& ids) {}
 
-		void CreatePoll(const schema::string pollId, const schema::string prompt, const std::vector<schema::string> options) {
+		void GetPoll(const schema::string& pollId)
+		{
+			schema::GetPollRequest packet(pollId);
+
+			auto send = new Send(to_string(packet));
+			_sendQueue.push(send);
+		}
+
+		void CreatePoll(const schema::string& pollId, const schema::string& prompt, const std::vector<schema::string>& options)
+		{
 			schema::CreatePollRequest packet(pollId, prompt, options);
 
 			auto send = new Send(to_string(packet));
