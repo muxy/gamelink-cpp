@@ -86,7 +86,7 @@ int main()
 			break;
 
 		case 'c':
-			sdk.createPoll("vote-and-win", "Who's your favorite?", {"Me", "Him", "Her"});
+			sdk.CreatePoll("vote-and-win", "Who's your favorite?", {"Me", "Him", "Her"});
 			break;
 
 		case 'q':

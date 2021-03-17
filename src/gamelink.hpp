@@ -6,6 +6,7 @@
 #include <queue>
 
 #include "../schema/authentication.h"
+#include "../schema/poll.h"
 
 namespace gamelink
 {
@@ -23,7 +24,8 @@ namespace gamelink
 	class SDK
 	{
 	public:
-		SDK() : _user(NULL) {};
+		SDK()
+			: _user(NULL){};
 		~SDK()
 		{
 			// Clean up unsent messages
@@ -91,7 +93,21 @@ namespace gamelink
 
 		void broadcast(const std::string& message, const std::vector<std::string>& ids) {}
 
-		void createPoll(const std::string& id, const std::string& prompt, const std::vector<std::string>& options) {}
+		void GetPoll(const schema::string& pollId)
+		{
+			schema::GetPollRequest packet(pollId);
+
+			auto send = new Send(to_string(packet));
+			_sendQueue.push(send);
+		}
+
+		void CreatePoll(const schema::string& pollId, const schema::string& prompt, const std::vector<schema::string>& options)
+		{
+			schema::CreatePollRequest packet(pollId, prompt, options);
+
+			auto send = new Send(to_string(packet));
+			_sendQueue.push(send);
+		}
 
 	private:
 		std::queue<Send*> _sendQueue;
