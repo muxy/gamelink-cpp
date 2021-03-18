@@ -73,20 +73,12 @@ int main()
 			std::cout << sdk.GetUser()->GetJWT() << "\n";
 			break;
 
-		case 's':
-			sdk.subscribeTo("thing", "");
-			break;
-
-		case 'u':
-			sdk.unsubscribeFrom("thing", "");
-			break;
-
-		case 'b':
-			sdk.broadcast("hi world", {});
-			break;
-
 		case 'c':
 			sdk.CreatePoll("vote-and-win", "Who's your favorite?", {"Me", "Him", "Her"});
+			break;
+
+		case 'p':
+			sdk.SubscribeToPoll("vote-and-win");
 			break;
 
 		case 'q':

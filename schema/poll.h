@@ -2,8 +2,7 @@
 #ifndef MUXY_GAMELINK_SCHEMA_STATE_H
 #define MUXY_GAMELINK_SCHEMA_STATE_H
 #include "schema/envelope.h"
-
-#include <map>
+#include "schema/subscription.h"
 
 namespace gamelink
 {
@@ -71,6 +70,11 @@ namespace gamelink
 
 				this->data.userData = userData;
 			}
+		};
+
+		struct SubscribePollRequest : SendEnvelope<bodies::SubscribeTopicBody>
+		{
+			SubscribePollRequest(const string& pollId);
 		};
 	}
 }

@@ -20,7 +20,7 @@ TEST_CASE("SDK Poll Creation", "[sdk][poll][creation]")
 	REQUIRE(!sdk.HasSends());
 }
 
-TEST_CASE("SDK Poll Results", "[sdk][poll][results]")
+TEST_CASE("SDK Poll Get Results", "[sdk][poll][results]")
 {
 	gamelink::SDK sdk;
 
@@ -30,6 +30,21 @@ TEST_CASE("SDK Poll Results", "[sdk][poll][results]")
 
 	sdk.ForeachSend([](gamelink::Send* send) {
 		REQUIRE(send->data == R"({"action":"get","data":{"poll_id":"test-poll"},"params":{"request_id":65535,"target":"poll"}})");
+	});
+
+	REQUIRE(!sdk.HasSends());
+}
+
+TEST_CASE("SDK Poll Subscription", "[sdk][poll][subscription]")
+{
+	gamelink::SDK sdk;
+
+	sdk.SubscribeToPoll("test-poll");
+
+	REQUIRE(sdk.HasSends());
+
+	sdk.ForeachSend([](gamelink::Send* send) {
+		REQUIRE(send->data == R"({"action":"subscribe","data":{"topic_id":"test-poll"},"params":{"request_id":65535,"target":"poll"}})");
 	});
 
 	REQUIRE(!sdk.HasSends());

@@ -21,5 +21,12 @@ namespace gamelink
 			data.prompt = prompt;
 			data.options = options;
 		}
+
+		SubscribePollRequest::SubscribePollRequest(const string& pollId)
+		{
+			action = string("subscribe");
+			params.target = string("poll");
+			data.topic_id = string(pollId);
+		}
 	}
 }

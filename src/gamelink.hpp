@@ -5,8 +5,7 @@
 #include <fmt/format.h>
 #include <queue>
 
-#include "../schema/authentication.h"
-#include "../schema/poll.h"
+#include "schema/schema.h"
 
 namespace gamelink
 {
@@ -87,12 +86,6 @@ namespace gamelink
 			_sendQueue.push(send);
 		}
 
-		void subscribeTo(const std::string& target, const std::string& id) {}
-
-		void unsubscribeFrom(const std::string& target, const std::string& id) {}
-
-		void broadcast(const std::string& message, const std::vector<std::string>& ids) {}
-
 		void GetPoll(const schema::string& pollId)
 		{
 			schema::GetPollRequest packet(pollId);
@@ -104,6 +97,14 @@ namespace gamelink
 		void CreatePoll(const schema::string& pollId, const schema::string& prompt, const std::vector<schema::string>& options)
 		{
 			schema::CreatePollRequest packet(pollId, prompt, options);
+
+			auto send = new Send(to_string(packet));
+			_sendQueue.push(send);
+		}
+
+		void SubscribeToPoll(const schema::string& pollId)
+		{
+			schema::SubscribePollRequest packet(pollId);
 
 			auto send = new Send(to_string(packet));
 			_sendQueue.push(send);
