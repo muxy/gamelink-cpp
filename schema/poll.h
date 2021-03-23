@@ -44,6 +44,45 @@ namespace gamelink
 													"user_data",
 													userData);
 			};
+
+			struct PollBody
+			{
+				string prompt;
+				std::vector<string> options;
+
+				MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(PollBody, "prompt", prompt, "options", options);
+			};
+
+			template<typename T>
+			struct UserDataPollBody
+			{
+				string prompt;
+				std::vector<string> options;
+				T userData;
+
+				MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(UserDataPollBody, "prompt", prompt, "options", options, "user_data", userData);
+			};
+
+			struct PollUpdateBody
+			{
+				string pollId;
+
+				PollBody poll;
+				std::vector<int> results;
+
+				MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PollUpdateBody, "topic_id", pollId, "poll", poll, "results", results);
+			};
+
+			template<typename T>
+			struct UserDataPollUpdateBody
+			{
+				string pollId;
+
+				UserDataPollBody<T> poll;
+				std::vector<int> results;
+
+				MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(UserDataPollUpdateBody, "topic_id", pollId, "poll", poll, "results", results);
+			};
 		}
 
 		struct GetPollRequest : SendEnvelope<bodies::GetPollBody>
@@ -75,6 +114,20 @@ namespace gamelink
 		struct SubscribePollRequest : SendEnvelope<bodies::SubscribeTopicBody>
 		{
 			SubscribePollRequest(const string& pollId);
+		};
+
+		struct PollUpdateResponse : ReceiveEnvelope<bodies::PollUpdateBody>
+		{
+			PollUpdateResponse(){};
+			PollUpdateResponse(const string& pollId,
+							   const string& prompt,
+							   const std::vector<string>& options,
+							   const std::vector<int>& results);
+		};
+
+		template<typename T>
+		struct UserDataPollUpdateResponse : ReceiveEnvelope<bodies::UserDataPollUpdateBody<T>>
+		{
 		};
 	}
 }

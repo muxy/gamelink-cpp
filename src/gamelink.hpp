@@ -24,7 +24,8 @@ namespace gamelink
 	{
 	public:
 		SDK()
-			: _user(NULL){};
+			: _user(NULL)
+			, _onPollUpdate(NULL){};
 		~SDK()
 		{
 			// Clean up unsent messages
@@ -46,6 +47,21 @@ namespace gamelink
 				schema::AuthenticateResponse authResp;
 				schema::ParseResponse<schema::AuthenticateResponse>(message, authResp);
 				this->_user = new schema::User(authResp.data.jwt);
+			}
+			else if (env.meta.action == "update")
+			{
+				if (env.meta.target == "poll")
+				{
+					// Poll update response
+					// TODO Handle a UserDataPollUpdateResponse as well
+					schema::PollUpdateResponse pollResp;
+					schema::ParseResponse<schema::PollUpdateResponse>(message, pollResp);
+
+					if (this->_onPollUpdate != NULL)
+					{
+						this->_onPollUpdate(pollResp);
+					}
+				}
 			}
 		}
 
@@ -76,6 +92,11 @@ namespace gamelink
 		schema::User* GetUser()
 		{
 			return _user;
+		}
+
+		void OnPollUpdate(std::function<void(const schema::PollUpdateResponse& pollResponse)> callback)
+		{
+			this->_onPollUpdate = callback;
 		}
 
 		void AuthenticateWithPIN(const std::string client_id, const std::string pin)
@@ -113,6 +134,8 @@ namespace gamelink
 	private:
 		std::queue<Send*> _sendQueue;
 		schema::User* _user;
+
+		std::function<void(const schema::PollUpdateResponse& pollResponse)> _onPollUpdate;
 	};
 }
 

@@ -2,6 +2,7 @@
 #include "util.h"
 
 #include "../gamelink.hpp"
+#include <iostream>
 
 TEST_CASE("SDK Poll Creation", "[sdk][poll][creation]")
 {
@@ -48,4 +49,37 @@ TEST_CASE("SDK Poll Subscription", "[sdk][poll][subscription]")
 	});
 
 	REQUIRE(!sdk.HasSends());
+}
+
+TEST_CASE("SDK Poll Update Response", "[sdk][poll][update]")
+{
+	gamelink::SDK sdk;
+
+	bool received = false;
+	auto json = R"({
+		"meta": {
+			"action": "update",
+			"target": "poll"
+		},
+		"data": {
+			"topic_id": "test-poll",
+			"poll": {
+				"prompt": "Choose one",
+				"options": ["Red", "Blue"]
+			},
+			"results": [3, 2]
+		}
+	})";
+
+	sdk.OnPollUpdate([&](gamelink::schema::PollUpdateResponse pollResp) {
+		received = true;
+
+		std::cout << "received";
+
+		SerializeEqual(pollResp, json);
+	});
+
+	sdk.ReceiveMessage(json);
+
+	REQUIRE(received);
 }

@@ -4,11 +4,13 @@
 
 #define GAMELINK_DEBUG 1
 
+#include "fmt/ranges.h"
 #include "src/gamelink.hpp"
 #include <websocket.h>
 
 using gamelink::SDK;
 using gamelink::Send;
+using gamelink::schema::PollUpdateResponse;
 
 int main()
 {
@@ -24,6 +26,20 @@ int main()
 #endif
 
 		sdk.ReceiveMessage(jstring);
+	});
+
+	// Set up SDK event handlers
+	sdk.OnPollUpdate([](PollUpdateResponse pollResponse) {
+		// Print the poll's results
+		fmt::print("For the poll \"{}\", results:\n", pollResponse.data.poll.prompt);
+		fmt::print("{}\n", pollResponse.data.poll.options);
+
+		int i = 0;
+		for (auto option : pollResponse.data.poll.options)
+		{
+			fmt::print("{}: {}\n", option, pollResponse.data.results[i]);
+			i++;
+		}
 	});
 
 	auto done = false;
