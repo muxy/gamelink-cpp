@@ -1,12 +1,26 @@
 gamelink - Documentation
 ====================================
 
-General
--------
 
 Configuration
-~~~~~~~~~~~~~~
+---------------
 .. doxygentypedef:: string
+
+Schema
+-------
+The schema library, contained in the namespace `gamelink::schema` are projections of the 
+network protocol into C++ structs.
+
+Serialization
+~~~~~~~~~~~~~
+To mark a type as serializable, use the macros ``MUXY_GAMELINK_SERIALIZE_[0..9]`` or
+``MUXY_GAMELINK_SERIALIZE_INTRUSIVE_[0..9]``
+
+These macros take arguments are similar to ``MUXY_GAMELINK_SERIALIZE_N(Type, Name1, Property1, Name2, Property2, ...)``
+
+``MUXY_GAMELINK_SERIALIZE_`` should be placed in the same namespace as ``Type``.
+
+``MUXY_GAMELINK_SERIALIZE_INTRUSIVE_`` should be placed in the declaration of the Type.
 
 
 Envelopes
@@ -34,6 +48,7 @@ Envelopes
 
 .. doxygenfunction:: gamelink::schema::ParseResponse
 .. doxygenfunction:: gamelink::schema::ParseEnvelope
+
 
 JSONAtom 
 ~~~~~~~~~~~~~
@@ -83,3 +98,76 @@ Authentication
 
 .. doxygenstruct:: gamelink::schema::AuthenticateResponse
     :members: data
+
+State
+~~~~~~~
+State types are designed to wrap a user-provided type. 
+
+Each body and Request/Response type are designed to be templated
+by the user-developer type.
+
+.. doxygenvariable:: gamelink::schema::STATE_TARGET_CHANNEL
+.. doxygenvariable:: gamelink::schema::STATE_TARGET_EXTENSION
+
+.. doxygenstruct:: gamelink::schema::bodies::SetStateBody
+    :members:
+
+.. doxygenstruct:: gamelink::schema::bodies::StateResponse
+    :members:
+
+.. doxygenstruct:: gamelink::schema::SetStateRequest
+    :members: SetStateRequest, data
+
+.. doxygenstruct:: gamelink::schema::SetStateResponse
+    :members: data
+
+.. doxygenstruct:: gamelink::schema::GetStateRequest
+    :members: GetStateRequest, data
+
+.. doxygenstruct:: gamelink::schema::GetStateResponse
+    :members: data
+
+.. doxygenstruct:: gamelink::schema::bodies::UpdateOperation
+    :members:
+    :undoc-members:
+
+.. doxygenstruct:: gamelink::schema::bodies::UpdateStateBody
+    :members:
+    :undoc-members:
+
+.. doxygenstruct:: gamelink::schema::UpdateStateRequest
+    :members: UpdateStateRequest, data
+
+.. doxygenstruct:: gamelink::schema::bodies::SubscribeStateBody
+    :members:
+    :undoc-members:
+
+.. doxygenstruct:: gamelink::schema::bodies::StateSubscriptionUpdate
+    :members:
+    :undoc-members:
+
+.. doxygenstruct:: gamelink::schema::SubscribeStateRequest
+    :members: SubscribeStateRequest, data
+
+Polling 
+~~~~~~~~~
+.. doxygenstruct:: gamelink::schema::bodies::GetPollBody
+    :members:
+    :undoc-members:
+
+.. doxygenstruct:: gamelink::schema::bodies::CreatePollBody
+    :members:
+    :undoc-members:
+
+.. doxygenstruct:: gamelink::schema::bodies::CreateUserDataPollBody
+    :members:
+    :undoc-members:
+
+.. doxygenstruct:: gamelink::schema::GetPollRequest
+    :members: GetPollRequest, data
+
+.. doxygenstruct:: gamelink::schema::CreatePollRequest
+    :members: CreatePollRequest, data
+
+.. doxygenstruct:: gamelink::schema::CreateUserDataPollRequest
+    :members: CreateUserDataPollRequest, data
