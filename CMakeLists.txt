@@ -38,3 +38,43 @@ include_directories(${OPENSSL_INCLUDE_DIR} ${LIB_WEBSOCKETS_INCLUDE_DIRS})
 
 add_executable(demo demo.cpp websocket.cpp ${SCHEMA_SOURCES})
 target_link_libraries(demo ${LIB_WEBSOCKETS_LIBRARIES})
+
+# Doc
+file(GLOB SCHEMA_PUBLIC_HEADERS "schema/*.h")
+file(GLOB SRC_PUBLIC_HEADERS "src/*.hpp")
+
+set(PUBLIC_HEADERS ${SCHEMA_PUBLIC_HEADERS} ${SRC_PUBLIC_HEADERS})
+
+set(DOXYGEN_INDEX_FILE "doxygen/html/index.html")
+set(DOXYFILE_IN "${CMAKE_CURRENT_SOURCE_DIR}/doxygen/Doxyfile.in")
+set(DOXYFILE_OUT "${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile")
+SET(DOXYGEN_STRIP_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+string(REPLACE ";" " " DOXYGEN_INPUTS "${PUBLIC_HEADERS}")
+set(DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/doxygen")
+
+configure_file(${DOXYFILE_IN} ${DOXYFILE_OUT} @ONLY)
+
+add_custom_command(OUTPUT ${DOXYGEN_INDEX_FILE}
+                   DEPENDS ${PUBLIC_HEADERS}
+                   COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
+                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                   MAIN_DEPENDENCY ${DOXYFILE_OUT} ${DOXYFILE_IN}
+                   COMMENT "Generating docs")
+
+
+add_custom_target(Doxygen ALL DEPENDS ${DOXYGEN_INDEX_FILE})
+
+find_program(SPHINX_EXECUTABLE
+             NAMES sphinx-build
+             DOC "Path to sphinx-build executable")
+
+set(SPHINX_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/docs)
+set(SPHINX_BUILD ${CMAKE_CURRENT_SOURCE_DIR}/docs/sphinx)
+
+add_custom_target(Sphinx ALL
+    COMMAND
+    ${SPHINX_EXECUTABLE} -b html
+    -Dbreathe_projects.gamelink=${DOXYGEN_OUTPUT_DIRECTORY}/xml
+    ${SPHINX_SOURCE} ${SPHINX_BUILD}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMENT "Generating sphinx documentation")

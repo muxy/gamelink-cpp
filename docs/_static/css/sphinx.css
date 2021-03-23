@@ -1,0 +1,15 @@
+/* 
+    Add in an &nbsp (\a0) before the name of a declaration for clarity.
+*/
+.sig-name.descname::before {
+   content: "\a0"
+}
+
+.cpp.function .target + .pre::after {
+    content: "\a0"
+ }
+
+.cpp.function em::before {
+    content: "\a0"
+}
+
