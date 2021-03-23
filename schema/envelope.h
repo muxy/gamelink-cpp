@@ -12,14 +12,24 @@ namespace gamelink
 		// An integer, double, string, null
 		enum JsonAtomType
 		{
+			/// No fields are valid, the JSONAtom represents a null
 			JSON_ATOM_NULL,
+
+			/// The int64Value field is valid, and the JSONAtom represents an integer.
 			JSON_ATOM_INT64,
+
+			/// The doubleValue field is valid, and the JSONAtom represents a double.
 			JSON_ATOM_DOUBLE,
+
+			/// The stringValue field is valid, and the JSONAtom represents a string.
 			JSON_ATOM_STRING,
 
 			JSON_ATOM_FORCE_32 = 0xFFFFFFFF
 		};
 
+		/// JSONAtom is effectively a tagged union that can contain a signed 64-bit integer, 
+		/// a floating point double, a string, or null. The type of a JSONAtom is stored in 
+		/// the `field` type.
 		struct JsonAtom
 		{
 			JsonAtomType type;
