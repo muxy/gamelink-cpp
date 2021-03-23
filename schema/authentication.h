@@ -11,7 +11,10 @@ namespace gamelink
 		{
 			struct AuthenticateWithPINBody
 			{
+				/// PIN string, as obtained from the REST API
 				string pin;
+
+				/// Client ID, as obtained from Twitch.
 				string client_id;
 			};
 
@@ -19,7 +22,10 @@ namespace gamelink
 
 			struct AuthenticateWithJWTBody
 			{
+				/// JWT string, as obtained from previous authorizations
 				string jwt;
+
+				/// Client ID, as obtained from Twitch.
 				string client_id;
 			};
 
@@ -27,6 +33,7 @@ namespace gamelink
 
 			struct JWTResponseBody
 			{
+				/// Signed JWT. Will expire.
 				string jwt;
 			};
 
@@ -39,22 +46,26 @@ namespace gamelink
 		};
 
 		struct SubscribeAuthenticationResponse : ReceiveEnvelope<bodies::OKResponseBody>
-		{
-		};
+		{};
 
 		struct AuthenticateWithPINRequest : SendEnvelope<bodies::AuthenticateWithPINBody>
 		{
+			/// Creates an authorization request.
+			/// @param[in] clientID Client ID.
+			/// @param[in] pin PIN obtained from user input.
 			AuthenticateWithPINRequest(const string& clientID, const string& pin);
 		};
 
 		struct AuthenticateWithJWTRequest : SendEnvelope<bodies::AuthenticateWithJWTBody>
 		{
+			/// Creates an authorization request
+			/// @param[in] clientID Client ID.
+			/// @param[in] jwt JWT obtained from previous authorizations.
 			AuthenticateWithJWTRequest(const string& clientID, const string& jwt);
 		};
 
 		struct AuthenticateResponse : ReceiveEnvelope<bodies::JWTResponseBody>
-		{
-		};
+		{};
 
 		class User
 		{

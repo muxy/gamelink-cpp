@@ -12,17 +12,10 @@ namespace gamelink
 		// An integer, double, string, null
 		enum JsonAtomType
 		{
-			/// No fields are valid, the JSONAtom represents a null
-			JSON_ATOM_NULL,
-
-			/// The int64Value field is valid, and the JSONAtom represents an integer.
-			JSON_ATOM_INT64,
-
-			/// The doubleValue field is valid, and the JSONAtom represents a double.
-			JSON_ATOM_DOUBLE,
-
-			/// The stringValue field is valid, and the JSONAtom represents a string.
-			JSON_ATOM_STRING,
+			JSON_ATOM_NULL,   //!< No fields are valid, the JSONAtom represents a null
+			JSON_ATOM_INT64,  //!< The int64Value field is valid, and the JSONAtom represents an integer.
+			JSON_ATOM_DOUBLE, //!< The doubleValue field is valid, and the JSONAtom represents a double.
+			JSON_ATOM_STRING, //!<The stringValue field is valid, and the JSONAtom represents a string.
 
 			JSON_ATOM_FORCE_32 = 0xFFFFFFFF
 		};
@@ -32,55 +25,89 @@ namespace gamelink
 		/// the `field` type.
 		struct JsonAtom
 		{
+			/// Type of the contained value
 			JsonAtomType type;
 
+			/// Integer value
 			int64_t int64Value;
+
+			/// Double value
 			double doubleValue;
+
+			/// String value
 			string stringValue;
 		};
 
+		/// Creates a JsonAtom that represents an integer
+		/// @param[in] v Integer value
+		/// @return JsonAtom that contains the input integer value
 		JsonAtom atomFromInteger(int64_t v);
+
+		/// Creates a JsonAtom that represents a double
+		/// @param[in] d Double value
+		/// @return JsonAtom that contains the input double value
 		JsonAtom atomFromDouble(double d);
+
+		/// Creates a JsonAtom that represents a string
+		/// @param[in] str String value
+		/// @return JsonAtom that contains the input string value
 		JsonAtom atomFromString(const string& str);
+
+		/// Creates a JsonAtom that represents null
+		/// @return A null JsonAtom
 		JsonAtom atomNull();
 
 		void to_json(nlohmann::json& out, const JsonAtom& p);
 		void from_json(const nlohmann::json& in, JsonAtom& p);
 
+		/// Contains metadata fields about a response
 		struct ReceiveMeta
 		{
 			ReceiveMeta();
 
+			/// Request ID, as sent by the response
 			uint16_t request_id;
+
+			/// Action of the request
 			string action;
+
+			/// Target of the request
 			string target;
+
+			/// Unix timestamp in milliseconds since epoch. 
 			uint64_t timestamp;
 		};
 
 		MUXY_GAMELINK_SERIALIZE_4(ReceiveMeta, "request_id", request_id, "action", action, "target", target, "timestamp", timestamp)
 
+		/// Error type, possibly returned by any API call. 
 		struct Error
 		{
+			/// Unsigned error code. Correlates to HTTP error codes.
 			uint32_t number;
+
+			/// Human readable error title.
 			string title;
+
+			/// Human readable detail field.
 			string detail;
 		};
 
 		MUXY_GAMELINK_SERIALIZE_3(Error, "number", number, "title", title, "detail", detail)
 
-		struct Envelope
-		{
-			ReceiveMeta meta;
-
-			std::vector<Error> errors;
-		};
-
+		/// ReceiveEnvelope 
 		template<typename T>
 		struct ReceiveEnvelope
 		{
+			/// Metadata about this response
 			ReceiveMeta meta;
 
+			/// Data field. Will vary based on the response.
+			/// See the type documentation for more details.
 			T data;
+
+			/// Errors list. Mutually exclusive with data.
+			/// May contain more than one error.
 			std::vector<Error> errors;
 		};
 
@@ -108,7 +135,11 @@ namespace gamelink
 		{
 			SendParameters();
 
+			/// Request ID. Will be echoed back in the response. 
+			/// By default, is 0xFFFF
 			uint16_t request_id;
+
+			/// Target field. Will vary in behavior based on action.
 			string target;
 		};
 
@@ -130,8 +161,14 @@ namespace gamelink
 		template<typename T>
 		struct SendEnvelope
 		{
+			/// The action of this request.
 			string action;
+
+			/// Parameters of this request.
 			SendParameters params;
+
+			/// Data field. Will vary based on the response.
+			/// See the type documentation for more details.
 			T data;
 		};
 
@@ -162,12 +199,15 @@ namespace gamelink
 		// A few common bodies
 		namespace bodies
 		{
+			/// The empty body. Has no members.
 			struct EmptyBody
-			{
-			};
+			{};
 
+			/// OKResponseBody is sent back when a simple operation succeeds.
 			struct OKResponseBody
 			{
+				/// Will always be 'true'. If an error occurred, then 
+				/// the errors array in the response would be set.
 				bool ok;
 			};
 
@@ -176,20 +216,23 @@ namespace gamelink
 
 		// Specialization for empty body serialization
 		MUXY_GAMELINK_SERIALIZE_2(SendEnvelope<bodies::EmptyBody>, "action", action, "params", params);
-
 		MUXY_GAMELINK_SERIALIZE_2(ReceiveEnvelope<bodies::EmptyBody>, "meta", meta, "errors", errors);
 
+
+		/// Parse a response object
+		/// @param[in] jsonString JSON input
+		/// @param[out] out Output object. Should be a ResponseEnvelope or a type inherited from ResponseEnvelope.
 		template<typename T>
-		void ParseResponse(const std::string& jsonString, T& out)
+		void ParseResponse(const string& jsonString, T& out)
 		{
 			auto json = nlohmann::json::parse(jsonString);
 			from_json(json, out);
 		}
 
-		/**
-		 * ParseEnvelope returns the response envelope, without parsing the data.
-		 */
-		ReceiveEnvelope<bodies::EmptyBody> ParseEnvelope(std::string jsonString);
+		/// Parses a ReceiveEnvelope only. Does not attempt to parse the body.
+		/// @param[in] jsonString: JSON input
+		/// @return A ReceiveEnvelope with no body, only metadata field and possibly errors.
+		ReceiveEnvelope<bodies::EmptyBody> ParseEnvelope(string jsonString);
 
 	}
 }
