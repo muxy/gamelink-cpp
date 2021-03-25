@@ -2,40 +2,38 @@
 #ifndef MUXY_GAMELINK_SCHEMA_STATE_H
 #define MUXY_GAMELINK_SCHEMA_STATE_H
 #include "schema/envelope.h"
+#include "schema/subscription.h"
 
 namespace gamelink
 {
     namespace schema
     {
         // Set / Get state
-        namespace bodies
+        template<typename T>
+        struct SetStateRequestBody
         {
-            template<typename T>
-            struct SetStateBody
-            {
-                T state;
+            T state;
 
-                MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SetStateBody, "state", state);
-            };
+            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SetStateRequestBody, "state", state);
+        };
 
-            template<typename T>
-            struct StateResponse
-            {
-                bool ok;
-                T state;
+        template<typename T>
+        struct StateResponseBody
+        {
+            bool ok;
+            T state;
 
-                MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(StateResponse, 
-                    "ok", ok, 
-                    "state", state
-                );
-            };
-        }
+            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(StateResponseBody, 
+                "ok", ok, 
+                "state", state
+            );
+        };
      
         static const char * STATE_TARGET_CHANNEL = "channel";
         static const char * STATE_TARGET_EXTENSION = "extension";
 
         template<typename T>
-        struct SetStateRequest : SendEnvelope< bodies::SetStateBody<T> >
+        struct SetStateRequest : SendEnvelope< SetStateRequestBody<T> >
         {
             SetStateRequest(const char * target, const T& value)
             {
@@ -46,77 +44,64 @@ namespace gamelink
         };
 
         template<typename T>
-        struct SetStateResponse : ReceiveEnvelope< bodies::StateResponse<T> >
+        struct SetStateResponse : ReceiveEnvelope< StateResponseBody<T> >
         {};
 
-        struct GetStateRequest : SendEnvelope< bodies::EmptyBody >
+        struct GetStateRequest : SendEnvelope< EmptyBody >
         {
             explicit GetStateRequest(const char * target);
         };
 
         template<typename T>
-        struct GetStateResponse : ReceiveEnvelope< bodies::StateResponse<T> >
+        struct GetStateResponse : ReceiveEnvelope< StateResponseBody<T> >
         {};
 
         // Update state
-        namespace bodies
+        struct UpdateOperation
         {
-            struct UpdateOperation
-            {
-                string operation;
-                string path;
-                JsonAtom value;
+            string operation;
+            string path;
+            JsonAtom value;
 
-                MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(UpdateOperation, 
-                    "op", operation, 
-                    "path", path, 
-                    "value", value
-                ); 
-            };
+            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(UpdateOperation, 
+                "op", operation, 
+                "path", path, 
+                "value", value
+            ); 
+        };
 
-            struct UpdateStateBody
-            {
-                std::vector<UpdateOperation> state;
+        struct UpdateStateRequestBody
+        {
+            std::vector<UpdateOperation> state;
 
-                MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(UpdateStateBody, "state", state);
-            };
-        }
+            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(UpdateStateRequestBody, "state", state);
+        };
 
-        struct UpdateStateRequest : SendEnvelope< bodies::UpdateStateBody >
+        struct UpdateStateRequest : SendEnvelope< UpdateStateRequestBody >
         {
             explicit UpdateStateRequest(const char * target);
         };
 
         // Subscription
-        namespace bodies
+        template<typename T>
+        struct StateUpdateBody
         {
-            struct SubscribeStateBody
-            {
-                string topic_id;
-                
-                MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SubscribeStateBody, "topic_id", topic_id);
-            };
+            string topic_id;
+            T state;
 
-            template<typename T>
-            struct StateSubscriptionUpdate
-            {
-                string topic_id;
-                T state;
+            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(StateUpdateBody, 
+                "topic_id", topic_id, 
+                "state", state
+            );
+        };
 
-                MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(StateSubscriptionUpdate, 
-                    "topic_id", topic_id, 
-                    "state", state
-                );
-            };
-        }
-
-        struct SubscribeStateRequest : SendEnvelope< bodies::SubscribeStateBody >
+        struct SubscribeStateRequest : SendEnvelope< SubscribeTopicRequestBody >
         {
             explicit SubscribeStateRequest(const char * target);
         };
 
         template<typename T>
-        struct SubscribeStateUpdateResponse : ReceiveEnvelope< bodies::StateSubscriptionUpdate<T> >
+        struct SubscribeStateUpdateResponse : ReceiveEnvelope< StateUpdateBody<T> >
         {};
     }
 }

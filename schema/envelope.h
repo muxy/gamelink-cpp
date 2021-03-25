@@ -196,27 +196,23 @@ namespace gamelink
 			return out.dump();
 		}
 
-		// A few common bodies
-		namespace bodies
+		/// The empty body. Has no members.
+		struct EmptyBody
+		{};
+
+		/// OKResponseBody is sent back when a simple operation succeeds.
+		struct OKResponseBody
 		{
-			/// The empty body. Has no members.
-			struct EmptyBody
-			{};
-
-			/// OKResponseBody is sent back when a simple operation succeeds.
-			struct OKResponseBody
-			{
-				/// Will always be 'true'. If an error occurred, then 
-				/// the errors array in the response would be set.
-				bool ok;
-			};
-
-			MUXY_GAMELINK_SERIALIZE_1(OKResponseBody, "ok", ok)
-		}
+			/// Will always be 'true'. If an error occurred, then 
+			/// the errors array in the response would be set.
+			bool ok;
+		};
+	
+		MUXY_GAMELINK_SERIALIZE_1(OKResponseBody, "ok", ok)
 
 		// Specialization for empty body serialization
-		MUXY_GAMELINK_SERIALIZE_2(SendEnvelope<bodies::EmptyBody>, "action", action, "params", params);
-		MUXY_GAMELINK_SERIALIZE_2(ReceiveEnvelope<bodies::EmptyBody>, "meta", meta, "errors", errors);
+		MUXY_GAMELINK_SERIALIZE_2(SendEnvelope<EmptyBody>, "action", action, "params", params);
+		MUXY_GAMELINK_SERIALIZE_2(ReceiveEnvelope<EmptyBody>, "meta", meta, "errors", errors);
 
 
 		/// Parse a response object
@@ -232,8 +228,7 @@ namespace gamelink
 		/// Parses a ReceiveEnvelope only. Does not attempt to parse the body.
 		/// @param[in] jsonString: JSON input
 		/// @return A ReceiveEnvelope with no body, only metadata field and possibly errors.
-		ReceiveEnvelope<bodies::EmptyBody> ParseEnvelope(string jsonString);
-
+		ReceiveEnvelope<EmptyBody> ParseEnvelope(const string& jsonString);
 	}
 }
 

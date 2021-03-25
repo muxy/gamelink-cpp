@@ -14,6 +14,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 include_directories(.)
 include_directories(third_party)
 include_directories(schema/test)
+include_directories(/usr/local/opt/openssl/include)
 
 file(GLOB SCHEMA_SOURCES "schema/*.cpp")
 file(GLOB SCHEMA_TEST_SOURCES "schema/test/*.cpp")

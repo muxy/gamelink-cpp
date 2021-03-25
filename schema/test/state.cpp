@@ -115,7 +115,7 @@ TEST_CASE("State update serialization", "[state][serialization]")
 {
     gamelink::schema::UpdateStateRequest req(gamelink::schema::STATE_TARGET_EXTENSION);
     
-    gamelink::schema::bodies::UpdateOperation op;
+    gamelink::schema::UpdateOperation op;
     op.operation = "replace";
     op.path = "/children/0/name", 
     op.value = gamelink::schema::atomFromString("percentage mana");
