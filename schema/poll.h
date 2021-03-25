@@ -84,7 +84,7 @@ namespace gamelink
 
 		struct GetPollRequest : SendEnvelope<GetPollRequestBody>
 		{
-			GetPollRequest(const string& pollId);
+			explicit GetPollRequest(const string& pollId);
 		};
 
 		struct CreatePollRequest : SendEnvelope<CreatePollRequestBody>

@@ -12,29 +12,41 @@ namespace gamelink
         template<typename T>
         struct SetStateRequestBody
         {
+            /// The state to set. The type `T` should be serializable
+            /// through use of the MUXY_GAMELINK_SERIALIZE macros.
             T state;
 
             MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SetStateRequestBody, "state", state);
         };
 
         template<typename T>
-        struct StateResponseBody
+        struct StateResponse
         {
+            /// Will always be true.
             bool ok;
+
+            /// State response. The type `T` should be serializable
+            /// through use of the MUXY_GAMELINK_SERIALIZE macros.
             T state;
 
-            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(StateResponseBody, 
+            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(StateResponse, 
                 "ok", ok, 
                 "state", state
             );
         };
-     
+    
+        /// Channel State target
         static const char * STATE_TARGET_CHANNEL = "channel";
+
+        /// Extension State target
         static const char * STATE_TARGET_EXTENSION = "extension";
 
         template<typename T>
         struct SetStateRequest : SendEnvelope< SetStateRequestBody<T> >
         {
+            /// Creates a SetState request.
+            /// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+            /// @param[in] value A serializable type. 
             SetStateRequest(const char * target, const T& value)
             {
                 this->action = string("set");
@@ -49,6 +61,8 @@ namespace gamelink
 
         struct GetStateRequest : SendEnvelope< EmptyBody >
         {
+            /// Creates a GetState request
+            /// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
             explicit GetStateRequest(const char * target);
         };
 
@@ -79,6 +93,8 @@ namespace gamelink
 
         struct UpdateStateRequest : SendEnvelope< UpdateStateRequestBody >
         {
+            /// Creates an UpdateState request
+            /// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
             explicit UpdateStateRequest(const char * target);
         };
 
@@ -97,6 +113,8 @@ namespace gamelink
 
         struct SubscribeStateRequest : SendEnvelope< SubscribeTopicRequestBody >
         {
+            /// Creates a SubscribeState request
+            /// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
             explicit SubscribeStateRequest(const char * target);
         };
 
