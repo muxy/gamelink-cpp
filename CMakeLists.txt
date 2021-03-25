@@ -14,19 +14,15 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 include_directories(.)
 include_directories(third_party)
 include_directories(schema/test)
-include_directories(/usr/local/opt/openssl/include)
+include_directories(src/test)
 
 file(GLOB SCHEMA_SOURCES "schema/*.cpp")
 file(GLOB SCHEMA_TEST_SOURCES "schema/test/*.cpp")
 
-add_executable(schema_tests ${SCHEMA_TEST_SOURCES} ${SCHEMA_SOURCES})
-
-# SDK unit tests
-include_directories(src/test)
-
 file(GLOB SDK_TEST_SOURCES "src/test/*.cpp")
+file(GLOB SDK_SOURCES "src/*.cpp")
 
-add_executable(sdk_tests ${SDK_TEST_SOURCES} ${SCHEMA_SOURCES})
+add_executable(tests ${SCHEMA_TEST_SOURCES} ${SCHEMA_SOURCES} ${SDK_TEST_SOURCES} ${SDK_SOURCES})
 
 # SDK demo app
 find_package(PkgConfig)

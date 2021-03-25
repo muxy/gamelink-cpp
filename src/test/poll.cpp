@@ -13,9 +13,20 @@ TEST_CASE("SDK Poll Creation", "[sdk][poll][creation]")
 	REQUIRE(sdk.HasSends());
 
 	sdk.ForeachSend([](gamelink::Send* send) {
-		REQUIRE(
-			send->data ==
-			R"({"action":"create","data":{"options":["Me","Them"],"poll_id":"test-poll","prompt":"Me or Them?"},"params":{"request_id":65535,"target":"poll"}})");
+		REQUIRE(JSONEquals(send->data,  
+			R"({
+				"action":"create",
+				"data":{
+					"options":["Me","Them"],
+					"poll_id":"test-poll",
+					"prompt":"Me or Them?"
+				},
+				"params":{
+					"request_id":65535,
+					"target":"poll"
+				}
+			})"
+		));
 	});
 
 	REQUIRE(!sdk.HasSends());
@@ -30,7 +41,9 @@ TEST_CASE("SDK Poll Get Results", "[sdk][poll][results]")
 	REQUIRE(sdk.HasSends());
 
 	sdk.ForeachSend([](gamelink::Send* send) {
-		REQUIRE(send->data == R"({"action":"get","data":{"poll_id":"test-poll"},"params":{"request_id":65535,"target":"poll"}})");
+		REQUIRE(JSONEquals(send->data, 
+			R"({"action":"get","data":{"poll_id":"test-poll"},"params":{"request_id":65535,"target":"poll"}})"
+		));
 	});
 
 	REQUIRE(!sdk.HasSends());
@@ -45,7 +58,9 @@ TEST_CASE("SDK Poll Subscription", "[sdk][poll][subscription]")
 	REQUIRE(sdk.HasSends());
 
 	sdk.ForeachSend([](gamelink::Send* send) {
-		REQUIRE(send->data == R"({"action":"subscribe","data":{"topic_id":"test-poll"},"params":{"request_id":65535,"target":"poll"}})");
+		REQUIRE(JSONEquals(send->data, 
+			R"({"action":"subscribe","data":{"topic_id":"test-poll"},"params":{"request_id":65535,"target":"poll"}})"
+		));
 	});
 
 	REQUIRE(!sdk.HasSends());
@@ -73,9 +88,6 @@ TEST_CASE("SDK Poll Update Response", "[sdk][poll][update]")
 
 	sdk.OnPollUpdate([&](gamelink::schema::PollUpdateResponse pollResp) {
 		received = true;
-
-		std::cout << "received";
-
 		SerializeEqual(pollResp, json);
 	});
 
