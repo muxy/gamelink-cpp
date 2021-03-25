@@ -21,13 +21,13 @@ TEST_CASE("Can deserialize with missing properties", "[deserialize]")
 
 TEST_CASE("Can deserialize with empty body", "[deserialize]")
 {
-    gamelink::schema::ReceiveEnvelope<gamelink::schema::bodies::EmptyBody> resp;
+    gamelink::schema::ReceiveEnvelope<gamelink::schema::EmptyBody> resp;
     Deserialize(R"({ })", resp);
 }
 
 TEST_CASE("Can deserialize with ok body", "[deserialize]")
 {
-    gamelink::schema::ReceiveEnvelope<gamelink::schema::bodies::OKResponseBody> resp;
+    gamelink::schema::ReceiveEnvelope<gamelink::schema::OKResponseBody> resp;
     Deserialize(R"({ 
         "data": {
             "ok": true

@@ -4,10 +4,12 @@
 #include "schema/config.h"
 #include "schema/poll.h"
 
+namespace gs = gamelink::schema;
+
 TEST_CASE("Poll Creation", "[poll][creation]")
 {
 	// Create poll without user data
-	gamelink::schema::CreatePollRequest req("poll-id", "Yes or No?", {"Yes", "No"});
+	gs::CreatePollRequest req("poll-id", "Yes or No?", {"Yes", "No"});
 	SerializeEqual(req, R"({
 		"action": "create",
 		"params": {
@@ -22,11 +24,11 @@ TEST_CASE("Poll Creation", "[poll][creation]")
 	})");
 
 	// Create poll with user data
-	std::map<gamelink::schema::string, gamelink::schema::string> userData;
+	std::map<gs::string, gs::string> userData;
 	userData["showTitle"] = "true";
 	userData["title"] = "Yes or No?";
 
-	gamelink::schema::CreateUserDataPollRequest<std::map<gamelink::schema::string, gamelink::schema::string>> req2("poll-id", "Yes or No?",
+	gs::CreatePollWithUserDataRequest<std::map<gs::string, gs::string>> req2("poll-id", "Yes or No?",
 																												   {"Yes", "No"}, userData);
 	SerializeEqual(req2, R"({
 		"action": "create",
@@ -48,7 +50,7 @@ TEST_CASE("Poll Creation", "[poll][creation]")
 
 TEST_CASE("Poll Update Response (De)Serialization", "[poll][update]")
 {
-	gamelink::schema::PollUpdateResponse pollResponse("poll-id", "Yes or No?", {"Yes", "No"}, {1, 2});
+	gs::PollUpdateResponse pollResponse("poll-id", "Yes or No?", {"Yes", "No"}, {1, 2});
 	SerializeEqual(pollResponse, R"({
 		"meta": {
 			"action": "update",

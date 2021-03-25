@@ -6,15 +6,12 @@ namespace gamelink
 {
 	namespace schema
 	{
-		namespace bodies
+		struct SubscribeTopicRequestBody
 		{
-			struct SubscribeTopicBody
-			{
-				string topic_id;
+			string topic_id;
 
-				MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SubscribeTopicBody, "topic_id", topic_id);
-			};
-		}
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SubscribeTopicRequestBody, "topic_id", topic_id);
+		};
 	}
 }
 

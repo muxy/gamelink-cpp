@@ -19,7 +19,9 @@ TEST_CASE("SDK Authentication", "[sdk][authentication]")
 	REQUIRE(sdk.HasSends());
 
 	sdk.ForeachSend([](gamelink::Send* send) {
-		REQUIRE(send->data == R"({"action":"authenticate","data":{"client_id":"client_id","pin":"pin"},"params":{"request_id":65535}})");
+		REQUIRE(JSONEquals(send->data,
+			R"({"action":"authenticate","data":{"client_id":"client_id","pin":"pin"},"params":{"request_id":65535}})"
+		));
 	});
 
 	REQUIRE(!sdk.HasSends());

@@ -29,4 +29,12 @@ void Deserialize(const std::string& in, T& out)
     nlohmann::json input = nlohmann::json::parse(in);
     from_json(input, out);
 }
+
+inline bool JSONEquals(const std::string& in, const std::string& expect)
+{
+    nlohmann::json input = nlohmann::json::parse(in);
+    nlohmann::json expected = nlohmann::json::parse(expect);
+
+    return input == expected;
+}
 #endif

@@ -7,48 +7,42 @@ namespace gamelink
 {
 	namespace schema
 	{
-		namespace bodies
+		struct AuthenticateWithPINRequestBody
 		{
-			struct AuthenticateWithPINBody
-			{
-				/// PIN string, as obtained from the REST API
-				string pin;
+			/// PIN string, as obtained from the REST API
+			string pin;
 
-				/// Client ID, as obtained from Twitch.
-				string client_id;
-			};
+			/// Client ID, as obtained from Twitch.
+			string client_id;
+		};
+		MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithPINRequestBody, "pin", pin, "client_id", client_id);
 
-			MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithPINBody, "pin", pin, "client_id", client_id);
+		struct AuthenticateWithJWTRequestBody
+		{
+			/// JWT string, as obtained from previous authorizations
+			string jwt;
 
-			struct AuthenticateWithJWTBody
-			{
-				/// JWT string, as obtained from previous authorizations
-				string jwt;
+			/// Client ID, as obtained from Twitch.
+			string client_id;
+		};
+		MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithJWTRequestBody, "jwt", jwt, "client_id", client_id);
 
-				/// Client ID, as obtained from Twitch.
-				string client_id;
-			};
+		struct AuthenticateJWTResponseBody
+		{
+			/// Signed JWT. Will expire.
+			string jwt;
+		};
+		MUXY_GAMELINK_SERIALIZE_1(AuthenticateJWTResponseBody, "jwt", jwt);
 
-			MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithJWTBody, "jwt", jwt, "client_id", client_id);
-
-			struct JWTResponseBody
-			{
-				/// Signed JWT. Will expire.
-				string jwt;
-			};
-
-			MUXY_GAMELINK_SERIALIZE_1(JWTResponseBody, "jwt", jwt);
-		}
-
-		struct SubscribeAuthenticationRequest : SendEnvelope<bodies::EmptyBody>
+		struct SubscribeAuthenticationRequest : SendEnvelope<EmptyBody>
 		{
 			SubscribeAuthenticationRequest();
 		};
 
-		struct SubscribeAuthenticationResponse : ReceiveEnvelope<bodies::OKResponseBody>
+		struct SubscribeAuthenticationResponse : ReceiveEnvelope<OKResponseBody>
 		{};
 
-		struct AuthenticateWithPINRequest : SendEnvelope<bodies::AuthenticateWithPINBody>
+		struct AuthenticateWithPINRequest : SendEnvelope<AuthenticateWithPINRequestBody>
 		{
 			/// Creates an authorization request.
 			/// @param[in] clientID Client ID.
@@ -56,7 +50,7 @@ namespace gamelink
 			AuthenticateWithPINRequest(const string& clientID, const string& pin);
 		};
 
-		struct AuthenticateWithJWTRequest : SendEnvelope<bodies::AuthenticateWithJWTBody>
+		struct AuthenticateWithJWTRequest : SendEnvelope<AuthenticateWithJWTRequestBody>
 		{
 			/// Creates an authorization request
 			/// @param[in] clientID Client ID.
@@ -64,7 +58,7 @@ namespace gamelink
 			AuthenticateWithJWTRequest(const string& clientID, const string& jwt);
 		};
 
-		struct AuthenticateResponse : ReceiveEnvelope<bodies::JWTResponseBody>
+		struct AuthenticateResponse : ReceiveEnvelope<AuthenticateJWTResponseBody>
 		{};
 
 		class User

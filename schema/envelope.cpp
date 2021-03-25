@@ -24,7 +24,7 @@ namespace gamelink
 			return atom;
 		}
 
-		JsonAtom atomFromString(const std::string& str)
+		JsonAtom atomFromString(const string& str)
 		{
 			JsonAtom atom;
 
@@ -99,9 +99,9 @@ namespace gamelink
 		{
 		}
 
-		ReceiveEnvelope<bodies::EmptyBody> ParseEnvelope(std::string jsonString)
+		ReceiveEnvelope<EmptyBody> ParseEnvelope(const string& jsonString)
 		{
-			ReceiveEnvelope<bodies::EmptyBody> out;
+			ReceiveEnvelope<EmptyBody> out;
 			ParseResponse(jsonString, out);
 			return out;
 		}
