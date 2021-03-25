@@ -5,8 +5,7 @@
 #include <fmt/format.h>
 #include <queue>
 
-#include "../schema/authentication.h"
-#include "../schema/poll.h"
+#include "schema/schema.h"
 
 namespace gamelink
 {
@@ -25,7 +24,8 @@ namespace gamelink
 	{
 	public:
 		SDK()
-			: _user(NULL){};
+			: _user(NULL)
+			, _onPollUpdate(NULL){};
 		~SDK()
 		{
 			// Clean up unsent messages
@@ -47,6 +47,21 @@ namespace gamelink
 				schema::AuthenticateResponse authResp;
 				schema::ParseResponse<schema::AuthenticateResponse>(message, authResp);
 				this->_user = new schema::User(authResp.data.jwt);
+			}
+			else if (env.meta.action == "update")
+			{
+				if (env.meta.target == "poll")
+				{
+					// Poll update response
+					// TODO Handle a UserDataPollUpdateResponse as well
+					schema::PollUpdateResponse pollResp;
+					schema::ParseResponse<schema::PollUpdateResponse>(message, pollResp);
+
+					if (this->_onPollUpdate != NULL)
+					{
+						this->_onPollUpdate(pollResp);
+					}
+				}
 			}
 		}
 
@@ -79,6 +94,11 @@ namespace gamelink
 			return _user;
 		}
 
+		void OnPollUpdate(std::function<void(const schema::PollUpdateResponse& pollResponse)> callback)
+		{
+			this->_onPollUpdate = callback;
+		}
+
 		void AuthenticateWithPIN(const std::string client_id, const std::string pin)
 		{
 			schema::AuthenticateWithPINRequest packet(client_id, pin);
@@ -86,12 +106,6 @@ namespace gamelink
 			auto send = new Send(to_string(packet));
 			_sendQueue.push(send);
 		}
-
-		void subscribeTo(const std::string& target, const std::string& id) {}
-
-		void unsubscribeFrom(const std::string& target, const std::string& id) {}
-
-		void broadcast(const std::string& message, const std::vector<std::string>& ids) {}
 
 		void GetPoll(const schema::string& pollId)
 		{
@@ -109,9 +123,19 @@ namespace gamelink
 			_sendQueue.push(send);
 		}
 
+		void SubscribeToPoll(const schema::string& pollId)
+		{
+			schema::SubscribePollRequest packet(pollId);
+
+			auto send = new Send(to_string(packet));
+			_sendQueue.push(send);
+		}
+
 	private:
 		std::queue<Send*> _sendQueue;
 		schema::User* _user;
+
+		std::function<void(const schema::PollUpdateResponse& pollResponse)> _onPollUpdate;
 	};
 }
 

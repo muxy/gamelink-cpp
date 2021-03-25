@@ -5,5 +5,7 @@
 #include "serialization.h"
 
 #include "authentication.h"
+#include "poll.h"
 #include "state.h"
+#include "subscription.h"
 #endif
