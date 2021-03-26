@@ -11,6 +11,8 @@ Schema
 The schema library, contained in the namespace `gamelink::schema` are projections of the 
 network protocol into C++ structs.
 
+Unless otherwise stated, all strings are utf-8 encoded.
+
 Serialization
 ~~~~~~~~~~~~~
 To mark a type as serializable, use the macros ``MUXY_GAMELINK_SERIALIZE_[0..9]`` or

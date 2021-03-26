@@ -36,19 +36,5 @@ namespace gamelink
 			params.target = string("poll");
 			data.topic_id = string(pollId);
 		}
-
-		PollUpdateResponse::PollUpdateResponse(const string& pollId,
-											   const string& prompt,
-											   const std::vector<string>& options,
-											   const std::vector<int>& results)
-		{
-			meta.action = string("update");
-			meta.target = string("poll");
-
-			data.pollId = string(pollId);
-			data.poll.prompt = string(prompt);
-			data.poll.options = options;
-			data.results = results;
-		}
 	}
 }
