@@ -6,121 +6,114 @@
 
 namespace gamelink
 {
-    namespace schema
-    {
-        // Set / Get state
-        template<typename T>
-        struct SetStateRequestBody
-        {
-            /// The state to set. The type `T` should be serializable
-            /// through use of the MUXY_GAMELINK_SERIALIZE macros.
-            T state;
+	namespace schema
+	{
+		// Set / Get state
+		template<typename T>
+		struct SetStateRequestBody
+		{
+			/// The state to set. The type `T` should be serializable
+			/// through use of the MUXY_GAMELINK_SERIALIZE macros.
+			T state;
 
-            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SetStateRequestBody, "state", state);
-        };
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SetStateRequestBody, "state", state);
+		};
 
-        template<typename T>
-        struct StateResponse
-        {
-            /// Will always be true.
-            bool ok;
+		template<typename T>
+		struct StateResponseBody
+		{
+			/// Will always be true.
+			bool ok;
 
-            /// State response. The type `T` should be serializable
-            /// through use of the MUXY_GAMELINK_SERIALIZE macros.
-            T state;
+			/// State response. The type `T` should be serializable
+			/// through use of the MUXY_GAMELINK_SERIALIZE macros.
+			T state;
 
-            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(StateResponse, 
-                "ok", ok, 
-                "state", state
-            );
-        };
-    
-        /// Channel State target
-        static const char * STATE_TARGET_CHANNEL = "channel";
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(StateResponseBody, "ok", ok, "state", state);
+		};
 
-        /// Extension State target
-        static const char * STATE_TARGET_EXTENSION = "extension";
+		/// Channel State target
+		static const char* STATE_TARGET_CHANNEL = "channel";
 
-        template<typename T>
-        struct SetStateRequest : SendEnvelope< SetStateRequestBody<T> >
-        {
-            /// Creates a SetState request.
-            /// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
-            /// @param[in] value A serializable type. 
-            SetStateRequest(const char * target, const T& value)
-            {
-                this->action = string("set");
-                this->params.target = string(target);
-                this->data.state = value;
-            }
-        };
+		/// Extension State target
+		static const char* STATE_TARGET_EXTENSION = "extension";
 
-        template<typename T>
-        struct SetStateResponse : ReceiveEnvelope< StateResponseBody<T> >
-        {};
+		template<typename T>
+		struct SetStateRequest : SendEnvelope<SetStateRequestBody<T>>
+		{
+			/// Creates a SetState request.
+			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+			/// @param[in] value A serializable type.
+			SetStateRequest(const char* target, const T& value)
+			{
+				this->action = string("set");
+				this->params.target = string(target);
+				this->data.state = value;
+			}
+		};
 
-        struct GetStateRequest : SendEnvelope< EmptyBody >
-        {
-            /// Creates a GetState request
-            /// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
-            explicit GetStateRequest(const char * target);
-        };
+		template<typename T>
+		struct SetStateResponse : ReceiveEnvelope<StateResponseBody<T>>
+		{
+		};
 
-        template<typename T>
-        struct GetStateResponse : ReceiveEnvelope< StateResponseBody<T> >
-        {};
+		struct GetStateRequest : SendEnvelope<EmptyBody>
+		{
+			/// Creates a GetState request
+			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+			explicit GetStateRequest(const char* target);
+		};
 
-        // Update state
-        struct UpdateOperation
-        {
-            string operation;
-            string path;
-            JsonAtom value;
+		template<typename T>
+		struct GetStateResponse : ReceiveEnvelope<StateResponseBody<T>>
+		{
+		};
 
-            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(UpdateOperation, 
-                "op", operation, 
-                "path", path, 
-                "value", value
-            ); 
-        };
+		// Update state
+		struct UpdateOperation
+		{
+			string operation;
+			string path;
+			JsonAtom value;
 
-        struct UpdateStateRequestBody
-        {
-            std::vector<UpdateOperation> state;
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(UpdateOperation, "op", operation, "path", path, "value", value);
+		};
 
-            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(UpdateStateRequestBody, "state", state);
-        };
+		struct UpdateStateRequestBody
+		{
+			std::vector<UpdateOperation> state;
 
-        struct UpdateStateRequest : SendEnvelope< UpdateStateRequestBody >
-        {
-            /// Creates an UpdateState request
-            /// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
-            explicit UpdateStateRequest(const char * target);
-        };
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(UpdateStateRequestBody, "state", state);
+		};
 
-        // Subscription
-        template<typename T>
-        struct StateUpdateBody
-        {
-            string topic_id;
-            T state;
+		struct UpdateStateRequest : SendEnvelope<UpdateStateRequestBody>
+		{
+			/// Creates an UpdateState request
+			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+			explicit UpdateStateRequest(const char* target);
+		};
 
-            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(StateUpdateBody, 
-                "topic_id", topic_id, 
-                "state", state
-            );
-        };
+		// Subscription
+		template<typename T>
+		struct StateUpdateBody
+		{
+			string topic_id;
+			T state;
 
-        struct SubscribeStateRequest : SendEnvelope< SubscribeTopicRequestBody >
-        {
-            /// Creates a SubscribeState request
-            /// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
-            explicit SubscribeStateRequest(const char * target);
-        };
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(StateUpdateBody, "topic_id", topic_id, "state", state);
+		};
 
-        template<typename T>
-        struct SubscribeStateUpdateResponse : ReceiveEnvelope< StateUpdateBody<T> >
-        {};
-    }
+		struct SubscribeStateRequest : SendEnvelope<SubscribeTopicRequestBody>
+		{
+			/// Creates a SubscribeState request
+			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+			explicit SubscribeStateRequest(const char* target);
+		};
+
+		template<typename T>
+		struct SubscribeStateUpdateResponse : ReceiveEnvelope<StateUpdateBody<T>>
+		{
+		};
+	}
 }
 #endif

@@ -99,11 +99,27 @@ namespace gamelink
 			this->_onPollUpdate = callback;
 		}
 
-		void AuthenticateWithPIN(const std::string client_id, const std::string pin)
+		/// Queues an authentication request using a PIN code, as received by the user from an extension's config view.
+		///
+		/// @param[in] clientId The extension's client ID
+		/// @param[in] pin 		The PIN input from the broadcaster
+		void AuthenticateWithPIN(const schema::string& clientId, const schema::string& pin)
 		{
-			schema::AuthenticateWithPINRequest packet(client_id, pin);
+			schema::AuthenticateWithPINRequest payload(clientId, pin);
 
-			auto send = new Send(to_string(packet));
+			auto send = new Send(to_string(payload));
+			_sendQueue.push(send);
+		}
+
+		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
+		///
+		/// @param[in] clientId The extension's client ID
+		/// @param[in] jwt 		The stored JWT from a previous authentication
+		void AuthenticateWithJWT(const schema::string& clientId, const schema::string& jwt)
+		{
+			schema::AuthenticateWithJWTRequest payload(clientId, jwt);
+
+			auto send = new Send(to_string(payload));
 			_sendQueue.push(send);
 		}
 
