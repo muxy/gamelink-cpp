@@ -28,8 +28,7 @@ TEST_CASE("Poll Creation", "[poll][creation]")
 	userData["showTitle"] = "true";
 	userData["title"] = "Yes or No?";
 
-	gs::CreatePollWithUserDataRequest<std::map<gs::string, gs::string>> req2("poll-id", "Yes or No?",
-																												   {"Yes", "No"}, userData);
+	gs::CreatePollWithUserDataRequest<std::map<gs::string, gs::string>> req2("poll-id", "Yes or No?", {"Yes", "No"}, userData);
 	SerializeEqual(req2, R"({
 		"action": "create",
 		"params": {
@@ -90,4 +89,19 @@ TEST_CASE("Poll Update Response (De)Serialization", "[poll][update]")
 	REQUIRE(pollResponse.data.poll.options[1] == "No");
 	REQUIRE(pollResponse.data.results[0] == 1);
 	REQUIRE(pollResponse.data.results[1] == 2);
+}
+
+TEST_CASE("Poll Deletion", "[poll][deletion]")
+{
+	gs::DeletePollRequest req("test-poll");
+	SerializeEqual(req, R"({
+		"action": "delete",
+		"params": {
+			"target": "poll",
+			"request_id": 65535
+		},
+		"data": {
+			"poll_id": "test-poll"
+		}
+	})");
 }

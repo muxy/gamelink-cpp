@@ -12,6 +12,14 @@ namespace gamelink
 			data.pollId = pollId;
 		}
 
+		DeletePollRequest::DeletePollRequest(const string& pollId)
+		{
+			action = string("delete");
+			params.target = string("poll");
+
+			data.pollId = pollId;
+		}
+
 		CreatePollRequest::CreatePollRequest(const string& pollId, const string& prompt, const std::vector<string>& options)
 		{
 			action = string("create");
