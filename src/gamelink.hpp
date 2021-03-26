@@ -147,6 +147,17 @@ namespace gamelink
 			_sendQueue.push(send);
 		}
 
+		/// Deletes the poll with the given ID.
+		///
+		/// @param[in] pollId 	The ID of the poll to delete.
+		void DeletePoll(const schema::string& pollId)
+		{
+			schema::DeletePollRequest payload(pollId);
+
+			auto send = new Send(to_string(payload));
+			_sendQueue.push(send);
+		}
+
 	private:
 		std::queue<Send*> _sendQueue;
 		schema::User* _user;

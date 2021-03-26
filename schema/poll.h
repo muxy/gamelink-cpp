@@ -15,6 +15,13 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(GetPollRequestBody, "poll_id", pollId);
 		};
 
+		struct DeletePollRequestBody
+		{
+			string pollId;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(DeletePollRequestBody, "poll_id", pollId);
+		};
+
 		struct CreatePollRequestBody
 		{
 			string pollId;
@@ -115,9 +122,8 @@ namespace gamelink
 
 		struct PollUpdateResponse : ReceiveEnvelope<PollUpdateBody>
 		{
-			PollUpdateResponse()
-			{};
-			
+			PollUpdateResponse(){};
+
 			PollUpdateResponse(const string& pollId,
 							   const string& prompt,
 							   const std::vector<string>& options,
@@ -127,6 +133,13 @@ namespace gamelink
 		template<typename T>
 		struct PollWithUserDataUpdateResponse : ReceiveEnvelope<PollWithUserDataUpdateBody<T>>
 		{
+		};
+
+		struct DeletePollRequest : SendEnvelope<DeletePollRequestBody>
+		{
+			/// Creates a DeletePoll request
+			/// @param[in] pollId 	The ID of the poll to be deleted.
+			DeletePollRequest(const string& pollId);
 		};
 	}
 }
