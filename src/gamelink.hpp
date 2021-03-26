@@ -70,7 +70,8 @@ namespace gamelink
 			return _sendQueue.size() > 0;
 		}
 
-		void ForeachSend(const std::function<void(Send* send)>& networkCallback)
+		template<typename Callback>
+		void ForeachSend(const Callback& networkCallback)
 		{
 			while (HasSends())
 			{

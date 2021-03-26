@@ -54,7 +54,18 @@ int main()
 #ifdef GAMELINK_DEBUG
 				fmt::print("outgoing> {}\n", send->data);
 #endif
-				websocket.send(nlohmann::json::parse(send->data));
+
+				nlohmann::json value = nlohmann::json::parse(send->data, nullptr, false)
+				if (j.is_discarded())
+				{
+#ifdef GAMELINK_DEBUG
+				fmt::print("! bad json\n");
+#endif
+				} 
+				else 
+				{
+					websocket.send(value);
+				}
 			});
 
 			std::this_thread::sleep_for(std::chrono::milliseconds(25));

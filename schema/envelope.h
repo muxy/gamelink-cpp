@@ -218,17 +218,25 @@ namespace gamelink
 		/// Parse a response object
 		/// @param[in] jsonString JSON input
 		/// @param[out] out Output object. Should be a ResponseEnvelope or a type inherited from ResponseEnvelope.
+		/// @return true iff the input JSON parsed correctly, false otherwise
 		template<typename T>
-		void ParseResponse(const string& jsonString, T& out)
+		bool ParseResponse(const string& jsonString, T& out)
 		{
-			auto json = nlohmann::json::parse(jsonString);
-			from_json(json, out);
+			nlohmann::json value = nlohmann::json::parse(jsonString, nullptr, false);
+			if (json.is_discarded())
+			{
+				return false;
+			}
+
+			from_json(value, out);
+			return true;
 		}
 
-		/// Parses a ReceiveEnvelope only. Does not attempt to parse the body.
-		/// @param[in] jsonString: JSON input
+		/// Parses a ReceiveEnvelope only. Does not attempt to parse the body. 
+		/// @param[in] jsonString JSON input
+		/// @param[out] success Optional boolean to determine parse failure. Will be set to true iff the parse succeeded, false otherwise.
 		/// @return A ReceiveEnvelope with no body, only metadata field and possibly errors.
-		ReceiveEnvelope<EmptyBody> ParseEnvelope(const string& jsonString);
+		ReceiveEnvelope<EmptyBody> ParseEnvelope(const string& jsonString, bool * success = nullptr);
 	}
 }
 
