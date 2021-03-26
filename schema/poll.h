@@ -25,7 +25,7 @@ namespace gamelink
 
 		struct CreatePollRequestBody
 		{
-			/// The Poll ID to create. Poll IDs are scoped to 
+			/// The Poll ID to create. Poll IDs are scoped to the current channel.
 			string pollId;
 
 			/// The poll prompt
@@ -124,14 +124,14 @@ namespace gamelink
 		struct GetPollRequest : SendEnvelope<GetPollRequestBody>
 		{
 			/// Creates a GetPoll request
-			/// @param[in] pollId The pollID of the poll to get. Maximum size 64 characters.
+			/// @param[in] pollId The ID of the poll to get. Maximum size 64 characters.
 			explicit GetPollRequest(const string& pollId);
 		};
 
 		struct CreatePollRequest : SendEnvelope<CreatePollRequestBody>
 		{
 			/// Creates a CreatePoll request.
-			/// @param[in] pollId The pollID of the poll to create. This can overwrite existing Poll IDs if the same
+			/// @param[in] pollId The ID of the poll to create. This can overwrite existing polls if the same
 			///                   id is specified.
 			/// @param[in] prompt The prompt for the poll to create.
 			/// @param[in] options vector of options for the poll.
@@ -142,7 +142,7 @@ namespace gamelink
 		struct CreatePollWithUserDataRequest : SendEnvelope<CreatePollWithUserDataRequestBody<T>>
 		{
 			/// Creates a CreatePoll request, but with user data.
-			/// @param[in] pollId The pollID of the poll to create. This can overwrite existing Poll IDs if the same
+			/// @param[in] pollId The ID of the poll to create. This can overwrite existing polls if the same
 			///                   id is specified.
 			/// @param[in] prompt The prompt for the poll to create.
 			/// @param[in] options vector of options for the poll.
@@ -164,7 +164,7 @@ namespace gamelink
 		struct SubscribePollRequest : SendEnvelope<SubscribeTopicRequestBody>
 		{
 			/// Creates a SubscribePollRequest.
-			/// @param[in] pollId The Poll ID to subscribe to updates for. 
+			/// @param[in] pollId The ID of the poll to subscribe to updates for. 
 			SubscribePollRequest(const string& pollId);
 		};
 

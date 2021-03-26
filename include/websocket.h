@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
-#include <string>
 #include <nlohmann/json.hpp>
+#include <string>
 
 struct Impl;
 
@@ -23,9 +23,10 @@ public:
 	int run();
 	void terminate();
 
-	void onMessage(std::function<void (nlohmann::json)> cb);
+	void onMessage(std::function<void(nlohmann::json)> cb);
+
 private:
 	void read();
 
-	Impl * impl;
+	Impl* impl;
 };
