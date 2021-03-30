@@ -36,7 +36,7 @@ include_directories(third_party)
 include_directories(${OPENSSL_INCLUDE_DIR} ${LIB_WEBSOCKETS_INCLUDE_DIRS})
 link_directories(${LIB_WEBSOCKETS_LIBRARY_DIRS})
 
-add_executable(demo ${DEMO_SOURCES} ${SDK_SOURCES} ${SCHEMA_SOURCES})
+add_executable(demo ${DEMO_SOURCES})
 target_link_libraries(demo ${LIB_WEBSOCKETS_LIBRARIES})
 
 # Doc
@@ -44,6 +44,7 @@ file(GLOB SCHEMA_PUBLIC_HEADERS "schema/*.h")
 file(GLOB SRC_PUBLIC_HEADERS "src/*.hpp")
 
 set(PUBLIC_HEADERS ${SCHEMA_PUBLIC_HEADERS} ${SRC_PUBLIC_HEADERS})
+
 
 set(DOXYGEN_INDEX_FILE "doxygen/html/index.html")
 set(DOXYFILE_IN "${CMAKE_CURRENT_SOURCE_DIR}/doxygen/Doxyfile.in")
@@ -77,3 +78,20 @@ add_custom_target(Sphinx ALL
     ${SPHINX_SOURCE} ${SPHINX_BUILD}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "Generating sphinx documentation")
+
+
+# Amalgamation
+set(AMALGAM_IN "${CMAKE_CURRENT_SOURCE_DIR}/amalgamate.in")
+set(AMALGAM_OUT "${CMAKE_CURRENT_SOURCE_DIR}/amalgamate.sh")
+
+set(AMALGAM_SOURCES ${SCHEMA_SOURCES} ${SDK_SOURCES})
+
+string(REPLACE ";" " " AMALGAM_PUBLIC_HEADERS "${PUBLIC_HEADERS}")
+string(REPLACE ";" " " AMALGAM_PUBLIC_SOURCES "${AMALGAM_SOURCES}")
+
+configure_file(${AMALGAM_IN} ${AMALGAM_OUT} @ONLY)
+add_custom_target(amalgam ALL 
+    COMMAND 
+    ${AMALGAM_OUT}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMENT "Generating Amalgam file")
