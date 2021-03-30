@@ -36,7 +36,7 @@ include_directories(third_party)
 include_directories(${OPENSSL_INCLUDE_DIR} ${LIB_WEBSOCKETS_INCLUDE_DIRS})
 link_directories(${LIB_WEBSOCKETS_LIBRARY_DIRS})
 
-add_executable(demo ${DEMO_SOURCES} ${SCHEMA_SOURCES})
+add_executable(demo ${DEMO_SOURCES} ${SDK_SOURCES} ${SCHEMA_SOURCES})
 target_link_libraries(demo ${LIB_WEBSOCKETS_LIBRARIES})
 
 # Doc

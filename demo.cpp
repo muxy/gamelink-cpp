@@ -55,14 +55,14 @@ int main()
 				fmt::print("outgoing> {}\n", send->data);
 #endif
 
-				nlohmann::json value = nlohmann::json::parse(send->data, nullptr, false)
-				if (j.is_discarded())
+				nlohmann::json value = nlohmann::json::parse(send->data, nullptr, false);
+				if (value.is_discarded())
 				{
 #ifdef GAMELINK_DEBUG
-				fmt::print("! bad json\n");
+					fmt::print("! bad json\n");
 #endif
-				} 
-				else 
+				}
+				else
 				{
 					websocket.send(value);
 				}
