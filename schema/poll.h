@@ -97,7 +97,7 @@ namespace gamelink
 			/// The poll information
 			PollResponseBody poll;
 
-			/// Array of vote counts for each poll option. This array may not be the same size as the 
+			/// Array of vote counts for each poll option. This array may not be the same size as the
 			/// options array.
 			std::vector<int> results;
 
@@ -119,7 +119,6 @@ namespace gamelink
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PollWithUserDataUpdateBody, "topic_id", pollId, "poll", poll, "results", results);
 		};
-
 
 		struct GetPollRequest : SendEnvelope<GetPollRequestBody>
 		{
@@ -146,8 +145,8 @@ namespace gamelink
 			///                   id is specified.
 			/// @param[in] prompt The prompt for the poll to create.
 			/// @param[in] options vector of options for the poll.
-			/// @param[in] userData Arbitrary user data to attach to this poll. This type should be serializable. The fully marshalled 
-			///                     size of this type should be under 1kb. 
+			/// @param[in] userData Arbitrary user data to attach to this poll. This type should be serializable. The fully marshalled
+			///                     size of this type should be under 1kb.
 			CreatePollWithUserDataRequest(const string& pollId, const string& prompt, const std::vector<string>& options, const T& userData)
 			{
 				this->action = string("create");
@@ -164,13 +163,17 @@ namespace gamelink
 		struct SubscribePollRequest : SendEnvelope<SubscribeTopicRequestBody>
 		{
 			/// Creates a SubscribePollRequest.
-			/// @param[in] pollId The ID of the poll to subscribe to updates for. 
+			/// @param[in] pollId The ID of the poll to subscribe to updates for.
 			SubscribePollRequest(const string& pollId);
 		};
 
 		struct PollUpdateResponse : ReceiveEnvelope<PollUpdateBody>
 		{
 			PollUpdateResponse(){};
+			PollUpdateResponse(const string& pollId,
+							   const string& prompt,
+							   const std::vector<string>& options,
+							   const std::vector<int>& results);
 		};
 
 		template<typename T>

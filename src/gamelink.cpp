@@ -24,16 +24,20 @@ namespace gamelink
 		}
 	}
 
-	void SDK::ReceiveMessage(std::string message)
+	bool SDK::ReceiveMessage(std::string message)
 	{
+		bool success = false;
 		auto env = schema::ParseEnvelope(message);
 
 		if (env.meta.action == "authenticate")
 		{
 			// Authentication response
 			schema::AuthenticateResponse authResp;
-			schema::ParseResponse<schema::AuthenticateResponse>(message, authResp);
-			this->_user = new schema::User(authResp.data.jwt);
+			success = schema::ParseResponse<schema::AuthenticateResponse>(message, authResp);
+			if (success)
+			{
+				this->_user = new schema::User(authResp.data.jwt);
+			}
 		}
 		else if (env.meta.action == "update")
 		{
@@ -42,14 +46,16 @@ namespace gamelink
 				// Poll update response
 				// TODO Handle a UserDataPollUpdateResponse as well
 				schema::PollUpdateResponse pollResp;
-				schema::ParseResponse<schema::PollUpdateResponse>(message, pollResp);
+				success = schema::ParseResponse<schema::PollUpdateResponse>(message, pollResp);
 
-				if (this->_onPollUpdate != NULL)
+				if (success && this->_onPollUpdate != NULL)
 				{
 					this->_onPollUpdate(pollResp);
 				}
 			}
 		}
+
+		return success;
 	}
 
 	void SDK::ForeachSend(const std::function<void(Send* send)>& networkCallback)
