@@ -19,14 +19,8 @@ int main()
 
 	// Set up network connection
 	WebsocketConnection websocket("sandbox.gamelink.muxy.io", 80);
-	websocket.onMessage([&](nlohmann::json json) {
-		auto jstring = json.dump();
-
-#ifdef GAMELINK_DEBUG
-		fmt::print("gamelink> {}\n", json.dump(2));
-#endif
-
-		sdk.ReceiveMessage(jstring);
+	websocket.onMessage([&](const char * bytes, uint32_t len) {
+		sdk.ReceiveMessage(bytes, len);
 	});
 
 	// Set up SDK event handlers
@@ -56,17 +50,7 @@ int main()
 				fmt::print("outgoing> {}\n", send->data);
 #endif
 
-				nlohmann::json value = nlohmann::json::parse(send->data, nullptr, false);
-				if (value.is_discarded())
-				{
-#ifdef GAMELINK_DEBUG
-					fmt::print("! bad json\n");
-#endif
-				}
-				else
-				{
-					websocket.send(value);
-				}
+				websocket.send(send->data.c_str(), send->data.size());
 			});
 
 			std::this_thread::sleep_for(std::chrono::milliseconds(25));

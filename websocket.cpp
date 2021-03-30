@@ -309,7 +309,7 @@ struct Impl
 	std::mutex lock;
 	std::vector<std::unique_ptr<Message>> messages;
 
-	std::function<void(nlohmann::json)> callback;
+	std::function<void(const char *, uint32_t)> callback;
 
 	std::string host;
 	uint16_t port;
@@ -360,18 +360,10 @@ int callbackEmptyProtocol(lws* wsi, lws_callback_reasons reasons, void* user, vo
 	}
 	case LWS_CALLBACK_CLIENT_RECEIVE:
 	{
-		// Doing this amount of work in the callback might block
-		// other operations, but its simplier to just have it done here.
 		const char* begin = reinterpret_cast<const char*>(in);
-		const char* end = begin + len;
-
-		// If this fails, this will result in an exception being
-		// throw across a C boundary, which will likely result in
-		// std::terminate being called.
-		nlohmann::json obj = nlohmann::json::parse(begin, end);
 		if (impl->callback)
 		{
-			impl->callback(obj);
+			impl->callback(begin, len);
 		}
 
 		break;
@@ -439,16 +431,22 @@ void WebsocketConnection::terminate()
 	lws_context_destroy(impl->lwsCtx);
 }
 
-void WebsocketConnection::send(const nlohmann::json& obj)
+void WebsocketConnection::send(const char * data, uint32_t length)
 {
-	Message* msg = new Message();
-	std::string data = obj.dump(0);
+	// Don't send more than 8mb in a single send. This value
+	// should be closer to 8k, but larger packets should be fine 
+	// up to a point.
+	if (length > 1024 * 1024 * 8) 
+	{
+		return;
+	}
 
+	Message* msg = new Message();
 	// The documentation for lws_write on websockets requires a LWS_PRE
 	// amount of space before the message proper to insert protocol information.
 	// Allocate that here, and place the data after the LWS_PRE bytes for access later.
-	msg->data.resize(data.size() + LWS_PRE);
-	memcpy(&msg->data[0] + LWS_PRE, data.data(), data.size());
+	msg->data.resize(length + LWS_PRE);
+	memcpy(&msg->data[0] + LWS_PRE, data, length);
 	msg->binary = false;
 
 	// Unsure if these are actually needed, but are in the example.
@@ -466,7 +464,7 @@ void WebsocketConnection::send(const nlohmann::json& obj)
 	}
 }
 
-void WebsocketConnection::onMessage(std::function<void(nlohmann::json)> cb)
+void WebsocketConnection::onMessage(std::function<void(const char *, uint32_t)> cb)
 {
 	impl->callback = cb;
 }

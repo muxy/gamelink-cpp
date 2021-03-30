@@ -612,13 +612,14 @@ namespace gamelink
 		MUXY_GAMELINK_SERIALIZE_2(ReceiveEnvelope<EmptyBody>, "meta", meta, "errors", errors);
 
 		/// Parse a response object
-		/// @param[in] jsonString JSON input
+		/// @param[in] bytes JSON input bytes. Must not be null.
+		/// @param[in] length Length of the bytes parameter
 		/// @param[out] out Output object. Should be a ResponseEnvelope or a type inherited from ResponseEnvelope.
 		/// @return true iff the input JSON parsed correctly, false otherwise
 		template<typename T>
-		bool ParseResponse(const string& jsonString, T& out)
+		bool ParseResponse(const char * bytes, uint32_t length, T& out)
 		{
-			nlohmann::json value = nlohmann::json::parse(jsonString, nullptr, false);
+			nlohmann::json value = nlohmann::json::parse(bytes, bytes + length, nullptr, false);
 			if (value.is_discarded())
 			{
 				return false;
@@ -629,10 +630,11 @@ namespace gamelink
 		}
 
 		/// Parses a ReceiveEnvelope only. Does not attempt to parse the body.
-		/// @param[in] jsonString JSON input
+		/// @param[in] bytes JSON input bytes. Must not be null.
+		/// @param[in] length Length of the bytes parameter
 		/// @param[out] success Optional boolean to determine parse failure. Will be set to true iff the parse succeeded, false otherwise.
 		/// @return A ReceiveEnvelope with no body, only metadata field and possibly errors.
-		ReceiveEnvelope<EmptyBody> ParseEnvelope(const string& jsonString, bool* success = nullptr);
+		ReceiveEnvelope<EmptyBody> ParseEnvelope(const char * bytes, uint32_t length, bool* success = nullptr);
 	}
 }
 
@@ -1086,7 +1088,7 @@ namespace gamelink
 		SDK();
 		~SDK();
 
-		bool ReceiveMessage(std::string message);
+		bool ReceiveMessage(const char * bytes, uint32_t length);
 
 		bool HasSends()
 		{
@@ -1275,10 +1277,10 @@ namespace gamelink
 		{
 		}
 
-		ReceiveEnvelope<EmptyBody> ParseEnvelope(const string& jsonString, bool * outSuccess)
+		ReceiveEnvelope<EmptyBody> ParseEnvelope(const char * bytes, uint32_t length, bool * outSuccess)
 		{
 			ReceiveEnvelope<EmptyBody> out;
-			bool result = ParseResponse(jsonString, out);
+			bool result = ParseResponse(bytes, length, out);
 			if (outSuccess) 
 			{
 				*outSuccess = result;
@@ -1369,3 +1371,145 @@ namespace gamelink
         }
     }
 }
+#ifndef INCLUDE_MUXY_GAMELINK_CPP
+#define INCLUDE_MUXY_GAMELINK_CPP
+
+
+
+namespace gamelink
+{
+	Send::Send(schema::string data)
+	{
+		this->data = data;
+	}
+
+	SDK::SDK()
+		: _user(NULL)
+		, _onPollUpdate(NULL){};
+	SDK::~SDK()
+	{
+		// Clean up unsent messages
+		while (HasSends())
+		{
+			Send* send = _sendQueue.front();
+			_sendQueue.pop();
+			delete send;
+		}
+	}
+
+	bool SDK::ReceiveMessage(const char * bytes, uint32_t length)
+	{
+		bool success = false;
+		auto env = schema::ParseEnvelope(bytes, length);
+
+		if (env.meta.action == "authenticate")
+		{
+			// Authentication response
+			schema::AuthenticateResponse authResp;
+			success = schema::ParseResponse<schema::AuthenticateResponse>(bytes, length, authResp);
+			if (success)
+			{
+				this->_user = new schema::User(authResp.data.jwt);
+			}
+		}
+		else if (env.meta.action == "update")
+		{
+			if (env.meta.target == "poll")
+			{
+				// Poll update response
+				// TODO Handle a UserDataPollUpdateResponse as well
+				schema::PollUpdateResponse pollResp;
+				success = schema::ParseResponse<schema::PollUpdateResponse>(bytes, length, pollResp);
+
+				if (success && this->_onPollUpdate != NULL)
+				{
+					this->_onPollUpdate(pollResp);
+				}
+			}
+		}
+
+		return success;
+	}
+
+	void SDK::ForeachSend(const std::function<void(Send* send)>& networkCallback)
+	{
+		while (HasSends())
+		{
+			Send* send = _sendQueue.front();
+			_sendQueue.pop();
+
+			networkCallback(send);
+
+			// Clean up send
+			delete send;
+		}
+	}
+
+	bool SDK::IsAuthenticated()
+	{
+		return _user != NULL;
+	}
+
+	schema::User* SDK::GetUser()
+	{
+		return _user;
+	}
+
+	void SDK::OnPollUpdate(std::function<void(const schema::PollUpdateResponse& pollResponse)> callback)
+	{
+		this->_onPollUpdate = callback;
+	}
+
+	void SDK::AuthenticateWithPIN(const schema::string& clientId, const schema::string& pin)
+	{
+		schema::AuthenticateWithPINRequest payload(clientId, pin);
+
+		auto send = new Send(to_string(payload));
+		_sendQueue.push(send);
+	}
+
+	void SDK::AuthenticateWithJWT(const schema::string& clientId, const schema::string& jwt)
+	{
+		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
+
+		auto send = new Send(to_string(payload));
+		_sendQueue.push(send);
+	}
+
+	void SDK::GetPoll(const schema::string& pollId)
+	{
+		schema::GetPollRequest packet(pollId);
+
+		auto send = new Send(to_string(packet));
+		_sendQueue.push(send);
+	}
+
+	void SDK::CreatePoll(const schema::string& pollId, const schema::string& prompt, const std::vector<schema::string>& options)
+	{
+		schema::CreatePollRequest packet(pollId, prompt, options);
+
+		auto send = new Send(to_string(packet));
+		_sendQueue.push(send);
+	}
+
+	void SDK::SubscribeToPoll(const schema::string& pollId)
+	{
+		schema::SubscribePollRequest packet(pollId);
+
+		auto send = new Send(to_string(packet));
+		_sendQueue.push(send);
+	}
+
+	void SDK::DeletePoll(const schema::string& pollId)
+	{
+		schema::DeletePollRequest payload(pollId);
+
+		auto send = new Send(to_string(payload));
+		_sendQueue.push(send);
+	}
+}
+
+#endif
+
+#endif
+#endif

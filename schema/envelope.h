@@ -216,13 +216,14 @@ namespace gamelink
 		MUXY_GAMELINK_SERIALIZE_2(ReceiveEnvelope<EmptyBody>, "meta", meta, "errors", errors);
 
 		/// Parse a response object
-		/// @param[in] jsonString JSON input
+		/// @param[in] bytes JSON input bytes. Must not be null.
+		/// @param[in] length Length of the bytes parameter
 		/// @param[out] out Output object. Should be a ResponseEnvelope or a type inherited from ResponseEnvelope.
 		/// @return true iff the input JSON parsed correctly, false otherwise
 		template<typename T>
-		bool ParseResponse(const string& jsonString, T& out)
+		bool ParseResponse(const char * bytes, uint32_t length, T& out)
 		{
-			nlohmann::json value = nlohmann::json::parse(jsonString, nullptr, false);
+			nlohmann::json value = nlohmann::json::parse(bytes, bytes + length, nullptr, false);
 			if (value.is_discarded())
 			{
 				return false;
@@ -233,10 +234,11 @@ namespace gamelink
 		}
 
 		/// Parses a ReceiveEnvelope only. Does not attempt to parse the body.
-		/// @param[in] jsonString JSON input
+		/// @param[in] bytes JSON input bytes. Must not be null.
+		/// @param[in] length Length of the bytes parameter
 		/// @param[out] success Optional boolean to determine parse failure. Will be set to true iff the parse succeeded, false otherwise.
 		/// @return A ReceiveEnvelope with no body, only metadata field and possibly errors.
-		ReceiveEnvelope<EmptyBody> ParseEnvelope(const string& jsonString, bool* success = nullptr);
+		ReceiveEnvelope<EmptyBody> ParseEnvelope(const char * bytes, uint32_t length, bool* success = nullptr);
 	}
 }
 

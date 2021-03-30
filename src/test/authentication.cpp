@@ -1,7 +1,7 @@
 #include "catch2/catch.hpp"
 #include "util.h"
 
-#include "../gamelink.hpp"
+#include "../gamelink.h"
 
 TEST_CASE("SDK PIN Authentication", "[sdk][authentication][pin]")
 {
@@ -26,7 +26,7 @@ TEST_CASE("SDK PIN Authentication", "[sdk][authentication][pin]")
 	REQUIRE(!sdk.HasSends());
 
 	// Verify state after successful auth
-	sdk.ReceiveMessage(R"({
+	const char * msg = R"({
 		"meta": {
 			"action": "authenticate"
 		},
@@ -34,7 +34,9 @@ TEST_CASE("SDK PIN Authentication", "[sdk][authentication][pin]")
 		"data": {
 			"jwt": "test-jwt"
 		}
-	})");
+	})";
+
+	sdk.ReceiveMessage(msg, strlen(msg));
 
 	REQUIRE(sdk.IsAuthenticated());
 	REQUIRE(sdk.GetUser()->GetJWT() == jwt);
@@ -64,7 +66,7 @@ TEST_CASE("SDK JWT Authentication", "[sdk][authentication][jwt]")
 	REQUIRE(!sdk.HasSends());
 
 	// Verify state after successful auth
-	sdk.ReceiveMessage(R"({
+	const char * msg = R"({
 		"meta": {
 			"action": "authenticate"
 		},
@@ -72,7 +74,8 @@ TEST_CASE("SDK JWT Authentication", "[sdk][authentication][jwt]")
 		"data": {
 			"jwt": "test-jwt"
 		}
-	})");
+	})";
+	sdk.ReceiveMessage(msg, strlen(msg));
 
 	REQUIRE(sdk.IsAuthenticated());
 	REQUIRE(sdk.GetUser()->GetJWT() == jwt);
