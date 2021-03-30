@@ -1,6 +1,6 @@
 #pragma once
-#ifndef MUXY_GAMELINK_SCHEMA_STATE_H
-#define MUXY_GAMELINK_SCHEMA_STATE_H
+#ifndef MUXY_GAMELINK_SCHEMA_POLL_H
+#define MUXY_GAMELINK_SCHEMA_POLL_H
 #include "schema/envelope.h"
 #include "schema/subscription.h"
 

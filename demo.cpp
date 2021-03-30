@@ -3,9 +3,10 @@
 #include <thread>
 
 #define GAMELINK_DEBUG 1
+#define MUXY_GAMELINK_SINGLE_IMPL
 
 #include "fmt/ranges.h"
-#include "src/gamelink.hpp"
+#include "gamelink_single.hpp"
 #include <websocket.h>
 
 using gamelink::SDK;
