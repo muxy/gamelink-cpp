@@ -24,16 +24,16 @@ namespace gamelink
 		}
 	}
 
-	bool SDK::ReceiveMessage(std::string message)
+	bool SDK::ReceiveMessage(const char * bytes, uint32_t length)
 	{
 		bool success = false;
-		auto env = schema::ParseEnvelope(message);
+		auto env = schema::ParseEnvelope(bytes, length);
 
 		if (env.meta.action == "authenticate")
 		{
 			// Authentication response
 			schema::AuthenticateResponse authResp;
-			success = schema::ParseResponse<schema::AuthenticateResponse>(message, authResp);
+			success = schema::ParseResponse<schema::AuthenticateResponse>(bytes, length, authResp);
 			if (success)
 			{
 				this->_user = new schema::User(authResp.data.jwt);
@@ -46,7 +46,7 @@ namespace gamelink
 				// Poll update response
 				// TODO Handle a UserDataPollUpdateResponse as well
 				schema::PollUpdateResponse pollResp;
-				success = schema::ParseResponse<schema::PollUpdateResponse>(message, pollResp);
+				success = schema::ParseResponse<schema::PollUpdateResponse>(bytes, length, pollResp);
 
 				if (success && this->_onPollUpdate != NULL)
 				{

@@ -17,14 +17,12 @@ public:
 	WebsocketConnection(WebsocketConnection&&) = delete;
 	WebsocketConnection& operator=(const WebsocketConnection&&) = delete;
 
-	// This function will block
-	void send(const nlohmann::json& json);
-
 	int run();
 	void terminate();
 
-	void onMessage(std::function<void(nlohmann::json)> cb);
-
+	// This function will block
+	void send(const char * bytes, uint32_t length);
+	void onMessage(std::function<void(const char *, uint32_t)> cb);
 private:
 	void read();
 

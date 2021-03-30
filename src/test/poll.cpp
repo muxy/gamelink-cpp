@@ -1,7 +1,7 @@
 #include "catch2/catch.hpp"
 #include "util.h"
 
-#include "../gamelink.hpp"
+#include "../gamelink.h"
 #include <iostream>
 
 TEST_CASE("SDK Poll Creation", "[sdk][poll][creation]")
@@ -71,7 +71,7 @@ TEST_CASE("SDK Poll Update Response", "[sdk][poll][update]")
 	gamelink::SDK sdk;
 
 	bool received = false;
-	auto json = R"({
+	const char * json = R"({
 		"meta": {
 			"action": "update",
 			"target": "poll"
@@ -91,7 +91,7 @@ TEST_CASE("SDK Poll Update Response", "[sdk][poll][update]")
 		SerializeEqual(pollResp, json);
 	});
 
-	sdk.ReceiveMessage(json);
+	sdk.ReceiveMessage(json, strlen(json));
 
 	REQUIRE(received);
 }

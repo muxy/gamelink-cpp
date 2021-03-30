@@ -1,11 +1,12 @@
 #include "catch2/catch.hpp"
 #include "util.h"
 
-#include "../gamelink.hpp"
+#include "../gamelink.h"
 
 TEST_CASE("SDK Returns False On Invalid JSON", "[sdk][errors]")
 {
 	gamelink::SDK sdk;
-	auto success = sdk.ReceiveMessage("Invalid JSON");
+	const char * bytes = "Invalid JSON";
+	auto success = sdk.ReceiveMessage(bytes, strlen(bytes));
 	REQUIRE(!success);
 }

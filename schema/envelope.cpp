@@ -99,10 +99,10 @@ namespace gamelink
 		{
 		}
 
-		ReceiveEnvelope<EmptyBody> ParseEnvelope(const string& jsonString, bool * outSuccess)
+		ReceiveEnvelope<EmptyBody> ParseEnvelope(const char * bytes, uint32_t length, bool * outSuccess)
 		{
 			ReceiveEnvelope<EmptyBody> out;
-			bool result = ParseResponse(jsonString, out);
+			bool result = ParseResponse(bytes, length, out);
 			if (outSuccess) 
 			{
 				*outSuccess = result;

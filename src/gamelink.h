@@ -23,7 +23,7 @@ namespace gamelink
 		SDK();
 		~SDK();
 
-		bool ReceiveMessage(std::string message);
+		bool ReceiveMessage(const char * bytes, uint32_t length);
 
 		bool HasSends()
 		{
