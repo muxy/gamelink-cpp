@@ -15,17 +15,14 @@
 
 namespace gamelink
 {
-    namespace schema
-    {
-        /// This can be controlled by defining `MUXY_GAMELINK_CUSTOM_STRING_TYPE`.
-        /// By default, MUXY_GAMELINK_CUSTOM_STRING_TYPE is std::string
-        /// This string should
-        ///     * Provide a constructor from a null-terminated c-string of chars
-        ///     * Provide operator== with another instance of the string type.
-        ///     * Provide a c_str() that returns a pointer to the first element of a 
-        ///       null-terminated array of utf8 encoded chars.
-        typedef MUXY_GAMELINK_CUSTOM_STRING_TYPE string;
-    }
+    /// This can be controlled by defining `MUXY_GAMELINK_CUSTOM_STRING_TYPE`.
+    /// By default, MUXY_GAMELINK_CUSTOM_STRING_TYPE is std::string
+    /// This string should
+    ///     * Provide a constructor from a null-terminated c-string of chars
+    ///     * Provide operator== with another instance of the string type.
+    ///     * Provide a c_str() that returns a pointer to the first element of a 
+    ///       null-terminated array of utf8 encoded chars.
+    typedef MUXY_GAMELINK_CUSTOM_STRING_TYPE string;
 } 
 
 #endif
@@ -727,9 +724,8 @@ namespace gamelink
 		public:
 			explicit User(string jwt);
 
-			const string& GetJWT();
+			const string& GetJWT() const;
 			// string GetOpaqueID();
-
 		private:
 			string jwt;
 		};
@@ -943,7 +939,6 @@ namespace gamelink
 
 #endif
 
-
 #ifndef MUXY_GAMELINK_SCHEMA_STATE_H
 #define MUXY_GAMELINK_SCHEMA_STATE_H
 
@@ -1077,10 +1072,58 @@ namespace gamelink
 	class Send
 	{
 	public:
-		Send(schema::string data);
+		Send(string data);
 
-		schema::string data;
+		string data;
 	};
+
+	namespace detail
+	{
+		template<typename T>
+		class Callback
+		{
+		public:
+			typedef void (*RawFunctionPointer)(void *, const T&);
+
+			Callback()
+				:_rawCallback(nullptr)
+				,_user(nullptr)
+			{}
+
+			void invoke(const T& v)
+			{
+				if (_rawCallback)
+				{
+					_rawCallback(_user, v);
+				}
+				else if (_callback)
+				{
+					_callback(v);
+				}
+			}
+
+			void set(std::function<void (const T&)> fn)
+			{
+				_rawCallback = nullptr;
+				_user = nullptr;
+
+				_callback = fn;
+			}
+
+			void set(RawFunctionPointer cb, void * user)
+			{
+				_rawCallback = cb;
+				_user = user;
+
+				_callback = std::function<void (const T&)>();
+			}
+		private:
+			RawFunctionPointer _rawCallback;
+			void* _user;
+
+			std::function<void (const T&)> _callback;
+		};
+	}
 
 	class SDK
 	{
@@ -1095,42 +1138,59 @@ namespace gamelink
 			return _sendQueue.size() > 0;
 		}
 
-		void ForeachSend(const std::function<void(const Send* send)>& networkCallback);
+		template<typename T>
+		void ForeachSend(const T& networkCallback)
+		{
+			while (HasSends())
+			{
+				Send* send = _sendQueue.front();
+				_sendQueue.pop();
 
-		bool IsAuthenticated();
+				networkCallback(send);
 
-		schema::User* GetUser();
+				// Clean up send
+				delete send;
+			}
+		}
 
+		typedef void (*SendCallback)(const Send*);
+		void ForeachSend(SendCallback cb, void * user);
+
+		bool IsAuthenticated() const;
+
+		const schema::User* GetUser() const;
+
+		// Callbacks
 		void OnPollUpdate(std::function<void(const schema::PollUpdateResponse& pollResponse)> callback);
+		void OnPollUpdate(void (*callback)(void *, const schema::PollUpdateResponse&), void* ptr);
 
 		/// Queues an authentication request using a PIN code, as received by the user from an extension's config view.
 		///
 		/// @param[in] clientId The extension's client ID
 		/// @param[in] pin 		The PIN input from the broadcaster
-		void AuthenticateWithPIN(const schema::string& clientId, const schema::string& pin);
+		void AuthenticateWithPIN(const string& clientId, const string& pin);
 
 		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
 		///
 		/// @param[in] clientId The extension's client ID
 		/// @param[in] jwt 		The stored JWT from a previous authentication
-		void AuthenticateWithJWT(const schema::string& clientId, const schema::string& jwt);
+		void AuthenticateWithJWT(const string& clientId, const string& jwt);
 
-		void GetPoll(const schema::string& pollId);
+		void GetPoll(const string& pollId);
 
-		void CreatePoll(const schema::string& pollId, const schema::string& prompt, const std::vector<schema::string>& options);
+		void CreatePoll(const string& pollId, const string& prompt, const std::vector<string>& options);
 
-		void SubscribeToPoll(const schema::string& pollId);
+		void SubscribeToPoll(const string& pollId);
 
 		/// Deletes the poll with the given ID.
 		///
 		/// @param[in] pollId 	The ID of the poll to delete.
-		void DeletePoll(const schema::string& pollId);
-
+		void DeletePoll(const string& pollId);
 	private:
 		std::queue<Send*> _sendQueue;
 		schema::User* _user;
 
-		std::function<void(const schema::PollUpdateResponse& pollResponse)> _onPollUpdate;
+		detail::Callback<schema::PollUpdateResponse> _onPollUpdate;
 	};
 }
 
@@ -1169,7 +1229,7 @@ namespace gamelink
 		{
 		}
 
-		const string& User::GetJWT()
+		const string& User::GetJWT() const
 		{
 			return this->jwt;
 		}
@@ -1378,14 +1438,15 @@ namespace gamelink
 
 namespace gamelink
 {
-	Send::Send(schema::string data)
+	Send::Send(string data)
 	{
 		this->data = data;
 	}
 
 	SDK::SDK()
 		: _user(NULL)
-		, _onPollUpdate(NULL){};
+	{};
+
 	SDK::~SDK()
 	{
 		// Clean up unsent messages
@@ -1420,10 +1481,9 @@ namespace gamelink
 				// TODO Handle a UserDataPollUpdateResponse as well
 				schema::PollUpdateResponse pollResp;
 				success = schema::ParseResponse<schema::PollUpdateResponse>(bytes, length, pollResp);
-
-				if (success && this->_onPollUpdate != NULL)
+				if (success)
 				{
-					this->_onPollUpdate(pollResp);
+					_onPollUpdate.invoke(pollResp);
 				}
 			}
 		}
@@ -1431,36 +1491,27 @@ namespace gamelink
 		return success;
 	}
 
-	void SDK::ForeachSend(const std::function<void(const Send* send)>& networkCallback)
-	{
-		while (HasSends())
-		{
-			Send* send = _sendQueue.front();
-			_sendQueue.pop();
-
-			networkCallback(send);
-
-			// Clean up send
-			delete send;
-		}
-	}
-
-	bool SDK::IsAuthenticated()
+	bool SDK::IsAuthenticated() const
 	{
 		return _user != NULL;
 	}
 
-	schema::User* SDK::GetUser()
+	const schema::User* SDK::GetUser() const
 	{
 		return _user;
 	}
 
 	void SDK::OnPollUpdate(std::function<void(const schema::PollUpdateResponse& pollResponse)> callback)
 	{
-		this->_onPollUpdate = callback;
+		this->_onPollUpdate.set(callback);
 	}
 
-	void SDK::AuthenticateWithPIN(const schema::string& clientId, const schema::string& pin)
+	void SDK::OnPollUpdate(void (*callback)(void *, const schema::PollUpdateResponse&), void* ptr)
+	{
+		this->_onPollUpdate.set(callback, ptr);
+	}
+
+	void SDK::AuthenticateWithPIN(const string& clientId, const string& pin)
 	{
 		schema::AuthenticateWithPINRequest payload(clientId, pin);
 
@@ -1468,7 +1519,7 @@ namespace gamelink
 		_sendQueue.push(send);
 	}
 
-	void SDK::AuthenticateWithJWT(const schema::string& clientId, const schema::string& jwt)
+	void SDK::AuthenticateWithJWT(const string& clientId, const string& jwt)
 	{
 		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
 
@@ -1476,7 +1527,7 @@ namespace gamelink
 		_sendQueue.push(send);
 	}
 
-	void SDK::GetPoll(const schema::string& pollId)
+	void SDK::GetPoll(const string& pollId)
 	{
 		schema::GetPollRequest packet(pollId);
 
@@ -1484,7 +1535,7 @@ namespace gamelink
 		_sendQueue.push(send);
 	}
 
-	void SDK::CreatePoll(const schema::string& pollId, const schema::string& prompt, const std::vector<schema::string>& options)
+	void SDK::CreatePoll(const string& pollId, const string& prompt, const std::vector<string>& options)
 	{
 		schema::CreatePollRequest packet(pollId, prompt, options);
 
@@ -1492,7 +1543,7 @@ namespace gamelink
 		_sendQueue.push(send);
 	}
 
-	void SDK::SubscribeToPoll(const schema::string& pollId)
+	void SDK::SubscribeToPoll(const string& pollId)
 	{
 		schema::SubscribePollRequest packet(pollId);
 
@@ -1500,7 +1551,7 @@ namespace gamelink
 		_sendQueue.push(send);
 	}
 
-	void SDK::DeletePoll(const schema::string& pollId)
+	void SDK::DeletePoll(const string& pollId)
 	{
 		schema::DeletePollRequest payload(pollId);
 
