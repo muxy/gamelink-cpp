@@ -30,13 +30,21 @@ target_include_directories(tests PRIVATE "src/test")
 
 find_package(PkgConfig)
 find_package(Doxygen)
+pkg_check_modules(LIB_WEBSOCKETS libwebsockets>=4.0.0)
+find_package(OpenSSL)
 
-# Doc
+if(${OPENSSL_INCLUDE_DIR} AND ${LIB_WEBSOCKETS_LIBRARY_DIRS})
+    add_executable(demo ${DEMO_SOURCES})
+    target_include_directories(demo PRIVATE ${OPENSSL_INCLUDE_DIR} ${LIB_WEBSOCKETS_INCLUDE_DIRS} "websocket_networK")
+    target_link_directories(demo PRIVATE ${LIB_WEBSOCKETS_LIBRARY_DIRS})
+    target_link_libraries(demo ${LIB_WEBSOCKETS_LIBRARIES})
+endif()
+
+# Documentation
 file(GLOB SCHEMA_PUBLIC_HEADERS "schema/*.h")
 file(GLOB SRC_PUBLIC_HEADERS "src/*.hpp")
 
 set(PUBLIC_HEADERS ${SCHEMA_PUBLIC_HEADERS} ${SRC_PUBLIC_HEADERS})
-
 
 set(DOXYGEN_INDEX_FILE "doxygen/html/index.html")
 set(DOXYFILE_IN "${CMAKE_CURRENT_SOURCE_DIR}/doxygen/Doxyfile.in")
@@ -87,3 +95,6 @@ add_custom_target(amalgam ALL
     ${AMALGAM_OUT}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "Generating Amalgam file")
+
+# Amalgamation compilation checked
+add_executable(amalgam_compile_check "amalgam_check.cpp")
