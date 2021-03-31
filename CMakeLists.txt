@@ -33,11 +33,13 @@ find_package(Doxygen)
 pkg_check_modules(LIB_WEBSOCKETS libwebsockets>=4.0.0)
 find_package(OpenSSL)
 
-if(${OPENSSL_INCLUDE_DIR} AND ${LIB_WEBSOCKETS_LIBRARY_DIRS})
+if(${LIB_WEBSOCKETS_INCLUDE_DIRS})
+if(${OPENSSL_INCLUDE_DIR})
     add_executable(demo ${DEMO_SOURCES})
     target_include_directories(demo PRIVATE ${OPENSSL_INCLUDE_DIR} ${LIB_WEBSOCKETS_INCLUDE_DIRS} "websocket_networK")
     target_link_directories(demo PRIVATE ${LIB_WEBSOCKETS_LIBRARY_DIRS})
     target_link_libraries(demo ${LIB_WEBSOCKETS_LIBRARIES})
+endif()
 endif()
 
 # Documentation
