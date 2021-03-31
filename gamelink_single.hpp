@@ -1095,7 +1095,7 @@ namespace gamelink
 			return _sendQueue.size() > 0;
 		}
 
-		void ForeachSend(const std::function<void(Send* send)>& networkCallback);
+		void ForeachSend(const std::function<void(const Send* send)>& networkCallback);
 
 		bool IsAuthenticated();
 
@@ -1431,7 +1431,7 @@ namespace gamelink
 		return success;
 	}
 
-	void SDK::ForeachSend(const std::function<void(Send* send)>& networkCallback)
+	void SDK::ForeachSend(const std::function<void(const Send* send)>& networkCallback)
 	{
 		while (HasSends())
 		{

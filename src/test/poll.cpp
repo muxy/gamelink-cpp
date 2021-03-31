@@ -1,7 +1,7 @@
 #include "catch2/catch.hpp"
 #include "util.h"
 
-#include "../gamelink.h"
+#include "gamelink.h"
 #include <iostream>
 
 TEST_CASE("SDK Poll Creation", "[sdk][poll][creation]")
@@ -12,7 +12,7 @@ TEST_CASE("SDK Poll Creation", "[sdk][poll][creation]")
 
 	REQUIRE(sdk.HasSends());
 
-	sdk.ForeachSend([](gamelink::Send* send) {
+	sdk.ForeachSend([](const gamelink::Send* send) {
 		REQUIRE(JSONEquals(send->data,  
 			R"({
 				"action":"create",
@@ -40,7 +40,7 @@ TEST_CASE("SDK Poll Get Results", "[sdk][poll][results]")
 
 	REQUIRE(sdk.HasSends());
 
-	sdk.ForeachSend([](gamelink::Send* send) {
+	sdk.ForeachSend([](const gamelink::Send* send) {
 		REQUIRE(JSONEquals(send->data, 
 			R"({"action":"get","data":{"poll_id":"test-poll"},"params":{"request_id":65535,"target":"poll"}})"
 		));
@@ -57,7 +57,7 @@ TEST_CASE("SDK Poll Subscription", "[sdk][poll][subscription]")
 
 	REQUIRE(sdk.HasSends());
 
-	sdk.ForeachSend([](gamelink::Send* send) {
+	sdk.ForeachSend([](const gamelink::Send* send) {
 		REQUIRE(JSONEquals(send->data, 
 			R"({"action":"subscribe","data":{"topic_id":"test-poll"},"params":{"request_id":65535,"target":"poll"}})"
 		));

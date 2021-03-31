@@ -45,7 +45,7 @@ int main()
 		{
 			websocket.run();
 
-			sdk.ForeachSend([&](Send* send) {
+			sdk.ForeachSend([&](const Send* send) {
 #ifdef GAMELINK_DEBUG
 				fmt::print("outgoing> {}\n", send->data);
 #endif

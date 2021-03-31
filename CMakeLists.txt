@@ -11,19 +11,22 @@ set(CMAKE_CXX_FLAGS "-Wall -DFMT_HEADER_ONLY=1 -pthread")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 
 include_directories(.)
+include_directories(include)
 include_directories(third_party)
-include_directories(schema/test)
-include_directories(src/test)
 
 ## Grab all the source files
 file(GLOB SCHEMA_SOURCES "schema/*.cpp")
 file(GLOB SCHEMA_TEST_SOURCES "schema/test/*.cpp")
 file(GLOB SDK_TEST_SOURCES "src/test/*.cpp")
 file(GLOB SDK_SOURCES "src/*.cpp")
+
 file(GLOB DEMO_SOURCES "*.cpp")
+list(APPEND DEMO_SOURCES "websocket_network/websocket.cpp")
 
 # Schema unit tests
 add_executable(tests ${SCHEMA_TEST_SOURCES} ${SCHEMA_SOURCES} ${SDK_TEST_SOURCES} ${SDK_SOURCES})
+target_include_directories(tests PRIVATE "schema/test")
+target_include_directories(tests PRIVATE "src/test")
 
 # SDK demo app
 find_package(PkgConfig)
@@ -31,12 +34,10 @@ find_package(Doxygen)
 pkg_check_modules(LIB_WEBSOCKETS REQUIRED libwebsockets>=4.0.0)
 find_package(OpenSSL REQUIRED)
 
-include_directories(include)
-include_directories(third_party)
-include_directories(${OPENSSL_INCLUDE_DIR} ${LIB_WEBSOCKETS_INCLUDE_DIRS})
-link_directories(${LIB_WEBSOCKETS_LIBRARY_DIRS})
 
 add_executable(demo ${DEMO_SOURCES})
+target_include_directories(demo PRIVATE ${OPENSSL_INCLUDE_DIR} ${LIB_WEBSOCKETS_INCLUDE_DIRS} "websocket_networK")
+target_link_directories(demo PRIVATE ${LIB_WEBSOCKETS_LIBRARY_DIRS})
 target_link_libraries(demo ${LIB_WEBSOCKETS_LIBRARIES})
 
 # Doc

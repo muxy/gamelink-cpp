@@ -5,7 +5,7 @@
 
 namespace gamelink
 {
-	Send::Send(schema::string data)
+	Send::Send(string data)
 	{
 		this->data = data;
 	}
@@ -58,7 +58,7 @@ namespace gamelink
 		return success;
 	}
 
-	void SDK::ForeachSend(const std::function<void(Send* send)>& networkCallback)
+	void SDK::ForeachSend(const std::function<void(const Send* send)>& networkCallback)
 	{
 		while (HasSends())
 		{
@@ -87,7 +87,7 @@ namespace gamelink
 		this->_onPollUpdate = callback;
 	}
 
-	void SDK::AuthenticateWithPIN(const schema::string& clientId, const schema::string& pin)
+	void SDK::AuthenticateWithPIN(const string& clientId, const string& pin)
 	{
 		schema::AuthenticateWithPINRequest payload(clientId, pin);
 
@@ -95,7 +95,7 @@ namespace gamelink
 		_sendQueue.push(send);
 	}
 
-	void SDK::AuthenticateWithJWT(const schema::string& clientId, const schema::string& jwt)
+	void SDK::AuthenticateWithJWT(const string& clientId, const string& jwt)
 	{
 		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
 
@@ -103,7 +103,7 @@ namespace gamelink
 		_sendQueue.push(send);
 	}
 
-	void SDK::GetPoll(const schema::string& pollId)
+	void SDK::GetPoll(const string& pollId)
 	{
 		schema::GetPollRequest packet(pollId);
 
@@ -111,7 +111,7 @@ namespace gamelink
 		_sendQueue.push(send);
 	}
 
-	void SDK::CreatePoll(const schema::string& pollId, const schema::string& prompt, const std::vector<schema::string>& options)
+	void SDK::CreatePoll(const string& pollId, const string& prompt, const std::vector<string>& options)
 	{
 		schema::CreatePollRequest packet(pollId, prompt, options);
 
@@ -119,7 +119,7 @@ namespace gamelink
 		_sendQueue.push(send);
 	}
 
-	void SDK::SubscribeToPoll(const schema::string& pollId)
+	void SDK::SubscribeToPoll(const string& pollId)
 	{
 		schema::SubscribePollRequest packet(pollId);
 
@@ -127,7 +127,7 @@ namespace gamelink
 		_sendQueue.push(send);
 	}
 
-	void SDK::DeletePoll(const schema::string& pollId)
+	void SDK::DeletePoll(const string& pollId)
 	{
 		schema::DeletePollRequest payload(pollId);
 
