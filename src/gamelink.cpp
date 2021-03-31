@@ -12,7 +12,8 @@ namespace gamelink
 
 	SDK::SDK()
 		: _user(NULL)
-		, _onPollUpdate(NULL){};
+	{};
+
 	SDK::~SDK()
 	{
 		// Clean up unsent messages
@@ -47,10 +48,9 @@ namespace gamelink
 				// TODO Handle a UserDataPollUpdateResponse as well
 				schema::PollUpdateResponse pollResp;
 				success = schema::ParseResponse<schema::PollUpdateResponse>(bytes, length, pollResp);
-
-				if (success && this->_onPollUpdate != NULL)
+				if (success)
 				{
-					this->_onPollUpdate(pollResp);
+					_onPollUpdate.invoke(pollResp);
 				}
 			}
 		}
@@ -58,33 +58,24 @@ namespace gamelink
 		return success;
 	}
 
-	void SDK::ForeachSend(const std::function<void(const Send* send)>& networkCallback)
-	{
-		while (HasSends())
-		{
-			Send* send = _sendQueue.front();
-			_sendQueue.pop();
-
-			networkCallback(send);
-
-			// Clean up send
-			delete send;
-		}
-	}
-
-	bool SDK::IsAuthenticated()
+	bool SDK::IsAuthenticated() const
 	{
 		return _user != NULL;
 	}
 
-	schema::User* SDK::GetUser()
+	const schema::User* SDK::GetUser() const
 	{
 		return _user;
 	}
 
 	void SDK::OnPollUpdate(std::function<void(const schema::PollUpdateResponse& pollResponse)> callback)
 	{
-		this->_onPollUpdate = callback;
+		this->_onPollUpdate.set(callback);
+	}
+
+	void SDK::OnPollUpdate(void (*callback)(void *, const schema::PollUpdateResponse&), void* ptr)
+	{
+		this->_onPollUpdate.set(callback, ptr);
 	}
 
 	void SDK::AuthenticateWithPIN(const string& clientId, const string& pin)
