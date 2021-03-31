@@ -28,17 +28,8 @@ add_executable(tests ${SCHEMA_TEST_SOURCES} ${SCHEMA_SOURCES} ${SDK_TEST_SOURCES
 target_include_directories(tests PRIVATE "schema/test")
 target_include_directories(tests PRIVATE "src/test")
 
-# SDK demo app
 find_package(PkgConfig)
 find_package(Doxygen)
-pkg_check_modules(LIB_WEBSOCKETS REQUIRED libwebsockets>=4.0.0)
-find_package(OpenSSL REQUIRED)
-
-
-add_executable(demo ${DEMO_SOURCES})
-target_include_directories(demo PRIVATE ${OPENSSL_INCLUDE_DIR} ${LIB_WEBSOCKETS_INCLUDE_DIRS} "websocket_networK")
-target_link_directories(demo PRIVATE ${LIB_WEBSOCKETS_LIBRARY_DIRS})
-target_link_libraries(demo ${LIB_WEBSOCKETS_LIBRARIES})
 
 # Doc
 file(GLOB SCHEMA_PUBLIC_HEADERS "schema/*.h")

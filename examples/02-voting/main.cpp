@@ -1,4 +1,5 @@
 #include <chrono>
+#include <cstdlib>
 #include <iostream>
 #include <thread>
 
@@ -19,9 +20,7 @@ int main()
 
 	// Set up network connection
 	WebsocketConnection websocket("sandbox.gamelink.muxy.io", 80);
-	websocket.onMessage([&](const char * bytes, uint32_t len) {
-		sdk.ReceiveMessage(bytes, len);
-	});
+	websocket.onMessage([&](const char* bytes, uint32_t len) { sdk.ReceiveMessage(bytes, len); });
 
 	// Set up SDK event handlers
 	sdk.OnPollUpdate([](PollUpdateResponse pollResponse) {
@@ -61,8 +60,18 @@ int main()
 
 	std::string client_id, pin;
 
-	std::cout << "Extension client ID: ";
-	std::cin >> client_id;
+	auto extId = getenv("EXTENSION_ID");
+
+	if (extId == NULL)
+	{
+		std::cout << "Extension client ID: ";
+		std::cin >> client_id;
+	}
+	else
+	{
+		client_id = std::string(extId);
+		std::cout << "Extension client ID: " << client_id << std::endl;
+	}
 
 	std::cout << "Authorization PIN: ";
 	std::cin >> pin;
@@ -76,32 +85,9 @@ int main()
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 
-	while (!done)
-	{
-		std::cout << "> ";
-		switch (getchar())
-		{
-		case 'a':
-			std::cout << sdk.GetUser()->GetJWT() << "\n";
-			break;
+	sdk.CreatePoll("vote-and-win", "Who's your favorite?", {"Me", "Him", "Her"});
 
-		case 'c':
-			sdk.CreatePoll("vote-and-win", "Who's your favorite?", {"Me", "Him", "Her"});
-			break;
-
-		case 'p':
-			sdk.SubscribeToPoll("vote-and-win");
-			break;
-
-		case 'q':
-			fmt::print("Bye\n");
-			done = true;
-			break;
-
-		default:
-			break;
-		}
-	}
+	sdk.SubscribeToPoll("vote-and-win");
 
 	sdkLoop.join();
 	websocket.terminate();
