@@ -4,7 +4,7 @@ OUTPUT_HEADER=gamelink_single.hpp
 # These msut be topologically sorted. Generally this means that
 # config.h, then serialization.h, then envelope.h followed by all other files.
 INPUT_HEADERS=(
-    ./config.h 
+    ./include/config.h 
     ./schema/serialization.h 
     ./schema/envelope.h 
     ./schema/subscription.h 
@@ -13,7 +13,7 @@ INPUT_HEADERS=(
     ./schema/poll.h 
     ./schema/schema.h 
     ./schema/state.h 
-    ./src/gamelink.h
+    ./include/gamelink.h
 )
 
 INPUT_SOURCES=(@AMALGAM_PUBLIC_SOURCES@)

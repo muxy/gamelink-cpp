@@ -30,7 +30,7 @@ namespace gamelink
 		{
 		}
 
-		const string& User::GetJWT()
+		const string& User::GetJWT() const
 		{
 			return this->jwt;
 		}

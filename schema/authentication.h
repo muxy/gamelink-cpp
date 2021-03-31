@@ -66,9 +66,8 @@ namespace gamelink
 		public:
 			explicit User(string jwt);
 
-			const string& GetJWT();
+			const string& GetJWT() const;
 			// string GetOpaqueID();
-
 		private:
 			string jwt;
 		};
