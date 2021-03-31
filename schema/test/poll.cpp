@@ -1,7 +1,7 @@
 #include "catch2/catch.hpp"
 #include "util.h"
 
-#include "schema/config.h"
+#include "config.h"
 #include "schema/poll.h"
 
 namespace gs = gamelink::schema;
@@ -24,11 +24,11 @@ TEST_CASE("Poll Creation", "[poll][creation]")
 	})");
 
 	// Create poll with user data
-	std::map<gs::string, gs::string> userData;
+	std::map<gamelink::string, gamelink::string> userData;
 	userData["showTitle"] = "true";
 	userData["title"] = "Yes or No?";
 
-	gs::CreatePollWithUserDataRequest<std::map<gs::string, gs::string>> req2("poll-id", "Yes or No?", {"Yes", "No"}, userData);
+	gs::CreatePollWithUserDataRequest<std::map<gamelink::string, gamelink::string>> req2("poll-id", "Yes or No?", {"Yes", "No"}, userData);
 	SerializeEqual(req2, R"({
 		"action": "create",
 		"params": {

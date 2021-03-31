@@ -4,7 +4,7 @@ OUTPUT_HEADER=gamelink_single.hpp
 # These msut be topologically sorted. Generally this means that
 # config.h, then serialization.h, then envelope.h followed by all other files.
 INPUT_HEADERS=(
-    ./schema/config.h 
+    ./config.h 
     ./schema/serialization.h 
     ./schema/envelope.h 
     ./schema/subscription.h 

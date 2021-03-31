@@ -12,9 +12,9 @@ namespace gamelink
 	class Send
 	{
 	public:
-		Send(schema::string data);
+		Send(string data);
 
-		schema::string data;
+		string data;
 	};
 
 	class SDK
@@ -30,7 +30,7 @@ namespace gamelink
 			return _sendQueue.size() > 0;
 		}
 
-		void ForeachSend(const std::function<void(Send* send)>& networkCallback);
+		void ForeachSend(const std::function<void(const Send* send)>& networkCallback);
 
 		bool IsAuthenticated();
 
@@ -42,24 +42,24 @@ namespace gamelink
 		///
 		/// @param[in] clientId The extension's client ID
 		/// @param[in] pin 		The PIN input from the broadcaster
-		void AuthenticateWithPIN(const schema::string& clientId, const schema::string& pin);
+		void AuthenticateWithPIN(const string& clientId, const string& pin);
 
 		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
 		///
 		/// @param[in] clientId The extension's client ID
 		/// @param[in] jwt 		The stored JWT from a previous authentication
-		void AuthenticateWithJWT(const schema::string& clientId, const schema::string& jwt);
+		void AuthenticateWithJWT(const string& clientId, const string& jwt);
 
-		void GetPoll(const schema::string& pollId);
+		void GetPoll(const string& pollId);
 
-		void CreatePoll(const schema::string& pollId, const schema::string& prompt, const std::vector<schema::string>& options);
+		void CreatePoll(const string& pollId, const string& prompt, const std::vector<string>& options);
 
-		void SubscribeToPoll(const schema::string& pollId);
+		void SubscribeToPoll(const string& pollId);
 
 		/// Deletes the poll with the given ID.
 		///
 		/// @param[in] pollId 	The ID of the poll to delete.
-		void DeletePoll(const schema::string& pollId);
+		void DeletePoll(const string& pollId);
 
 	private:
 		std::queue<Send*> _sendQueue;

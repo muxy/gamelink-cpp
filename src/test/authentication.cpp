@@ -1,7 +1,7 @@
 #include "catch2/catch.hpp"
 #include "util.h"
 
-#include "../gamelink.h"
+#include "gamelink.h"
 
 TEST_CASE("SDK PIN Authentication", "[sdk][authentication][pin]")
 {
@@ -18,7 +18,7 @@ TEST_CASE("SDK PIN Authentication", "[sdk][authentication][pin]")
 
 	REQUIRE(sdk.HasSends());
 
-	sdk.ForeachSend([](gamelink::Send* send) {
+	sdk.ForeachSend([](const gamelink::Send* send) {
 		REQUIRE(JSONEquals(send->data,
 						   R"({"action":"authenticate","data":{"client_id":"client_id","pin":"pin"},"params":{"request_id":65535}})"));
 	});
@@ -58,7 +58,7 @@ TEST_CASE("SDK JWT Authentication", "[sdk][authentication][jwt]")
 
 	REQUIRE(sdk.HasSends());
 
-	sdk.ForeachSend([](gamelink::Send* send) {
+	sdk.ForeachSend([](const gamelink::Send* send) {
 		REQUIRE(JSONEquals(send->data,
 						   R"({"action":"authenticate","data":{"client_id":"client_id","jwt":"test-jwt"},"params":{"request_id":65535}})"));
 	});
