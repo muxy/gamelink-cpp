@@ -37,6 +37,7 @@ namespace gamelink
 			success = schema::ParseResponse<schema::AuthenticateResponse>(bytes, length, authResp);
 			if (success)
 			{
+				_onAuthenticate.invoke(authResp);
 				this->_user = new schema::User(authResp.data.jwt);
 			}
 		}
@@ -68,14 +69,25 @@ namespace gamelink
 		return _user;
 	}
 
+	// Callbacks
 	void SDK::OnPollUpdate(std::function<void(const schema::PollUpdateResponse& pollResponse)> callback)
 	{
-		this->_onPollUpdate.set(callback);
+		_onPollUpdate.set(callback);
 	}
 
 	void SDK::OnPollUpdate(void (*callback)(void *, const schema::PollUpdateResponse&), void* ptr)
 	{
-		this->_onPollUpdate.set(callback, ptr);
+		_onPollUpdate.set(callback, ptr);
+	}
+
+	void SDK::OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> callback)
+	{
+		_onAuthenticate.set(callback);
+	}
+
+	void SDK::OnAuthenticate(void (*callback)(void *, const schema::AuthenticateResponse&), void* ptr)
+	{
+		_onAuthenticate.set(callback, ptr);
 	}
 
 	void SDK::AuthenticateWithPIN(const string& clientId, const string& pin)
