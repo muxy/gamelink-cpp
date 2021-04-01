@@ -100,3 +100,11 @@ add_custom_target(amalgam ALL
 
 # Amalgamation compilation checked
 add_executable(amalgam_compile_check "amalgam_check.cpp")
+
+
+## Examples
+add_subdirectory("examples/01-authenticate" "${CMAKE_CURRENT_SOURCE_DIR}/examples/01-authenticate/")
+add_subdirectory("examples/02-voting" "${CMAKE_CURRENT_SOURCE_DIR}/examples/02-voting")
+
+add_custom_target(examples ALL)
+add_dependencies(examples authenticate voting)

@@ -8,6 +8,14 @@
 #define MUXY_GAMELINK_CUSTOM_STRING_TYPE std::string
 #endif
 
+#ifndef NO_FMT_INCLUDE
+#include <fmt/format.h>
+#endif
+
+#ifndef NO_JSON_INCLUDE
+#include <nlohmann/json.hpp>
+#endif
+
 namespace gamelink
 {
     /// This can be controlled by defining `MUXY_GAMELINK_CUSTOM_STRING_TYPE`.

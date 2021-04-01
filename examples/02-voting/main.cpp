@@ -8,24 +8,25 @@
 
 #include "fmt/ranges.h"
 #include "gamelink_single.hpp"
-#include <websocket.h>
 
-using gamelink::SDK;
-using gamelink::Send;
-using gamelink::schema::PollUpdateResponse;
+#include "load_configuration.h"
+#include "websocket_network/websocket.h"
 
 int main()
 {
-	SDK sdk;
+	gamelink::SDK sdk;
 
 	// Set up network connection
 	WebsocketConnection websocket("sandbox.gamelink.muxy.io", 80);
-	websocket.onMessage([&](const char* bytes, uint32_t len) { sdk.ReceiveMessage(bytes, len); });
+	websocket.onMessage([&](const char* bytes, uint32_t len) { 
+		sdk.ReceiveMessage(bytes, len); 
+	});
+
+	bool done = false;
 
 	// Set up SDK event handlers
-	sdk.OnPollUpdate([](PollUpdateResponse pollResponse) {
+	sdk.OnPollUpdate([&](gamelink::schema::PollUpdateResponse pollResponse) {
 		// Print the poll's results
-		fmt::print("For the poll \"{}\", results:\n", pollResponse.data.poll.prompt);
 		fmt::print("{}\n", pollResponse.data.poll.options);
 
 		int i = 0;
@@ -34,63 +35,26 @@ int main()
 			fmt::print("{}: {}\n", option, pollResponse.data.results[i]);
 			i++;
 		}
+
+		done = true;
 	});
 
-	auto done = false;
+	examples::Configuration cfg = examples::LoadConfiguration();
+	std::string jwt = examples::LoadJWT();
 
-	// Create thread to send Gamelink messages to server
-	auto loop = [&]() {
-		while (!done)
-		{
-			websocket.run();
-
-			sdk.ForeachSend([&](const Send* send) {
-#ifdef GAMELINK_DEBUG
-				fmt::print("outgoing> {}\n", send->data);
-#endif
-
-				websocket.send(send->data.c_str(), send->data.size());
-			});
-
-			std::this_thread::sleep_for(std::chrono::milliseconds(25));
-		}
-	};
-
-	std::thread sdkLoop(loop);
-
-	std::string client_id, pin;
-
-	auto extId = getenv("EXTENSION_ID");
-
-	if (extId == NULL)
-	{
-		std::cout << "Extension client ID: ";
-		std::cin >> client_id;
-	}
-	else
-	{
-		client_id = std::string(extId);
-		std::cout << "Extension client ID: " << client_id << std::endl;
-	}
-
-	std::cout << "Authorization PIN: ";
-	std::cin >> pin;
-
-	sdk.AuthenticateWithPIN(client_id, pin);
-
-	std::cout << "Awaiting auth response..";
-	while (!sdk.IsAuthenticated())
-	{
-		std::cout << ".";
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	}
-
+	sdk.AuthenticateWithJWT(cfg.clientID, jwt);
 	sdk.CreatePoll("vote-and-win", "Who's your favorite?", {"Me", "Him", "Her"});
-
 	sdk.SubscribeToPoll("vote-and-win");
 
-	sdkLoop.join();
-	websocket.terminate();
+	sdk.ForeachSend([&](const gamelink::Send * send)
+    {
+        websocket.send(send->data.c_str(), send->data.size());
+    });
+
+	while (!done)
+	{
+		websocket.run();
+	}
 
 	return 0;
 }
