@@ -33,8 +33,8 @@ find_package(Doxygen)
 pkg_check_modules(LIB_WEBSOCKETS libwebsockets>=4.0.0)
 find_package(OpenSSL)
 
-if(${LIB_WEBSOCKETS_INCLUDE_DIRS})
-if(${OPENSSL_INCLUDE_DIR})
+if(LIB_WEBSOCKETS_INCLUDE_DIRS)
+if(OPENSSL_INCLUDE_DIR)
     add_executable(demo ${DEMO_SOURCES})
     target_include_directories(demo PRIVATE ${OPENSSL_INCLUDE_DIR} ${LIB_WEBSOCKETS_INCLUDE_DIRS} "websocket_networK")
     target_link_directories(demo PRIVATE ${LIB_WEBSOCKETS_LIBRARY_DIRS})
@@ -103,8 +103,8 @@ add_executable(amalgam_compile_check "amalgam_check.cpp")
 
 
 ## Examples
-if(${LIB_WEBSOCKETS_INCLUDE_DIRS})
-if(${OPENSSL_INCLUDE_DIR})
+if(LIB_WEBSOCKETS_INCLUDE_DIRS)
+if(OPENSSL_INCLUDE_DIR)
     add_subdirectory("examples/01-authenticate" "${CMAKE_CURRENT_SOURCE_DIR}/examples/01-authenticate/")
     add_subdirectory("examples/02-voting" "${CMAKE_CURRENT_SOURCE_DIR}/examples/02-voting")
 
