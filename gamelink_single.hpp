@@ -7,14 +7,10 @@
 #ifndef MUXY_GAMELINK_CONFIG_H
 #define MUXY_GAMELINK_CONFIG_H
 
-// Support custom string types. 
+// Support custom string types.
 #ifndef MUXY_GAMELINK_CUSTOM_STRING_TYPE
 #include <string>
 #define MUXY_GAMELINK_CUSTOM_STRING_TYPE std::string
-#endif
-
-#ifndef NO_FMT_INCLUDE
-#include <fmt/format.h>
 #endif
 
 #ifndef NO_JSON_INCLUDE
@@ -23,17 +19,18 @@
 
 namespace gamelink
 {
-    /// This can be controlled by defining `MUXY_GAMELINK_CUSTOM_STRING_TYPE`.
-    /// By default, MUXY_GAMELINK_CUSTOM_STRING_TYPE is std::string
-    /// This string should
-    ///     * Provide a constructor from a null-terminated c-string of chars
-    ///     * Provide operator== with another instance of the string type.
-    ///     * Provide a c_str() that returns a pointer to the first element of a 
-    ///       null-terminated array of utf8 encoded chars.
-    typedef MUXY_GAMELINK_CUSTOM_STRING_TYPE string;
-} 
+	/// This can be controlled by defining `MUXY_GAMELINK_CUSTOM_STRING_TYPE`.
+	/// By default, MUXY_GAMELINK_CUSTOM_STRING_TYPE is std::string
+	/// This string should
+	///     * Provide a constructor from a null-terminated c-string of chars
+	///     * Provide operator== with another instance of the string type.
+	///     * Provide a c_str() that returns a pointer to the first element of a
+	///       null-terminated array of utf8 encoded chars.
+	typedef MUXY_GAMELINK_CUSTOM_STRING_TYPE string;
+}
 
 #endif
+
 
 
 #ifndef MUXY_GAMELINK_SCHEMA_SERIALIZATION_H
@@ -1070,7 +1067,6 @@ namespace gamelink
 #ifndef INCLUDE_MUXY_GAMELINK_H
 #define INCLUDE_MUXY_GAMELINK_H
 
-#include <fmt/format.h>
 #include <queue>
 
 
@@ -1091,12 +1087,13 @@ namespace gamelink
 		class Callback
 		{
 		public:
-			typedef void (*RawFunctionPointer)(void *, const T&);
+			typedef void (*RawFunctionPointer)(void*, const T&);
 
 			Callback()
-				:_rawCallback(nullptr)
-				,_user(nullptr)
-			{}
+				: _rawCallback(nullptr)
+				, _user(nullptr)
+			{
+			}
 
 			void invoke(const T& v)
 			{
@@ -1110,7 +1107,7 @@ namespace gamelink
 				}
 			}
 
-			void set(std::function<void (const T&)> fn)
+			void set(std::function<void(const T&)> fn)
 			{
 				_rawCallback = nullptr;
 				_user = nullptr;
@@ -1118,18 +1115,19 @@ namespace gamelink
 				_callback = fn;
 			}
 
-			void set(RawFunctionPointer cb, void * user)
+			void set(RawFunctionPointer cb, void* user)
 			{
 				_rawCallback = cb;
 				_user = user;
 
-				_callback = std::function<void (const T&)>();
+				_callback = std::function<void(const T&)>();
 			}
+
 		private:
 			RawFunctionPointer _rawCallback;
 			void* _user;
 
-			std::function<void (const T&)> _callback;
+			std::function<void(const T&)> _callback;
 		};
 	}
 
@@ -1139,7 +1137,7 @@ namespace gamelink
 		SDK();
 		~SDK();
 
-		bool ReceiveMessage(const char * bytes, uint32_t length);
+		bool ReceiveMessage(const char* bytes, uint32_t length);
 
 		bool HasSends()
 		{
@@ -1162,7 +1160,7 @@ namespace gamelink
 		}
 
 		typedef void (*SendCallback)(const Send*);
-		void ForeachSend(SendCallback cb, void * user);
+		void ForeachSend(SendCallback cb, void* user);
 
 		bool IsAuthenticated() const;
 
@@ -1170,10 +1168,10 @@ namespace gamelink
 
 		// Callbacks
 		void OnPollUpdate(std::function<void(const schema::PollUpdateResponse&)> callback);
-		void OnPollUpdate(void (*callback)(void *, const schema::PollUpdateResponse&), void* ptr);
+		void OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr);
 
 		void OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> callback);
-		void OnAuthenticate(void (*callback)(void *, const schema::AuthenticateResponse&), void* ptr);
+		void OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr);
 
 		/// Queues an authentication request using a PIN code, as received by the user from an extension's config view.
 		///
@@ -1197,6 +1195,7 @@ namespace gamelink
 		///
 		/// @param[in] pollId 	The ID of the poll to delete.
 		void DeletePoll(const string& pollId);
+
 	private:
 		std::queue<Send*> _sendQueue;
 		schema::User* _user;
