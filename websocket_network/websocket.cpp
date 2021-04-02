@@ -1,6 +1,5 @@
 #include "websocket.h"
 
-#include <fmt/format.h>
 #include <libwebsockets.h>
 #include <mutex>
 
@@ -309,7 +308,7 @@ struct Impl
 	std::mutex lock;
 	std::vector<std::unique_ptr<Message>> messages;
 
-	std::function<void(const char *, uint32_t)> callback;
+	std::function<void(const char*, uint32_t)> callback;
 
 	std::string host;
 	uint16_t port;
@@ -322,11 +321,10 @@ int callbackEmptyProtocol(lws* wsi, lws_callback_reasons reasons, void* user, vo
 	switch (reasons)
 	{
 	case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
-		fmt::print("Err: {}\n", (char*)in);
+		// TODO: Handle connection error
 		break;
 
-	case LWS_CALLBACK_CLIENT_WRITEABLE:
-	{
+	case LWS_CALLBACK_CLIENT_WRITEABLE: {
 		// Pop a value and write.
 		std::unique_ptr<Message> msg;
 		if (impl->messages.size())
@@ -349,7 +347,7 @@ int callbackEmptyProtocol(lws* wsi, lws_callback_reasons reasons, void* user, vo
 
 			if (res < msg->data.size() - LWS_PRE)
 			{
-				fmt::print("ERR {} writing to socket\n", res);
+				// TODO: Handle error writing to socket
 				return -1;
 			}
 		}
@@ -358,8 +356,7 @@ int callbackEmptyProtocol(lws* wsi, lws_callback_reasons reasons, void* user, vo
 		lws_callback_on_writable(impl->client);
 		break;
 	}
-	case LWS_CALLBACK_CLIENT_RECEIVE:
-	{
+	case LWS_CALLBACK_CLIENT_RECEIVE: {
 		const char* begin = reinterpret_cast<const char*>(in);
 		if (impl->callback)
 		{
@@ -431,12 +428,12 @@ void WebsocketConnection::terminate()
 	lws_context_destroy(impl->lwsCtx);
 }
 
-void WebsocketConnection::send(const char * data, uint32_t length)
+void WebsocketConnection::send(const char* data, uint32_t length)
 {
 	// Don't send more than 8mb in a single send. This value
-	// should be closer to 8k, but larger packets should be fine 
+	// should be closer to 8k, but larger packets should be fine
 	// up to a point.
-	if (length > 1024 * 1024 * 8) 
+	if (length > 1024 * 1024 * 8)
 	{
 		return;
 	}
@@ -464,7 +461,7 @@ void WebsocketConnection::send(const char * data, uint32_t length)
 	}
 }
 
-void WebsocketConnection::onMessage(std::function<void(const char *, uint32_t)> cb)
+void WebsocketConnection::onMessage(std::function<void(const char*, uint32_t)> cb)
 {
 	impl->callback = cb;
 }
