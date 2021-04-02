@@ -6,7 +6,7 @@ pipelines:
         - step:
             name: Build and test
             script:
-              - apt-get -y install cmake ninja-build
+              - apt-get update && apt-get -y install cmake ninja-build
               - rm -rf build && mkdir -p build && cd build && cmake .. -GNinja && cd ..
               - cmake --build build --target amalgam 
               - ./amalgamate.sh
