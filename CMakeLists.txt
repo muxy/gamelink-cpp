@@ -64,7 +64,7 @@ add_custom_command(OUTPUT ${DOXYGEN_INDEX_FILE}
                    MAIN_DEPENDENCY ${DOXYFILE_OUT} ${DOXYFILE_IN}
                    COMMENT "Generating docs")
 
-add_custom_target(Doxygen ALL DEPENDS ${DOXYGEN_INDEX_FILE})
+add_custom_target(Doxygen DEPENDS ${DOXYGEN_INDEX_FILE})
 
 find_program(SPHINX_EXECUTABLE
              NAMES sphinx-build
@@ -73,7 +73,7 @@ find_program(SPHINX_EXECUTABLE
 set(SPHINX_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/docs)
 set(SPHINX_BUILD ${CMAKE_CURRENT_SOURCE_DIR}/docs/sphinx)
 
-add_custom_target(Sphinx ALL
+add_custom_target(Sphinx
     COMMAND
     ${SPHINX_EXECUTABLE} -b html
     -Dbreathe_projects.gamelink=${DOXYGEN_OUTPUT_DIRECTORY}/xml
@@ -100,7 +100,7 @@ add_custom_target(amalgam ALL
 
 # Amalgamation compilation checked
 add_executable(amalgam_compile_check "amalgam_check.cpp")
-
+add_dependencies(amalgam_compile_check amalgam)
 
 ## Examples
 if(LIB_WEBSOCKETS_INCLUDE_DIRS)
@@ -109,6 +109,6 @@ if(OPENSSL_INCLUDE_DIR)
     add_subdirectory("examples/02-voting" "${CMAKE_CURRENT_SOURCE_DIR}/examples/02-voting")
 
     add_custom_target(examples ALL)
-    add_dependencies(examples authenticate voting)
+    add_dependencies(examples amalgam authenticate voting)
 endif()
 endif()
