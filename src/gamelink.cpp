@@ -54,6 +54,17 @@ namespace gamelink
 					_onPollUpdate.invoke(pollResp);
 				}
 			}
+
+			if (env.meta.target == "channel")
+			{
+				schema::SubscribeStateUpdateResponse<nlohmann::json> resp;
+
+				success = schema::ParseResponse(bytes, length, resp);
+				if (success)
+				{
+					_onStateUpdate.invoke(resp);
+				}
+			}
 		}
 
 		return success;
@@ -88,6 +99,16 @@ namespace gamelink
 	void SDK::OnAuthenticate(void (*callback)(void *, const schema::AuthenticateResponse&), void* ptr)
 	{
 		_onAuthenticate.set(callback, ptr);
+	}
+
+	void SDK::OnStateUpdate(std::function<void (const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback)
+	{
+		_onStateUpdate.set(callback);
+	}
+	
+	void SDK::OnStateUpdate(void (*callback)(void*, const schema::SubscribeStateUpdateResponse<nlohmann::json>&), void* ptr)
+	{
+		_onStateUpdate.set(callback, ptr);
 	}
 
 	void SDK::AuthenticateWithPIN(const string& clientId, const string& pin)

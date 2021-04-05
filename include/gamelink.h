@@ -101,11 +101,14 @@ namespace gamelink
 		const schema::User* GetUser() const;
 
 		// Callbacks
-		void OnPollUpdate(std::function<void(const schema::PollUpdateResponse&)> callback);
+		void OnPollUpdate(std::function<void (const schema::PollUpdateResponse&)> callback);
 		void OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr);
 
-		void OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> callback);
+		void OnAuthenticate(std::function<void (const schema::AuthenticateResponse&)> callback);
 		void OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr);
+
+		void OnStateUpdate(std::function<void (const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback);
+		void OnStateUpdate(void (*callback)(void*, const schema::SubscribeStateUpdateResponse<nlohmann::json>&), void* ptr);
 
 		/// Queues an authentication request using a PIN code, as received by the user from an extension's config view.
 		///
@@ -156,6 +159,7 @@ namespace gamelink
 
 		detail::Callback<schema::PollUpdateResponse> _onPollUpdate;
 		detail::Callback<schema::AuthenticateResponse> _onAuthenticate;
+		detail::Callback<schema::SubscribeStateUpdateResponse<nlohmann::json>> _onStateUpdate;
 	};
 }
 

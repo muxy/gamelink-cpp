@@ -67,3 +67,74 @@ TEST_CASE("SDK Update State", "[sdk][state]")
         ));
     });
 }
+
+TEST_CASE("SDK Subscription", "[sdk][state][subscription]")
+{
+    gamelink::SDK sdk;
+
+    uint32_t calls = 0;
+    uint32_t errors = 0;
+    sdk.OnStateUpdate([&](const gamelink::schema::SubscribeStateUpdateResponse<nlohmann::json>& resp)
+    {
+        calls++;
+        if (!resp.errors.empty())
+        {
+            errors++;
+        }
+    });
+
+    // Basic usage
+    sdk.SubscribeToStateUpdates(gamelink::schema::STATE_TARGET_CHANNEL);
+    REQUIRE(calls == 0);
+    REQUIRE(errors == 0);
+
+    const char * message = R"({
+        "meta": {
+            "action": "update", 
+            "target": "channel"
+        }, 
+        "data": {
+            "state": {
+                "mana": 100, 
+                "dps": 10562121, 
+                "position": {
+                    "x": 12, 
+                    "y": 34
+                }
+            }
+        }
+    })";
+
+    sdk.ReceiveMessage(message, strlen(message));
+    REQUIRE(calls == 1);
+    REQUIRE(errors == 0);
+
+    // Show errors go through correctly.
+    message = R"({
+        "meta": {
+            "action": "update", 
+            "target": "channel"
+        }, 
+        "errors": [{
+            "title": "oh no", 
+            "code": 404, 
+            "detail": "not found"
+        }]
+    })";
+    sdk.ReceiveMessage(message, strlen(message));
+    REQUIRE(calls == 2);
+    REQUIRE(errors == 1);
+
+    // Show that other updates don't trigger a state update
+    message = R"({
+        "meta": {
+            "action": "update", 
+            "target": "poll"
+        }, 
+        "data": {}
+    })";
+
+    sdk.ReceiveMessage(message, strlen(message));
+    REQUIRE(calls == 2);
+    REQUIRE(errors == 1);
+}
