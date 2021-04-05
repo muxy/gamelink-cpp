@@ -189,7 +189,7 @@ namespace gamelink
 		}
 
 		template<typename T>
-		std::string to_string(SendEnvelope<T>& p)
+		std::string to_string(const SendEnvelope<T>& p)
 		{
 			nlohmann::json out;
 			to_json(out, p);

@@ -3,7 +3,6 @@
 #define INCLUDE_MUXY_GAMELINK_H
 
 #include <queue>
-
 #include "schema/schema.h"
 
 namespace gamelink
@@ -120,10 +119,10 @@ namespace gamelink
 		/// @param[in] jwt 		The stored JWT from a previous authentication
 		void AuthenticateWithJWT(const string& clientId, const string& jwt);
 
+		// Poll stuff, all async.
 		void GetPoll(const string& pollId);
-
 		void CreatePoll(const string& pollId, const string& prompt, const std::vector<string>& options);
-
+		void CreatePoll(const string& pollId ,const string& prompt, const string * optionsBegin, const string * optionsEnd);
 		void SubscribeToPoll(const string& pollId);
 
 		/// Deletes the poll with the given ID.
@@ -131,7 +130,27 @@ namespace gamelink
 		/// @param[in] pollId 	The ID of the poll to delete.
 		void DeletePoll(const string& pollId);
 
+
+		// State operations
+		template<typename T>
+		void SetState(const char * target, const T& value)
+		{
+			nlohmann::json js = nlohmann::json(value);
+			SetState(target, js);
+		};
+		void SetState(const char * target, const nlohmann::json& value);
+		void GetState(const char * target);
+		void UpdateState(const char * target, const string& operation, const string& path, const schema::JsonAtom& atom);
+		void UpdateState(const char * target, const schema::UpdateOperation * begin, const schema::UpdateOperation * end);
+		void SubscribeToStateUpdates(const char * target);
 	private:
+		template<typename Payload>
+		void queuePayload(const Payload& p)
+		{
+			Send * send = new Send(to_string(p));
+			_sendQueue.push(send);
+		}
+
 		std::queue<Send*> _sendQueue;
 		schema::User* _user;
 
