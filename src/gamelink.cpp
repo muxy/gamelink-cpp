@@ -11,8 +11,7 @@ namespace gamelink
 	}
 
 	SDK::SDK()
-		: _user(NULL)
-	{};
+		: _user(NULL){};
 
 	SDK::~SDK()
 	{
@@ -25,7 +24,7 @@ namespace gamelink
 		}
 	}
 
-	bool SDK::ReceiveMessage(const char * bytes, uint32_t length)
+	bool SDK::ReceiveMessage(const char* bytes, uint32_t length)
 	{
 		bool success = false;
 		auto env = schema::ParseEnvelope(bytes, length);
@@ -86,7 +85,7 @@ namespace gamelink
 		_onPollUpdate.set(callback);
 	}
 
-	void SDK::OnPollUpdate(void (*callback)(void *, const schema::PollUpdateResponse&), void* ptr)
+	void SDK::OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr)
 	{
 		_onPollUpdate.set(callback, ptr);
 	}
@@ -96,16 +95,16 @@ namespace gamelink
 		_onAuthenticate.set(callback);
 	}
 
-	void SDK::OnAuthenticate(void (*callback)(void *, const schema::AuthenticateResponse&), void* ptr)
+	void SDK::OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr)
 	{
 		_onAuthenticate.set(callback, ptr);
 	}
 
-	void SDK::OnStateUpdate(std::function<void (const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback)
+	void SDK::OnStateUpdate(std::function<void(const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback)
 	{
 		_onStateUpdate.set(callback);
 	}
-	
+
 	void SDK::OnStateUpdate(void (*callback)(void*, const schema::SubscribeStateUpdateResponse<nlohmann::json>&), void* ptr)
 	{
 		_onStateUpdate.set(callback, ptr);
@@ -147,25 +146,25 @@ namespace gamelink
 		queuePayload(payload);
 	}
 
-	void SDK::SetState(const char * target, const nlohmann::json& value)
+	void SDK::SetState(const char* target, const nlohmann::json& value)
 	{
 		schema::SetStateRequest<nlohmann::json> payload(target, value);
 		queuePayload(payload);
 	}
 
-	void SDK::GetState(const char * target)
+	void SDK::GetState(const char* target)
 	{
 		schema::GetStateRequest payload(target);
 		queuePayload(payload);
 	}
 
-	void SDK::SubscribeToStateUpdates(const char * target)
+	void SDK::SubscribeToStateUpdates(const char* target)
 	{
 		schema::SubscribeStateRequest payload(target);
 		queuePayload(payload);
 	}
 
-	void SDK::UpdateState(const char * target, const string& operation, const string& path, const schema::JsonAtom& atom)
+	void SDK::UpdateState(const char* target, const string& operation, const string& path, const schema::JsonAtom& atom)
 	{
 		schema::UpdateOperation op;
 		op.operation = operation;
@@ -175,7 +174,7 @@ namespace gamelink
 		UpdateState(target, &op, &op + 1);
 	}
 
-	void SDK::UpdateState(const char * target, const schema::UpdateOperation * begin, const schema::UpdateOperation * end)
+	void SDK::UpdateState(const char* target, const schema::UpdateOperation* begin, const schema::UpdateOperation* end)
 	{
 		schema::UpdateStateRequest payload(target);
 		std::vector<schema::UpdateOperation> updates;
