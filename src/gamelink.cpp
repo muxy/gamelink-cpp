@@ -2,6 +2,7 @@
 #define INCLUDE_MUXY_GAMELINK_CPP
 
 #include "gamelink.h"
+#include <cstdio>
 
 namespace gamelink
 {
@@ -23,11 +24,42 @@ namespace gamelink
 			delete send;
 		}
 	}
+	
+	void SDK::debugLogSend(const Send * s)
+	{
+		if (_onDebugMessage.valid())
+		{
+			uint32_t bufferLength = s->data.size() + 128;
+			char * buffer = new char[bufferLength];
+
+			int offset = snprintf(buffer, bufferLength, "send len=%d msg=", static_cast<int>(s->data.size()));
+			memcpy(buffer + offset, s->data.c_str(), s->data.size());
+			buffer[s->data.size() + offset] = '\0';
+
+			_onDebugMessage.invoke(string(buffer));
+
+			delete [] buffer;
+		}
+	}
 
 	bool SDK::ReceiveMessage(const char* bytes, uint32_t length)
 	{
 		bool success = false;
 		auto env = schema::ParseEnvelope(bytes, length);
+
+		if (_onDebugMessage.valid())
+		{
+			uint32_t bufferLength = length + 128;
+			char * buffer = new char[bufferLength];
+
+			int offset = snprintf(buffer, bufferLength, "recv len=%d msg=", static_cast<int>(length));
+			memcpy(buffer + offset, bytes, length);
+			buffer[length + offset] = '\0';
+
+			_onDebugMessage.invoke(string(buffer));
+
+			delete [] buffer;
+		}
 
 		if (env.meta.action == "authenticate")
 		{
@@ -80,6 +112,16 @@ namespace gamelink
 	}
 
 	// Callbacks
+	void SDK::OnDebugMessage(std::function<void(const string&)> callback)
+	{
+		_onDebugMessage.set(callback);
+	}
+
+	void SDK::OnDebugMessage(void (*callback)(void*, const string&), void *ptr)
+	{
+		_onDebugMessage.set(callback, ptr);
+	}
+
 	void SDK::OnPollUpdate(std::function<void(const schema::PollUpdateResponse& pollResponse)> callback)
 	{
 		_onPollUpdate.set(callback);

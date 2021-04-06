@@ -2,6 +2,7 @@
 
 
 #ifndef MUXY_GAMELINK_SINGLE_HPP
+#define MUXY_GAMELINK_SINGLE_HPP
 #pragma once
 
 #ifndef MUXY_GAMELINK_CONFIG_H
@@ -35,7 +36,6 @@ namespace gamelink
 
 #ifndef MUXY_GAMELINK_SCHEMA_SERIALIZATION_H
 #define MUXY_GAMELINK_SCHEMA_SERIALIZATION_H
-#include <nlohmann/json.hpp>
 
 #define MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, name, out, property) \
 	{ nlohmann::json::const_iterator it = in.find(name); if (it != in.end()) { it->get_to(out. property); }}
@@ -587,7 +587,7 @@ namespace gamelink
 		}
 
 		template<typename T>
-		std::string to_string(SendEnvelope<T>& p)
+		std::string to_string(const SendEnvelope<T>& p)
 		{
 			nlohmann::json out;
 			to_json(out, p);
@@ -1067,9 +1067,8 @@ namespace gamelink
 #ifndef INCLUDE_MUXY_GAMELINK_H
 #define INCLUDE_MUXY_GAMELINK_H
 
+
 #include <queue>
-
-
 
 namespace gamelink
 {
@@ -1123,6 +1122,20 @@ namespace gamelink
 				_callback = std::function<void(const T&)>();
 			}
 
+			bool valid() const
+			{
+				if (_rawCallback) 
+				{
+					return true;
+				}
+
+				if (_callback)
+				{
+					return true;
+				}
+
+				return false;
+			}
 		private:
 			RawFunctionPointer _rawCallback;
 			void* _user;
@@ -1131,6 +1144,7 @@ namespace gamelink
 		};
 	}
 
+	
 	class SDK
 	{
 	public:
@@ -1166,12 +1180,20 @@ namespace gamelink
 
 		const schema::User* GetUser() const;
 
+		/// Sets the OnDebugMessage callback. These messages are emitted
+		/// for debugging purposes only.
+		void OnDebugMessage(std::function<void(const string&)> callback);
+		void OnDebugMessage(void (*callback)(void*, const string&), void *ptr);
+		
 		// Callbacks
 		void OnPollUpdate(std::function<void(const schema::PollUpdateResponse&)> callback);
 		void OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr);
 
 		void OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> callback);
 		void OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr);
+
+		void OnStateUpdate(std::function<void(const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback);
+		void OnStateUpdate(void (*callback)(void*, const schema::SubscribeStateUpdateResponse<nlohmann::json>&), void* ptr);
 
 		/// Queues an authentication request using a PIN code, as received by the user from an extension's config view.
 		///
@@ -1185,10 +1207,35 @@ namespace gamelink
 		/// @param[in] jwt 		The stored JWT from a previous authentication
 		void AuthenticateWithJWT(const string& clientId, const string& jwt);
 
+		// Poll stuff, all async.
+
+		/// Queues a request to get poll information, including results, for the poll with the given ID.
+		/// Roughly equivilent to a single poll subscription update.
+		/// Results are obtained through the OnPollUpdate callback.
+		///
+		/// @param[in] pollId The Poll ID to get information for
 		void GetPoll(const string& pollId);
 
+		/// Queues a request to create a poll.
+		///
+		/// @param[in] pollId The Poll ID to create
+		/// @param[in] prompt The Prompt to store in the poll.
+		/// @param[in] options An array of options to store in the poll.
 		void CreatePoll(const string& pollId, const string& prompt, const std::vector<string>& options);
 
+		/// Queues a request to create a poll.
+		///
+		/// @param[in] pollId The Poll ID to create
+		/// @param[in] prompt The Prompt to store in the poll.
+		/// @param[in] optionsBegin Pointer to the first element in an array of options to store in the poll.
+		/// @param[in] optionsEnd Pointer one past the final entry in an array of options to store in the poll.
+		void CreatePoll(const string& pollId, const string& prompt, const string* optionsBegin, const string* optionsEnd);
+
+		/// Subscribes to updates for a given poll.
+		/// Updates come through the OnPollUpdate callback.
+		/// Once a poll stops receiving new votes, the subscription will stop receiving new updates.
+		///
+		/// @param[in] pollId The Poll ID to create
 		void SubscribeToPoll(const string& pollId);
 
 		/// Deletes the poll with the given ID.
@@ -1196,12 +1243,71 @@ namespace gamelink
 		/// @param[in] pollId 	The ID of the poll to delete.
 		void DeletePoll(const string& pollId);
 
+		// State operations, all async.
+
+		/// Queues a request to replace the entirety of state with new information.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] value A serializable type. Will overwrite any existing state for the given target.
+		///                  Cannot be an array or primitive type.
+		template<typename T>
+		void SetState(const char* target, const T& value)
+		{
+			nlohmann::json js = nlohmann::json(value);
+			SetState(target, js);
+		};
+
+		/// Queues a request to replace the entirety of state with new information.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] value JSON. Will overwrite any existing state for the given target.
+		///                  Must be an object, not an array or primitive type.
+		void SetState(const char* target, const nlohmann::json& value);
+
+		/// Queues a request to get state.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		void GetState(const char* target);
+
+		/// Queues a request to do a single JSON Patch operation on the state object.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] operation A JSON Patch operation
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] atom The value to use in the patch operation
+		void UpdateState(const char* target, const string& operation, const string& path, const schema::JsonAtom& atom);
+
+		/// Queues a request to do many JSON Patch operations on the state object.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] begin Pointer to the first element in an array of UpdateOperations
+		/// @param[in] end Pointer one past the last element in an array of UpdateOperations
+		void UpdateState(const char* target, const schema::UpdateOperation* begin, const schema::UpdateOperation* end);
+
+		/// Starts subscribing to state updates for the given target.
+		/// Updates come through the OnStateUpdate callback
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		void SubscribeToStateUpdates(const char* target);
 	private:
+		void debugLogSend(const Send *);
+
+		template<typename Payload>
+		void queuePayload(const Payload& p)
+		{
+			Send* send = new Send(to_string(p));
+			debugLogSend(send);
+			_sendQueue.push(send);
+		}
+
 		std::queue<Send*> _sendQueue;
 		schema::User* _user;
 
+		detail::Callback<string> _onDebugMessage;
+
 		detail::Callback<schema::PollUpdateResponse> _onPollUpdate;
 		detail::Callback<schema::AuthenticateResponse> _onAuthenticate;
+		detail::Callback<schema::SubscribeStateUpdateResponse<nlohmann::json>> _onStateUpdate;
 	};
 }
 
@@ -1446,6 +1552,7 @@ namespace gamelink
 #define INCLUDE_MUXY_GAMELINK_CPP
 
 
+#include <cstdio>
 
 namespace gamelink
 {
@@ -1455,8 +1562,7 @@ namespace gamelink
 	}
 
 	SDK::SDK()
-		: _user(NULL)
-	{};
+		: _user(NULL){};
 
 	SDK::~SDK()
 	{
@@ -1468,11 +1574,42 @@ namespace gamelink
 			delete send;
 		}
 	}
+	
+	void SDK::debugLogSend(const Send * s)
+	{
+		if (_onDebugMessage.valid())
+		{
+			uint32_t bufferLength = s->data.size() + 128;
+			char * buffer = new char[bufferLength];
 
-	bool SDK::ReceiveMessage(const char * bytes, uint32_t length)
+			int offset = snprintf(buffer, bufferLength, "send len=%d msg=", static_cast<int>(s->data.size()));
+			memcpy(buffer + offset, s->data.c_str(), s->data.size());
+			buffer[s->data.size() + offset] = '\0';
+
+			_onDebugMessage.invoke(string(buffer));
+
+			delete [] buffer;
+		}
+	}
+
+	bool SDK::ReceiveMessage(const char* bytes, uint32_t length)
 	{
 		bool success = false;
 		auto env = schema::ParseEnvelope(bytes, length);
+
+		if (_onDebugMessage.valid())
+		{
+			uint32_t bufferLength = length + 128;
+			char * buffer = new char[bufferLength];
+
+			int offset = snprintf(buffer, bufferLength, "recv len=%d msg=", static_cast<int>(length));
+			memcpy(buffer + offset, bytes, length);
+			buffer[length + offset] = '\0';
+
+			_onDebugMessage.invoke(string(buffer));
+
+			delete [] buffer;
+		}
 
 		if (env.meta.action == "authenticate")
 		{
@@ -1498,6 +1635,17 @@ namespace gamelink
 					_onPollUpdate.invoke(pollResp);
 				}
 			}
+
+			if (env.meta.target == "channel")
+			{
+				schema::SubscribeStateUpdateResponse<nlohmann::json> resp;
+
+				success = schema::ParseResponse(bytes, length, resp);
+				if (success)
+				{
+					_onStateUpdate.invoke(resp);
+				}
+			}
 		}
 
 		return success;
@@ -1514,12 +1662,22 @@ namespace gamelink
 	}
 
 	// Callbacks
+	void SDK::OnDebugMessage(std::function<void(const string&)> callback)
+	{
+		_onDebugMessage.set(callback);
+	}
+
+	void SDK::OnDebugMessage(void (*callback)(void*, const string&), void *ptr)
+	{
+		_onDebugMessage.set(callback, ptr);
+	}
+
 	void SDK::OnPollUpdate(std::function<void(const schema::PollUpdateResponse& pollResponse)> callback)
 	{
 		_onPollUpdate.set(callback);
 	}
 
-	void SDK::OnPollUpdate(void (*callback)(void *, const schema::PollUpdateResponse&), void* ptr)
+	void SDK::OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr)
 	{
 		_onPollUpdate.set(callback, ptr);
 	}
@@ -1529,58 +1687,95 @@ namespace gamelink
 		_onAuthenticate.set(callback);
 	}
 
-	void SDK::OnAuthenticate(void (*callback)(void *, const schema::AuthenticateResponse&), void* ptr)
+	void SDK::OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr)
 	{
 		_onAuthenticate.set(callback, ptr);
+	}
+
+	void SDK::OnStateUpdate(std::function<void(const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback)
+	{
+		_onStateUpdate.set(callback);
+	}
+
+	void SDK::OnStateUpdate(void (*callback)(void*, const schema::SubscribeStateUpdateResponse<nlohmann::json>&), void* ptr)
+	{
+		_onStateUpdate.set(callback, ptr);
 	}
 
 	void SDK::AuthenticateWithPIN(const string& clientId, const string& pin)
 	{
 		schema::AuthenticateWithPINRequest payload(clientId, pin);
-
-		auto send = new Send(to_string(payload));
-		_sendQueue.push(send);
+		queuePayload(payload);
 	}
 
 	void SDK::AuthenticateWithJWT(const string& clientId, const string& jwt)
 	{
 		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
-
-		auto send = new Send(to_string(payload));
-		_sendQueue.push(send);
+		queuePayload(payload);
 	}
 
 	void SDK::GetPoll(const string& pollId)
 	{
 		schema::GetPollRequest packet(pollId);
-
-		auto send = new Send(to_string(packet));
-		_sendQueue.push(send);
+		queuePayload(packet);
 	}
 
 	void SDK::CreatePoll(const string& pollId, const string& prompt, const std::vector<string>& options)
 	{
 		schema::CreatePollRequest packet(pollId, prompt, options);
-
-		auto send = new Send(to_string(packet));
-		_sendQueue.push(send);
+		queuePayload(packet);
 	}
 
 	void SDK::SubscribeToPoll(const string& pollId)
 	{
 		schema::SubscribePollRequest packet(pollId);
-
-		auto send = new Send(to_string(packet));
-		_sendQueue.push(send);
+		queuePayload(packet);
 	}
 
 	void SDK::DeletePoll(const string& pollId)
 	{
 		schema::DeletePollRequest payload(pollId);
-
-		auto send = new Send(to_string(payload));
-		_sendQueue.push(send);
+		queuePayload(payload);
 	}
+
+	void SDK::SetState(const char* target, const nlohmann::json& value)
+	{
+		schema::SetStateRequest<nlohmann::json> payload(target, value);
+		queuePayload(payload);
+	}
+
+	void SDK::GetState(const char* target)
+	{
+		schema::GetStateRequest payload(target);
+		queuePayload(payload);
+	}
+
+	void SDK::SubscribeToStateUpdates(const char* target)
+	{
+		schema::SubscribeStateRequest payload(target);
+		queuePayload(payload);
+	}
+
+	void SDK::UpdateState(const char* target, const string& operation, const string& path, const schema::JsonAtom& atom)
+	{
+		schema::UpdateOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = atom;
+
+		UpdateState(target, &op, &op + 1);
+	}
+
+	void SDK::UpdateState(const char* target, const schema::UpdateOperation* begin, const schema::UpdateOperation* end)
+	{
+		schema::UpdateStateRequest payload(target);
+		std::vector<schema::UpdateOperation> updates;
+		updates.resize(end - begin);
+		std::copy(begin, end, updates.begin());
+
+		payload.data.state = std::move(updates);
+		queuePayload(payload);
+	};
 }
 
 #endif

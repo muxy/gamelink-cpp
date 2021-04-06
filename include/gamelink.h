@@ -57,6 +57,20 @@ namespace gamelink
 				_callback = std::function<void(const T&)>();
 			}
 
+			bool valid() const
+			{
+				if (_rawCallback) 
+				{
+					return true;
+				}
+
+				if (_callback)
+				{
+					return true;
+				}
+
+				return false;
+			}
 		private:
 			RawFunctionPointer _rawCallback;
 			void* _user;
@@ -65,6 +79,7 @@ namespace gamelink
 		};
 	}
 
+	
 	class SDK
 	{
 	public:
@@ -100,6 +115,11 @@ namespace gamelink
 
 		const schema::User* GetUser() const;
 
+		/// Sets the OnDebugMessage callback. These messages are emitted
+		/// for debugging purposes only.
+		void OnDebugMessage(std::function<void(const string&)> callback);
+		void OnDebugMessage(void (*callback)(void*, const string&), void *ptr);
+		
 		// Callbacks
 		void OnPollUpdate(std::function<void(const schema::PollUpdateResponse&)> callback);
 		void OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr);
@@ -204,17 +224,21 @@ namespace gamelink
 		///
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		void SubscribeToStateUpdates(const char* target);
-
 	private:
+		void debugLogSend(const Send *);
+
 		template<typename Payload>
 		void queuePayload(const Payload& p)
 		{
 			Send* send = new Send(to_string(p));
+			debugLogSend(send);
 			_sendQueue.push(send);
 		}
 
 		std::queue<Send*> _sendQueue;
 		schema::User* _user;
+
+		detail::Callback<string> _onDebugMessage;
 
 		detail::Callback<schema::PollUpdateResponse> _onPollUpdate;
 		detail::Callback<schema::AuthenticateResponse> _onAuthenticate;

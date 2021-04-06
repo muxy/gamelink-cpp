@@ -15,6 +15,12 @@ int main()
     connection.onMessage([&](const char* bytes, uint32_t len) { 
         sdk.ReceiveMessage(bytes, len); 
     });
+
+    // Setup the debug logger.
+    sdk.OnDebugMessage([](const std::string& str)
+    {
+        std::cerr << "!    " << str << "\n";
+    });
     
     std::string pin;
     while (pin.empty() || !std::cin)
