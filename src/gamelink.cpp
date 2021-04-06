@@ -6,7 +6,7 @@
 
 namespace gamelink
 {
-	Send::Send(string data)
+	Payload::Payload(string data)
 	{
 		this->data = data;
 	}
@@ -17,15 +17,15 @@ namespace gamelink
 	SDK::~SDK()
 	{
 		// Clean up unsent messages
-		while (HasSends())
+		while (HasPayloads())
 		{
-			Send* send = _sendQueue.front();
-			_sendQueue.pop();
+			Payload* send = _queuedPayloads.front();
+			_queuedPayloads.pop();
 			delete send;
 		}
 	}
 	
-	void SDK::debugLogSend(const Send * s)
+	void SDK::debugLogPayload(const Payload * s)
 	{
 		if (_onDebugMessage.valid())
 		{

@@ -7,10 +7,10 @@
 
 namespace gamelink
 {
-	class Send
+	class Payload
 	{
 	public:
-		Send(string data);
+		Payload(string data);
 
 		string data;
 	};
@@ -88,28 +88,28 @@ namespace gamelink
 
 		bool ReceiveMessage(const char* bytes, uint32_t length);
 
-		bool HasSends()
+		bool HasPayloads()
 		{
-			return _sendQueue.size() > 0;
+			return _queuedPayloads.size() > 0;
 		}
 
 		template<typename T>
-		void ForeachSend(const T& networkCallback)
+		void ForeachPayload(const T& networkCallback)
 		{
-			while (HasSends())
+			while (HasPayloads())
 			{
-				Send* send = _sendQueue.front();
-				_sendQueue.pop();
+				Payload* payload = _queuedPayloads.front();
+				_queuedPayloads.pop();
 
-				networkCallback(send);
+				networkCallback(payload);
 
 				// Clean up send
-				delete send;
+				delete payload;
 			}
 		}
 
-		typedef void (*SendCallback)(const Send*);
-		void ForeachSend(SendCallback cb, void* user);
+		typedef void (*NetworkCallback)(const Payload*);
+		void ForeachSend(NetworkCallback cb, void* user);
 
 		bool IsAuthenticated() const;
 
@@ -225,17 +225,17 @@ namespace gamelink
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		void SubscribeToStateUpdates(const char* target);
 	private:
-		void debugLogSend(const Send *);
+		void debugLogPayload(const Payload *);
 
-		template<typename Payload>
-		void queuePayload(const Payload& p)
+		template<typename T>
+		void queuePayload(const T& p)
 		{
-			Send* send = new Send(to_string(p));
-			debugLogSend(send);
-			_sendQueue.push(send);
+			Payload* payload = new Payload(to_string(p));
+			debugLogPayload(payload);
+			_queuedPayloads.push(payload);
 		}
 
-		std::queue<Send*> _sendQueue;
+		std::queue<Payload*> _queuedPayloads;
 		schema::User* _user;
 
 		detail::Callback<string> _onDebugMessage;

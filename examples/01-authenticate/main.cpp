@@ -45,7 +45,7 @@ int main()
     });
 
     sdk.AuthenticateWithPIN(config.clientID, pin);
-    sdk.ForeachSend([&](const gamelink::Send * send)
+    sdk.ForeachPayload([&](const gamelink::Payload * send)
     {
         connection.send(send->data.c_str(), send->data.size());
     });

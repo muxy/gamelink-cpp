@@ -45,7 +45,7 @@ int main()
 	sdk.CreatePoll("vote-and-win", "Who's your favorite?", {"Me", "Him", "Her"});
 	sdk.SubscribeToPoll("vote-and-win");
 
-	sdk.ForeachSend([&](const gamelink::Send* send) { websocket.send(send->data.c_str(), send->data.size()); });
+	sdk.ForeachPayload([&](const gamelink::Payload* send) { websocket.send(send->data.c_str(), send->data.size()); });
 
 	while (!done)
 	{

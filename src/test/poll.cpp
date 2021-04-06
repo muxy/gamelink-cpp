@@ -10,9 +10,9 @@ TEST_CASE("SDK Poll Creation", "[sdk][poll][creation]")
 
 	sdk.CreatePoll("test-poll", "Me or Them?", {"Me", "Them"});
 
-	REQUIRE(sdk.HasSends());
+	REQUIRE(sdk.HasPayloads());
 
-	sdk.ForeachSend([](const gamelink::Send* send) {
+	sdk.ForeachPayload([](const gamelink::Payload* send) {
 		REQUIRE(JSONEquals(send->data,  
 			R"({
 				"action":"create",
@@ -29,7 +29,7 @@ TEST_CASE("SDK Poll Creation", "[sdk][poll][creation]")
 		));
 	});
 
-	REQUIRE(!sdk.HasSends());
+	REQUIRE(!sdk.HasPayloads());
 }
 
 TEST_CASE("SDK Poll Get Results", "[sdk][poll][results]")
@@ -38,15 +38,15 @@ TEST_CASE("SDK Poll Get Results", "[sdk][poll][results]")
 
 	sdk.GetPoll("test-poll");
 
-	REQUIRE(sdk.HasSends());
+	REQUIRE(sdk.HasPayloads());
 
-	sdk.ForeachSend([](const gamelink::Send* send) {
+	sdk.ForeachPayload([](const gamelink::Payload* send) {
 		REQUIRE(JSONEquals(send->data, 
 			R"({"action":"get","data":{"poll_id":"test-poll"},"params":{"request_id":65535,"target":"poll"}})"
 		));
 	});
 
-	REQUIRE(!sdk.HasSends());
+	REQUIRE(!sdk.HasPayloads());
 }
 
 TEST_CASE("SDK Poll Subscription", "[sdk][poll][subscription]")
@@ -55,15 +55,15 @@ TEST_CASE("SDK Poll Subscription", "[sdk][poll][subscription]")
 
 	sdk.SubscribeToPoll("test-poll");
 
-	REQUIRE(sdk.HasSends());
+	REQUIRE(sdk.HasPayloads());
 
-	sdk.ForeachSend([](const gamelink::Send* send) {
+	sdk.ForeachPayload([](const gamelink::Payload* send) {
 		REQUIRE(JSONEquals(send->data, 
 			R"({"action":"subscribe","data":{"topic_id":"test-poll"},"params":{"request_id":65535,"target":"poll"}})"
 		));
 	});
 
-	REQUIRE(!sdk.HasSends());
+	REQUIRE(!sdk.HasPayloads());
 }
 
 TEST_CASE("SDK Poll Update Response", "[sdk][poll][update]")
