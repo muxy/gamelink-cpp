@@ -24,13 +24,13 @@ namespace gamelink
 			delete send;
 		}
 	}
-	
-	void SDK::debugLogPayload(const Payload * s)
+
+	void SDK::debugLogPayload(const Payload* s)
 	{
 		if (_onDebugMessage.valid())
 		{
 			uint32_t bufferLength = s->data.size() + 128;
-			char * buffer = new char[bufferLength];
+			char* buffer = new char[bufferLength];
 
 			int offset = snprintf(buffer, bufferLength, "send len=%d msg=", static_cast<int>(s->data.size()));
 			memcpy(buffer + offset, s->data.c_str(), s->data.size());
@@ -38,7 +38,7 @@ namespace gamelink
 
 			_onDebugMessage.invoke(string(buffer));
 
-			delete [] buffer;
+			delete[] buffer;
 		}
 	}
 
@@ -50,7 +50,7 @@ namespace gamelink
 		if (_onDebugMessage.valid())
 		{
 			uint32_t bufferLength = length + 128;
-			char * buffer = new char[bufferLength];
+			char* buffer = new char[bufferLength];
 
 			int offset = snprintf(buffer, bufferLength, "recv len=%d msg=", static_cast<int>(length));
 			memcpy(buffer + offset, bytes, length);
@@ -58,7 +58,7 @@ namespace gamelink
 
 			_onDebugMessage.invoke(string(buffer));
 
-			delete [] buffer;
+			delete[] buffer;
 		}
 
 		if (env.meta.action == "authenticate")
@@ -117,7 +117,7 @@ namespace gamelink
 		_onDebugMessage.set(callback);
 	}
 
-	void SDK::OnDebugMessage(void (*callback)(void*, const string&), void *ptr)
+	void SDK::OnDebugMessage(void (*callback)(void*, const string&), void* ptr)
 	{
 		_onDebugMessage.set(callback, ptr);
 	}

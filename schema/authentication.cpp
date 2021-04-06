@@ -26,7 +26,8 @@ namespace gamelink
 			data.client_id = client;
 		}
 
-		User::User(string jwt) : jwt(std::move(jwt))
+		User::User(string jwt)
+			: jwt(std::move(jwt))
 		{
 		}
 

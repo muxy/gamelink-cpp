@@ -34,16 +34,25 @@ struct Character
 
 	std::vector<Spell> spellbook;
 
-	MUXY_GAMELINK_SERIALIZE_INTRUSIVE_9(Character, 
-		"name", name, 
-		"characterClass", characterClass,
-		"str", str, 
-		"con", con, 
-		"dex", dex, 
-		"int", intellect, 
-		"wis", wis, 
-		"cha", cha, 
-		"spellbook", spellbook);
+	MUXY_GAMELINK_SERIALIZE_INTRUSIVE_9(Character,
+										"name",
+										name,
+										"characterClass",
+										characterClass,
+										"str",
+										str,
+										"con",
+										con,
+										"dex",
+										dex,
+										"int",
+										intellect,
+										"wis",
+										wis,
+										"cha",
+										cha,
+										"spellbook",
+										spellbook);
 };
 
 int main()
@@ -55,10 +64,7 @@ int main()
 	websocket.onMessage([&](const char* bytes, uint32_t len) { sdk.ReceiveMessage(bytes, len); });
 
 	// Setup the debug logger.
-    sdk.OnDebugMessage([](const std::string& str)
-    {
-        std::cerr << "!    " << str << "\n";
-    });
+	sdk.OnDebugMessage([](const std::string& str) { std::cerr << "!    " << str << "\n"; });
 
 	bool done = false;
 	examples::Configuration cfg = examples::LoadConfiguration();
@@ -80,17 +86,14 @@ int main()
 	gandalf.spellbook.push_back({"Shatter", 1});
 	gandalf.spellbook.push_back({"Speak With Animals", 1});
 
-
 	sdk.SetState(gamelink::schema::STATE_TARGET_CHANNEL, gandalf);
 
 	// Level up int
-	sdk.UpdateState(gamelink::schema::STATE_TARGET_CHANNEL, 
-		"replace", "/int", gamelink::schema::atomFromInteger(19));
+	sdk.UpdateState(gamelink::schema::STATE_TARGET_CHANNEL, "replace", "/int", gamelink::schema::atomFromInteger(19));
 
 	// Learn a useful spell
-	sdk.UpdateState(gamelink::schema::STATE_TARGET_CHANNEL, 
-		"add", "/spellbook/-", gamelink::schema::atomFromLiteral(R"({ "name": "Fireball", "level": 3 })"));
-
+	sdk.UpdateState(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/spellbook/-",
+					gamelink::schema::atomFromLiteral(R"({ "name": "Fireball", "level": 3 })"));
 
 	// Subscribe to state
 	sdk.OnStateUpdate([&](const gamelink::schema::SubscribeStateUpdateResponse<nlohmann::json>& state) {

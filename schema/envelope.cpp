@@ -120,11 +120,11 @@ namespace gamelink
 		{
 		}
 
-		ReceiveEnvelope<EmptyBody> ParseEnvelope(const char * bytes, uint32_t length, bool * outSuccess)
+		ReceiveEnvelope<EmptyBody> ParseEnvelope(const char* bytes, uint32_t length, bool* outSuccess)
 		{
 			ReceiveEnvelope<EmptyBody> out;
 			bool result = ParseResponse(bytes, length, out);
-			if (outSuccess) 
+			if (outSuccess)
 			{
 				*outSuccess = result;
 			}

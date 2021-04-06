@@ -61,7 +61,7 @@ namespace gamelink
 		{
 		};
 
-		struct GetStateRequestBody 
+		struct GetStateRequestBody
 		{
 			/// Either 'channel' or 'extension', based on the target.
 			string state_id;

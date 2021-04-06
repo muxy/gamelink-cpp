@@ -59,7 +59,7 @@ namespace gamelink
 
 			bool valid() const
 			{
-				if (_rawCallback) 
+				if (_rawCallback)
 				{
 					return true;
 				}
@@ -71,6 +71,7 @@ namespace gamelink
 
 				return false;
 			}
+
 		private:
 			RawFunctionPointer _rawCallback;
 			void* _user;
@@ -79,7 +80,6 @@ namespace gamelink
 		};
 	}
 
-	
 	class SDK
 	{
 	public:
@@ -118,8 +118,8 @@ namespace gamelink
 		/// Sets the OnDebugMessage callback. These messages are emitted
 		/// for debugging purposes only.
 		void OnDebugMessage(std::function<void(const string&)> callback);
-		void OnDebugMessage(void (*callback)(void*, const string&), void *ptr);
-		
+		void OnDebugMessage(void (*callback)(void*, const string&), void* ptr);
+
 		// Callbacks
 		void OnPollUpdate(std::function<void(const schema::PollUpdateResponse&)> callback);
 		void OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr);
@@ -228,8 +228,9 @@ namespace gamelink
 		///
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		void SubscribeToStateUpdates(const char* target);
+
 	private:
-		void debugLogPayload(const Payload *);
+		void debugLogPayload(const Payload*);
 
 		template<typename T>
 		void queuePayload(const T& p)
