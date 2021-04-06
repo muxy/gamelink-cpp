@@ -34,7 +34,17 @@ namespace gamelink
 			return atom;
 		}
 
-		JsonAtom atomNull(int64_t v)
+		JsonAtom atomFromLiteral(const string& str)
+		{
+			JsonAtom atom;
+
+			atom.type = JSON_ATOM_LITERAL;
+			atom.stringValue = str;
+
+			return atom;
+		}
+
+		JsonAtom atomNull()
 		{
 			JsonAtom atom;
 			atom.type = JSON_ATOM_NULL;
@@ -57,6 +67,9 @@ namespace gamelink
 			case JSON_ATOM_STRING:
 				out = p.stringValue;
 				break;
+			case JSON_ATOM_LITERAL:
+				out = nlohmann::json::parse(p.stringValue.c_str(), nullptr, false);
+				break;
 			default:
 				// Bad
 				out = nlohmann::json();
@@ -74,17 +87,25 @@ namespace gamelink
 			}
 			else if (n.is_string())
 			{
+				p.type = JSON_ATOM_STRING;
 				p.stringValue = n.get<string>();
 				return;
 			}
 			else if (n.is_number_integer())
 			{
+				p.type = JSON_ATOM_INT64;
 				p.int64Value = n.get<int64_t>();
 				return;
 			}
 			else if (n.is_number())
 			{
+				p.type = JSON_ATOM_DOUBLE;
 				p.doubleValue = n.get<double>();
+			}
+			else if (n.is_object() || n.is_array())
+			{
+				p.type = JSON_ATOM_LITERAL;
+				p.stringValue = n.dump();
 			}
 		}
 
@@ -99,11 +120,11 @@ namespace gamelink
 		{
 		}
 
-		ReceiveEnvelope<EmptyBody> ParseEnvelope(const char * bytes, uint32_t length, bool * outSuccess)
+		ReceiveEnvelope<EmptyBody> ParseEnvelope(const char* bytes, uint32_t length, bool* outSuccess)
 		{
 			ReceiveEnvelope<EmptyBody> out;
 			bool result = ParseResponse(bytes, length, out);
-			if (outSuccess) 
+			if (outSuccess)
 			{
 				*outSuccess = result;
 			}

@@ -6,7 +6,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 project(GamelinkExamples)
 
 # Settings
-set(CMAKE_CXX_FLAGS "-Wall -DFMT_HEADER_ONLY=1 -pthread")
+set(CMAKE_CXX_FLAGS "-Wall")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 
 include_directories(../..)

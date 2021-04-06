@@ -40,7 +40,8 @@ namespace gamelink
 		};
 
 		struct SubscribeAuthenticationResponse : ReceiveEnvelope<OKResponseBody>
-		{};
+		{
+		};
 
 		struct AuthenticateWithPINRequest : SendEnvelope<AuthenticateWithPINRequestBody>
 		{
@@ -59,7 +60,8 @@ namespace gamelink
 		};
 
 		struct AuthenticateResponse : ReceiveEnvelope<AuthenticateJWTResponseBody>
-		{};
+		{
+		};
 
 		class User
 		{

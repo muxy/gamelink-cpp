@@ -24,13 +24,13 @@ namespace gamelink
 			delete send;
 		}
 	}
-	
-	void SDK::debugLogPayload(const Payload * s)
+
+	void SDK::debugLogPayload(const Payload* s)
 	{
 		if (_onDebugMessage.valid())
 		{
 			uint32_t bufferLength = s->data.size() + 128;
-			char * buffer = new char[bufferLength];
+			char* buffer = new char[bufferLength];
 
 			int offset = snprintf(buffer, bufferLength, "send len=%d msg=", static_cast<int>(s->data.size()));
 			memcpy(buffer + offset, s->data.c_str(), s->data.size());
@@ -38,7 +38,7 @@ namespace gamelink
 
 			_onDebugMessage.invoke(string(buffer));
 
-			delete [] buffer;
+			delete[] buffer;
 		}
 	}
 
@@ -50,7 +50,7 @@ namespace gamelink
 		if (_onDebugMessage.valid())
 		{
 			uint32_t bufferLength = length + 128;
-			char * buffer = new char[bufferLength];
+			char* buffer = new char[bufferLength];
 
 			int offset = snprintf(buffer, bufferLength, "recv len=%d msg=", static_cast<int>(length));
 			memcpy(buffer + offset, bytes, length);
@@ -58,7 +58,7 @@ namespace gamelink
 
 			_onDebugMessage.invoke(string(buffer));
 
-			delete [] buffer;
+			delete[] buffer;
 		}
 
 		if (env.meta.action == "authenticate")
@@ -117,7 +117,7 @@ namespace gamelink
 		_onDebugMessage.set(callback);
 	}
 
-	void SDK::OnDebugMessage(void (*callback)(void*, const string&), void *ptr)
+	void SDK::OnDebugMessage(void (*callback)(void*, const string&), void* ptr)
 	{
 		_onDebugMessage.set(callback, ptr);
 	}
@@ -208,7 +208,7 @@ namespace gamelink
 
 	void SDK::UpdateState(const char* target, const string& operation, const string& path, const schema::JsonAtom& atom)
 	{
-		schema::UpdateOperation op;
+		schema::PatchOperation op;
 		op.operation = operation;
 		op.path = path;
 		op.value = atom;
@@ -216,10 +216,10 @@ namespace gamelink
 		UpdateState(target, &op, &op + 1);
 	}
 
-	void SDK::UpdateState(const char* target, const schema::UpdateOperation* begin, const schema::UpdateOperation* end)
+	void SDK::UpdateState(const char* target, const schema::PatchOperation* begin, const schema::PatchOperation* end)
 	{
-		schema::UpdateStateRequest payload(target);
-		std::vector<schema::UpdateOperation> updates;
+		schema::PatchStateRequest payload(target);
+		std::vector<schema::PatchOperation> updates;
 		updates.resize(end - begin);
 		std::copy(begin, end, updates.begin());
 

@@ -18,7 +18,7 @@ find_package(PkgConfig)
 pkg_check_modules(LIB_WEBSOCKETS REQUIRED libwebsockets>=4.0.0)
 find_package(OpenSSL REQUIRED)
 
-set(TARGET_NAME authenticate)
+set(TARGET_NAME state)
 
 add_executable(${TARGET_NAME} main.cpp ${WEBSOCKET_SOURCES})
 set_target_properties(${TARGET_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")

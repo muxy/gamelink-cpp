@@ -12,16 +12,17 @@ namespace gamelink
 		// An integer, double, string, null
 		enum JsonAtomType
 		{
-			JSON_ATOM_NULL,   //!< No fields are valid, the JSONAtom represents a null
-			JSON_ATOM_INT64,  //!< The int64Value field is valid, and the JSONAtom represents an integer.
-			JSON_ATOM_DOUBLE, //!< The doubleValue field is valid, and the JSONAtom represents a double.
-			JSON_ATOM_STRING, //!< The stringValue field is valid, and the JSONAtom represents a string.
+			JSON_ATOM_NULL,    //!< No fields are valid, the JSONAtom represents a null
+			JSON_ATOM_INT64,   //!< The int64Value field is valid, and the JSONAtom represents an integer.
+			JSON_ATOM_DOUBLE,  //!< The doubleValue field is valid, and the JSONAtom represents a double.
+			JSON_ATOM_STRING,  //!< The stringValue field is valid, and the JSONAtom represents a string.
+			JSON_ATOM_LITERAL, //!< The stringValue field is valid, and is a JSON encoded object or array.
 
 			JSON_ATOM_FORCE_32 = 0xFFFFFFFF
 		};
 
 		/// JSONAtom is effectively a tagged union that can contain a signed 64-bit integer,
-		/// a floating point double, a string, or null. The type of a JSONAtom is stored in
+		/// a floating point double, a string, a json literal, or null. The type of a JSONAtom is stored in
 		/// the `field` type.
 		struct JsonAtom
 		{
@@ -52,6 +53,11 @@ namespace gamelink
 		/// @param[in] str String value
 		/// @return JsonAtom that contains the input string value
 		JsonAtom atomFromString(const string& str);
+
+		/// Creates a JsonAtom that represents an object
+		/// @param[in] str JSON Literal
+		/// @return JsonAtom that contains the input literal
+		JsonAtom atomFromLiteral(const string& str);
 
 		/// Creates a JsonAtom that represents null
 		/// @return A null JsonAtom
@@ -221,7 +227,7 @@ namespace gamelink
 		/// @param[out] out Output object. Should be a ResponseEnvelope or a type inherited from ResponseEnvelope.
 		/// @return true iff the input JSON parsed correctly, false otherwise
 		template<typename T>
-		bool ParseResponse(const char * bytes, uint32_t length, T& out)
+		bool ParseResponse(const char* bytes, uint32_t length, T& out)
 		{
 			nlohmann::json value = nlohmann::json::parse(bytes, bytes + length, nullptr, false);
 			if (value.is_discarded())
@@ -238,7 +244,7 @@ namespace gamelink
 		/// @param[in] length Length of the bytes parameter
 		/// @param[out] success Optional boolean to determine parse failure. Will be set to true iff the parse succeeded, false otherwise.
 		/// @return A ReceiveEnvelope with no body, only metadata field and possibly errors.
-		ReceiveEnvelope<EmptyBody> ParseEnvelope(const char * bytes, uint32_t length, bool* success = nullptr);
+		ReceiveEnvelope<EmptyBody> ParseEnvelope(const char* bytes, uint32_t length, bool* success = nullptr);
 	}
 }
 

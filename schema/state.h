@@ -12,11 +12,14 @@ namespace gamelink
 		template<typename T>
 		struct SetStateRequestBody
 		{
+			/// Either 'channel' or 'extension', based on the target.
+			string state_id;
+
 			/// The state to set. The type `T` should be serializable
 			/// through use of the MUXY_GAMELINK_SERIALIZE macros.
 			T state;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SetStateRequestBody, "state", state);
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(SetStateRequestBody, "state_id", state_id, "state", state);
 		};
 
 		template<typename T>
@@ -47,7 +50,8 @@ namespace gamelink
 			SetStateRequest(const char* target, const T& value)
 			{
 				this->action = string("set");
-				this->params.target = string(target);
+				this->params.target = string("state");
+				this->data.state_id = string(target);
 				this->data.state = value;
 			}
 		};
@@ -57,7 +61,15 @@ namespace gamelink
 		{
 		};
 
-		struct GetStateRequest : SendEnvelope<EmptyBody>
+		struct GetStateRequestBody
+		{
+			/// Either 'channel' or 'extension', based on the target.
+			string state_id;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(GetStateRequestBody, "state_id", state_id);
+		};
+
+		struct GetStateRequest : SendEnvelope<GetStateRequestBody>
 		{
 			/// Creates a GetState request
 			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
@@ -70,27 +82,30 @@ namespace gamelink
 		};
 
 		// Update state
-		struct UpdateOperation
+		struct PatchOperation
 		{
 			string operation;
 			string path;
 			JsonAtom value;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(UpdateOperation, "op", operation, "path", path, "value", value);
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PatchOperation, "op", operation, "path", path, "value", value);
 		};
 
-		struct UpdateStateRequestBody
+		struct PatchStateRequestBody
 		{
-			std::vector<UpdateOperation> state;
+			/// Either 'channel' or 'extension', based on the target.
+			string state_id;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(UpdateStateRequestBody, "state", state);
+			std::vector<PatchOperation> state;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(PatchStateRequestBody, "state_id", state_id, "state", state);
 		};
 
-		struct UpdateStateRequest : SendEnvelope<UpdateStateRequestBody>
+		struct PatchStateRequest : SendEnvelope<PatchStateRequestBody>
 		{
 			/// Creates an UpdateState request
 			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
-			explicit UpdateStateRequest(const char* target);
+			explicit PatchStateRequest(const char* target);
 		};
 
 		// Subscription
