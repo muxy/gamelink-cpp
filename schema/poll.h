@@ -65,13 +65,16 @@ namespace gamelink
 
 		struct PollResponseBody
 		{
+			/// The Poll ID that the update is for
+			string pollId;
+
 			/// The prompt for the poll.
 			string prompt;
 
 			/// A list of answers to the prompt. Maximum 64.
 			std::vector<string> options;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(PollResponseBody, "prompt", prompt, "options", options);
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PollResponseBody, "poll_id", pollId, "prompt", prompt, "options", options);
 		};
 
 		template<typename T>
@@ -91,9 +94,6 @@ namespace gamelink
 
 		struct PollUpdateBody
 		{
-			/// The Poll ID that the update is for
-			string pollId;
-
 			/// The poll information
 			PollResponseBody poll;
 
@@ -101,7 +101,7 @@ namespace gamelink
 			/// options array.
 			std::vector<int> results;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PollUpdateBody, "topic_id", pollId, "poll", poll, "results", results);
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(PollUpdateBody, "poll", poll, "results", results);
 		};
 
 		template<typename T>
@@ -169,11 +169,6 @@ namespace gamelink
 
 		struct PollUpdateResponse : ReceiveEnvelope<PollUpdateBody>
 		{
-			PollUpdateResponse(){};
-			PollUpdateResponse(const string& pollId,
-							   const string& prompt,
-							   const std::vector<string>& options,
-							   const std::vector<int>& results);
 		};
 
 		template<typename T>

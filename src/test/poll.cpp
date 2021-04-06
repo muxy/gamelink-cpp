@@ -77,8 +77,8 @@ TEST_CASE("SDK Poll Update Response", "[sdk][poll][update]")
 			"target": "poll"
 		},
 		"data": {
-			"topic_id": "test-poll",
 			"poll": {
+				"poll_id": "test-poll",
 				"prompt": "Choose one",
 				"options": ["Red", "Blue"]
 			},

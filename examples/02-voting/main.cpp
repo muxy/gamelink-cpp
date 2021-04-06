@@ -29,6 +29,7 @@ int main()
 
 	// Set up SDK event handlers
 	sdk.OnPollUpdate([&](gamelink::schema::PollUpdateResponse pollResponse) {
+		std::cout << "Got poll info, id=" << pollResponse.data.poll.pollId << " prompt=" << pollResponse.data.poll.prompt << "\n";
 		for (uint32_t i = 0; i < pollResponse.data.poll.options.size(); i++)
 		{
 			std::cout << "Option[" << i << "]: " <<  pollResponse.data.poll.options[i] << " = " << pollResponse.data.results[i] << "\n";
