@@ -4,6 +4,7 @@
 
 #include "catch2/catch.hpp"
 #include "nlohmann/json.hpp"
+#include <iostream>
 
 template<typename T>
 void SerializeEqual(const T& v, const std::string& in)
@@ -34,7 +35,14 @@ inline bool JSONEquals(const std::string& in, const std::string& expect)
 {
     nlohmann::json input = nlohmann::json::parse(in);
     nlohmann::json expected = nlohmann::json::parse(expect);
+    if (input != expected)
+    {
+        std::cerr << "Mismatch: \n";
+        std::cerr << input.dump(2) << "\n=====\n";
+        std::cerr << expected.dump(2) << "\n\n";
+        return false;
+    }
 
-    return input == expected;
+    return true;
 }
 #endif

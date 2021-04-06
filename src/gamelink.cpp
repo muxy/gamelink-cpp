@@ -11,8 +11,7 @@ namespace gamelink
 	}
 
 	SDK::SDK()
-		: _user(NULL)
-	{};
+		: _user(NULL){};
 
 	SDK::~SDK()
 	{
@@ -25,7 +24,7 @@ namespace gamelink
 		}
 	}
 
-	bool SDK::ReceiveMessage(const char * bytes, uint32_t length)
+	bool SDK::ReceiveMessage(const char* bytes, uint32_t length)
 	{
 		bool success = false;
 		auto env = schema::ParseEnvelope(bytes, length);
@@ -54,6 +53,17 @@ namespace gamelink
 					_onPollUpdate.invoke(pollResp);
 				}
 			}
+
+			if (env.meta.target == "channel")
+			{
+				schema::SubscribeStateUpdateResponse<nlohmann::json> resp;
+
+				success = schema::ParseResponse(bytes, length, resp);
+				if (success)
+				{
+					_onStateUpdate.invoke(resp);
+				}
+			}
 		}
 
 		return success;
@@ -75,7 +85,7 @@ namespace gamelink
 		_onPollUpdate.set(callback);
 	}
 
-	void SDK::OnPollUpdate(void (*callback)(void *, const schema::PollUpdateResponse&), void* ptr)
+	void SDK::OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr)
 	{
 		_onPollUpdate.set(callback, ptr);
 	}
@@ -85,58 +95,95 @@ namespace gamelink
 		_onAuthenticate.set(callback);
 	}
 
-	void SDK::OnAuthenticate(void (*callback)(void *, const schema::AuthenticateResponse&), void* ptr)
+	void SDK::OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr)
 	{
 		_onAuthenticate.set(callback, ptr);
+	}
+
+	void SDK::OnStateUpdate(std::function<void(const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback)
+	{
+		_onStateUpdate.set(callback);
+	}
+
+	void SDK::OnStateUpdate(void (*callback)(void*, const schema::SubscribeStateUpdateResponse<nlohmann::json>&), void* ptr)
+	{
+		_onStateUpdate.set(callback, ptr);
 	}
 
 	void SDK::AuthenticateWithPIN(const string& clientId, const string& pin)
 	{
 		schema::AuthenticateWithPINRequest payload(clientId, pin);
-
-		auto send = new Send(to_string(payload));
-		_sendQueue.push(send);
+		queuePayload(payload);
 	}
 
 	void SDK::AuthenticateWithJWT(const string& clientId, const string& jwt)
 	{
 		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
-
-		auto send = new Send(to_string(payload));
-		_sendQueue.push(send);
+		queuePayload(payload);
 	}
 
 	void SDK::GetPoll(const string& pollId)
 	{
 		schema::GetPollRequest packet(pollId);
-
-		auto send = new Send(to_string(packet));
-		_sendQueue.push(send);
+		queuePayload(packet);
 	}
 
 	void SDK::CreatePoll(const string& pollId, const string& prompt, const std::vector<string>& options)
 	{
 		schema::CreatePollRequest packet(pollId, prompt, options);
-
-		auto send = new Send(to_string(packet));
-		_sendQueue.push(send);
+		queuePayload(packet);
 	}
 
 	void SDK::SubscribeToPoll(const string& pollId)
 	{
 		schema::SubscribePollRequest packet(pollId);
-
-		auto send = new Send(to_string(packet));
-		_sendQueue.push(send);
+		queuePayload(packet);
 	}
 
 	void SDK::DeletePoll(const string& pollId)
 	{
 		schema::DeletePollRequest payload(pollId);
-
-		auto send = new Send(to_string(payload));
-		_sendQueue.push(send);
+		queuePayload(payload);
 	}
+
+	void SDK::SetState(const char* target, const nlohmann::json& value)
+	{
+		schema::SetStateRequest<nlohmann::json> payload(target, value);
+		queuePayload(payload);
+	}
+
+	void SDK::GetState(const char* target)
+	{
+		schema::GetStateRequest payload(target);
+		queuePayload(payload);
+	}
+
+	void SDK::SubscribeToStateUpdates(const char* target)
+	{
+		schema::SubscribeStateRequest payload(target);
+		queuePayload(payload);
+	}
+
+	void SDK::UpdateState(const char* target, const string& operation, const string& path, const schema::JsonAtom& atom)
+	{
+		schema::UpdateOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = atom;
+
+		UpdateState(target, &op, &op + 1);
+	}
+
+	void SDK::UpdateState(const char* target, const schema::UpdateOperation* begin, const schema::UpdateOperation* end)
+	{
+		schema::UpdateStateRequest payload(target);
+		std::vector<schema::UpdateOperation> updates;
+		updates.resize(end - begin);
+		std::copy(begin, end, updates.begin());
+
+		payload.data.state = std::move(updates);
+		queuePayload(payload);
+	};
 }
 
 #endif
