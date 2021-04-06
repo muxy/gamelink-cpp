@@ -7,10 +7,10 @@
 
 namespace gamelink
 {
-	class Send
+	class Payload
 	{
 	public:
-		Send(string data);
+		Payload(string data);
 
 		string data;
 	};
@@ -57,6 +57,20 @@ namespace gamelink
 				_callback = std::function<void(const T&)>();
 			}
 
+			bool valid() const
+			{
+				if (_rawCallback) 
+				{
+					return true;
+				}
+
+				if (_callback)
+				{
+					return true;
+				}
+
+				return false;
+			}
 		private:
 			RawFunctionPointer _rawCallback;
 			void* _user;
@@ -65,6 +79,7 @@ namespace gamelink
 		};
 	}
 
+	
 	class SDK
 	{
 	public:
@@ -73,33 +88,38 @@ namespace gamelink
 
 		bool ReceiveMessage(const char* bytes, uint32_t length);
 
-		bool HasSends()
+		bool HasPayloads()
 		{
-			return _sendQueue.size() > 0;
+			return _queuedPayloads.size() > 0;
 		}
 
 		template<typename T>
-		void ForeachSend(const T& networkCallback)
+		void ForeachPayload(const T& networkCallback)
 		{
-			while (HasSends())
+			while (HasPayloads())
 			{
-				Send* send = _sendQueue.front();
-				_sendQueue.pop();
+				Payload* payload = _queuedPayloads.front();
+				_queuedPayloads.pop();
 
-				networkCallback(send);
+				networkCallback(payload);
 
 				// Clean up send
-				delete send;
+				delete payload;
 			}
 		}
 
-		typedef void (*SendCallback)(const Send*);
-		void ForeachSend(SendCallback cb, void* user);
+		typedef void (*NetworkCallback)(const Payload*);
+		void ForeachSend(NetworkCallback cb, void* user);
 
 		bool IsAuthenticated() const;
 
 		const schema::User* GetUser() const;
 
+		/// Sets the OnDebugMessage callback. These messages are emitted
+		/// for debugging purposes only.
+		void OnDebugMessage(std::function<void(const string&)> callback);
+		void OnDebugMessage(void (*callback)(void*, const string&), void *ptr);
+		
 		// Callbacks
 		void OnPollUpdate(std::function<void(const schema::PollUpdateResponse&)> callback);
 		void OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr);
@@ -204,17 +224,21 @@ namespace gamelink
 		///
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		void SubscribeToStateUpdates(const char* target);
-
 	private:
-		template<typename Payload>
-		void queuePayload(const Payload& p)
+		void debugLogPayload(const Payload *);
+
+		template<typename T>
+		void queuePayload(const T& p)
 		{
-			Send* send = new Send(to_string(p));
-			_sendQueue.push(send);
+			Payload* payload = new Payload(to_string(p));
+			debugLogPayload(payload);
+			_queuedPayloads.push(payload);
 		}
 
-		std::queue<Send*> _sendQueue;
+		std::queue<Payload*> _queuedPayloads;
 		schema::User* _user;
+
+		detail::Callback<string> _onDebugMessage;
 
 		detail::Callback<schema::PollUpdateResponse> _onPollUpdate;
 		detail::Callback<schema::AuthenticateResponse> _onAuthenticate;

@@ -15,6 +15,12 @@ int main()
     connection.onMessage([&](const char* bytes, uint32_t len) { 
         sdk.ReceiveMessage(bytes, len); 
     });
+
+    // Setup the debug logger.
+    sdk.OnDebugMessage([](const std::string& str)
+    {
+        std::cerr << "!    " << str << "\n";
+    });
     
     std::string pin;
     while (pin.empty() || !std::cin)
@@ -39,7 +45,7 @@ int main()
     });
 
     sdk.AuthenticateWithPIN(config.clientID, pin);
-    sdk.ForeachSend([&](const gamelink::Send * send)
+    sdk.ForeachPayload([&](const gamelink::Payload * send)
     {
         connection.send(send->data.c_str(), send->data.size());
     });

@@ -23,7 +23,7 @@ TEST_CASE("SDK State Creation", "[sdk][state]")
     st.value = 42.123;
 
     sdk.SetState(gamelink::schema::STATE_TARGET_CHANNEL, st);
-    sdk.ForeachSend([](const gamelink::Send * send){
+    sdk.ForeachPayload([](const gamelink::Payload * send){
         REQUIRE(JSONEquals(send->data, 
         R"({
             "action": "set", 
@@ -48,7 +48,7 @@ TEST_CASE("SDK Update State", "[sdk][state]")
     gamelink::SDK sdk;
 
     sdk.UpdateState(gamelink::schema::STATE_TARGET_CHANNEL, "replace", "/name", gamelink::schema::atomFromString("whatever"));
-     sdk.ForeachSend([](const gamelink::Send * send){
+     sdk.ForeachPayload([](const gamelink::Payload * send){
         REQUIRE(JSONEquals(send->data, 
         R"({
             "action": "update", 

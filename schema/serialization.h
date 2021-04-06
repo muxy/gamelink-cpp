@@ -2,7 +2,6 @@
 #pragma once
 #ifndef MUXY_GAMELINK_SCHEMA_SERIALIZATION_H
 #define MUXY_GAMELINK_SCHEMA_SERIALIZATION_H
-#include <nlohmann/json.hpp>
 
 #define MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, name, out, property) \
 	{ nlohmann::json::const_iterator it = in.find(name); if (it != in.end()) { it->get_to(out. property); }}

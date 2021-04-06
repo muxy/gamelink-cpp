@@ -19,18 +19,20 @@ int main()
 	WebsocketConnection websocket("sandbox.gamelink.muxy.io", 80);
 	websocket.onMessage([&](const char* bytes, uint32_t len) { sdk.ReceiveMessage(bytes, len); });
 
+	// Setup the debug logger.
+    sdk.OnDebugMessage([](const std::string& str)
+    {
+        std::cerr << "!    " << str << "\n";
+    });
+
 	bool done = false;
 
 	// Set up SDK event handlers
 	sdk.OnPollUpdate([&](gamelink::schema::PollUpdateResponse pollResponse) {
-		// Print the poll's results
-		std::cout << pollResponse.data.poll.options << std::endl;
-
-		int i = 0;
-		for (auto option : pollResponse.data.poll.options)
+		std::cout << "Got poll info, id=" << pollResponse.data.poll.pollId << " prompt=" << pollResponse.data.poll.prompt << "\n";
+		for (uint32_t i = 0; i < pollResponse.data.poll.options.size(); i++)
 		{
-			std::cout << option, << ": " << pollResponse.data.results[i] << std::endl);
-			i++;
+			std::cout << "Option[" << i << "]: " <<  pollResponse.data.poll.options[i] << " = " << pollResponse.data.results[i] << "\n";
 		}
 
 		done = true;
@@ -43,7 +45,7 @@ int main()
 	sdk.CreatePoll("vote-and-win", "Who's your favorite?", {"Me", "Him", "Her"});
 	sdk.SubscribeToPoll("vote-and-win");
 
-	sdk.ForeachSend([&](const gamelink::Send* send) { websocket.send(send->data.c_str(), send->data.size()); });
+	sdk.ForeachPayload([&](const gamelink::Payload* send) { websocket.send(send->data.c_str(), send->data.size()); });
 
 	while (!done)
 	{

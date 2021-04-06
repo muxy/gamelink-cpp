@@ -11,19 +11,19 @@ TEST_CASE("SDK PIN Authentication", "[sdk][authentication][pin]")
 	// Test initial state
 	REQUIRE(!sdk.IsAuthenticated());
 	REQUIRE(sdk.GetUser() == NULL);
-	REQUIRE(!sdk.HasSends());
+	REQUIRE(!sdk.HasPayloads());
 
 	// Verify generated auth request
 	sdk.AuthenticateWithPIN("client_id", "pin");
 
-	REQUIRE(sdk.HasSends());
+	REQUIRE(sdk.HasPayloads());
 
-	sdk.ForeachSend([](const gamelink::Send* send) {
+	sdk.ForeachPayload([](const gamelink::Payload* send) {
 		REQUIRE(JSONEquals(send->data,
 						   R"({"action":"authenticate","data":{"client_id":"client_id","pin":"pin"},"params":{"request_id":65535}})"));
 	});
 
-	REQUIRE(!sdk.HasSends());
+	REQUIRE(!sdk.HasPayloads());
 
 	// Verify state after successful auth
 	const char * msg = R"({
@@ -40,7 +40,7 @@ TEST_CASE("SDK PIN Authentication", "[sdk][authentication][pin]")
 
 	REQUIRE(sdk.IsAuthenticated());
 	REQUIRE(sdk.GetUser()->GetJWT() == jwt);
-	REQUIRE(!sdk.HasSends());
+	REQUIRE(!sdk.HasPayloads());
 }
 
 TEST_CASE("SDK JWT Authentication", "[sdk][authentication][jwt]")
@@ -51,19 +51,19 @@ TEST_CASE("SDK JWT Authentication", "[sdk][authentication][jwt]")
 	// Test initial state
 	REQUIRE(!sdk.IsAuthenticated());
 	REQUIRE(sdk.GetUser() == NULL);
-	REQUIRE(!sdk.HasSends());
+	REQUIRE(!sdk.HasPayloads());
 
 	// Verify generated auth request
 	sdk.AuthenticateWithJWT("client_id", jwt);
 
-	REQUIRE(sdk.HasSends());
+	REQUIRE(sdk.HasPayloads());
 
-	sdk.ForeachSend([](const gamelink::Send* send) {
+	sdk.ForeachPayload([](const gamelink::Payload* send) {
 		REQUIRE(JSONEquals(send->data,
 						   R"({"action":"authenticate","data":{"client_id":"client_id","jwt":"test-jwt"},"params":{"request_id":65535}})"));
 	});
 
-	REQUIRE(!sdk.HasSends());
+	REQUIRE(!sdk.HasPayloads());
 
 	// Verify state after successful auth
 	const char * msg = R"({
@@ -79,5 +79,5 @@ TEST_CASE("SDK JWT Authentication", "[sdk][authentication][jwt]")
 
 	REQUIRE(sdk.IsAuthenticated());
 	REQUIRE(sdk.GetUser()->GetJWT() == jwt);
-	REQUIRE(!sdk.HasSends());
+	REQUIRE(!sdk.HasPayloads());
 }

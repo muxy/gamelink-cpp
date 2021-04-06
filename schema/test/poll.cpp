@@ -49,16 +49,21 @@ TEST_CASE("Poll Creation", "[poll][creation]")
 
 TEST_CASE("Poll Update Response (De)Serialization", "[poll][update]")
 {
-	gs::PollUpdateResponse pollResponse("poll-id", "Yes or No?", {"Yes", "No"}, {1, 2});
+	gs::PollUpdateResponse pollResponse;
+	pollResponse.data.poll.pollId = "poll-id";
+	pollResponse.data.poll.prompt = "Yes or No?";
+	pollResponse.data.poll.options = {"Yes", "No"};
+	pollResponse.data.results = {1, 2};
+
 	SerializeEqual(pollResponse, R"({
 		"meta": {
 			"action": "update",
 			"target": "poll"
 		},
 		"data": {
-			"topic_id": "poll-id",
 			"results": [1, 2],
 			"poll": {
+				"poll_id": "poll-id",
 				"prompt": "Yes or No?",
 				"options": ["Yes", "No"]
 			}
@@ -71,9 +76,9 @@ TEST_CASE("Poll Update Response (De)Serialization", "[poll][update]")
 			"target": "poll"
 		},
 		"data": {
-			"topic_id": "poll-id",
 			"results": [1, 2],
 			"poll": {
+				"poll_id": "poll-id",
 				"prompt": "Yes or No?",
 				"options": ["Yes", "No"]
 			}
@@ -83,7 +88,7 @@ TEST_CASE("Poll Update Response (De)Serialization", "[poll][update]")
 
 	REQUIRE(pollResponse.meta.action == "update");
 	REQUIRE(pollResponse.meta.target == "poll");
-	REQUIRE(pollResponse.data.pollId == "poll-id");
+	REQUIRE(pollResponse.data.poll.pollId == "poll-id");
 	REQUIRE(pollResponse.data.poll.prompt == "Yes or No?");
 	REQUIRE(pollResponse.data.poll.options[0] == "Yes");
 	REQUIRE(pollResponse.data.poll.options[1] == "No");
