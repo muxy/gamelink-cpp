@@ -208,7 +208,7 @@ namespace gamelink
 
 	void SDK::UpdateState(const char* target, const string& operation, const string& path, const schema::JsonAtom& atom)
 	{
-		schema::UpdateOperation op;
+		schema::PatchOperation op;
 		op.operation = operation;
 		op.path = path;
 		op.value = atom;
@@ -216,10 +216,10 @@ namespace gamelink
 		UpdateState(target, &op, &op + 1);
 	}
 
-	void SDK::UpdateState(const char* target, const schema::UpdateOperation* begin, const schema::UpdateOperation* end)
+	void SDK::UpdateState(const char* target, const schema::PatchOperation* begin, const schema::PatchOperation* end)
 	{
-		schema::UpdateStateRequest payload(target);
-		std::vector<schema::UpdateOperation> updates;
+		schema::PatchStateRequest payload(target);
+		std::vector<schema::PatchOperation> updates;
 		updates.resize(end - begin);
 		std::copy(begin, end, updates.begin());
 

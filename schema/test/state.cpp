@@ -50,9 +50,10 @@ TEST_CASE("Basic state serialization", "[state][serialization]")
         "action": "set", 
         "params": {
             "request_id": 65535,
-            "target": "channel"
+            "target": "state"
         }, 
         "data": {
+            "state_id": "channel",
             "state": {
                 "name": "hp", 
                 "value": 100, 
@@ -77,7 +78,7 @@ TEST_CASE("State response deserialization", "[state][deserialization]")
         "meta": {
             "action": "set",
             "request_id": 4,
-            "target": "channel"
+            "target": "state"
         }, 
         "data": {
             "ok": true,
@@ -98,7 +99,7 @@ TEST_CASE("State response deserialization", "[state][deserialization]")
     
     REQUIRE(resp.meta.action == "set");
     REQUIRE(resp.meta.request_id == 4);
-    REQUIRE(resp.meta.target == "channel");
+    REQUIRE(resp.meta.target == "state");
 
     REQUIRE(resp.data.ok == true);
     REQUIRE(resp.data.state.name == "hp");
@@ -113,9 +114,9 @@ TEST_CASE("State response deserialization", "[state][deserialization]")
 
 TEST_CASE("State update serialization", "[state][serialization]")
 {
-    gamelink::schema::UpdateStateRequest req(gamelink::schema::STATE_TARGET_EXTENSION);
+    gamelink::schema::PatchStateRequest req(gamelink::schema::STATE_TARGET_EXTENSION);
     
-    gamelink::schema::UpdateOperation op;
+    gamelink::schema::PatchOperation op;
     op.operation = "replace";
     op.path = "/children/0/name", 
     op.value = gamelink::schema::atomFromString("percentage mana");
@@ -123,12 +124,13 @@ TEST_CASE("State update serialization", "[state][serialization]")
     req.data.state.push_back(op);
 
     SerializeEqual(req, R"({
-        "action": "update", 
+        "action": "patch", 
         "params": {
             "request_id": 65535, 
-            "target": "extension"
+            "target": "state"
         }, 
         "data": {
+            "state_id": "extension",
             "state": [
                 { "op" : "replace", "path": "/children/0/name", "value": "percentage mana" }
             ]
@@ -143,7 +145,10 @@ TEST_CASE("State get serialization", "[state][serialization]")
         "action": "get", 
         "params": {
             "request_id": 65535, 
-            "target": "channel"
+            "target": "state"
+        }, 
+        "data": {
+            "state_id": "channel"
         }
     })");
 }

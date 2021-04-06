@@ -7,20 +7,22 @@ namespace gamelink
         GetStateRequest::GetStateRequest(const char * target)
         {
             action = string("get");
-            params.target = string(target);
+            params.target = string("state");
+            data.state_id = string(target);
         }
         
-        UpdateStateRequest::UpdateStateRequest(const char * target)
+        PatchStateRequest::PatchStateRequest(const char * target)
         {
-            action = string("update");
-            params.target = string(target);
+            action = string("patch");
+            params.target = string("state");
+            data.state_id = string(target);
         }
 
         SubscribeStateRequest::SubscribeStateRequest(const char * target)
         {
             action = string("subscribe");
             params.target = string("state");
-            data.topic_id = string(target);    
+            data.topic_id = string(target);
         }
     }
 }

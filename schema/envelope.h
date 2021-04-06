@@ -16,13 +16,14 @@ namespace gamelink
 			JSON_ATOM_INT64,  //!< The int64Value field is valid, and the JSONAtom represents an integer.
 			JSON_ATOM_DOUBLE, //!< The doubleValue field is valid, and the JSONAtom represents a double.
 			JSON_ATOM_STRING, //!< The stringValue field is valid, and the JSONAtom represents a string.
+			JSON_ATOM_LITERAL, //!< The stringValue field is valid, and is a JSON encoded object or array.
 
 			JSON_ATOM_FORCE_32 = 0xFFFFFFFF
 		};
 
 		/// JSONAtom is effectively a tagged union that can contain a signed 64-bit integer,
-		/// a floating point double, a string, or null. The type of a JSONAtom is stored in
-		/// the `field` type.
+		/// a floating point double, a string, a json literal, or null. The type of a JSONAtom is stored in
+		/// the `field` type. 
 		struct JsonAtom
 		{
 			/// Type of the contained value
@@ -52,6 +53,11 @@ namespace gamelink
 		/// @param[in] str String value
 		/// @return JsonAtom that contains the input string value
 		JsonAtom atomFromString(const string& str);
+
+		/// Creates a JsonAtom that represents an object
+		/// @param[in] str JSON Literal
+		/// @return JsonAtom that contains the input literal
+		JsonAtom atomFromLiteral(const string& str);
 
 		/// Creates a JsonAtom that represents null
 		/// @return A null JsonAtom

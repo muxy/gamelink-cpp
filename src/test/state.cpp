@@ -28,6 +28,7 @@ TEST_CASE("SDK State Creation", "[sdk][state]")
         R"({
             "action": "set", 
             "data": {
+                "state_id": "channel",
                 "state": {
                     "children": [], 
                     "name": "health", 
@@ -36,7 +37,7 @@ TEST_CASE("SDK State Creation", "[sdk][state]")
             }, 
             "params":{
                 "request_id":65535,
-                "target":"channel"
+                "target":"state"
             }
         })"
         ));
@@ -51,8 +52,9 @@ TEST_CASE("SDK Update State", "[sdk][state]")
      sdk.ForeachPayload([](const gamelink::Payload * send){
         REQUIRE(JSONEquals(send->data, 
         R"({
-            "action": "update", 
+            "action": "patch", 
             "data": {
+                "state_id": "channel",
                 "state": [{
                     "op": "replace", 
                     "path": "/name", 
@@ -61,7 +63,7 @@ TEST_CASE("SDK Update State", "[sdk][state]")
             }, 
             "params":{
                 "request_id":65535,
-                "target":"channel"
+                "target":"state"
             }
         })"
         ));

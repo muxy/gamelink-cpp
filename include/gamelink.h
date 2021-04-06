@@ -181,6 +181,7 @@ namespace gamelink
 		// State operations, all async.
 
 		/// Queues a request to replace the entirety of state with new information.
+		/// This will generate a StateUpdate subscription event.
 		///
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		/// @param[in] value A serializable type. Will overwrite any existing state for the given target.
@@ -193,6 +194,7 @@ namespace gamelink
 		};
 
 		/// Queues a request to replace the entirety of state with new information.
+		/// This will generate a StateUpdate subscription event.
 		///
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		/// @param[in] value JSON. Will overwrite any existing state for the given target.
@@ -205,6 +207,7 @@ namespace gamelink
 		void GetState(const char* target);
 
 		/// Queues a request to do a single JSON Patch operation on the state object.
+		/// This will generate a StateUpdate subscription event.
 		///
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		/// @param[in] operation A JSON Patch operation
@@ -213,11 +216,12 @@ namespace gamelink
 		void UpdateState(const char* target, const string& operation, const string& path, const schema::JsonAtom& atom);
 
 		/// Queues a request to do many JSON Patch operations on the state object.
+		/// This will generate a StateUpdate subscription event.
 		///
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		/// @param[in] begin Pointer to the first element in an array of UpdateOperations
 		/// @param[in] end Pointer one past the last element in an array of UpdateOperations
-		void UpdateState(const char* target, const schema::UpdateOperation* begin, const schema::UpdateOperation* end);
+		void UpdateState(const char* target, const schema::PatchOperation* begin, const schema::PatchOperation* end);
 
 		/// Starts subscribing to state updates for the given target.
 		/// Updates come through the OnStateUpdate callback
