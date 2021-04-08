@@ -60,7 +60,7 @@ int main()
 	gamelink::SDK sdk;
 
 	// Set up network connection
-	WebsocketConnection websocket("localhost", 5050);
+	WebsocketConnection websocket("sandbox.gamelink.muxy.io", 80);
 	websocket.onMessage([&](const char* bytes, uint32_t len) { sdk.ReceiveMessage(bytes, len); });
 
 	// Setup the debug logger.
@@ -95,9 +95,15 @@ int main()
 	sdk.UpdateState(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/spellbook/-",
 					gamelink::schema::atomFromLiteral(R"({ "name": "Fireball", "level": 3 })"));
 
+	// Get state now:
+	sdk.GetState(gamelink::schema::STATE_TARGET_CHANNEL, [](const gamelink::schema::GetStateResponse<nlohmann::json>& state) {
+		std::cout << " Got state: " << state.data.state["name"] << " has " << state.data.state["int"] << " int\n";
+	});
+
 	// Subscribe to state
 	sdk.OnStateUpdate([&](const gamelink::schema::SubscribeStateUpdateResponse<nlohmann::json>& state) {
 		std::cout << " Got a state update: " << state.data.state["name"] << " has " << state.data.state["int"] << " int\n";
+		done = true;
 	});
 
 	sdk.SubscribeToStateUpdates(gamelink::schema::STATE_TARGET_CHANNEL);
