@@ -37,362 +37,402 @@ namespace gamelink
 #ifndef MUXY_GAMELINK_SCHEMA_SERIALIZATION_H
 #define MUXY_GAMELINK_SCHEMA_SERIALIZATION_H
 
-#define MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, name, out, property) \
-	{ nlohmann::json::const_iterator it = in.find(name); if (it != in.end()) { it->get_to(out. property); }}
-
-
-#define MUXY_GAMELINK_SERIALIZE_0(Type) \
-    inline void to_json(nlohmann::json& out, const Type& p) {      \
-	} \
-    inline void from_json(const nlohmann::json& in, Type& p) {     \
+#define MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, name, out, property)                                                                        \
+	{                                                                                                                                      \
+		nlohmann::json::const_iterator it = in.find(name);                                                                                 \
+		if (it != in.end())                                                                                                                \
+		{                                                                                                                                  \
+			it->get_to(out.property);                                                                                                      \
+		}                                                                                                                                  \
 	}
 
-#define MUXY_GAMELINK_SERIALIZE_INTRUSIVE_0(Type) \
-    friend inline void to_json(nlohmann::json& out, const Type& p) {      \
-	} \
-    friend inline void from_json(const nlohmann::json& in, Type& p) {     \
+#define MUXY_GAMELINK_SERIALIZE_0(Type)                                                                                                    \
+	inline void to_json(nlohmann::json& out, const Type& p) {}                                                                             \
+	inline void from_json(const nlohmann::json& in, Type& p) {}
+
+#define MUXY_GAMELINK_SERIALIZE_INTRUSIVE_0(Type)                                                                                          \
+	friend inline void to_json(nlohmann::json& out, const Type& p) {}                                                                      \
+	friend inline void from_json(const nlohmann::json& in, Type& p) {}
+
+#define MUXY_GAMELINK_SERIALIZE_1(Type, n1, p1)                                                                                            \
+	inline void to_json(nlohmann::json& out, const Type& p)                                                                                \
+	{                                                                                                                                      \
+		out[n1] = p.p1;                                                                                                                    \
+	}                                                                                                                                      \
+	inline void from_json(const nlohmann::json& in, Type& p)                                                                               \
+	{                                                                                                                                      \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1)                                                                                  \
 	}
 
-#define MUXY_GAMELINK_SERIALIZE_1(Type, n1, p1) \
-    inline void to_json(nlohmann::json& out, const Type& p) {      \
-		out[n1] = p. p1; \
-	} \
-    inline void from_json(const nlohmann::json& in, Type& p) {     \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1) \
+#define MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(Type, n1, p1)                                                                                  \
+	friend inline void to_json(nlohmann::json& out, const Type& p)                                                                         \
+	{                                                                                                                                      \
+		out[n1] = p.p1;                                                                                                                    \
+	}                                                                                                                                      \
+	friend inline void from_json(const nlohmann::json& in, Type& p)                                                                        \
+	{                                                                                                                                      \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1)                                                                                  \
 	}
 
-#define MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(Type, n1, p1) \
-    friend inline void to_json(nlohmann::json& out, const Type& p) {      \
-		out[n1] = p. p1; \
-	} \
-    friend inline void from_json(const nlohmann::json& in, Type& p) {     \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1) \
+#define MUXY_GAMELINK_SERIALIZE_2(Type, n1, p1, n2, p2)                                                                                    \
+	inline void to_json(nlohmann::json& out, const Type& p)                                                                                \
+	{                                                                                                                                      \
+		out[n1] = p.p1;                                                                                                                    \
+		out[n2] = p.p2;                                                                                                                    \
+	}                                                                                                                                      \
+	inline void from_json(const nlohmann::json& in, Type& p)                                                                               \
+	{                                                                                                                                      \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2)                                                                                  \
 	}
 
-#define MUXY_GAMELINK_SERIALIZE_2(Type, n1, p1, n2, p2) \
-    inline void to_json(nlohmann::json& out, const Type& p) {      \
-		out[n1] = p. p1; \
-		out[n2] = p. p2; \
-	} \
-    inline void from_json(const nlohmann::json& in, Type& p) {     \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2) \
+#define MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(Type, n1, p1, n2, p2)                                                                          \
+	friend inline void to_json(nlohmann::json& out, const Type& p)                                                                         \
+	{                                                                                                                                      \
+		out[n1] = p.p1;                                                                                                                    \
+		out[n2] = p.p2;                                                                                                                    \
+	}                                                                                                                                      \
+	friend inline void from_json(const nlohmann::json& in, Type& p)                                                                        \
+	{                                                                                                                                      \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2)                                                                                  \
 	}
 
-#define MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(Type, n1, p1, n2, p2) \
-    friend inline void to_json(nlohmann::json& out, const Type& p) {      \
-		out[n1] = p. p1; \
-		out[n2] = p. p2; \
-	} \
-    friend inline void from_json(const nlohmann::json& in, Type& p) {     \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2) \
+#define MUXY_GAMELINK_SERIALIZE_3(Type, n1, p1, n2, p2, n3, p3)                                                                            \
+	inline void to_json(nlohmann::json& out, const Type& p)                                                                                \
+	{                                                                                                                                      \
+		out[n1] = p.p1;                                                                                                                    \
+		out[n2] = p.p2;                                                                                                                    \
+		out[n3] = p.p3;                                                                                                                    \
+	}                                                                                                                                      \
+	inline void from_json(const nlohmann::json& in, Type& p)                                                                               \
+	{                                                                                                                                      \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3)                                                                                  \
 	}
 
-#define MUXY_GAMELINK_SERIALIZE_3(Type, n1, p1, n2, p2, n3, p3) \
-    inline void to_json(nlohmann::json& out, const Type& p) {      \
-		out[n1] = p. p1; \
-		out[n2] = p. p2; \
-		out[n3] = p. p3; \
-	} \
-    inline void from_json(const nlohmann::json& in, Type& p) {     \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3) \
+#define MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(Type, n1, p1, n2, p2, n3, p3)                                                                  \
+	friend inline void to_json(nlohmann::json& out, const Type& p)                                                                         \
+	{                                                                                                                                      \
+		out[n1] = p.p1;                                                                                                                    \
+		out[n2] = p.p2;                                                                                                                    \
+		out[n3] = p.p3;                                                                                                                    \
+	}                                                                                                                                      \
+	friend inline void from_json(const nlohmann::json& in, Type& p)                                                                        \
+	{                                                                                                                                      \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3)                                                                                  \
 	}
 
-#define MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(Type, n1, p1, n2, p2, n3, p3) \
-    friend inline void to_json(nlohmann::json& out, const Type& p) {      \
-		out[n1] = p. p1; \
-		out[n2] = p. p2; \
-		out[n3] = p. p3; \
-	} \
-    friend inline void from_json(const nlohmann::json& in, Type& p) {     \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3) \
+#define MUXY_GAMELINK_SERIALIZE_4(Type, n1, p1, n2, p2, n3, p3, n4, p4)                                                                    \
+	inline void to_json(nlohmann::json& out, const Type& p)                                                                                \
+	{                                                                                                                                      \
+		out[n1] = p.p1;                                                                                                                    \
+		out[n2] = p.p2;                                                                                                                    \
+		out[n3] = p.p3;                                                                                                                    \
+		out[n4] = p.p4;                                                                                                                    \
+	}                                                                                                                                      \
+	inline void from_json(const nlohmann::json& in, Type& p)                                                                               \
+	{                                                                                                                                      \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4)                                                                                  \
 	}
 
-#define MUXY_GAMELINK_SERIALIZE_4(Type, n1, p1, n2, p2, n3, p3, n4, p4) \
-    inline void to_json(nlohmann::json& out, const Type& p) {      \
-		out[n1] = p. p1; \
-		out[n2] = p. p2; \
-		out[n3] = p. p3; \
-		out[n4] = p. p4; \
-	} \
-    inline void from_json(const nlohmann::json& in, Type& p) {     \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4) \
+#define MUXY_GAMELINK_SERIALIZE_INTRUSIVE_4(Type, n1, p1, n2, p2, n3, p3, n4, p4)                                                          \
+	friend inline void to_json(nlohmann::json& out, const Type& p)                                                                         \
+	{                                                                                                                                      \
+		out[n1] = p.p1;                                                                                                                    \
+		out[n2] = p.p2;                                                                                                                    \
+		out[n3] = p.p3;                                                                                                                    \
+		out[n4] = p.p4;                                                                                                                    \
+	}                                                                                                                                      \
+	friend inline void from_json(const nlohmann::json& in, Type& p)                                                                        \
+	{                                                                                                                                      \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4)                                                                                  \
 	}
 
-#define MUXY_GAMELINK_SERIALIZE_INTRUSIVE_4(Type, n1, p1, n2, p2, n3, p3, n4, p4) \
-    friend inline void to_json(nlohmann::json& out, const Type& p) {      \
-		out[n1] = p. p1; \
-		out[n2] = p. p2; \
-		out[n3] = p. p3; \
-		out[n4] = p. p4; \
-	} \
-    friend inline void from_json(const nlohmann::json& in, Type& p) {     \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4) \
+#define MUXY_GAMELINK_SERIALIZE_5(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5)                                                            \
+	inline void to_json(nlohmann::json& out, const Type& p)                                                                                \
+	{                                                                                                                                      \
+		out[n1] = p.p1;                                                                                                                    \
+		out[n2] = p.p2;                                                                                                                    \
+		out[n3] = p.p3;                                                                                                                    \
+		out[n4] = p.p4;                                                                                                                    \
+		out[n5] = p.p5;                                                                                                                    \
+	}                                                                                                                                      \
+	inline void from_json(const nlohmann::json& in, Type& p)                                                                               \
+	{                                                                                                                                      \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5)                                                                                  \
 	}
 
-#define MUXY_GAMELINK_SERIALIZE_5(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5) \
-    inline void to_json(nlohmann::json& out, const Type& p) {      \
-		out[n1] = p. p1; \
-		out[n2] = p. p2; \
-		out[n3] = p. p3; \
-		out[n4] = p. p4; \
-		out[n5] = p. p5; \
-	} \
-    inline void from_json(const nlohmann::json& in, Type& p) {     \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5) \
+#define MUXY_GAMELINK_SERIALIZE_INTRUSIVE_5(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5)                                                  \
+	friend inline void to_json(nlohmann::json& out, const Type& p)                                                                         \
+	{                                                                                                                                      \
+		out[n1] = p.p1;                                                                                                                    \
+		out[n2] = p.p2;                                                                                                                    \
+		out[n3] = p.p3;                                                                                                                    \
+		out[n4] = p.p4;                                                                                                                    \
+		out[n5] = p.p5;                                                                                                                    \
+	}                                                                                                                                      \
+	friend inline void from_json(const nlohmann::json& in, Type& p)                                                                        \
+	{                                                                                                                                      \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5)                                                                                  \
 	}
 
-#define MUXY_GAMELINK_SERIALIZE_INTRUSIVE_5(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5) \
-    friend inline void to_json(nlohmann::json& out, const Type& p) {      \
-		out[n1] = p. p1; \
-		out[n2] = p. p2; \
-		out[n3] = p. p3; \
-		out[n4] = p. p4; \
-		out[n5] = p. p5; \
-	} \
-    friend inline void from_json(const nlohmann::json& in, Type& p) {     \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5) \
+#define MUXY_GAMELINK_SERIALIZE_6(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5, n6, p6)                                                    \
+	inline void to_json(nlohmann::json& out, const Type& p)                                                                                \
+	{                                                                                                                                      \
+		out[n1] = p.p1;                                                                                                                    \
+		out[n2] = p.p2;                                                                                                                    \
+		out[n3] = p.p3;                                                                                                                    \
+		out[n4] = p.p4;                                                                                                                    \
+		out[n5] = p.p5;                                                                                                                    \
+		out[n6] = p.p6;                                                                                                                    \
+	}                                                                                                                                      \
+	inline void from_json(const nlohmann::json& in, Type& p)                                                                               \
+	{                                                                                                                                      \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n6, p, p6)                                                                                  \
 	}
 
-#define MUXY_GAMELINK_SERIALIZE_6(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5, n6, p6) \
-    inline void to_json(nlohmann::json& out, const Type& p) {      \
-		out[n1] = p. p1; \
-		out[n2] = p. p2; \
-		out[n3] = p. p3; \
-		out[n4] = p. p4; \
-		out[n5] = p. p5; \
-		out[n6] = p. p6; \
-	} \
-    inline void from_json(const nlohmann::json& in, Type& p) {     \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n6, p, p6) \
+#define MUXY_GAMELINK_SERIALIZE_INTRUSIVE_6(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5, n6, p6)                                          \
+	friend inline void to_json(nlohmann::json& out, const Type& p)                                                                         \
+	{                                                                                                                                      \
+		out[n1] = p.p1;                                                                                                                    \
+		out[n2] = p.p2;                                                                                                                    \
+		out[n3] = p.p3;                                                                                                                    \
+		out[n4] = p.p4;                                                                                                                    \
+		out[n5] = p.p5;                                                                                                                    \
+		out[n6] = p.p6;                                                                                                                    \
+	}                                                                                                                                      \
+	friend inline void from_json(const nlohmann::json& in, Type& p)                                                                        \
+	{                                                                                                                                      \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n6, p, p6)                                                                                  \
 	}
 
-#define MUXY_GAMELINK_SERIALIZE_INTRUSIVE_6(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5, n6, p6) \
-    friend inline void to_json(nlohmann::json& out, const Type& p) {      \
-		out[n1] = p. p1; \
-		out[n2] = p. p2; \
-		out[n3] = p. p3; \
-		out[n4] = p. p4; \
-		out[n5] = p. p5; \
-		out[n6] = p. p6; \
-	} \
-    friend inline void from_json(const nlohmann::json& in, Type& p) {     \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n6, p, p6) \
+#define MUXY_GAMELINK_SERIALIZE_7(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5, n6, p6, n7, p7)                                            \
+	inline void to_json(nlohmann::json& out, const Type& p)                                                                                \
+	{                                                                                                                                      \
+		out[n1] = p.p1;                                                                                                                    \
+		out[n2] = p.p2;                                                                                                                    \
+		out[n3] = p.p3;                                                                                                                    \
+		out[n4] = p.p4;                                                                                                                    \
+		out[n5] = p.p5;                                                                                                                    \
+		out[n6] = p.p6;                                                                                                                    \
+		out[n7] = p.p7;                                                                                                                    \
+	}                                                                                                                                      \
+	inline void from_json(const nlohmann::json& in, Type& p)                                                                               \
+	{                                                                                                                                      \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n6, p, p6)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n7, p, p7)                                                                                  \
 	}
 
-#define MUXY_GAMELINK_SERIALIZE_7(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5, n6, p6, n7, p7) \
-    inline void to_json(nlohmann::json& out, const Type& p) {      \
-		out[n1] = p. p1; \
-		out[n2] = p. p2; \
-		out[n3] = p. p3; \
-		out[n4] = p. p4; \
-		out[n5] = p. p5; \
-		out[n6] = p. p6; \
-		out[n7] = p. p7; \
-	} \
-    inline void from_json(const nlohmann::json& in, Type& p) {     \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n6, p, p6) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n7, p, p7) \
+#define MUXY_GAMELINK_SERIALIZE_INTRUSIVE_7(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5, n6, p6, n7, p7)                                  \
+	friend inline void to_json(nlohmann::json& out, const Type& p)                                                                         \
+	{                                                                                                                                      \
+		out[n1] = p.p1;                                                                                                                    \
+		out[n2] = p.p2;                                                                                                                    \
+		out[n3] = p.p3;                                                                                                                    \
+		out[n4] = p.p4;                                                                                                                    \
+		out[n5] = p.p5;                                                                                                                    \
+		out[n6] = p.p6;                                                                                                                    \
+		out[n7] = p.p7;                                                                                                                    \
+	}                                                                                                                                      \
+	friend inline void from_json(const nlohmann::json& in, Type& p)                                                                        \
+	{                                                                                                                                      \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n6, p, p6)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n7, p, p7)                                                                                  \
 	}
 
-#define MUXY_GAMELINK_SERIALIZE_INTRUSIVE_7(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5, n6, p6, n7, p7) \
-    friend inline void to_json(nlohmann::json& out, const Type& p) {      \
-		out[n1] = p. p1; \
-		out[n2] = p. p2; \
-		out[n3] = p. p3; \
-		out[n4] = p. p4; \
-		out[n5] = p. p5; \
-		out[n6] = p. p6; \
-		out[n7] = p. p7; \
-	} \
-    friend inline void from_json(const nlohmann::json& in, Type& p) {     \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n6, p, p6) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n7, p, p7) \
+#define MUXY_GAMELINK_SERIALIZE_8(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5, n6, p6, n7, p7, n8, p8)                                    \
+	inline void to_json(nlohmann::json& out, const Type& p)                                                                                \
+	{                                                                                                                                      \
+		out[n1] = p.p1;                                                                                                                    \
+		out[n2] = p.p2;                                                                                                                    \
+		out[n3] = p.p3;                                                                                                                    \
+		out[n4] = p.p4;                                                                                                                    \
+		out[n5] = p.p5;                                                                                                                    \
+		out[n6] = p.p6;                                                                                                                    \
+		out[n7] = p.p7;                                                                                                                    \
+		out[n8] = p.p8;                                                                                                                    \
+	}                                                                                                                                      \
+	inline void from_json(const nlohmann::json& in, Type& p)                                                                               \
+	{                                                                                                                                      \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n6, p, p6)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n7, p, p7)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n8, p, p8)                                                                                  \
 	}
 
-#define MUXY_GAMELINK_SERIALIZE_8(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5, n6, p6, n7, p7, n8, p8) \
-    inline void to_json(nlohmann::json& out, const Type& p) {      \
-		out[n1] = p. p1; \
-		out[n2] = p. p2; \
-		out[n3] = p. p3; \
-		out[n4] = p. p4; \
-		out[n5] = p. p5; \
-		out[n6] = p. p6; \
-		out[n7] = p. p7; \
-		out[n8] = p. p8; \
-	} \
-    inline void from_json(const nlohmann::json& in, Type& p) {     \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n6, p, p6) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n7, p, p7) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n8, p, p8) \
+#define MUXY_GAMELINK_SERIALIZE_INTRUSIVE_8(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5, n6, p6, n7, p7, n8, p8)                          \
+	friend inline void to_json(nlohmann::json& out, const Type& p)                                                                         \
+	{                                                                                                                                      \
+		out[n1] = p.p1;                                                                                                                    \
+		out[n2] = p.p2;                                                                                                                    \
+		out[n3] = p.p3;                                                                                                                    \
+		out[n4] = p.p4;                                                                                                                    \
+		out[n5] = p.p5;                                                                                                                    \
+		out[n6] = p.p6;                                                                                                                    \
+		out[n7] = p.p7;                                                                                                                    \
+		out[n8] = p.p8;                                                                                                                    \
+	}                                                                                                                                      \
+	friend inline void from_json(const nlohmann::json& in, Type& p)                                                                        \
+	{                                                                                                                                      \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n6, p, p6)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n7, p, p7)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n8, p, p8)                                                                                  \
 	}
 
-#define MUXY_GAMELINK_SERIALIZE_INTRUSIVE_8(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5, n6, p6, n7, p7, n8, p8) \
-    friend inline void to_json(nlohmann::json& out, const Type& p) {      \
-		out[n1] = p. p1; \
-		out[n2] = p. p2; \
-		out[n3] = p. p3; \
-		out[n4] = p. p4; \
-		out[n5] = p. p5; \
-		out[n6] = p. p6; \
-		out[n7] = p. p7; \
-		out[n8] = p. p8; \
-	} \
-    friend inline void from_json(const nlohmann::json& in, Type& p) {     \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n6, p, p6) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n7, p, p7) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n8, p, p8) \
+#define MUXY_GAMELINK_SERIALIZE_9(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5, n6, p6, n7, p7, n8, p8, n9, p9)                            \
+	inline void to_json(nlohmann::json& out, const Type& p)                                                                                \
+	{                                                                                                                                      \
+		out[n1] = p.p1;                                                                                                                    \
+		out[n2] = p.p2;                                                                                                                    \
+		out[n3] = p.p3;                                                                                                                    \
+		out[n4] = p.p4;                                                                                                                    \
+		out[n5] = p.p5;                                                                                                                    \
+		out[n6] = p.p6;                                                                                                                    \
+		out[n7] = p.p7;                                                                                                                    \
+		out[n8] = p.p8;                                                                                                                    \
+		out[n9] = p.p9;                                                                                                                    \
+	}                                                                                                                                      \
+	inline void from_json(const nlohmann::json& in, Type& p)                                                                               \
+	{                                                                                                                                      \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n6, p, p6)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n7, p, p7)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n8, p, p8)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n9, p, p9)                                                                                  \
 	}
 
-#define MUXY_GAMELINK_SERIALIZE_9(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5, n6, p6, n7, p7, n8, p8, n9, p9) \
-    inline void to_json(nlohmann::json& out, const Type& p) {      \
-		out[n1] = p. p1; \
-		out[n2] = p. p2; \
-		out[n3] = p. p3; \
-		out[n4] = p. p4; \
-		out[n5] = p. p5; \
-		out[n6] = p. p6; \
-		out[n7] = p. p7; \
-		out[n8] = p. p8; \
-		out[n9] = p. p9; \
-	} \
-    inline void from_json(const nlohmann::json& in, Type& p) {     \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n6, p, p6) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n7, p, p7) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n8, p, p8) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n9, p, p9) \
+#define MUXY_GAMELINK_SERIALIZE_INTRUSIVE_9(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5, n6, p6, n7, p7, n8, p8, n9, p9)                  \
+	friend inline void to_json(nlohmann::json& out, const Type& p)                                                                         \
+	{                                                                                                                                      \
+		out[n1] = p.p1;                                                                                                                    \
+		out[n2] = p.p2;                                                                                                                    \
+		out[n3] = p.p3;                                                                                                                    \
+		out[n4] = p.p4;                                                                                                                    \
+		out[n5] = p.p5;                                                                                                                    \
+		out[n6] = p.p6;                                                                                                                    \
+		out[n7] = p.p7;                                                                                                                    \
+		out[n8] = p.p8;                                                                                                                    \
+		out[n9] = p.p9;                                                                                                                    \
+	}                                                                                                                                      \
+	friend inline void from_json(const nlohmann::json& in, Type& p)                                                                        \
+	{                                                                                                                                      \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n6, p, p6)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n7, p, p7)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n8, p, p8)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n9, p, p9)                                                                                  \
 	}
 
-#define MUXY_GAMELINK_SERIALIZE_INTRUSIVE_9(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5, n6, p6, n7, p7, n8, p8, n9, p9) \
-    friend inline void to_json(nlohmann::json& out, const Type& p) {      \
-		out[n1] = p. p1; \
-		out[n2] = p. p2; \
-		out[n3] = p. p3; \
-		out[n4] = p. p4; \
-		out[n5] = p. p5; \
-		out[n6] = p. p6; \
-		out[n7] = p. p7; \
-		out[n8] = p. p8; \
-		out[n9] = p. p9; \
-	} \
-    friend inline void from_json(const nlohmann::json& in, Type& p) {     \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n6, p, p6) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n7, p, p7) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n8, p, p8) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n9, p, p9) \
+#define MUXY_GAMELINK_SERIALIZE_10(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5, n6, p6, n7, p7, n8, p8, n9, p9, n10, p10)                 \
+	inline void to_json(nlohmann::json& out, const Type& p)                                                                                \
+	{                                                                                                                                      \
+		out[n1] = p.p1;                                                                                                                    \
+		out[n2] = p.p2;                                                                                                                    \
+		out[n3] = p.p3;                                                                                                                    \
+		out[n4] = p.p4;                                                                                                                    \
+		out[n5] = p.p5;                                                                                                                    \
+		out[n6] = p.p6;                                                                                                                    \
+		out[n7] = p.p7;                                                                                                                    \
+		out[n8] = p.p8;                                                                                                                    \
+		out[n9] = p.p9;                                                                                                                    \
+		out[n10] = p.p10;                                                                                                                  \
+	}                                                                                                                                      \
+	inline void from_json(const nlohmann::json& in, Type& p)                                                                               \
+	{                                                                                                                                      \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n6, p, p6)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n7, p, p7)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n8, p, p8)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n9, p, p9)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n10, p, p10)                                                                                \
 	}
 
-#define MUXY_GAMELINK_SERIALIZE_10(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5, n6, p6, n7, p7, n8, p8, n9, p9, n10, p10) \
-    inline void to_json(nlohmann::json& out, const Type& p) {      \
-		out[n1] = p. p1; \
-		out[n2] = p. p2; \
-		out[n3] = p. p3; \
-		out[n4] = p. p4; \
-		out[n5] = p. p5; \
-		out[n6] = p. p6; \
-		out[n7] = p. p7; \
-		out[n8] = p. p8; \
-		out[n9] = p. p9; \
-		out[n10] = p. p10; \
-	} \
-    inline void from_json(const nlohmann::json& in, Type& p) {     \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n6, p, p6) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n7, p, p7) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n8, p, p8) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n9, p, p9) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n10, p, p10) \
+#define MUXY_GAMELINK_SERIALIZE_INTRUSIVE_10(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5, n6, p6, n7, p7, n8, p8, n9, p9, n10, p10)       \
+	friend inline void to_json(nlohmann::json& out, const Type& p)                                                                         \
+	{                                                                                                                                      \
+		out[n1] = p.p1;                                                                                                                    \
+		out[n2] = p.p2;                                                                                                                    \
+		out[n3] = p.p3;                                                                                                                    \
+		out[n4] = p.p4;                                                                                                                    \
+		out[n5] = p.p5;                                                                                                                    \
+		out[n6] = p.p6;                                                                                                                    \
+		out[n7] = p.p7;                                                                                                                    \
+		out[n8] = p.p8;                                                                                                                    \
+		out[n9] = p.p9;                                                                                                                    \
+		out[n10] = p.p10;                                                                                                                  \
+	}                                                                                                                                      \
+	friend inline void from_json(const nlohmann::json& in, Type& p)                                                                        \
+	{                                                                                                                                      \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n6, p, p6)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n7, p, p7)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n8, p, p8)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n9, p, p9)                                                                                  \
+		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n10, p, p10)                                                                                \
 	}
-
-#define MUXY_GAMELINK_SERIALIZE_INTRUSIVE_10(Type, n1, p1, n2, p2, n3, p3, n4, p4, n5, p5, n6, p6, n7, p7, n8, p8, n9, p9, n10, p10) \
-    friend inline void to_json(nlohmann::json& out, const Type& p) {      \
-		out[n1] = p. p1; \
-		out[n2] = p. p2; \
-		out[n3] = p. p3; \
-		out[n4] = p. p4; \
-		out[n5] = p. p5; \
-		out[n6] = p. p6; \
-		out[n7] = p. p7; \
-		out[n8] = p. p8; \
-		out[n9] = p. p9; \
-		out[n10] = p. p10; \
-	} \
-    friend inline void from_json(const nlohmann::json& in, Type& p) {     \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n1, p, p1) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n2, p, p2) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n3, p, p3) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n4, p, p4) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n5, p, p5) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n6, p, p6) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n7, p, p7) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n8, p, p8) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n9, p, p9) \
-		MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, n10, p, p10) \
-	}
-
 
 #endif
 
@@ -410,16 +450,17 @@ namespace gamelink
 		// An integer, double, string, null
 		enum JsonAtomType
 		{
-			JSON_ATOM_NULL,   //!< No fields are valid, the JSONAtom represents a null
-			JSON_ATOM_INT64,  //!< The int64Value field is valid, and the JSONAtom represents an integer.
-			JSON_ATOM_DOUBLE, //!< The doubleValue field is valid, and the JSONAtom represents a double.
-			JSON_ATOM_STRING, //!< The stringValue field is valid, and the JSONAtom represents a string.
+			JSON_ATOM_NULL,    //!< No fields are valid, the JSONAtom represents a null
+			JSON_ATOM_INT64,   //!< The int64Value field is valid, and the JSONAtom represents an integer.
+			JSON_ATOM_DOUBLE,  //!< The doubleValue field is valid, and the JSONAtom represents a double.
+			JSON_ATOM_STRING,  //!< The stringValue field is valid, and the JSONAtom represents a string.
+			JSON_ATOM_LITERAL, //!< The stringValue field is valid, and is a JSON encoded object or array.
 
 			JSON_ATOM_FORCE_32 = 0xFFFFFFFF
 		};
 
 		/// JSONAtom is effectively a tagged union that can contain a signed 64-bit integer,
-		/// a floating point double, a string, or null. The type of a JSONAtom is stored in
+		/// a floating point double, a string, a json literal, or null. The type of a JSONAtom is stored in
 		/// the `field` type.
 		struct JsonAtom
 		{
@@ -450,6 +491,11 @@ namespace gamelink
 		/// @param[in] str String value
 		/// @return JsonAtom that contains the input string value
 		JsonAtom atomFromString(const string& str);
+
+		/// Creates a JsonAtom that represents an object
+		/// @param[in] str JSON Literal
+		/// @return JsonAtom that contains the input literal
+		JsonAtom atomFromLiteral(const string& str);
 
 		/// Creates a JsonAtom that represents null
 		/// @return A null JsonAtom
@@ -619,7 +665,7 @@ namespace gamelink
 		/// @param[out] out Output object. Should be a ResponseEnvelope or a type inherited from ResponseEnvelope.
 		/// @return true iff the input JSON parsed correctly, false otherwise
 		template<typename T>
-		bool ParseResponse(const char * bytes, uint32_t length, T& out)
+		bool ParseResponse(const char* bytes, uint32_t length, T& out)
 		{
 			nlohmann::json value = nlohmann::json::parse(bytes, bytes + length, nullptr, false);
 			if (value.is_discarded())
@@ -636,7 +682,7 @@ namespace gamelink
 		/// @param[in] length Length of the bytes parameter
 		/// @param[out] success Optional boolean to determine parse failure. Will be set to true iff the parse succeeded, false otherwise.
 		/// @return A ReceiveEnvelope with no body, only metadata field and possibly errors.
-		ReceiveEnvelope<EmptyBody> ParseEnvelope(const char * bytes, uint32_t length, bool* success = nullptr);
+		ReceiveEnvelope<EmptyBody> ParseEnvelope(const char* bytes, uint32_t length, bool* success = nullptr);
 	}
 }
 
@@ -703,7 +749,8 @@ namespace gamelink
 		};
 
 		struct SubscribeAuthenticationResponse : ReceiveEnvelope<OKResponseBody>
-		{};
+		{
+		};
 
 		struct AuthenticateWithPINRequest : SendEnvelope<AuthenticateWithPINRequestBody>
 		{
@@ -722,7 +769,8 @@ namespace gamelink
 		};
 
 		struct AuthenticateResponse : ReceiveEnvelope<AuthenticateJWTResponseBody>
-		{};
+		{
+		};
 
 		class User
 		{
@@ -952,11 +1000,14 @@ namespace gamelink
 		template<typename T>
 		struct SetStateRequestBody
 		{
+			/// Either 'channel' or 'extension', based on the target.
+			string state_id;
+
 			/// The state to set. The type `T` should be serializable
 			/// through use of the MUXY_GAMELINK_SERIALIZE macros.
 			T state;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SetStateRequestBody, "state", state);
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(SetStateRequestBody, "state_id", state_id, "state", state);
 		};
 
 		template<typename T>
@@ -987,7 +1038,8 @@ namespace gamelink
 			SetStateRequest(const char* target, const T& value)
 			{
 				this->action = string("set");
-				this->params.target = string(target);
+				this->params.target = string("state");
+				this->data.state_id = string(target);
 				this->data.state = value;
 			}
 		};
@@ -997,7 +1049,15 @@ namespace gamelink
 		{
 		};
 
-		struct GetStateRequest : SendEnvelope<EmptyBody>
+		struct GetStateRequestBody
+		{
+			/// Either 'channel' or 'extension', based on the target.
+			string state_id;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(GetStateRequestBody, "state_id", state_id);
+		};
+
+		struct GetStateRequest : SendEnvelope<GetStateRequestBody>
 		{
 			/// Creates a GetState request
 			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
@@ -1010,27 +1070,30 @@ namespace gamelink
 		};
 
 		// Update state
-		struct UpdateOperation
+		struct PatchOperation
 		{
 			string operation;
 			string path;
 			JsonAtom value;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(UpdateOperation, "op", operation, "path", path, "value", value);
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PatchOperation, "op", operation, "path", path, "value", value);
 		};
 
-		struct UpdateStateRequestBody
+		struct PatchStateRequestBody
 		{
-			std::vector<UpdateOperation> state;
+			/// Either 'channel' or 'extension', based on the target.
+			string state_id;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(UpdateStateRequestBody, "state", state);
+			std::vector<PatchOperation> state;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(PatchStateRequestBody, "state_id", state_id, "state", state);
 		};
 
-		struct UpdateStateRequest : SendEnvelope<UpdateStateRequestBody>
+		struct PatchStateRequest : SendEnvelope<PatchStateRequestBody>
 		{
 			/// Creates an UpdateState request
 			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
-			explicit UpdateStateRequest(const char* target);
+			explicit PatchStateRequest(const char* target);
 		};
 
 		// Subscription
@@ -1067,24 +1130,32 @@ namespace gamelink
 
 namespace gamelink
 {
-	class Send
+	class Payload
 	{
 	public:
-		Send(string data);
+		Payload(string data);
 
 		string data;
 	};
 
 	namespace detail
 	{
+		static const uint32_t CALLBACK_PERSISTENT = 0;
+		static const uint32_t CALLBACK_ONESHOT = 1;
+		static const uint32_t CALLBACK_ONESHOT_CONSUMED = 2;
+
 		template<typename T>
 		class Callback
 		{
 		public:
 			typedef void (*RawFunctionPointer)(void*, const T&);
 
-			Callback()
-				: _rawCallback(nullptr)
+
+			Callback(uint32_t id, uint16_t targetRequestId, uint32_t oneShotStatus)
+				: id(id)
+				, targetRequestId(targetRequestId)
+				, oneShotStatus(oneShotStatus)
+				, _rawCallback(nullptr)
 				, _user(nullptr)
 			{
 			}
@@ -1098,6 +1169,11 @@ namespace gamelink
 				else if (_callback)
 				{
 					_callback(v);
+				}
+
+				if (oneShotStatus == CALLBACK_ONESHOT)
+				{
+					oneShotStatus = CALLBACK_ONESHOT_CONSUMED;
 				}
 			}
 
@@ -1117,9 +1193,17 @@ namespace gamelink
 				_callback = std::function<void(const T&)>();
 			}
 
+			void clear()
+			{
+				_rawCallback = nullptr;
+				_user = nullptr;
+
+				_callback = std::function<void(const T&)>();
+			}
+
 			bool valid() const
 			{
-				if (_rawCallback) 
+				if (_rawCallback)
 				{
 					return true;
 				}
@@ -1131,15 +1215,99 @@ namespace gamelink
 
 				return false;
 			}
+
+			uint32_t id;
+			uint16_t targetRequestId;
+			uint32_t oneShotStatus;
 		private:
 			RawFunctionPointer _rawCallback;
 			void* _user;
 
 			std::function<void(const T&)> _callback;
 		};
+
+		static const uint16_t ANY_REQUEST_ID = 0xFFFF;
+		
+
+		template<typename T, uint8_t IDMask>
+		class CallbackCollection
+		{
+		public:
+			CallbackCollection()
+				: currentHandle(0)
+			{
+			}
+
+			typedef void (*RawFunctionPointer)(void*, const T&);
+
+			bool validateId(uint32_t id)
+			{
+				// Check the ID byte for consistency.
+				return ((id >> 24) & 0xFF) == IDMask;
+			}
+
+			uint32_t set(std::function<void(const T&)> fn, uint16_t requestId, uint32_t flags)
+			{
+				uint32_t id = nextID();
+				Callback<T> cb(id, requestId, flags);
+				cb.set(fn);
+
+				callbacks.emplace_back(std::move(cb));
+
+				return id;
+			}
+
+			uint32_t set(RawFunctionPointer fn, void* user, uint16_t requestId, uint32_t flags)
+			{
+				uint32_t id = nextID();
+				Callback<T> cb(id, requestId, flags);
+				cb.set(fn, user);
+
+				callbacks.emplace_back(std::move(cb));
+
+				return id;
+			}
+
+			void remove(uint32_t id)
+			{
+				callbacks.erase(std::remove_if(callbacks.begin(), callbacks.end(), [id](const Callback<T>& cb) { return cb.id == id; }),
+								callbacks.end());
+			}
+
+			void invoke(const T& v)
+			{
+				uint16_t requestId = v.meta.request_id;
+				for (uint32_t i = 0; i < callbacks.size(); ++i)
+				{
+					if (callbacks[i].targetRequestId == ANY_REQUEST_ID || callbacks[i].targetRequestId == requestId)
+					{
+						callbacks[i].invoke(v);
+					}
+				}
+
+				callbacks.erase(std::remove_if(callbacks.begin(), callbacks.end(), [](const Callback<T>& cb)
+				{
+					return cb.oneShotStatus == CALLBACK_ONESHOT_CONSUMED;
+				}), callbacks.end());
+			}
+
+		private:
+			uint32_t nextID()
+			{
+				// Store a byte to determine if the id returned from a set operation belongs to this
+				// collection of callbacks.
+				static const uint32_t MASK = 0x0FFFFFFFu;
+				uint32_t id = (currentHandle & (MASK)) | (static_cast<uint32_t>(IDMask) << 24);
+				currentHandle = (currentHandle + 1) & 0x0FFFFFFFu;
+				return id;
+			}
+
+			uint32_t currentHandle;
+			std::vector<Callback<T>> callbacks;
+		};
 	}
 
-	
+	/// Not thread safe.
 	class SDK
 	{
 	public:
@@ -1148,47 +1316,51 @@ namespace gamelink
 
 		bool ReceiveMessage(const char* bytes, uint32_t length);
 
-		bool HasSends()
+		bool HasPayloads()
 		{
-			return _sendQueue.size() > 0;
+			return _queuedPayloads.size() > 0;
 		}
 
 		template<typename T>
-		void ForeachSend(const T& networkCallback)
+		void ForeachPayload(const T& networkCallback)
 		{
-			while (HasSends())
+			while (HasPayloads())
 			{
-				Send* send = _sendQueue.front();
-				_sendQueue.pop();
+				Payload* payload = _queuedPayloads.front();
+				_queuedPayloads.pop();
 
-				networkCallback(send);
+				networkCallback(payload);
 
 				// Clean up send
-				delete send;
+				delete payload;
 			}
 		}
 
-		typedef void (*SendCallback)(const Send*);
-		void ForeachSend(SendCallback cb, void* user);
+		typedef void (*NetworkCallback)(const Payload*);
+		void ForeachSend(NetworkCallback cb, void* user);
 
 		bool IsAuthenticated() const;
 
 		const schema::User* GetUser() const;
 
 		/// Sets the OnDebugMessage callback. These messages are emitted
-		/// for debugging purposes only.
+		/// for debugging purposes only. There can only be one OnDebugMessage callback registered.
 		void OnDebugMessage(std::function<void(const string&)> callback);
-		void OnDebugMessage(void (*callback)(void*, const string&), void *ptr);
-		
-		// Callbacks
-		void OnPollUpdate(std::function<void(const schema::PollUpdateResponse&)> callback);
-		void OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr);
+		void OnDebugMessage(void (*callback)(void*, const string&), void* ptr);
+		void DetachOnDebugMessage();
 
-		void OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> callback);
-		void OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr);
+		// Callbacks.
+		uint32_t OnPollUpdate(std::function<void(const schema::PollUpdateResponse&)> callback);
+		uint32_t OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr);
+		void DetachOnPollUpdate(uint32_t id);
 
-		void OnStateUpdate(std::function<void(const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback);
-		void OnStateUpdate(void (*callback)(void*, const schema::SubscribeStateUpdateResponse<nlohmann::json>&), void* ptr);
+		uint32_t OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> callback);
+		uint32_t OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr);
+		void DetachOnAuthenticate(uint32_t id);
+
+		uint32_t OnStateUpdate(std::function<void(const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback);
+		uint32_t OnStateUpdate(void (*callback)(void*, const schema::SubscribeStateUpdateResponse<nlohmann::json>&), void* ptr);
+		void DetachOnStateUpdate(uint32_t id);
 
 		/// Queues an authentication request using a PIN code, as received by the user from an extension's config view.
 		///
@@ -1241,6 +1413,7 @@ namespace gamelink
 		// State operations, all async.
 
 		/// Queues a request to replace the entirety of state with new information.
+		/// This will generate a StateUpdate subscription event.
 		///
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		/// @param[in] value A serializable type. Will overwrite any existing state for the given target.
@@ -1253,6 +1426,7 @@ namespace gamelink
 		};
 
 		/// Queues a request to replace the entirety of state with new information.
+		/// This will generate a StateUpdate subscription event.
 		///
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		/// @param[in] value JSON. Will overwrite any existing state for the given target.
@@ -1264,7 +1438,13 @@ namespace gamelink
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		void GetState(const char* target);
 
+		/// Queues a request to get state, using the passed in callback to receive the results.
+		/// This callback is called only once.
+		void GetState(const char* target, std::function<void(const schema::GetStateResponse<nlohmann::json>&)> callback);
+		void GetState(const char* target, void (*callback)(void*, const schema::GetStateResponse<nlohmann::json>&), void* user);
+
 		/// Queues a request to do a single JSON Patch operation on the state object.
+		/// This will generate a StateUpdate subscription event.
 		///
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		/// @param[in] operation A JSON Patch operation
@@ -1273,36 +1453,42 @@ namespace gamelink
 		void UpdateState(const char* target, const string& operation, const string& path, const schema::JsonAtom& atom);
 
 		/// Queues a request to do many JSON Patch operations on the state object.
+		/// This will generate a StateUpdate subscription event.
 		///
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		/// @param[in] begin Pointer to the first element in an array of UpdateOperations
 		/// @param[in] end Pointer one past the last element in an array of UpdateOperations
-		void UpdateState(const char* target, const schema::UpdateOperation* begin, const schema::UpdateOperation* end);
+		void UpdateState(const char* target, const schema::PatchOperation* begin, const schema::PatchOperation* end);
 
 		/// Starts subscribing to state updates for the given target.
 		/// Updates come through the OnStateUpdate callback
 		///
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		void SubscribeToStateUpdates(const char* target);
-	private:
-		void debugLogSend(const Send *);
 
-		template<typename Payload>
-		void queuePayload(const Payload& p)
+	private:
+		void debugLogPayload(const Payload*);
+
+		template<typename T>
+		void queuePayload(const T& p)
 		{
-			Send* send = new Send(to_string(p));
-			debugLogSend(send);
-			_sendQueue.push(send);
+			Payload* payload = new Payload(to_string(p));
+			debugLogPayload(payload);
+			_queuedPayloads.push(payload);
 		}
 
-		std::queue<Send*> _sendQueue;
+		std::queue<Payload*> _queuedPayloads;
 		schema::User* _user;
 
-		detail::Callback<string> _onDebugMessage;
+		uint16_t currentRequestId;
+		uint16_t nextRequestId();
 
-		detail::Callback<schema::PollUpdateResponse> _onPollUpdate;
-		detail::Callback<schema::AuthenticateResponse> _onAuthenticate;
-		detail::Callback<schema::SubscribeStateUpdateResponse<nlohmann::json>> _onStateUpdate;
+		detail::Callback<string> _onDebugMessage;
+		detail::CallbackCollection<schema::PollUpdateResponse, 1> _onPollUpdate;
+		detail::CallbackCollection<schema::AuthenticateResponse, 2> _onAuthenticate;
+		detail::CallbackCollection<schema::SubscribeStateUpdateResponse<nlohmann::json>, 3> _onStateUpdate;
+
+		detail::CallbackCollection<schema::GetStateResponse<nlohmann::json>, 4> _onGetState;
 	};
 }
 
@@ -1337,7 +1523,8 @@ namespace gamelink
 			data.client_id = client;
 		}
 
-		User::User(string jwt) : jwt(std::move(jwt))
+		User::User(string jwt)
+			: jwt(std::move(jwt))
 		{
 		}
 
@@ -1384,7 +1571,17 @@ namespace gamelink
 			return atom;
 		}
 
-		JsonAtom atomNull(int64_t v)
+		JsonAtom atomFromLiteral(const string& str)
+		{
+			JsonAtom atom;
+
+			atom.type = JSON_ATOM_LITERAL;
+			atom.stringValue = str;
+
+			return atom;
+		}
+
+		JsonAtom atomNull()
 		{
 			JsonAtom atom;
 			atom.type = JSON_ATOM_NULL;
@@ -1407,6 +1604,9 @@ namespace gamelink
 			case JSON_ATOM_STRING:
 				out = p.stringValue;
 				break;
+			case JSON_ATOM_LITERAL:
+				out = nlohmann::json::parse(p.stringValue.c_str(), nullptr, false);
+				break;
 			default:
 				// Bad
 				out = nlohmann::json();
@@ -1424,17 +1624,25 @@ namespace gamelink
 			}
 			else if (n.is_string())
 			{
+				p.type = JSON_ATOM_STRING;
 				p.stringValue = n.get<string>();
 				return;
 			}
 			else if (n.is_number_integer())
 			{
+				p.type = JSON_ATOM_INT64;
 				p.int64Value = n.get<int64_t>();
 				return;
 			}
 			else if (n.is_number())
 			{
+				p.type = JSON_ATOM_DOUBLE;
 				p.doubleValue = n.get<double>();
+			}
+			else if (n.is_object() || n.is_array())
+			{
+				p.type = JSON_ATOM_LITERAL;
+				p.stringValue = n.dump();
 			}
 		}
 
@@ -1449,11 +1657,11 @@ namespace gamelink
 		{
 		}
 
-		ReceiveEnvelope<EmptyBody> ParseEnvelope(const char * bytes, uint32_t length, bool * outSuccess)
+		ReceiveEnvelope<EmptyBody> ParseEnvelope(const char* bytes, uint32_t length, bool* outSuccess)
 		{
 			ReceiveEnvelope<EmptyBody> out;
 			bool result = ParseResponse(bytes, length, out);
-			if (outSuccess) 
+			if (outSuccess)
 			{
 				*outSuccess = result;
 			}
@@ -1507,27 +1715,29 @@ namespace gamelink
 
 namespace gamelink
 {
-    namespace schema
-    {
-        GetStateRequest::GetStateRequest(const char * target)
-        {
-            action = string("get");
-            params.target = string(target);
-        }
-        
-        UpdateStateRequest::UpdateStateRequest(const char * target)
-        {
-            action = string("update");
-            params.target = string(target);
-        }
+	namespace schema
+	{
+		GetStateRequest::GetStateRequest(const char* target)
+		{
+			action = string("get");
+			params.target = string("state");
+			data.state_id = string(target);
+		}
 
-        SubscribeStateRequest::SubscribeStateRequest(const char * target)
-        {
-            action = string("subscribe");
-            params.target = string("state");
-            data.topic_id = string(target);    
-        }
-    }
+		PatchStateRequest::PatchStateRequest(const char* target)
+		{
+			action = string("patch");
+			params.target = string("state");
+			data.state_id = string(target);
+		}
+
+		SubscribeStateRequest::SubscribeStateRequest(const char* target)
+		{
+			action = string("subscribe");
+			params.target = string("state");
+			data.topic_id = string(target);
+		}
+	}
 }
 #ifndef INCLUDE_MUXY_GAMELINK_CPP
 #define INCLUDE_MUXY_GAMELINK_CPP
@@ -1537,31 +1747,40 @@ namespace gamelink
 
 namespace gamelink
 {
-	Send::Send(string data)
+	Payload::Payload(string data)
 	{
 		this->data = data;
 	}
 
 	SDK::SDK()
-		: _user(NULL){};
+		: _user(NULL)
+		, currentRequestId(1)
+		, _onDebugMessage(0, 0, detail::CALLBACK_PERSISTENT){};
 
 	SDK::~SDK()
 	{
 		// Clean up unsent messages
-		while (HasSends())
+		while (HasPayloads())
 		{
-			Send* send = _sendQueue.front();
-			_sendQueue.pop();
+			Payload* send = _queuedPayloads.front();
+			_queuedPayloads.pop();
 			delete send;
 		}
 	}
-	
-	void SDK::debugLogSend(const Send * s)
+
+	uint16_t SDK::nextRequestId()
+	{
+		// Wrap around at 32k
+		uint16_t id = (currentRequestId++ & 0x7F);
+		return id;
+	}
+
+	void SDK::debugLogPayload(const Payload* s)
 	{
 		if (_onDebugMessage.valid())
 		{
 			uint32_t bufferLength = s->data.size() + 128;
-			char * buffer = new char[bufferLength];
+			char* buffer = new char[bufferLength];
 
 			int offset = snprintf(buffer, bufferLength, "send len=%d msg=", static_cast<int>(s->data.size()));
 			memcpy(buffer + offset, s->data.c_str(), s->data.size());
@@ -1569,19 +1788,24 @@ namespace gamelink
 
 			_onDebugMessage.invoke(string(buffer));
 
-			delete [] buffer;
+			delete[] buffer;
 		}
 	}
 
 	bool SDK::ReceiveMessage(const char* bytes, uint32_t length)
 	{
 		bool success = false;
-		auto env = schema::ParseEnvelope(bytes, length);
+		bool parseEnvelopeSuccess = false;
+		schema::ReceiveEnvelope<schema::EmptyBody> env = schema::ParseEnvelope(bytes, length, &parseEnvelopeSuccess);
+		if (!parseEnvelopeSuccess)
+		{
+			return false;
+		}
 
 		if (_onDebugMessage.valid())
 		{
 			uint32_t bufferLength = length + 128;
-			char * buffer = new char[bufferLength];
+			char* buffer = new char[bufferLength];
 
 			int offset = snprintf(buffer, bufferLength, "recv len=%d msg=", static_cast<int>(length));
 			memcpy(buffer + offset, bytes, length);
@@ -1589,18 +1813,31 @@ namespace gamelink
 
 			_onDebugMessage.invoke(string(buffer));
 
-			delete [] buffer;
+			delete[] buffer;
 		}
 
 		if (env.meta.action == "authenticate")
 		{
 			// Authentication response
 			schema::AuthenticateResponse authResp;
-			success = schema::ParseResponse<schema::AuthenticateResponse>(bytes, length, authResp);
+			success = schema::ParseResponse(bytes, length, authResp);
 			if (success)
 			{
 				_onAuthenticate.invoke(authResp);
 				this->_user = new schema::User(authResp.data.jwt);
+			}
+		}
+		else if (env.meta.action == "get")
+		{
+			if (env.meta.target == "state")
+			{
+				schema::GetStateResponse<nlohmann::json> stateResp;
+				success = schema::ParseResponse(bytes, length, stateResp);
+
+				if (success)
+				{
+					_onGetState.invoke(stateResp);
+				}
 			}
 		}
 		else if (env.meta.action == "update")
@@ -1648,39 +1885,80 @@ namespace gamelink
 		_onDebugMessage.set(callback);
 	}
 
-	void SDK::OnDebugMessage(void (*callback)(void*, const string&), void *ptr)
+	void SDK::OnDebugMessage(void (*callback)(void*, const string&), void* ptr)
 	{
 		_onDebugMessage.set(callback, ptr);
 	}
 
-	void SDK::OnPollUpdate(std::function<void(const schema::PollUpdateResponse& pollResponse)> callback)
+	void SDK::DetachOnDebugMessage()
 	{
-		_onPollUpdate.set(callback);
+		_onDebugMessage.clear();
 	}
 
-	void SDK::OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr)
+	uint32_t SDK::OnPollUpdate(std::function<void(const schema::PollUpdateResponse& pollResponse)> callback)
 	{
-		_onPollUpdate.set(callback, ptr);
+		return _onPollUpdate.set(callback, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
 	}
 
-	void SDK::OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> callback)
+	uint32_t SDK::OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr)
 	{
-		_onAuthenticate.set(callback);
+		return _onPollUpdate.set(callback, ptr, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
 	}
 
-	void SDK::OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr)
+	void SDK::DetachOnPollUpdate(uint32_t id)
 	{
-		_onAuthenticate.set(callback, ptr);
+		if (_onPollUpdate.validateId(id))
+		{
+			_onPollUpdate.remove(id);
+		}
+		else
+		{
+			_onDebugMessage.invoke("Invalid ID passed into DetachOnPollUpdate");
+		}
 	}
 
-	void SDK::OnStateUpdate(std::function<void(const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback)
+	uint32_t SDK::OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> callback)
 	{
-		_onStateUpdate.set(callback);
+		return _onAuthenticate.set(callback, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
 	}
 
-	void SDK::OnStateUpdate(void (*callback)(void*, const schema::SubscribeStateUpdateResponse<nlohmann::json>&), void* ptr)
+	uint32_t SDK::OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr)
 	{
-		_onStateUpdate.set(callback, ptr);
+		return _onAuthenticate.set(callback, ptr, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
+
+	void SDK::DetachOnAuthenticate(uint32_t id)
+	{
+		if (_onAuthenticate.validateId(id))
+		{
+			_onAuthenticate.remove(id);
+		}
+		else
+		{
+			_onDebugMessage.invoke("Invalid ID passed into DetachOnAuthenticate");
+		}
+	}
+
+	uint32_t SDK::OnStateUpdate(std::function<void(const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback)
+	{
+		return _onStateUpdate.set(callback, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
+
+	uint32_t SDK::OnStateUpdate(void (*callback)(void*, const schema::SubscribeStateUpdateResponse<nlohmann::json>&), void* ptr)
+	{
+		return _onStateUpdate.set(callback, ptr, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
+
+	void SDK::DetachOnStateUpdate(uint32_t id)
+	{
+		if (_onStateUpdate.validateId(id))
+		{
+			_onStateUpdate.remove(id);
+		}
+		else
+		{
+			_onDebugMessage.invoke("Invalid ID passed into OnStateUpdate");
+		}
 	}
 
 	void SDK::AuthenticateWithPIN(const string& clientId, const string& pin)
@@ -1731,6 +2009,28 @@ namespace gamelink
 		queuePayload(payload);
 	}
 
+	void SDK::GetState(const char* target, std::function<void(const schema::GetStateResponse<nlohmann::json>&)> callback)
+	{
+		schema::GetStateRequest payload(target);
+		uint16_t id = nextRequestId();
+
+		payload.params.request_id = id;
+		queuePayload(payload);
+
+		_onGetState.set(callback, id, detail::CALLBACK_ONESHOT);
+	}
+
+	void SDK::GetState(const char* target, void (*callback)(void*, const schema::GetStateResponse<nlohmann::json>&), void* user)
+	{
+		schema::GetStateRequest payload(target);
+		uint16_t id = nextRequestId();
+
+		payload.params.request_id = id;
+		queuePayload(payload);
+
+		_onGetState.set(callback, user, id, detail::CALLBACK_ONESHOT);
+	}
+
 	void SDK::SubscribeToStateUpdates(const char* target)
 	{
 		schema::SubscribeStateRequest payload(target);
@@ -1739,7 +2039,7 @@ namespace gamelink
 
 	void SDK::UpdateState(const char* target, const string& operation, const string& path, const schema::JsonAtom& atom)
 	{
-		schema::UpdateOperation op;
+		schema::PatchOperation op;
 		op.operation = operation;
 		op.path = path;
 		op.value = atom;
@@ -1747,10 +2047,10 @@ namespace gamelink
 		UpdateState(target, &op, &op + 1);
 	}
 
-	void SDK::UpdateState(const char* target, const schema::UpdateOperation* begin, const schema::UpdateOperation* end)
+	void SDK::UpdateState(const char* target, const schema::PatchOperation* begin, const schema::PatchOperation* end)
 	{
-		schema::UpdateStateRequest payload(target);
-		std::vector<schema::UpdateOperation> updates;
+		schema::PatchStateRequest payload(target);
+		std::vector<schema::PatchOperation> updates;
 		updates.resize(end - begin);
 		std::copy(begin, end, updates.begin());
 
