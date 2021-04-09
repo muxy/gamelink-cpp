@@ -1762,16 +1762,6 @@ namespace gamelink
 {
 	namespace schema
 	{
-
-	}
-}
-
-
-
-namespace gamelink
-{
-	namespace schema
-	{
 		GetStateRequest::GetStateRequest(const char* target)
 		{
 			action = string("get");
@@ -1908,8 +1898,7 @@ namespace gamelink
 					_onPollUpdate.invoke(pollResp);
 				}
 			}
-
-			if (env.meta.target == "channel")
+			else if (env.meta.target == "channel")
 			{
 				schema::SubscribeStateUpdateResponse<nlohmann::json> resp;
 
@@ -1917,6 +1906,15 @@ namespace gamelink
 				if (success)
 				{
 					_onStateUpdate.invoke(resp);
+				}
+			}
+			else if (env.meta.target == "twitchBitsPurchase")
+			{
+				schema::TwitchPurchaseBitsResponse<nlohmann::json> resp;
+				success = schema::ParseResponse(bytes, length, resp);
+				if (success)
+				{
+					_onTwitchPurchaseBits.invoke(resp);
 				}
 			}
 		}
