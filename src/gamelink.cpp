@@ -12,7 +12,9 @@ namespace gamelink
 	}
 
 	SDK::SDK()
-		: _user(NULL){};
+		: _user(NULL)
+		, currentRequestId(1)
+		, _onDebugMessage(0, 0, detail::CALLBACK_PERSISTENT){};
 
 	SDK::~SDK()
 	{
@@ -23,6 +25,13 @@ namespace gamelink
 			_queuedPayloads.pop();
 			delete send;
 		}
+	}
+
+	uint16_t SDK::nextRequestId()
+	{
+		// Wrap around at 32k
+		uint16_t id = (currentRequestId++ & 0x7F);
+		return id;
 	}
 
 	void SDK::debugLogPayload(const Payload* s)
@@ -45,7 +54,12 @@ namespace gamelink
 	bool SDK::ReceiveMessage(const char* bytes, uint32_t length)
 	{
 		bool success = false;
-		auto env = schema::ParseEnvelope(bytes, length);
+		bool parseEnvelopeSuccess = false;
+		schema::ReceiveEnvelope<schema::EmptyBody> env = schema::ParseEnvelope(bytes, length, &parseEnvelopeSuccess);
+		if (!parseEnvelopeSuccess)
+		{
+			return false;
+		}
 
 		if (_onDebugMessage.valid())
 		{
@@ -65,11 +79,24 @@ namespace gamelink
 		{
 			// Authentication response
 			schema::AuthenticateResponse authResp;
-			success = schema::ParseResponse<schema::AuthenticateResponse>(bytes, length, authResp);
+			success = schema::ParseResponse(bytes, length, authResp);
 			if (success)
 			{
 				_onAuthenticate.invoke(authResp);
 				this->_user = new schema::User(authResp.data.jwt);
+			}
+		}
+		else if (env.meta.action == "get")
+		{
+			if (env.meta.target == "state")
+			{
+				schema::GetStateResponse<nlohmann::json> stateResp;
+				success = schema::ParseResponse(bytes, length, stateResp);
+
+				if (success)
+				{
+					_onGetState.invoke(stateResp);
+				}
 			}
 		}
 		else if (env.meta.action == "update")
@@ -122,34 +149,75 @@ namespace gamelink
 		_onDebugMessage.set(callback, ptr);
 	}
 
-	void SDK::OnPollUpdate(std::function<void(const schema::PollUpdateResponse& pollResponse)> callback)
+	void SDK::DetachOnDebugMessage()
 	{
-		_onPollUpdate.set(callback);
+		_onDebugMessage.clear();
 	}
 
-	void SDK::OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr)
+	uint32_t SDK::OnPollUpdate(std::function<void(const schema::PollUpdateResponse& pollResponse)> callback)
 	{
-		_onPollUpdate.set(callback, ptr);
+		return _onPollUpdate.set(callback, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
 	}
 
-	void SDK::OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> callback)
+	uint32_t SDK::OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr)
 	{
-		_onAuthenticate.set(callback);
+		return _onPollUpdate.set(callback, ptr, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
 	}
 
-	void SDK::OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr)
+	void SDK::DetachOnPollUpdate(uint32_t id)
 	{
-		_onAuthenticate.set(callback, ptr);
+		if (_onPollUpdate.validateId(id))
+		{
+			_onPollUpdate.remove(id);
+		}
+		else
+		{
+			_onDebugMessage.invoke("Invalid ID passed into DetachOnPollUpdate");
+		}
 	}
 
-	void SDK::OnStateUpdate(std::function<void(const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback)
+	uint32_t SDK::OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> callback)
 	{
-		_onStateUpdate.set(callback);
+		return _onAuthenticate.set(callback, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
 	}
 
-	void SDK::OnStateUpdate(void (*callback)(void*, const schema::SubscribeStateUpdateResponse<nlohmann::json>&), void* ptr)
+	uint32_t SDK::OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr)
 	{
-		_onStateUpdate.set(callback, ptr);
+		return _onAuthenticate.set(callback, ptr, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
+
+	void SDK::DetachOnAuthenticate(uint32_t id)
+	{
+		if (_onAuthenticate.validateId(id))
+		{
+			_onAuthenticate.remove(id);
+		}
+		else
+		{
+			_onDebugMessage.invoke("Invalid ID passed into DetachOnAuthenticate");
+		}
+	}
+
+	uint32_t SDK::OnStateUpdate(std::function<void(const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback)
+	{
+		return _onStateUpdate.set(callback, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
+
+	uint32_t SDK::OnStateUpdate(void (*callback)(void*, const schema::SubscribeStateUpdateResponse<nlohmann::json>&), void* ptr)
+	{
+		return _onStateUpdate.set(callback, ptr, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
+
+	void SDK::DetachOnStateUpdate(uint32_t id)
+	{
+		if (_onStateUpdate.validateId(id))
+		{
+			_onStateUpdate.remove(id);
+		}
+		else
+		{
+			_onDebugMessage.invoke("Invalid ID passed into OnStateUpdate");
+		}
 	}
 
 	void SDK::AuthenticateWithPIN(const string& clientId, const string& pin)
@@ -198,6 +266,28 @@ namespace gamelink
 	{
 		schema::GetStateRequest payload(target);
 		queuePayload(payload);
+	}
+
+	void SDK::GetState(const char* target, std::function<void(const schema::GetStateResponse<nlohmann::json>&)> callback)
+	{
+		schema::GetStateRequest payload(target);
+		uint16_t id = nextRequestId();
+
+		payload.params.request_id = id;
+		queuePayload(payload);
+
+		_onGetState.set(callback, id, detail::CALLBACK_ONESHOT);
+	}
+
+	void SDK::GetState(const char* target, void (*callback)(void*, const schema::GetStateResponse<nlohmann::json>&), void* user)
+	{
+		schema::GetStateRequest payload(target);
+		uint16_t id = nextRequestId();
+
+		payload.params.request_id = id;
+		queuePayload(payload);
+
+		_onGetState.set(callback, user, id, detail::CALLBACK_ONESHOT);
 	}
 
 	void SDK::SubscribeToStateUpdates(const char* target)

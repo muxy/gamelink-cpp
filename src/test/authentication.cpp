@@ -26,7 +26,7 @@ TEST_CASE("SDK PIN Authentication", "[sdk][authentication][pin]")
 	REQUIRE(!sdk.HasPayloads());
 
 	// Verify state after successful auth
-	const char * msg = R"({
+	const char* msg = R"({
 		"meta": {
 			"action": "authenticate"
 		},
@@ -66,7 +66,7 @@ TEST_CASE("SDK JWT Authentication", "[sdk][authentication][jwt]")
 	REQUIRE(!sdk.HasPayloads());
 
 	// Verify state after successful auth
-	const char * msg = R"({
+	const char* msg = R"({
 		"meta": {
 			"action": "authenticate"
 		},

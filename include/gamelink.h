@@ -17,14 +17,22 @@ namespace gamelink
 
 	namespace detail
 	{
+		static const uint32_t CALLBACK_PERSISTENT = 0;
+		static const uint32_t CALLBACK_ONESHOT = 1;
+		static const uint32_t CALLBACK_ONESHOT_CONSUMED = 2;
+
 		template<typename T>
 		class Callback
 		{
 		public:
 			typedef void (*RawFunctionPointer)(void*, const T&);
 
-			Callback()
-				: _rawCallback(nullptr)
+
+			Callback(uint32_t id, uint16_t targetRequestId, uint32_t oneShotStatus)
+				: id(id)
+				, targetRequestId(targetRequestId)
+				, oneShotStatus(oneShotStatus)
+				, _rawCallback(nullptr)
 				, _user(nullptr)
 			{
 			}
@@ -38,6 +46,11 @@ namespace gamelink
 				else if (_callback)
 				{
 					_callback(v);
+				}
+
+				if (oneShotStatus == CALLBACK_ONESHOT)
+				{
+					oneShotStatus = CALLBACK_ONESHOT_CONSUMED;
 				}
 			}
 
@@ -57,6 +70,14 @@ namespace gamelink
 				_callback = std::function<void(const T&)>();
 			}
 
+			void clear()
+			{
+				_rawCallback = nullptr;
+				_user = nullptr;
+
+				_callback = std::function<void(const T&)>();
+			}
+
 			bool valid() const
 			{
 				if (_rawCallback)
@@ -72,14 +93,98 @@ namespace gamelink
 				return false;
 			}
 
+			uint32_t id;
+			uint16_t targetRequestId;
+			uint32_t oneShotStatus;
 		private:
 			RawFunctionPointer _rawCallback;
 			void* _user;
 
 			std::function<void(const T&)> _callback;
 		};
+
+		static const uint16_t ANY_REQUEST_ID = 0xFFFF;
+		
+
+		template<typename T, uint8_t IDMask>
+		class CallbackCollection
+		{
+		public:
+			CallbackCollection()
+				: currentHandle(0)
+			{
+			}
+
+			typedef void (*RawFunctionPointer)(void*, const T&);
+
+			bool validateId(uint32_t id)
+			{
+				// Check the ID byte for consistency.
+				return ((id >> 24) & 0xFF) == IDMask;
+			}
+
+			uint32_t set(std::function<void(const T&)> fn, uint16_t requestId, uint32_t flags)
+			{
+				uint32_t id = nextID();
+				Callback<T> cb(id, requestId, flags);
+				cb.set(fn);
+
+				callbacks.emplace_back(std::move(cb));
+
+				return id;
+			}
+
+			uint32_t set(RawFunctionPointer fn, void* user, uint16_t requestId, uint32_t flags)
+			{
+				uint32_t id = nextID();
+				Callback<T> cb(id, requestId, flags);
+				cb.set(fn, user);
+
+				callbacks.emplace_back(std::move(cb));
+
+				return id;
+			}
+
+			void remove(uint32_t id)
+			{
+				callbacks.erase(std::remove_if(callbacks.begin(), callbacks.end(), [id](const Callback<T>& cb) { return cb.id == id; }),
+								callbacks.end());
+			}
+
+			void invoke(const T& v)
+			{
+				uint16_t requestId = v.meta.request_id;
+				for (uint32_t i = 0; i < callbacks.size(); ++i)
+				{
+					if (callbacks[i].targetRequestId == ANY_REQUEST_ID || callbacks[i].targetRequestId == requestId)
+					{
+						callbacks[i].invoke(v);
+					}
+				}
+
+				callbacks.erase(std::remove_if(callbacks.begin(), callbacks.end(), [](const Callback<T>& cb)
+				{
+					return cb.oneShotStatus == CALLBACK_ONESHOT_CONSUMED;
+				}), callbacks.end());
+			}
+
+		private:
+			uint32_t nextID()
+			{
+				// Store a byte to determine if the id returned from a set operation belongs to this
+				// collection of callbacks.
+				static const uint32_t MASK = 0x0FFFFFFFu;
+				uint32_t id = (currentHandle & (MASK)) | (static_cast<uint32_t>(IDMask) << 24);
+				currentHandle = (currentHandle + 1) & 0x0FFFFFFFu;
+				return id;
+			}
+
+			uint32_t currentHandle;
+			std::vector<Callback<T>> callbacks;
+		};
 	}
 
+	/// Not thread safe.
 	class SDK
 	{
 	public:
@@ -116,19 +221,23 @@ namespace gamelink
 		const schema::User* GetUser() const;
 
 		/// Sets the OnDebugMessage callback. These messages are emitted
-		/// for debugging purposes only.
+		/// for debugging purposes only. There can only be one OnDebugMessage callback registered.
 		void OnDebugMessage(std::function<void(const string&)> callback);
 		void OnDebugMessage(void (*callback)(void*, const string&), void* ptr);
+		void DetachOnDebugMessage();
 
-		// Callbacks
-		void OnPollUpdate(std::function<void(const schema::PollUpdateResponse&)> callback);
-		void OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr);
+		// Callbacks.
+		uint32_t OnPollUpdate(std::function<void(const schema::PollUpdateResponse&)> callback);
+		uint32_t OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr);
+		void DetachOnPollUpdate(uint32_t id);
 
-		void OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> callback);
-		void OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr);
+		uint32_t OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> callback);
+		uint32_t OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr);
+		void DetachOnAuthenticate(uint32_t id);
 
-		void OnStateUpdate(std::function<void(const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback);
-		void OnStateUpdate(void (*callback)(void*, const schema::SubscribeStateUpdateResponse<nlohmann::json>&), void* ptr);
+		uint32_t OnStateUpdate(std::function<void(const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback);
+		uint32_t OnStateUpdate(void (*callback)(void*, const schema::SubscribeStateUpdateResponse<nlohmann::json>&), void* ptr);
+		void DetachOnStateUpdate(uint32_t id);
 
 		/// Queues an authentication request using a PIN code, as received by the user from an extension's config view.
 		///
@@ -206,6 +315,11 @@ namespace gamelink
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		void GetState(const char* target);
 
+		/// Queues a request to get state, using the passed in callback to receive the results.
+		/// This callback is called only once.
+		void GetState(const char* target, std::function<void(const schema::GetStateResponse<nlohmann::json>&)> callback);
+		void GetState(const char* target, void (*callback)(void*, const schema::GetStateResponse<nlohmann::json>&), void* user);
+
 		/// Queues a request to do a single JSON Patch operation on the state object.
 		/// This will generate a StateUpdate subscription event.
 		///
@@ -243,11 +357,15 @@ namespace gamelink
 		std::queue<Payload*> _queuedPayloads;
 		schema::User* _user;
 
-		detail::Callback<string> _onDebugMessage;
+		uint16_t currentRequestId;
+		uint16_t nextRequestId();
 
-		detail::Callback<schema::PollUpdateResponse> _onPollUpdate;
-		detail::Callback<schema::AuthenticateResponse> _onAuthenticate;
-		detail::Callback<schema::SubscribeStateUpdateResponse<nlohmann::json>> _onStateUpdate;
+		detail::Callback<string> _onDebugMessage;
+		detail::CallbackCollection<schema::PollUpdateResponse, 1> _onPollUpdate;
+		detail::CallbackCollection<schema::AuthenticateResponse, 2> _onAuthenticate;
+		detail::CallbackCollection<schema::SubscribeStateUpdateResponse<nlohmann::json>, 3> _onStateUpdate;
+
+		detail::CallbackCollection<schema::GetStateResponse<nlohmann::json>, 4> _onGetState;
 	};
 }
 
