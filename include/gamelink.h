@@ -27,7 +27,6 @@ namespace gamelink
 		public:
 			typedef void (*RawFunctionPointer)(void*, const T&);
 
-
 			Callback(uint32_t id, uint16_t targetRequestId, uint32_t oneShotStatus)
 				: id(id)
 				, targetRequestId(targetRequestId)
@@ -96,6 +95,7 @@ namespace gamelink
 			uint32_t id;
 			uint16_t targetRequestId;
 			uint32_t oneShotStatus;
+
 		private:
 			RawFunctionPointer _rawCallback;
 			void* _user;
@@ -104,7 +104,6 @@ namespace gamelink
 		};
 
 		static const uint16_t ANY_REQUEST_ID = 0xFFFF;
-		
 
 		template<typename T, uint8_t IDMask>
 		class CallbackCollection
@@ -162,10 +161,9 @@ namespace gamelink
 					}
 				}
 
-				callbacks.erase(std::remove_if(callbacks.begin(), callbacks.end(), [](const Callback<T>& cb)
-				{
-					return cb.oneShotStatus == CALLBACK_ONESHOT_CONSUMED;
-				}), callbacks.end());
+				callbacks.erase(std::remove_if(callbacks.begin(), callbacks.end(),
+											   [](const Callback<T>& cb) { return cb.oneShotStatus == CALLBACK_ONESHOT_CONSUMED; }),
+								callbacks.end());
 			}
 
 		private:
@@ -238,6 +236,10 @@ namespace gamelink
 		uint32_t OnStateUpdate(std::function<void(const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback);
 		uint32_t OnStateUpdate(void (*callback)(void*, const schema::SubscribeStateUpdateResponse<nlohmann::json>&), void* ptr);
 		void DetachOnStateUpdate(uint32_t id);
+
+		uint32_t OnTwitchPurchaseBits(std::function<void(const schema::TwitchPurchaseBitsResponse<nlohmann::json>&)> callback);
+		uint32_t OnTwitchPurchaseBits(void (*callback)(void*, const schema::TwitchPurchaseBitsResponse<nlohmann::json>&), void* ptr);
+		void DetachOnTwitchPurchaseBits(uint32_t id);
 
 		/// Queues an authentication request using a PIN code, as received by the user from an extension's config view.
 		///
@@ -364,8 +366,8 @@ namespace gamelink
 		detail::CallbackCollection<schema::PollUpdateResponse, 1> _onPollUpdate;
 		detail::CallbackCollection<schema::AuthenticateResponse, 2> _onAuthenticate;
 		detail::CallbackCollection<schema::SubscribeStateUpdateResponse<nlohmann::json>, 3> _onStateUpdate;
-
 		detail::CallbackCollection<schema::GetStateResponse<nlohmann::json>, 4> _onGetState;
+		detail::CallbackCollection<schema::TwitchPurchaseBitsResponse<nlohmann::json>, 5> _onTwitchPurchaseBits;
 	};
 }
 
