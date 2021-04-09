@@ -220,6 +220,28 @@ namespace gamelink
 		}
 	}
 
+	uint32_t SDK::OnTwitchPurchaseBits(std::function<void(const schema::TwitchPurchaseBitsResponse<nlohmann::json>&)> callback)
+	{
+		return _onTwitchPurchaseBits.set(callback, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
+
+	uint32_t SDK::OnTwitchPurchaseBits(void (*callback)(void*, const schema::TwitchPurchaseBitsResponse<nlohmann::json>&), void* ptr)
+	{
+		return _onTwitchPurchaseBits.set(callback, ptr, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
+
+	void SDK::DetachOnTwitchPurchaseBits(uint32_t id)
+	{
+		if (_onTwitchPurchaseBits.validateId(id))
+		{
+			_onTwitchPurchaseBits.remove(id);
+		}
+		else
+		{
+			_onDebugMessage.invoke("Invalid ID passed into DetachOnTwitchPurchaseBits");
+		}
+	}
+
 	void SDK::AuthenticateWithPIN(const string& clientId, const string& pin)
 	{
 		schema::AuthenticateWithPINRequest payload(clientId, pin);

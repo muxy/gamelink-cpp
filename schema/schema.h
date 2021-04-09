@@ -6,6 +6,7 @@
 
 #include "authentication.h"
 #include "poll.h"
+#include "purchase.h"
 #include "state.h"
 #include "subscription.h"
 #endif
