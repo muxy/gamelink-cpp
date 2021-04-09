@@ -246,12 +246,16 @@ namespace gamelink
 		/// @param[in] clientId The extension's client ID
 		/// @param[in] pin 		The PIN input from the broadcaster
 		void AuthenticateWithPIN(const string& clientId, const string& pin);
+		void AuthenticateWithPIN(const string& clientId, const string& pin, std::function<void (const schema::AuthenticateResponse&)> callback);
+		void AuthenticateWithPIN(const string& clientId, const string& pin, void (*callback)(void *, const schema::AuthenticateResponse&), void* user);
 
 		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
 		///
 		/// @param[in] clientId The extension's client ID
 		/// @param[in] jwt 		The stored JWT from a previous authentication
 		void AuthenticateWithJWT(const string& clientId, const string& jwt);
+		void AuthenticateWithJWT(const string& clientId, const string& pin, std::function<void (const schema::AuthenticateResponse&)> callback);
+		void AuthenticateWithJWT(const string& clientId, const string& pin, void (*callback)(void *, const schema::AuthenticateResponse&), void* user);
 
 		// Poll stuff, all async.
 
@@ -261,6 +265,8 @@ namespace gamelink
 		///
 		/// @param[in] pollId The Poll ID to get information for
 		void GetPoll(const string& pollId);
+		void GetPoll(const string& pollId, std::function<void(const schema::GetPollResponse&)> callback);
+		void GetPoll(const string& pollId, void (*callback)(void*, const schema::GetPollResponse&), void* user);
 
 		/// Queues a request to create a poll.
 		///
@@ -372,11 +378,13 @@ namespace gamelink
 		uint16_t nextRequestId();
 
 		detail::Callback<string> _onDebugMessage;
+
 		detail::CallbackCollection<schema::PollUpdateResponse, 1> _onPollUpdate;
 		detail::CallbackCollection<schema::AuthenticateResponse, 2> _onAuthenticate;
 		detail::CallbackCollection<schema::SubscribeStateUpdateResponse<nlohmann::json>, 3> _onStateUpdate;
 		detail::CallbackCollection<schema::GetStateResponse<nlohmann::json>, 4> _onGetState;
 		detail::CallbackCollection<schema::TwitchPurchaseBitsResponse<nlohmann::json>, 5> _onTwitchPurchaseBits;
+		detail::CallbackCollection<schema::GetPollResponse, 6> _onGetPoll;
 	};
 }
 

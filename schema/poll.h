@@ -92,6 +92,19 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PollWithUserDataResponseBody, "prompt", prompt, "options", options, "user_data", userData);
 		};
 
+		// Note that this is the same as PollUpdateBody
+		struct GetPollResponseBody
+		{
+			/// The poll information
+			PollResponseBody poll;
+
+			/// Array of vote counts for each poll option. This array may not be the same size as the
+			/// options array.
+			std::vector<int> results;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(GetPollResponseBody, "poll", poll, "results", results);
+		};
+
 		struct PollUpdateBody
 		{
 			/// The poll information
@@ -168,6 +181,10 @@ namespace gamelink
 		};
 
 		struct PollUpdateResponse : ReceiveEnvelope<PollUpdateBody>
+		{
+		};
+
+		struct GetPollResponse : ReceiveEnvelope<GetPollResponseBody>
 		{
 		};
 

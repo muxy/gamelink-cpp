@@ -112,6 +112,17 @@ namespace gamelink
 					_onGetState.invoke(stateResp);
 				}
 			}
+
+			if (env.meta.target == "poll")
+			{
+				schema::GetPollResponse pollResp;
+				success = schema::ParseResponse(bytes, length, pollResp);
+
+				if (success)
+				{
+					_onGetPoll.invoke(pollResp);
+				}
+			}
 		}
 		else if (env.meta.action == "update")
 		{
@@ -270,16 +281,82 @@ namespace gamelink
 		queuePayload(payload);
 	}
 
+	void SDK::AuthenticateWithPIN(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback)
+	{
+		schema::AuthenticateWithPINRequest payload(clientId, pin);
+		uint16_t id = nextRequestId();
+
+		payload.params.request_id = id;
+		queuePayload(payload);
+
+		_onAuthenticate.set(callback, id, detail::CALLBACK_ONESHOT);
+	}
+
+	void SDK::AuthenticateWithPIN(const string& clientId, const string& pin, void (*callback)(void*, const schema::AuthenticateResponse&), void* user)
+	{
+		schema::AuthenticateWithPINRequest payload(clientId, pin);
+		uint16_t id = nextRequestId();
+
+		payload.params.request_id = id;
+		queuePayload(payload);
+
+		_onAuthenticate.set(callback, user, id, detail::CALLBACK_ONESHOT);
+	}
+
 	void SDK::AuthenticateWithJWT(const string& clientId, const string& jwt)
 	{
 		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
 		queuePayload(payload);
 	}
 
+	void SDK::AuthenticateWithJWT(const string& clientId, const string& jwt, std::function<void(const schema::AuthenticateResponse&)> callback)
+	{
+		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
+		uint16_t id = nextRequestId();
+
+		payload.params.request_id = id;
+		queuePayload(payload);
+
+		_onAuthenticate.set(callback, id, detail::CALLBACK_ONESHOT);
+	}
+
+	void SDK::AuthenticateWithJWT(const string& clientId, const string& jwt, void (*callback)(void*, const schema::AuthenticateResponse&), void* user)
+	{
+		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
+		uint16_t id = nextRequestId();
+
+		payload.params.request_id = id;
+		queuePayload(payload);
+
+		_onAuthenticate.set(callback, user, id, detail::CALLBACK_ONESHOT);
+	}
+
 	void SDK::GetPoll(const string& pollId)
 	{
 		schema::GetPollRequest packet(pollId);
 		queuePayload(packet);
+	}
+
+	void SDK::GetPoll(const string& pollId, std::function<void(const schema::GetPollResponse&)> callback)
+	{
+		schema::GetPollRequest payload(pollId);
+		uint16_t id = nextRequestId();
+
+		payload.params.request_id = id;
+		queuePayload(payload);
+
+		_onGetPoll.set(callback, id, detail::CALLBACK_ONESHOT);
+	}
+
+	void SDK::GetPoll(const string& pollId, void (*callback)(void*, const schema::GetPollResponse&), void* user)
+	{
+		schema::GetPollRequest payload(pollId);
+		uint16_t id = nextRequestId();
+
+		payload.params.request_id = id;
+		queuePayload(payload);
+
+		_onGetPoll.set(callback, user, id, detail::CALLBACK_ONESHOT);
 	}
 
 	void SDK::CreatePoll(const string& pollId, const string& prompt, const std::vector<string>& options)

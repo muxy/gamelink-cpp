@@ -144,12 +144,62 @@ TEST_CASE("SDK Poll Get Results", "[sdk][poll][results]")
 	sdk.GetPoll("test-poll");
 
 	REQUIRE(sdk.HasPayloads());
-
 	sdk.ForeachPayload([](const gamelink::Payload* send) {
 		REQUIRE(JSONEquals(send->data, R"({"action":"get","data":{"poll_id":"test-poll"},"params":{"request_id":65535,"target":"poll"}})"));
 	});
-
 	REQUIRE(!sdk.HasPayloads());
+
+	uint32_t calls = 0;
+	sdk.GetPoll("something-else", [&](const gamelink::schema::GetPollResponse& poll) {
+		calls++;
+
+		REQUIRE(poll.data.poll.pollId == "something-else");
+	});
+
+	const char * msg = R"({
+		 "data": {
+            "poll": {
+                "poll_id": "something-else",
+				"prompt": "Superman or Batman", 
+				"options": ["Superman", "Batman"], 
+				"user_data": {}
+            }, 
+			"results": [
+				100, 
+				93
+			]
+        },
+        "meta":{
+            "request_id":1,
+            "action": "get",
+            "target":"poll"
+        }
+	})";
+
+	sdk.ReceiveMessage(msg, strlen(msg));
+
+	msg = R"({
+		 "data": {
+            "poll": {
+                "poll_id": "wrong",
+				"prompt": "no", 
+				"options": ["yes", "no"], 
+				"user_data": {}
+            }, 
+			"results": [
+				0, 
+				1
+			]
+        },
+        "meta":{
+            "request_id":2,
+            "action": "get",
+            "target":"poll"
+        }
+	})";
+
+	sdk.ReceiveMessage(msg, strlen(msg));
+	REQUIRE(calls == 1);
 }
 
 TEST_CASE("SDK Poll Subscription", "[sdk][poll][subscription]")
