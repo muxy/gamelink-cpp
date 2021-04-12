@@ -10,4 +10,5 @@
 #include "state.h"
 #include "subscription.h"
 #include "broadcast.h"
+#include "datastream.h"
 #endif

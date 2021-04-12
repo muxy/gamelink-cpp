@@ -921,6 +921,20 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PollWithUserDataResponseBody, "prompt", prompt, "options", options, "user_data", userData);
 		};
 
+		// Note that this is the same as PollUpdateBody, and is provided for consistency with each 
+		// endpoint having their own envelope with body.
+		struct GetPollResponseBody
+		{
+			/// The poll information
+			PollResponseBody poll;
+
+			/// Array of vote counts for each poll option. This array may not be the same size as the
+			/// options array.
+			std::vector<int> results;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(GetPollResponseBody, "poll", poll, "results", results);
+		};
+
 		struct PollUpdateBody
 		{
 			/// The poll information
@@ -993,10 +1007,14 @@ namespace gamelink
 		{
 			/// Creates a SubscribePollRequest.
 			/// @param[in] pollId The ID of the poll to subscribe to updates for.
-			SubscribePollRequest(const string& pollId);
+			explicit SubscribePollRequest(const string& pollId);
 		};
 
 		struct PollUpdateResponse : ReceiveEnvelope<PollUpdateBody>
+		{
+		};
+
+		struct GetPollResponse : ReceiveEnvelope<GetPollResponseBody>
 		{
 		};
 
@@ -1009,7 +1027,7 @@ namespace gamelink
 		{
 			/// Creates a DeletePoll request
 			/// @param[in] pollId 	The ID of the poll to be deleted.
-			DeletePollRequest(const string& pollId);
+			explicit DeletePollRequest(const string& pollId);
 		};
 	}
 }
@@ -1019,6 +1037,8 @@ namespace gamelink
 
 #ifndef MUXY_GAMELINK_SCHEMA_H
 #define MUXY_GAMELINK_SCHEMA_H
+
+
 
 
 
@@ -1165,6 +1185,74 @@ namespace gamelink
 #endif
 
 
+#ifndef MUXY_GAMELINK_SCHEMA_BROADCAST_H
+#define MUXY_GAMELINK_SCHEMA_BROADCAST_H
+
+
+namespace gamelink
+{
+    namespace schema
+    {
+        struct BroadcastRequestBody
+        {
+            string message;
+            string topic;
+
+            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(BroadcastRequestBody, "message", message, "topic", topic);
+        };
+
+        struct BroadcastRequest : SendEnvelope<BroadcastRequestBody>
+        {
+            BroadcastRequest(const string& topic, const string& msg);
+        };
+
+        struct BroadcastResponse : ReceiveEnvelope<OKResponseBody>
+        {};
+    }
+}
+
+#endif
+
+#ifndef MUXY_GAMELINK_SCHEMA_DATASTREAM_H
+#define MUXY_GAMELINK_SCHEMA_DATASTREAM_H
+
+
+
+namespace gamelink
+{
+	namespace schema
+	{
+		struct DatastreamEvent
+		{
+			nlohmann::json event;
+			int64_t timestamp;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(DatastreamEvent, "event", event, "timestamp", timestamp);
+		};
+
+		struct DatastreamUpdateBody
+		{
+			std::vector<DatastreamEvent> events;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(DatastreamUpdateBody, "events", events);
+		};
+
+		struct DatastreamUpdate : ReceiveEnvelope<DatastreamUpdateBody>
+		{
+		};
+
+		struct SubscribeDatastreamRequest : SendEnvelope<SubscribeTopicRequestBody>
+		{
+			/// Creates a SubscribeDatastreamRequest
+			explicit SubscribeDatastreamRequest();
+		};
+
+	}
+}
+
+#endif
+
+
 #ifndef INCLUDE_MUXY_GAMELINK_H
 #define INCLUDE_MUXY_GAMELINK_H
 
@@ -1176,7 +1264,7 @@ namespace gamelink
 	class Payload
 	{
 	public:
-		Payload(string data);
+		explicit Payload(string data);
 
 		string data;
 	};
@@ -1355,13 +1443,31 @@ namespace gamelink
 		SDK();
 		~SDK();
 
+		// Not implemented. SDK is not copyable
+		SDK(const SDK&);
+		SDK& operator=(const SDK&);
+
+		// Not implemented. SDK is not movable
+		SDK(SDK&&);
+		SDK& operator=(SDK&&);
+
+		/// Receives a character buffer as a message. This function
+		/// may invoke callbacks.
+		///
+		/// @param[in] bytes Pointer to contiguous array of bytes that represent a network message.
+		/// @param[in] length Length of the bytes array.
+		/// @return Returns true if the message was parsed correctly.
 		bool ReceiveMessage(const char* bytes, uint32_t length);
 
-		bool HasPayloads()
-		{
-			return _queuedPayloads.size() > 0;
-		}
+		/// Returns true if there are a non-zero amount of payloads to send.
+		///
+		/// @return returns if there are payloads to send.
+		bool HasPayloads() const;
 
+		/// Invokes a callable type for each avaliable payload.
+		///
+		/// @param[in] networkCallback callback invoked once for each available payload.
+		///                            must be in the form networkCallback(const Payload*)
 		template<typename T>
 		void ForeachPayload(const T& networkCallback)
 		{
@@ -1377,47 +1483,193 @@ namespace gamelink
 			}
 		}
 
-		typedef void (*NetworkCallback)(const Payload*);
-		void ForeachSend(NetworkCallback cb, void* user);
+		typedef void (*NetworkCallback)(void*, const Payload*);
 
+		/// Invokes a function pointer for each avaliable payload.
+		///
+		/// @param[in] cb Callback to be invoked for each avaliable payload
+		/// @param[in] user User pointer that is passed into the callback
+		void ForeachPayload(NetworkCallback cb, void* user);
+
+		/// Returns if an authentication message has been received.
+		///
+		/// @return true if an authentication message has been received.
 		bool IsAuthenticated() const;
 
+		/// Gets the currently authenticated user.
+		///
+		/// @return The currently authenticated user, or null if no authentication message
+		///         has been recieved.
 		const schema::User* GetUser() const;
 
-		/// Sets the OnDebugMessage callback. These messages are emitted
-		/// for debugging purposes only. There can only be one OnDebugMessage callback registered.
+		/// Sets the OnDebugMessage callback. This is invoked for debugging purposes only.
+		/// There can only be one OnDebugMessage callback registered.
+		///
+		/// @param[in] callback Callback to log a debug message
 		void OnDebugMessage(std::function<void(const string&)> callback);
+
+		/// Sets the OnDebugMessage callback with a function pointer and user pointer.
+		/// This is invoked for debugging purposes only.
+		/// There can only be one OnDebugMessage callback registered.
+		///
+		/// @param[in] callback Callback to log a debug message.
+		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
 		void OnDebugMessage(void (*callback)(void*, const string&), void* ptr);
+
+		/// Detaches the OnDebugMessage callback, so no additional calls will be made.
 		void DetachOnDebugMessage();
 
-		// Callbacks.
+		/// Sets the OnPollUpdate callback. This callback is invoked after SubscribeToPoll is called.
+		/// @remark SubscribeToPoll takes in a poll id, but can be called multiple times with different poll ids.
+		///        Callbacks registered through OnPollUpdate receive all update messages, regardless of poll id.
+		///        Callbacks that are designed to only get updates for a specific poll id should test the poll id
+		///        from within the callback itself.
+		///
+		/// @param[in] callback Callback to invoke when a poll update message is received
+		/// @return Returns an integer handle to the callback, to be used in DetachOnPollUpdate.
 		uint32_t OnPollUpdate(std::function<void(const schema::PollUpdateResponse&)> callback);
+
+		/// Sets the OnPollUpdate callback. This callback is invoked after SubscribeToPoll is called.
+		/// See the std::function overload for remarks.
+		///
+		/// @param[in] callback Callback to invoke when a poll update message is received
+		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
+		/// @return Returns an integer handle to the callback, to be used in DetachOnPollUpdate.
 		uint32_t OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr);
+
+		/// Detaches an OnPollUpdate callback.
+		///
+		/// @param[in] id A handle obtained from calling OnPollUpdate. Invalid handles are ignored.
 		void DetachOnPollUpdate(uint32_t id);
 
+		/// Sets the OnAuthenticate callback. This callback is invoked when an authentication
+		/// message is received.
+		///
+		/// @param[in] callback Callback to invoke when an authentication message is received.
+		/// @return Returns an integer handle to the callback, to be used in DetachOnAuthenticate.
 		uint32_t OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> callback);
+
+		/// Sets the OnAuthenticate callback. This callback is invoked when an authentication
+		/// message is received.
+		///
+		/// @param[in] callback Callback to invoke when an authentication message is received.
+		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
+		/// @return Returns an integer handle to the callback, to be used in DetachOnAuthenticate.
 		uint32_t OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr);
+
+		/// Detaches an OnAuthenticate callback.
+		///
+		/// @param[in] id A handle obtained from calling OnAuthenticate. Invalid handles are ignored.
 		void DetachOnAuthenticate(uint32_t id);
 
+		/// Sets the OnStateUpdate callback. This callback is invoked when a state update
+		/// message is received.
+		///
+		/// @param[in] callback Callback to invoke when a state update message is received.
+		/// @return Returns an integer handle to the callback, to be used in DetachOnStateUpdate.
 		uint32_t OnStateUpdate(std::function<void(const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback);
+
+		/// Sets the OnStateUpdate callback. This callback is invoked when a state update
+		/// message is received.
+		///
+		/// @param[in] callback Callback to invoke when a state update message is received.
+		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
+		/// @return Returns an integer handle to the callback, to be used in DetachOnStateUpdate.
 		uint32_t OnStateUpdate(void (*callback)(void*, const schema::SubscribeStateUpdateResponse<nlohmann::json>&), void* ptr);
+
+		/// Detaches an OnStateUpdate callback.
+		///
+		/// @param[in] id A handle obtained from calling OnStateUpdate. Invalid handles are ignored.
 		void DetachOnStateUpdate(uint32_t id);
 
+		/// Sets the OnTwitchPurchaseBits callback. This callback is invoked when twitch purchase
+		/// message is received.
+		/// @remarks The twitch purchase message has been authenticated and deduplicated by the server.
+		///          This callback receives all SKUs purchased, so a callback for a specific SKU should
+		///          test the SKU in the callback.
+		///
+		/// @param[in] callback Callback to invoke when a twitch purchase message is received.
+		/// @return Returns an integer handle to the callback, to be used in DetachOnTwitchPurchaseBits.
 		uint32_t OnTwitchPurchaseBits(std::function<void(const schema::TwitchPurchaseBitsResponse<nlohmann::json>&)> callback);
+
+		/// Sets the OnTwitchPurchaseBits callback. This callback is invoked when twitch purchase
+		/// message is received.
+		/// See the std::function overload for remarks.
+		///
+		/// @param[in] callback Callback to invoke when a twitch purchase message is received.
+		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
+		/// @return Returns an integer handle to the callback, to be used in DetachOnTwitchPurchaseBits.
 		uint32_t OnTwitchPurchaseBits(void (*callback)(void*, const schema::TwitchPurchaseBitsResponse<nlohmann::json>&), void* ptr);
+
+		/// Detaches an OnTwitchPurchaseBits callback.
+		///
+		/// @param[in] id A handle obtained from calling OnTwitchPurchaseBits. Invalid handles are ignored.
 		void DetachOnTwitchPurchaseBits(uint32_t id);
 
-		/// Queues an authentication request using a PIN code, as received by the user from an extension's config view.
+		/// Queues an authentication request using a PIN code, as received by the user from an
+		/// extension's config view.
 		///
 		/// @param[in] clientId The extension's client ID
 		/// @param[in] pin 		The PIN input from the broadcaster
 		void AuthenticateWithPIN(const string& clientId, const string& pin);
+
+		/// Queues an authentication request using a PIN code, as received by the user from an
+		/// extension's config view.
+		/// This overload attaches a one-shot callback to be called when the authentication response
+		/// message is received.
+		///
+		/// @param[in] clientId The extension's client ID
+		/// @param[in] pin 		The PIN input from the broadcaster
+		/// @param[in] callback Callback that is invoked once when this authentication request
+		///                     is responded to.
+		void
+		AuthenticateWithPIN(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback);
+
+		/// Queues an authentication request using a PIN code, as received by the user from an
+		/// extension's config view.
+		/// This overload attaches a one-shot callback to be called when the authentication response
+		/// message is received.
+		///
+		/// @param[in] clientId The extension's client ID
+		/// @param[in] pin 		The PIN input from the broadcaster
+		/// @param[in] callback Callback that is invoked once when this authentication request
+		///                     is responded to.
+		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
+		void AuthenticateWithPIN(const string& clientId,
+								 const string& pin,
+								 void (*callback)(void*, const schema::AuthenticateResponse&),
+								 void* user);
 
 		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
 		///
 		/// @param[in] clientId The extension's client ID
 		/// @param[in] jwt 		The stored JWT from a previous authentication
 		void AuthenticateWithJWT(const string& clientId, const string& jwt);
+
+		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
+		/// This overload attaches a one-shot callback to be called when the authentication response
+		/// message is received.
+		///
+		/// @param[in] clientId The extension's client ID
+		/// @param[in] jwt 		The stored JWT from a previous authentication
+		/// @param[in] callback Callback that is invoked once when this authentication request
+		///                     is responded to.
+		void
+		AuthenticateWithJWT(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback);
+
+		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
+		/// This overload attaches a one-shot callback to be called when the authentication response
+		/// message is received.
+		///
+		/// @param[in] clientId The extension's client ID
+		/// @param[in] jwt 		The stored JWT from a previous authentication
+		/// @param[in] callback Callback that is invoked once when this authentication request
+		///                     is responded to.
+		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
+		void AuthenticateWithJWT(const string& clientId,
+								 const string& pin,
+								 void (*callback)(void*, const schema::AuthenticateResponse&),
+								 void* user);
 
 		// Poll stuff, all async.
 
@@ -1427,6 +1679,21 @@ namespace gamelink
 		///
 		/// @param[in] pollId The Poll ID to get information for
 		void GetPoll(const string& pollId);
+
+		/// Queues a request to get poll information. This overload attaches a one-shot callback to be
+		/// called when poll information is received.
+		///
+		/// @param[in] pollId   The Poll ID to get information for
+		/// @param[in] callback Callback invoked when this get poll request is responded to.
+		void GetPoll(const string& pollId, std::function<void(const schema::GetPollResponse&)> callback);
+
+		/// Queues a request to get poll information. This overload attaches a one-shot callback to be
+		/// called when poll information is received.
+		///
+		/// @param[in] pollId   The Poll ID to get information for
+		/// @param[in] callback Callback invoked when this get poll request is responded to.
+		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
+		void GetPoll(const string& pollId, void (*callback)(void*, const schema::GetPollResponse&), void* user);
 
 		/// Queues a request to create a poll.
 		///
@@ -1483,13 +1750,23 @@ namespace gamelink
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		void GetState(const char* target);
 
-		/// Queues a request to get state, using the passed in callback to receive the results.
-		/// This callback is called only once.
+		/// Queues a request to get state. This overload attaches a one-shot callback to be
+		/// called when state is received.
+		///
+		/// @param[in] target   Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] callback Callback invoked when this state request is responded to.
 		void GetState(const char* target, std::function<void(const schema::GetStateResponse<nlohmann::json>&)> callback);
+
+		/// Queues a request to get state. This overload attaches a one-shot callback to be
+		/// called when state is received.
+		///
+		/// @param[in] target   Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] callback Callback invoked when this state request is responded to.
+		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
 		void GetState(const char* target, void (*callback)(void*, const schema::GetStateResponse<nlohmann::json>&), void* user);
 
 		/// Queues a request to do a single JSON Patch operation on the state object.
-		/// This will generate a StateUpdate subscription event.
+		/// This will generate a StateUpdate event.
 		///
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		/// @param[in] operation A JSON Patch operation
@@ -1498,7 +1775,7 @@ namespace gamelink
 		void UpdateState(const char* target, const string& operation, const string& path, const schema::JsonAtom& atom);
 
 		/// Queues a request to do many JSON Patch operations on the state object.
-		/// This will generate a StateUpdate subscription event.
+		/// This will generate a StateUpdate event.
 		///
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		/// @param[in] begin Pointer to the first element in an array of UpdateOperations
@@ -1510,6 +1787,50 @@ namespace gamelink
 		///
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		void SubscribeToStateUpdates(const char* target);
+
+		/// Sends a broadcast to all viewers on the channel using the extension.
+		/// @remark The serialized size of the value parameter must be under 8 kilobytes.
+		///
+		/// @param[in] topic The topic of the message to send. The frontend uses this value
+		///                  to filter messages.
+		/// @param[in] value Serializable, arbitrary object.
+		template<typename T>
+		void SendBroadcast(const string& topic, const T& value)
+		{
+			nlohmann::json js = nlohmann::json(value);
+			SendBroadcast(topic, js);
+		}
+
+		/// Sends a broadcast to all viewers on the channel using the extension.
+		/// @remark The serialized size of the message parameter must be under 8 kilobytes.
+		///
+		/// @param[in] topic The topic of the message to send. The frontend uses this value
+		///                  to filter messages.
+		/// @param[in] message Arbitrary json object. May not be a primitive or array.
+		void SendBroadcast(const string& topic, const nlohmann::json& message);
+
+		/// Sends a request to subscribe to the datastream.
+		void SubscribeToDatastream();
+
+		/// Sets a OnDatastream callback. This callback is invoked when a datastream update
+		/// message is received.
+		///
+		/// @param[in] callback Callback to invoke when a datastream update message is received.
+		/// @return Returns an integer handle to the callback, to be used in DetachOnDatastream.
+		uint32_t OnDatastream(std::function<void(const schema::DatastreamUpdate&)> callback);
+
+		/// Sets a OnDatastream callback. This callback is invoked when a datastream update
+		/// message is received.
+		///
+		/// @param[in] callback Callback to invoke when a datastream update message is received.
+		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
+		/// @return Returns an integer handle to the callback, to be used in DetachOnDatastream.
+		uint32_t OnDatastream(void (*callback)(void*, const schema::DatastreamUpdate&), void* user);
+
+		/// Detaches an OnDatastream callback.
+		///
+		/// @param[in] id A handle obtained from calling OnDatastream. Invalid handles are ignored.
+		void DetachOnDatastream(uint32_t);
 
 	private:
 		void debugLogPayload(const Payload*);
@@ -1525,15 +1846,18 @@ namespace gamelink
 		std::queue<Payload*> _queuedPayloads;
 		schema::User* _user;
 
-		uint16_t currentRequestId;
+		uint16_t _currentRequestId;
 		uint16_t nextRequestId();
 
 		detail::Callback<string> _onDebugMessage;
+
 		detail::CallbackCollection<schema::PollUpdateResponse, 1> _onPollUpdate;
 		detail::CallbackCollection<schema::AuthenticateResponse, 2> _onAuthenticate;
 		detail::CallbackCollection<schema::SubscribeStateUpdateResponse<nlohmann::json>, 3> _onStateUpdate;
 		detail::CallbackCollection<schema::GetStateResponse<nlohmann::json>, 4> _onGetState;
 		detail::CallbackCollection<schema::TwitchPurchaseBitsResponse<nlohmann::json>, 5> _onTwitchPurchaseBits;
+		detail::CallbackCollection<schema::GetPollResponse, 6> _onGetPoll;
+		detail::CallbackCollection<schema::DatastreamUpdate, 7> _onDatastreamUpdate;
 	};
 }
 
@@ -1576,6 +1900,38 @@ namespace gamelink
 		const string& User::GetJWT() const
 		{
 			return this->jwt;
+		}
+	}
+}
+
+
+
+
+namespace gamelink
+{
+    namespace schema
+    {
+        BroadcastRequest::BroadcastRequest(const string& topic, const string& msg)
+        {
+            action = string("broadcast");
+            params.target = string("");
+
+            data.topic = topic;
+            data.message = msg;
+        }
+    }
+}
+
+
+
+namespace gamelink
+{
+	namespace schema
+	{
+		SubscribeDatastreamRequest::SubscribeDatastreamRequest()
+		{
+			action = string("subscribe");
+			params.target = string("datastream");
 		}
 	}
 }
@@ -1789,6 +2145,7 @@ namespace gamelink
 
 
 #include <cstdio>
+#include <iostream>
 
 namespace gamelink
 {
@@ -1799,7 +2156,7 @@ namespace gamelink
 
 	SDK::SDK()
 		: _user(NULL)
-		, currentRequestId(1)
+		, _currentRequestId(1)
 		, _onDebugMessage(0, 0, detail::CALLBACK_PERSISTENT){};
 
 	SDK::~SDK()
@@ -1816,7 +2173,7 @@ namespace gamelink
 	uint16_t SDK::nextRequestId()
 	{
 		// Wrap around at 32k
-		uint16_t id = (currentRequestId++ & 0x7F);
+		uint16_t id = (_currentRequestId++ & 0x7F);
 		return id;
 	}
 
@@ -1834,6 +2191,25 @@ namespace gamelink
 			_onDebugMessage.invoke(string(buffer));
 
 			delete[] buffer;
+		}
+	}
+
+	bool SDK::HasPayloads() const
+	{
+		return _queuedPayloads.size() > 0;
+	}
+
+	void SDK::ForeachPayload(SDK::NetworkCallback networkCallback, void* user)
+	{
+		while (HasPayloads())
+		{
+			Payload* payload = _queuedPayloads.front();
+			_queuedPayloads.pop();
+
+			networkCallback(user, payload);
+
+			// Clean up send
+			delete payload;
 		}
 	}
 
@@ -1884,6 +2260,17 @@ namespace gamelink
 					_onGetState.invoke(stateResp);
 				}
 			}
+
+			if (env.meta.target == "poll")
+			{
+				schema::GetPollResponse pollResp;
+				success = schema::ParseResponse(bytes, length, pollResp);
+
+				if (success)
+				{
+					_onGetPoll.invoke(pollResp);
+				}
+			}
 		}
 		else if (env.meta.action == "update")
 		{
@@ -1915,6 +2302,15 @@ namespace gamelink
 				if (success)
 				{
 					_onTwitchPurchaseBits.invoke(resp);
+				}
+			}
+			else if (env.meta.target == "datastream")
+			{
+				schema::DatastreamUpdate resp;
+				success = schema::ParseResponse(bytes, length, resp);
+				if (success)
+				{
+					_onDatastreamUpdate.invoke(resp);
 				}
 			}
 		}
@@ -2042,16 +2438,90 @@ namespace gamelink
 		queuePayload(payload);
 	}
 
+	void
+	SDK::AuthenticateWithPIN(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback)
+	{
+		schema::AuthenticateWithPINRequest payload(clientId, pin);
+		uint16_t id = nextRequestId();
+
+		payload.params.request_id = id;
+		queuePayload(payload);
+
+		_onAuthenticate.set(callback, id, detail::CALLBACK_ONESHOT);
+	}
+
+	void SDK::AuthenticateWithPIN(const string& clientId,
+								  const string& pin,
+								  void (*callback)(void*, const schema::AuthenticateResponse&),
+								  void* user)
+	{
+		schema::AuthenticateWithPINRequest payload(clientId, pin);
+		uint16_t id = nextRequestId();
+
+		payload.params.request_id = id;
+		queuePayload(payload);
+
+		_onAuthenticate.set(callback, user, id, detail::CALLBACK_ONESHOT);
+	}
+
 	void SDK::AuthenticateWithJWT(const string& clientId, const string& jwt)
 	{
 		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
 		queuePayload(payload);
 	}
 
+	void
+	SDK::AuthenticateWithJWT(const string& clientId, const string& jwt, std::function<void(const schema::AuthenticateResponse&)> callback)
+	{
+		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
+		uint16_t id = nextRequestId();
+
+		payload.params.request_id = id;
+		queuePayload(payload);
+
+		_onAuthenticate.set(callback, id, detail::CALLBACK_ONESHOT);
+	}
+
+	void SDK::AuthenticateWithJWT(const string& clientId,
+								  const string& jwt,
+								  void (*callback)(void*, const schema::AuthenticateResponse&),
+								  void* user)
+	{
+		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
+		uint16_t id = nextRequestId();
+
+		payload.params.request_id = id;
+		queuePayload(payload);
+
+		_onAuthenticate.set(callback, user, id, detail::CALLBACK_ONESHOT);
+	}
+
 	void SDK::GetPoll(const string& pollId)
 	{
 		schema::GetPollRequest packet(pollId);
 		queuePayload(packet);
+	}
+
+	void SDK::GetPoll(const string& pollId, std::function<void(const schema::GetPollResponse&)> callback)
+	{
+		schema::GetPollRequest payload(pollId);
+		uint16_t id = nextRequestId();
+
+		payload.params.request_id = id;
+		queuePayload(payload);
+
+		_onGetPoll.set(callback, id, detail::CALLBACK_ONESHOT);
+	}
+
+	void SDK::GetPoll(const string& pollId, void (*callback)(void*, const schema::GetPollResponse&), void* user)
+	{
+		schema::GetPollRequest payload(pollId);
+		uint16_t id = nextRequestId();
+
+		payload.params.request_id = id;
+		queuePayload(payload);
+
+		_onGetPoll.set(callback, user, id, detail::CALLBACK_ONESHOT);
 	}
 
 	void SDK::CreatePoll(const string& pollId, const string& prompt, const std::vector<string>& options)
@@ -2132,6 +2602,40 @@ namespace gamelink
 		payload.data.state = std::move(updates);
 		queuePayload(payload);
 	};
+
+	void SDK::SendBroadcast(const string& target, const nlohmann::json& msg)
+	{
+		schema::BroadcastRequest payload(target, msg.dump());
+		queuePayload(payload);
+	}
+
+	void SDK::SubscribeToDatastream()
+	{
+		schema::SubscribeDatastreamRequest payload;
+		queuePayload(payload);
+	}
+
+	uint32_t SDK::OnDatastream(std::function<void(const schema::DatastreamUpdate&)> callback)
+	{
+		return _onDatastreamUpdate.set(callback, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
+
+	uint32_t SDK::OnDatastream(void (*callback)(void*, const schema::DatastreamUpdate&), void* user)
+	{
+		return _onDatastreamUpdate.set(callback, user, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
+
+	void SDK::DetachOnDatastream(uint32_t id)
+	{
+		if (_onDatastreamUpdate.validateId(id))
+		{
+			_onDatastreamUpdate.remove(id);
+		}
+		else
+		{
+			_onDebugMessage.invoke("Invalid ID passed into DetachOnDatastream");
+		}
+	}
 }
 
 #endif

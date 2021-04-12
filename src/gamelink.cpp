@@ -3,6 +3,7 @@
 
 #include "gamelink.h"
 #include <cstdio>
+#include <iostream>
 
 namespace gamelink
 {
@@ -161,6 +162,15 @@ namespace gamelink
 					_onTwitchPurchaseBits.invoke(resp);
 				}
 			}
+			else if (env.meta.target == "datastream")
+			{
+				schema::DatastreamUpdate resp;
+				success = schema::ParseResponse(bytes, length, resp);
+				if (success)
+				{
+					_onDatastreamUpdate.invoke(resp);
+				}
+			}
 		}
 
 		return success;
@@ -286,7 +296,8 @@ namespace gamelink
 		queuePayload(payload);
 	}
 
-	void SDK::AuthenticateWithPIN(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback)
+	void
+	SDK::AuthenticateWithPIN(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback)
 	{
 		schema::AuthenticateWithPINRequest payload(clientId, pin);
 		uint16_t id = nextRequestId();
@@ -297,7 +308,10 @@ namespace gamelink
 		_onAuthenticate.set(callback, id, detail::CALLBACK_ONESHOT);
 	}
 
-	void SDK::AuthenticateWithPIN(const string& clientId, const string& pin, void (*callback)(void*, const schema::AuthenticateResponse&), void* user)
+	void SDK::AuthenticateWithPIN(const string& clientId,
+								  const string& pin,
+								  void (*callback)(void*, const schema::AuthenticateResponse&),
+								  void* user)
 	{
 		schema::AuthenticateWithPINRequest payload(clientId, pin);
 		uint16_t id = nextRequestId();
@@ -314,7 +328,8 @@ namespace gamelink
 		queuePayload(payload);
 	}
 
-	void SDK::AuthenticateWithJWT(const string& clientId, const string& jwt, std::function<void(const schema::AuthenticateResponse&)> callback)
+	void
+	SDK::AuthenticateWithJWT(const string& clientId, const string& jwt, std::function<void(const schema::AuthenticateResponse&)> callback)
 	{
 		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
 		uint16_t id = nextRequestId();
@@ -325,7 +340,10 @@ namespace gamelink
 		_onAuthenticate.set(callback, id, detail::CALLBACK_ONESHOT);
 	}
 
-	void SDK::AuthenticateWithJWT(const string& clientId, const string& jwt, void (*callback)(void*, const schema::AuthenticateResponse&), void* user)
+	void SDK::AuthenticateWithJWT(const string& clientId,
+								  const string& jwt,
+								  void (*callback)(void*, const schema::AuthenticateResponse&),
+								  void* user)
 	{
 		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
 		uint16_t id = nextRequestId();
@@ -447,6 +465,34 @@ namespace gamelink
 	{
 		schema::BroadcastRequest payload(target, msg.dump());
 		queuePayload(payload);
+	}
+
+	void SDK::SubscribeToDatastream()
+	{
+		schema::SubscribeDatastreamRequest payload;
+		queuePayload(payload);
+	}
+
+	uint32_t SDK::OnDatastream(std::function<void(const schema::DatastreamUpdate&)> callback)
+	{
+		return _onDatastreamUpdate.set(callback, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
+
+	uint32_t SDK::OnDatastream(void (*callback)(void*, const schema::DatastreamUpdate&), void* user)
+	{
+		return _onDatastreamUpdate.set(callback, user, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
+
+	void SDK::DetachOnDatastream(uint32_t id)
+	{
+		if (_onDatastreamUpdate.validateId(id))
+		{
+			_onDatastreamUpdate.remove(id);
+		}
+		else
+		{
+			_onDebugMessage.invoke("Invalid ID passed into DetachOnDatastream");
+		}
 	}
 }
 
