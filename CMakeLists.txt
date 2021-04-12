@@ -16,17 +16,15 @@ include_directories(third_party)
 
 ## Grab all the source files
 file(GLOB SCHEMA_SOURCES "schema/*.cpp")
-file(GLOB SCHEMA_TEST_SOURCES "schema/test/*.cpp")
-file(GLOB SDK_TEST_SOURCES "src/test/*.cpp")
+file(GLOB SDK_TEST_SOURCES "test/*.cpp")
 file(GLOB SDK_SOURCES "src/*.cpp")
 
 file(GLOB DEMO_SOURCES "*.cpp")
 list(APPEND DEMO_SOURCES "websocket_network/websocket.cpp")
 
 # Schema unit tests
-add_executable(tests ${SCHEMA_TEST_SOURCES} ${SCHEMA_SOURCES} ${SDK_TEST_SOURCES} ${SDK_SOURCES})
-target_include_directories(tests PRIVATE "schema/test")
-target_include_directories(tests PRIVATE "src/test")
+add_executable(tests ${SCHEMA_SOURCES} ${SDK_TEST_SOURCES} ${SDK_SOURCES})
+target_include_directories(tests PRIVATE "test")
 
 find_package(PkgConfig)
 find_package(Doxygen)
@@ -80,7 +78,6 @@ add_custom_target(Sphinx
     ${SPHINX_SOURCE} ${SPHINX_BUILD}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "Generating sphinx documentation")
-
 
 # Amalgamation
 set(AMALGAM_IN "${CMAKE_CURRENT_SOURCE_DIR}/amalgamate.in")

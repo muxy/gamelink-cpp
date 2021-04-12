@@ -368,7 +368,7 @@ namespace gamelink
 		std::queue<Payload*> _queuedPayloads;
 		schema::User* _user;
 
-		uint16_t currentRequestId;
+		uint16_t _currentRequestId;
 		uint16_t nextRequestId();
 
 		detail::Callback<string> _onDebugMessage;

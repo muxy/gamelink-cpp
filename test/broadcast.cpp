@@ -1,8 +1,8 @@
 #include "catch2/catch.hpp"
 #include "util.h"
 
-#include "config.h"
-#include "schema/broadcast.h"
+#include "gamelink.h"
+#include <iostream>
 
 namespace gs = gamelink::schema;
 
@@ -32,4 +32,35 @@ TEST_CASE("Broadcasting", "[broadcast]")
             "message": "{\"item\":\"Thunderfury, Blessed Blade of the Windseeker\",\"who\":12345}"
         }
     })");
+}
+
+struct StickerBroadcast
+{
+    std::string sticker;
+
+    MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(StickerBroadcast, "sticker", sticker);
+};
+
+TEST_CASE("Broadcast", "[sdk][broadcast]")
+{
+    StickerBroadcast msg;
+    msg.sticker = "Good Work!";
+
+    gamelink::SDK sdk;
+    sdk.SendBroadcast("sticker", msg);
+	sdk.ForeachPayload([](const gamelink::Payload* send) {
+		REQUIRE(JSONEquals(send->data,
+        R"({
+            "action":"broadcast",
+            "data":{
+                "topic": "sticker", 
+                "message": "{\"sticker\":\"Good Work!\"}"
+            },
+            "params":{
+                "request_id":65535
+            }
+        })"));
+	});
+    
+	REQUIRE(!sdk.HasPayloads());
 }
