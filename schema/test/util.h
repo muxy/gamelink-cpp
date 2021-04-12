@@ -37,8 +37,8 @@ inline bool JSONEquals(const std::string& in, const std::string& expect)
     nlohmann::json expected = nlohmann::json::parse(expect);
     if (input != expected)
     {
-        std::cerr << "Mismatch: \n";
-        std::cerr << input.dump(2) << "\n=====\n";
+        std::cerr << "Mismatch: (input)\n";
+        std::cerr << input.dump(2) << "\n===== (expected): \n";
         std::cerr << expected.dump(2) << "\n\n";
         return false;
     }

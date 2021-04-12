@@ -9,4 +9,5 @@
 #include "purchase.h"
 #include "state.h"
 #include "subscription.h"
+#include "broadcast.h"
 #endif

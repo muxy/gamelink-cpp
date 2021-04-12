@@ -13,6 +13,7 @@ INPUT_HEADERS=(
     ./schema/poll.h 
     ./schema/schema.h 
     ./schema/state.h 
+    ./schema/broadcast.h
     ./include/gamelink.h
 )
 

@@ -51,6 +51,20 @@ namespace gamelink
 		}
 	}
 
+	void SDK::ForeachPayload(SDK::NetworkCallback networkCallback, void* user)
+	{
+		while (HasPayloads())
+		{
+			Payload* payload = _queuedPayloads.front();
+			_queuedPayloads.pop();
+
+			networkCallback(user, payload);
+
+			// Clean up send
+			delete payload;
+		}
+	}
+
 	bool SDK::ReceiveMessage(const char* bytes, uint32_t length)
 	{
 		bool success = false;
@@ -338,6 +352,12 @@ namespace gamelink
 		payload.data.state = std::move(updates);
 		queuePayload(payload);
 	};
+
+	void SDK::SendBroadcast(const string& target, const nlohmann::json& msg)
+	{
+		schema::BroadcastRequest payload(target, msg.dump());
+		queuePayload(payload);
+	}
 }
 
 #endif

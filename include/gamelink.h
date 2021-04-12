@@ -211,8 +211,8 @@ namespace gamelink
 			}
 		}
 
-		typedef void (*NetworkCallback)(const Payload*);
-		void ForeachSend(NetworkCallback cb, void* user);
+		typedef void (*NetworkCallback)(void*, const Payload*);
+		void ForeachPayload(NetworkCallback cb, void* user);
 
 		bool IsAuthenticated() const;
 
@@ -345,6 +345,15 @@ namespace gamelink
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		void SubscribeToStateUpdates(const char* target);
 
+		template<typename T>
+		void SendBroadcast(const string& topic, const T& value)
+		{
+			nlohmann::json js = nlohmann::json(value);
+			SendBroadcast(topic, js);
+		}
+
+		// Sends a json mesasge to all users
+		void SendBroadcast(const string& topic, const nlohmann::json& message);
 	private:
 		void debugLogPayload(const Payload*);
 
