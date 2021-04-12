@@ -164,7 +164,7 @@ namespace gamelink
 		{
 			/// Creates a SubscribePollRequest.
 			/// @param[in] pollId The ID of the poll to subscribe to updates for.
-			SubscribePollRequest(const string& pollId);
+			explicit SubscribePollRequest(const string& pollId);
 		};
 
 		struct PollUpdateResponse : ReceiveEnvelope<PollUpdateBody>
@@ -180,7 +180,7 @@ namespace gamelink
 		{
 			/// Creates a DeletePoll request
 			/// @param[in] pollId 	The ID of the poll to be deleted.
-			DeletePollRequest(const string& pollId);
+			explicit DeletePollRequest(const string& pollId);
 		};
 	}
 }
