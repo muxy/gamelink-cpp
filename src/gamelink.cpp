@@ -51,6 +51,11 @@ namespace gamelink
 		}
 	}
 
+	bool SDK::HasPayloads() const
+	{
+		return _queuedPayloads.size() > 0;
+	}
+
 	void SDK::ForeachPayload(SDK::NetworkCallback networkCallback, void* user)
 	{
 		while (HasPayloads())

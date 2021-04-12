@@ -92,7 +92,8 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PollWithUserDataResponseBody, "prompt", prompt, "options", options, "user_data", userData);
 		};
 
-		// Note that this is the same as PollUpdateBody
+		// Note that this is the same as PollUpdateBody, and is provided for consistency with each 
+		// endpoint having their own envelope with body.
 		struct GetPollResponseBody
 		{
 			/// The poll information
