@@ -74,13 +74,18 @@ TEST_CASE("SDK PIN Authentication", "[sdk][authentication][pin]")
 	REQUIRE(!sdk.HasPayloads());
 
 	// Verify generated auth request
-	sdk.AuthenticateWithPIN("client_id", "pin");
+	uint32_t calls = 0;
+	sdk.AuthenticateWithPIN("client_id", "pin", [&](const gamelink::schema::AuthenticateResponse& resp)
+	{
+		REQUIRE(resp.data.jwt == "test-jwt");
+		calls++;
+	});
 
 	REQUIRE(sdk.HasPayloads());
 
 	sdk.ForeachPayload([](const gamelink::Payload* send) {
 		REQUIRE(JSONEquals(send->data,
-						   R"({"action":"authenticate","data":{"client_id":"client_id","pin":"pin"},"params":{"request_id":65535}})"));
+						   R"({"action":"authenticate","data":{"client_id":"client_id","pin":"pin"},"params":{"request_id":1}})"));
 	});
 
 	REQUIRE(!sdk.HasPayloads());
@@ -88,6 +93,7 @@ TEST_CASE("SDK PIN Authentication", "[sdk][authentication][pin]")
 	// Verify state after successful auth
 	const char* msg = R"({
 		"meta": {
+			"request_id": 1,
 			"action": "authenticate"
 		},
 
@@ -101,6 +107,7 @@ TEST_CASE("SDK PIN Authentication", "[sdk][authentication][pin]")
 	REQUIRE(sdk.IsAuthenticated());
 	REQUIRE(sdk.GetUser()->GetJWT() == jwt);
 	REQUIRE(!sdk.HasPayloads());
+	REQUIRE(calls == 1);
 }
 
 TEST_CASE("SDK JWT Authentication", "[sdk][authentication][jwt]")
@@ -114,13 +121,18 @@ TEST_CASE("SDK JWT Authentication", "[sdk][authentication][jwt]")
 	REQUIRE(!sdk.HasPayloads());
 
 	// Verify generated auth request
-	sdk.AuthenticateWithJWT("client_id", jwt);
+	uint32_t calls = 0;
+	sdk.AuthenticateWithJWT("client_id", jwt, [&](const gamelink::schema::AuthenticateResponse& resp)
+	{
+		REQUIRE(resp.data.jwt == "test-jwt");
+		calls++;
+	});
 
 	REQUIRE(sdk.HasPayloads());
 
 	sdk.ForeachPayload([](const gamelink::Payload* send) {
 		REQUIRE(JSONEquals(send->data,
-						   R"({"action":"authenticate","data":{"client_id":"client_id","jwt":"test-jwt"},"params":{"request_id":65535}})"));
+						   R"({"action":"authenticate","data":{"client_id":"client_id","jwt":"test-jwt"},"params":{"request_id":1}})"));
 	});
 
 	REQUIRE(!sdk.HasPayloads());
@@ -128,6 +140,7 @@ TEST_CASE("SDK JWT Authentication", "[sdk][authentication][jwt]")
 	// Verify state after successful auth
 	const char* msg = R"({
 		"meta": {
+			"request_id": 1,
 			"action": "authenticate"
 		},
 
