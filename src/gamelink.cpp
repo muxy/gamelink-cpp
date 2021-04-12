@@ -13,7 +13,7 @@ namespace gamelink
 
 	SDK::SDK()
 		: _user(NULL)
-		, currentRequestId(1)
+		, _currentRequestId(1)
 		, _onDebugMessage(0, 0, detail::CALLBACK_PERSISTENT){};
 
 	SDK::~SDK()
@@ -30,7 +30,7 @@ namespace gamelink
 	uint16_t SDK::nextRequestId()
 	{
 		// Wrap around at 32k
-		uint16_t id = (currentRequestId++ & 0x7F);
+		uint16_t id = (_currentRequestId++ & 0x7F);
 		return id;
 	}
 
