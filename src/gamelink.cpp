@@ -23,7 +23,7 @@ namespace gamelink
 		while (HasPayloads())
 		{
 			Payload* send = _queuedPayloads.front();
-			_queuedPayloads.pop();
+			_queuedPayloads.pop_front();
 			delete send;
 		}
 	}
@@ -59,15 +59,27 @@ namespace gamelink
 
 	void SDK::ForeachPayload(SDK::NetworkCallback networkCallback, void* user)
 	{
-		while (HasPayloads())
+		while (true)
 		{
-			Payload* payload = _queuedPayloads.front();
-			_queuedPayloads.pop();
+			Payload* payload = NULL;
+			_lock.lock();
+			if (HasPayloads())
+			{
+				payload = _queuedPayloads.front();
+				_queuedPayloads.pop_front();
+				_lock.unlock();
+			}
+			else
+			{
+				_lock.unlock();
+				break;
+			}
 
-			networkCallback(user, payload);
-
-			// Clean up send
-			delete payload;
+			if (payload)
+			{
+				networkCallback(user, payload);
+				delete payload;
+			}
 		}
 	}
 
@@ -103,7 +115,9 @@ namespace gamelink
 			if (success)
 			{
 				_onAuthenticate.invoke(authResp);
-				this->_user = new schema::User(authResp.data.jwt);
+
+				_user = new schema::User(authResp.data.jwt);
+				_storedJWT = authResp.data.jwt;
 			}
 		}
 		else if (env.meta.action == "get")
@@ -184,6 +198,20 @@ namespace gamelink
 	const schema::User* SDK::GetUser() const
 	{
 		return _user;
+	}
+
+	void SDK::HandleReconnect()
+	{
+		if (!(_storedJWT == gamelink::string("")))
+		{
+			schema::AuthenticateWithJWTRequest p(_storedClientId, _storedJWT);
+			Payload * payload = new Payload(to_string(p));
+			debugLogPayload(payload);
+
+			_lock.lock();
+			_queuedPayloads.push_front(payload);
+			_lock.unlock();
+		}
 	}
 
 	// Callbacks
@@ -293,6 +321,8 @@ namespace gamelink
 	void SDK::AuthenticateWithPIN(const string& clientId, const string& pin)
 	{
 		schema::AuthenticateWithPINRequest payload(clientId, pin);
+		_storedClientId = clientId;
+
 		queuePayload(payload);
 	}
 
@@ -300,6 +330,8 @@ namespace gamelink
 	SDK::AuthenticateWithPIN(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback)
 	{
 		schema::AuthenticateWithPINRequest payload(clientId, pin);
+		_storedClientId = clientId;
+
 		uint16_t id = nextRequestId();
 
 		payload.params.request_id = id;
@@ -314,6 +346,8 @@ namespace gamelink
 								  void* user)
 	{
 		schema::AuthenticateWithPINRequest payload(clientId, pin);
+		_storedClientId = clientId;
+
 		uint16_t id = nextRequestId();
 
 		payload.params.request_id = id;
@@ -325,6 +359,8 @@ namespace gamelink
 	void SDK::AuthenticateWithJWT(const string& clientId, const string& jwt)
 	{
 		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
+		_storedClientId = clientId;
+
 		queuePayload(payload);
 	}
 
@@ -332,6 +368,8 @@ namespace gamelink
 	SDK::AuthenticateWithJWT(const string& clientId, const string& jwt, std::function<void(const schema::AuthenticateResponse&)> callback)
 	{
 		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
+		_storedClientId = clientId;
+
 		uint16_t id = nextRequestId();
 
 		payload.params.request_id = id;
@@ -346,6 +384,8 @@ namespace gamelink
 								  void* user)
 	{
 		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
+		_storedClientId = clientId;
+
 		uint16_t id = nextRequestId();
 
 		payload.params.request_id = id;
