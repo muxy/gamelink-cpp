@@ -555,6 +555,29 @@ namespace gamelink
 		/// @param[in] message Arbitrary json object. May not be a primitive or array.
 		void SendBroadcast(const string& topic, const nlohmann::json& message);
 
+		/// Sends a request to subscribe to the datastream.
+		void SubscribeToDatastream();
+
+		/// Sets a OnDatastream callback. This callback is invoked when a datastream update
+		/// message is received.
+		///
+		/// @param[in] callback Callback to invoke when a datastream update message is received.
+		/// @return Returns an integer handle to the callback, to be used in DetachOnDatastream.
+		uint32_t OnDatastream(std::function<void(const schema::DatastreamUpdate&)> callback);
+
+		/// Sets a OnDatastream callback. This callback is invoked when a datastream update
+		/// message is received.
+		///
+		/// @param[in] callback Callback to invoke when a datastream update message is received.
+		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
+		/// @return Returns an integer handle to the callback, to be used in DetachOnDatastream.
+		uint32_t OnDatastream(void (*callback)(void*, const schema::DatastreamUpdate&), void* user);
+
+		/// Detaches an OnDatastream callback.
+		///
+		/// @param[in] id A handle obtained from calling OnDatastream. Invalid handles are ignored.
+		void DetachOnDatastream(uint32_t);
+
 	private:
 		void debugLogPayload(const Payload*);
 
@@ -580,6 +603,7 @@ namespace gamelink
 		detail::CallbackCollection<schema::GetStateResponse<nlohmann::json>, 4> _onGetState;
 		detail::CallbackCollection<schema::TwitchPurchaseBitsResponse<nlohmann::json>, 5> _onTwitchPurchaseBits;
 		detail::CallbackCollection<schema::GetPollResponse, 6> _onGetPoll;
+		detail::CallbackCollection<schema::DatastreamUpdate, 7> _onDatastreamUpdate;
 	};
 }
 

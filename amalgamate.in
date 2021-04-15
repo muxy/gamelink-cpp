@@ -14,6 +14,7 @@ INPUT_HEADERS=(
     ./schema/schema.h 
     ./schema/state.h 
     ./schema/broadcast.h
+    ./schema/datastream.h
     ./include/gamelink.h
 )
 
