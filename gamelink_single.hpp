@@ -3,7 +3,6 @@
 
 #ifndef MUXY_GAMELINK_SINGLE_HPP
 #define MUXY_GAMELINK_SINGLE_HPP
-#pragma once
 
 #ifndef MUXY_GAMELINK_CONFIG_H
 #define MUXY_GAMELINK_CONFIG_H
@@ -1863,6 +1862,7 @@ namespace gamelink
 
 #endif
 
+#endif
 #ifdef MUXY_GAMELINK_SINGLE_IMPL
 
 
@@ -2640,5 +2640,4 @@ namespace gamelink
 
 #endif
 
-#endif
 #endif
