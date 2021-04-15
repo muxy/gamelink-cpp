@@ -19,6 +19,7 @@ namespace gamelink
 	{
 		static const uint32_t CALLBACK_PERSISTENT = 0;
 		static const uint32_t CALLBACK_ONESHOT = 1;
+		static const uint32_t CALLBACK_REMOVED = 2;
 
 		template<typename T>
 		class Callback
@@ -26,10 +27,10 @@ namespace gamelink
 		public:
 			typedef void (*RawFunctionPointer)(void*, const T&);
 
-			Callback(uint32_t id, uint16_t targetRequestId, uint32_t oneShotStatus)
-				: id(id)
-				, targetRequestId(targetRequestId)
-				, oneShotStatus(oneShotStatus)
+			Callback(uint32_t id, uint16_t targetRequestId, uint32_t status)
+				: _id(id)
+				, _targetRequestId(targetRequestId)
+				, _status(status)
 				, _rawCallback(nullptr)
 				, _user(nullptr)
 			{
@@ -86,10 +87,9 @@ namespace gamelink
 				return false;
 			}
 
-			uint32_t id;
-			uint16_t targetRequestId;
-			uint32_t oneShotStatus;
-
+			uint32_t _id;
+			uint16_t _targetRequestId;
+			uint32_t _status;
 		private:
 			RawFunctionPointer _rawCallback;
 			void* _user;
@@ -153,55 +153,57 @@ namespace gamelink
 			void remove(uint32_t id)
 			{
 				_lock.lock();
-				_callbacks.erase(std::remove_if(_callbacks.begin(), _callbacks.end(),
-												[id](const Callback<T>* cb) {
-													if (cb->id == id)
-													{
-														delete cb;
-														return true;
-													}
-													return false;
-												}),
-								 _callbacks.end());
+				for (uint32_t i = 0; i < _callbacks.size(); ++i)
+				{
+					if (_callbacks[i]->_id == id)
+					{
+						_callbacks[i]->_status = CALLBACK_REMOVED;
+					}
+				}
 				_lock.unlock();
 			}
 
+			// This must not be called recursively.
 			void invoke(const T& v)
 			{
 				std::vector<Callback<T>*> copy;
 				uint16_t requestId = v.meta.request_id;
 
-				// Copy callbacks and remove oneshots under lock
 				_lock.lock();
 				copy = _callbacks;
-				_callbacks.erase(std::remove_if(_callbacks.begin(), _callbacks.end(),
-												[=](const Callback<T>* cb) {
-													if (cb->targetRequestId == ANY_REQUEST_ID || cb->targetRequestId == requestId)
-													{
-														// Can't do memory management here, since a copy was made above
-														// and will be invoked later on.
-														return cb->oneShotStatus == CALLBACK_ONESHOT;
-													}
-													return false;
-												}),
-								 _callbacks.end());
 				_lock.unlock();
 
 				// Invoke the copied callbacks.
 				for (uint32_t i = 0; i < copy.size(); ++i)
 				{
-					if (copy[i]->targetRequestId == ANY_REQUEST_ID || copy[i]->targetRequestId == requestId)
+					if (copy[i]->_targetRequestId == ANY_REQUEST_ID || copy[i]->_targetRequestId == requestId)
 					{
-						copy[i]->invoke(v);
-
-						// This callback was removed from the _callbacks array above, so make sure to
-						// do memory management here.
-						if (copy[i]->oneShotStatus == CALLBACK_ONESHOT)
+						// Invoke if valid to do so.
+						if (copy[i]->_status == CALLBACK_PERSISTENT || copy[i]->_status == CALLBACK_ONESHOT)
 						{
-							delete copy[i];
+							copy[i]->invoke(v);
+						}
+
+						if (copy[i]->_status == CALLBACK_ONESHOT)
+						{
+							copy[i]->_status = CALLBACK_REMOVED;
 						}
 					}
 				}
+
+				_lock.lock();
+				auto it = std::remove_if(_callbacks.begin(), _callbacks.end(), [](const Callback<T>* cb)
+				{
+					if (cb->_status == CALLBACK_REMOVED)
+					{
+						delete cb;
+						return true;
+					}
+					return false;
+				});
+
+				_callbacks.erase(it, _callbacks.end());
+				_lock.unlock();
 			}
 
 		private:
