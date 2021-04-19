@@ -55,7 +55,7 @@ TEST_CASE("Basic state serialization", "[state][serialization]")
         }, 
         "data": {
             "state_id": "channel",
-            "state": {
+        "state": {
                 "name": "hp", 
                 "value": 100, 
                 "priv": 32, 

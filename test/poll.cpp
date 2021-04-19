@@ -23,11 +23,11 @@ TEST_CASE("Poll Creation", "[poll][creation]")
 	})");
 
 	// Create poll with user data
-	std::map<gamelink::string, gamelink::string> userData;
+	std::map<std::string, gamelink::string> userData;
 	userData["showTitle"] = "true";
 	userData["title"] = "Yes or No?";
 
-	gs::CreatePollWithUserDataRequest<std::map<gamelink::string, gamelink::string>> req2("poll-id", "Yes or No?", {"Yes", "No"}, userData);
+	gs::CreatePollWithUserDataRequest<std::map<std::string, gamelink::string>> req2("poll-id", "Yes or No?", {"Yes", "No"}, userData);
 	SerializeEqual(req2, R"({
 		"action": "create",
 		"params": {

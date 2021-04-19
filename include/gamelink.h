@@ -7,6 +7,18 @@
 
 namespace gamelink
 {
+	// Utility function
+	template<typename T>
+	const schema::Error* FirstError(const schema::ReceiveEnvelope<T>& recv)
+	{
+		if (recv.errors.empty())
+		{
+			return NULL;
+		}
+
+		return &recv.errors[0];
+	}
+	
 	class Payload
 	{
 	public:
@@ -643,7 +655,7 @@ namespace gamelink
 		template<typename T>
 		void queuePayload(const T& p)
 		{
-			Payload* payload = new Payload(to_string(p));
+			Payload* payload = new Payload(gamelink::string(to_string(p).c_str()));
 			debugLogPayload(payload);
 
 			_lock.lock();
