@@ -25,7 +25,7 @@ list(APPEND DEMO_SOURCES "websocket_network/websocket.cpp")
 ## Unit tests
 add_executable(tests ${SCHEMA_SOURCES} ${SDK_TEST_SOURCES} ${SDK_SOURCES})
 target_include_directories(tests PRIVATE "test")
-target_compile_definitions(tests PRIVATE "MUXY_GAMELINK_CUSTOM_STRING_TYPE=ConstrainedString" "MUXY_GAMELINK_CUSTOM_STRING_INCLUDE=\"constrained_string.h\"")
+target_compile_definitions(tests PRIVATE "MUXY_GAMELINK_CUSTOM_STRING_TYPE=ConstrainedString" "MUXY_GAMELINK_CUSTOM_LOCK_TYPE=ConstrainedLock" "MUXY_GAMELINK_CUSTOM_STRING_INCLUDE=\"constrained_types.h\"")
 
 ## Demo 
 find_package(PkgConfig)

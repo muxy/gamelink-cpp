@@ -4,7 +4,7 @@
 
 #include "catch2/catch.hpp"
 #include "nlohmann/json.hpp"
-#include "constrained_string.h"
+#include "constrained_types.h"
 #include <iostream>
 
 template<typename T>
