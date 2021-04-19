@@ -8,6 +8,12 @@
 #define MUXY_GAMELINK_CUSTOM_STRING_TYPE std::string
 #endif
 
+// Support custom lock types. 
+#ifndef MUXY_GAMELINK_CUSTOM_LOCK_TYPE
+#include <mutex>
+#define MUXY_GAMELINK_CUSTOM_LOCK_TYPE std::mutex
+#endif
+
 #ifndef NO_JSON_INCLUDE
 #include <nlohmann/json.hpp>
 #endif
@@ -17,11 +23,24 @@ namespace gamelink
 	/// This can be controlled by defining `MUXY_GAMELINK_CUSTOM_STRING_TYPE`.
 	/// By default, MUXY_GAMELINK_CUSTOM_STRING_TYPE is std::string
 	/// This string should
+	///     * Have a default constructor that creates an empty ("") string.
+	///     * Be Copy constructable and assignable.
 	///     * Provide a constructor from a null-terminated c-string of chars
 	///     * Provide operator== with another instance of the string type.
-	///     * Provide a c_str() that returns a pointer to the first element of a
+	///     * Provide a .size() that returns an integer of the length of the string, 
+	///       excluding any null terminator.
+	///     * Provide a .c_str() that returns a pointer to the first element of a
 	///       null-terminated array of utf8 encoded chars.
 	typedef MUXY_GAMELINK_CUSTOM_STRING_TYPE string;
+
+
+	/// This can be controlled by defining `MUXY_GAMELINK_CUSTOM_LOCK_TYPE`
+	/// By default, MUXY_GAMELINK_CUSTOM_LOCK_TYPE is std::mutex
+	/// This lock type should
+	///     * Have a default constructor that creates a valid, unlocked lock.
+	/// 	* Provide .lock(), .unlock() and bool .try_lock()
+	/// 	* .try_lock() should true upon lock aquisition, and false otherwise.
+	typedef MUXY_GAMELINK_CUSTOM_LOCK_TYPE lock;
 }
 
 #endif

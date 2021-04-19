@@ -3,7 +3,7 @@
 #define INCLUDE_MUXY_GAMELINK_H
 
 #include "schema/schema.h"
-#include <queue>
+#include <deque>
 
 namespace gamelink
 {
@@ -19,7 +19,7 @@ namespace gamelink
 	{
 		static const uint32_t CALLBACK_PERSISTENT = 0;
 		static const uint32_t CALLBACK_ONESHOT = 1;
-		static const uint32_t CALLBACK_ONESHOT_CONSUMED = 2;
+		static const uint32_t CALLBACK_REMOVED = 2;
 
 		template<typename T>
 		class Callback
@@ -27,10 +27,10 @@ namespace gamelink
 		public:
 			typedef void (*RawFunctionPointer)(void*, const T&);
 
-			Callback(uint32_t id, uint16_t targetRequestId, uint32_t oneShotStatus)
-				: id(id)
-				, targetRequestId(targetRequestId)
-				, oneShotStatus(oneShotStatus)
+			Callback(uint32_t id, uint16_t targetRequestId, uint32_t status)
+				: _id(id)
+				, _targetRequestId(targetRequestId)
+				, _status(status)
 				, _rawCallback(nullptr)
 				, _user(nullptr)
 			{
@@ -45,11 +45,6 @@ namespace gamelink
 				else if (_callback)
 				{
 					_callback(v);
-				}
-
-				if (oneShotStatus == CALLBACK_ONESHOT)
-				{
-					oneShotStatus = CALLBACK_ONESHOT_CONSUMED;
 				}
 			}
 
@@ -92,10 +87,9 @@ namespace gamelink
 				return false;
 			}
 
-			uint32_t id;
-			uint16_t targetRequestId;
-			uint32_t oneShotStatus;
-
+			uint32_t _id;
+			uint16_t _targetRequestId;
+			uint32_t _status;
 		private:
 			RawFunctionPointer _rawCallback;
 			void* _user;
@@ -110,8 +104,16 @@ namespace gamelink
 		{
 		public:
 			CallbackCollection()
-				: currentHandle(0)
+				: _currentHandle(0)
 			{
+			}
+
+			~CallbackCollection()
+			{
+				for (uint32_t i = 0; i < _callbacks.size(); ++i)
+				{
+					delete _callbacks[i];
+				}
 			}
 
 			typedef void (*RawFunctionPointer)(void*, const T&);
@@ -125,10 +127,12 @@ namespace gamelink
 			uint32_t set(std::function<void(const T&)> fn, uint16_t requestId, uint32_t flags)
 			{
 				uint32_t id = nextID();
-				Callback<T> cb(id, requestId, flags);
-				cb.set(fn);
+				Callback<T>* cb = new Callback<T>(id, requestId, flags);
+				cb->set(fn);
 
-				callbacks.emplace_back(std::move(cb));
+				_lock.lock();
+				_callbacks.push_back(cb);
+				_lock.unlock();
 
 				return id;
 			}
@@ -136,34 +140,70 @@ namespace gamelink
 			uint32_t set(RawFunctionPointer fn, void* user, uint16_t requestId, uint32_t flags)
 			{
 				uint32_t id = nextID();
-				Callback<T> cb(id, requestId, flags);
-				cb.set(fn, user);
+				Callback<T>* cb = new Callback<T>(id, requestId, flags);
+				cb->set(fn, user);
 
-				callbacks.emplace_back(std::move(cb));
+				_lock.lock();
+				_callbacks.push_back(cb);
+				_lock.unlock();
 
 				return id;
 			}
 
 			void remove(uint32_t id)
 			{
-				callbacks.erase(std::remove_if(callbacks.begin(), callbacks.end(), [id](const Callback<T>& cb) { return cb.id == id; }),
-								callbacks.end());
+				_lock.lock();
+				for (uint32_t i = 0; i < _callbacks.size(); ++i)
+				{
+					if (_callbacks[i]->_id == id)
+					{
+						_callbacks[i]->_status = CALLBACK_REMOVED;
+					}
+				}
+				_lock.unlock();
 			}
 
+			// This must not be called recursively.
 			void invoke(const T& v)
 			{
+				std::vector<Callback<T>*> copy;
 				uint16_t requestId = v.meta.request_id;
-				for (uint32_t i = 0; i < callbacks.size(); ++i)
+
+				_lock.lock();
+				copy = _callbacks;
+				_lock.unlock();
+
+				// Invoke the copied callbacks.
+				for (uint32_t i = 0; i < copy.size(); ++i)
 				{
-					if (callbacks[i].targetRequestId == ANY_REQUEST_ID || callbacks[i].targetRequestId == requestId)
+					if (copy[i]->_targetRequestId == ANY_REQUEST_ID || copy[i]->_targetRequestId == requestId)
 					{
-						callbacks[i].invoke(v);
+						// Invoke if valid to do so.
+						if (copy[i]->_status == CALLBACK_PERSISTENT || copy[i]->_status == CALLBACK_ONESHOT)
+						{
+							copy[i]->invoke(v);
+						}
+
+						if (copy[i]->_status == CALLBACK_ONESHOT)
+						{
+							copy[i]->_status = CALLBACK_REMOVED;
+						}
 					}
 				}
 
-				callbacks.erase(std::remove_if(callbacks.begin(), callbacks.end(),
-											   [](const Callback<T>& cb) { return cb.oneShotStatus == CALLBACK_ONESHOT_CONSUMED; }),
-								callbacks.end());
+				_lock.lock();
+				auto it = std::remove_if(_callbacks.begin(), _callbacks.end(), [](const Callback<T>* cb)
+				{
+					if (cb->_status == CALLBACK_REMOVED)
+					{
+						delete cb;
+						return true;
+					}
+					return false;
+				});
+
+				_callbacks.erase(it, _callbacks.end());
+				_lock.unlock();
 			}
 
 		private:
@@ -172,13 +212,15 @@ namespace gamelink
 				// Store a byte to determine if the id returned from a set operation belongs to this
 				// collection of callbacks.
 				static const uint32_t MASK = 0x0FFFFFFFu;
-				uint32_t id = (currentHandle & (MASK)) | (static_cast<uint32_t>(IDMask) << 24);
-				currentHandle = (currentHandle + 1) & 0x0FFFFFFFu;
+				uint32_t id = (_currentHandle & (MASK)) | (static_cast<uint32_t>(IDMask) << 24);
+				_currentHandle = (_currentHandle + 1) & 0x0FFFFFFFu;
 				return id;
 			}
 
-			uint32_t currentHandle;
-			std::vector<Callback<T>> callbacks;
+			uint32_t _currentHandle;
+			gamelink::lock _lock;
+
+			std::vector<Callback<T>*> _callbacks;
 		};
 	}
 
@@ -205,6 +247,11 @@ namespace gamelink
 		/// @return Returns true if the message was parsed correctly.
 		bool ReceiveMessage(const char* bytes, uint32_t length);
 
+		/// Call this after a websocket reconnect after disconnect.
+		/// This queues in an authorization message before any additional
+		/// messages are sent.
+		void HandleReconnect();
+
 		/// Returns true if there are a non-zero amount of payloads to send.
 		///
 		/// @return returns if there are payloads to send.
@@ -217,15 +264,27 @@ namespace gamelink
 		template<typename T>
 		void ForeachPayload(const T& networkCallback)
 		{
-			while (HasPayloads())
+			while (true)
 			{
-				Payload* payload = _queuedPayloads.front();
-				_queuedPayloads.pop();
+				Payload* payload = NULL;
+				_lock.lock();
+				if (HasPayloads())
+				{
+					payload = _queuedPayloads.front();
+					_queuedPayloads.pop_front();
+					_lock.unlock();
+				}
+				else
+				{
+					_lock.unlock();
+					break;
+				}
 
-				networkCallback(payload);
-
-				// Clean up send
-				delete payload;
+				if (payload)
+				{
+					networkCallback(payload);
+					delete payload;
+				}
 			}
 		}
 
@@ -586,10 +645,19 @@ namespace gamelink
 		{
 			Payload* payload = new Payload(to_string(p));
 			debugLogPayload(payload);
-			_queuedPayloads.push(payload);
+
+			_lock.lock();
+			_queuedPayloads.push_back(payload);
+			_lock.unlock();
 		}
 
-		std::queue<Payload*> _queuedPayloads;
+		// Fields stored to handle reconnects
+		gamelink::string _storedJWT;
+		gamelink::string _storedClientId;
+
+		gamelink::lock _lock;
+
+		std::deque<Payload*> _queuedPayloads;
 		schema::User* _user;
 
 		uint16_t _currentRequestId;

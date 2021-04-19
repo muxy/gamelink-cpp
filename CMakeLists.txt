@@ -22,10 +22,11 @@ file(GLOB SDK_SOURCES "src/*.cpp")
 file(GLOB DEMO_SOURCES "*.cpp")
 list(APPEND DEMO_SOURCES "websocket_network/websocket.cpp")
 
-# Schema unit tests
+## Unit tests
 add_executable(tests ${SCHEMA_SOURCES} ${SDK_TEST_SOURCES} ${SDK_SOURCES})
 target_include_directories(tests PRIVATE "test")
 
+## Demo 
 find_package(PkgConfig)
 find_package(Doxygen)
 pkg_check_modules(LIB_WEBSOCKETS libwebsockets>=4.0.0)
