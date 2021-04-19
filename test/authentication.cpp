@@ -105,7 +105,7 @@ TEST_CASE("SDK PIN Authentication", "[sdk][authentication][pin]")
 	sdk.ReceiveMessage(msg, strlen(msg));
 
 	REQUIRE(sdk.IsAuthenticated());
-	REQUIRE(sdk.GetUser()->GetJWT() == jwt);
+	REQUIRE(sdk.GetUser()->GetJWT() == gamelink::string(jwt.c_str()));
 	REQUIRE(!sdk.HasPayloads());
 	REQUIRE(calls == 1);
 }
@@ -122,7 +122,7 @@ TEST_CASE("SDK JWT Authentication", "[sdk][authentication][jwt]")
 
 	// Verify generated auth request
 	uint32_t calls = 0;
-	sdk.AuthenticateWithJWT("client_id", jwt, [&](const gamelink::schema::AuthenticateResponse& resp)
+	sdk.AuthenticateWithJWT("client_id", jwt.c_str(), [&](const gamelink::schema::AuthenticateResponse& resp)
 	{
 		REQUIRE(resp.data.jwt == "test-jwt");
 		calls++;
@@ -151,6 +151,6 @@ TEST_CASE("SDK JWT Authentication", "[sdk][authentication][jwt]")
 	sdk.ReceiveMessage(msg, strlen(msg));
 
 	REQUIRE(sdk.IsAuthenticated());
-	REQUIRE(sdk.GetUser()->GetJWT() == jwt);
+	REQUIRE(sdk.GetUser()->GetJWT() == gamelink::string(jwt.c_str()));
 	REQUIRE(!sdk.HasPayloads());
 }

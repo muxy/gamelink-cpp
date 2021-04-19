@@ -25,6 +25,7 @@ list(APPEND DEMO_SOURCES "websocket_network/websocket.cpp")
 ## Unit tests
 add_executable(tests ${SCHEMA_SOURCES} ${SDK_TEST_SOURCES} ${SDK_SOURCES})
 target_include_directories(tests PRIVATE "test")
+target_compile_definitions(tests PRIVATE "MUXY_GAMELINK_CUSTOM_STRING_TYPE=ConstrainedString" "MUXY_GAMELINK_CUSTOM_LOCK_TYPE=ConstrainedLock" "MUXY_GAMELINK_CUSTOM_STRING_INCLUDE=\"constrained_types.h\"")
 
 ## Demo 
 find_package(PkgConfig)
@@ -46,7 +47,6 @@ file(GLOB SCHEMA_PUBLIC_HEADERS "schema/*.h")
 file(GLOB SRC_PUBLIC_HEADERS "src/*.hpp")
 
 set(PUBLIC_HEADERS ${SCHEMA_PUBLIC_HEADERS} ${SRC_PUBLIC_HEADERS})
-
 set(DOXYGEN_INDEX_FILE "doxygen/html/index.html")
 set(DOXYFILE_IN "${CMAKE_CURRENT_SOURCE_DIR}/doxygen/Doxyfile.in")
 set(DOXYFILE_OUT "${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile")
@@ -63,7 +63,7 @@ add_custom_command(OUTPUT ${DOXYGEN_INDEX_FILE}
                    MAIN_DEPENDENCY ${DOXYFILE_OUT} ${DOXYFILE_IN}
                    COMMENT "Generating docs")
 
-add_custom_target(Doxygen DEPENDS ${DOXYGEN_INDEX_FILE})
+add_custom_target(doxygen DEPENDS ${DOXYGEN_INDEX_FILE})
 
 find_program(SPHINX_EXECUTABLE
              NAMES sphinx-build
@@ -72,13 +72,15 @@ find_program(SPHINX_EXECUTABLE
 set(SPHINX_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/docs)
 set(SPHINX_BUILD ${CMAKE_CURRENT_SOURCE_DIR}/docs/sphinx)
 
-add_custom_target(Sphinx
+add_custom_target(sphinx
     COMMAND
     ${SPHINX_EXECUTABLE} -b html
     -Dbreathe_projects.gamelink=${DOXYGEN_OUTPUT_DIRECTORY}/xml
     ${SPHINX_SOURCE} ${SPHINX_BUILD}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "Generating sphinx documentation")
+
+add_dependencies(sphinx doxygen)
 
 # Amalgamation
 set(AMALGAM_IN "${CMAKE_CURRENT_SOURCE_DIR}/amalgamate.in")

@@ -205,7 +205,7 @@ namespace gamelink
 		if (!(_storedJWT == gamelink::string("")))
 		{
 			schema::AuthenticateWithJWTRequest p(_storedClientId, _storedJWT);
-			Payload * payload = new Payload(to_string(p));
+			Payload * payload = new Payload(gamelink::string(to_string(p).c_str()));
 			debugLogPayload(payload);
 
 			_lock.lock();
@@ -503,7 +503,7 @@ namespace gamelink
 
 	void SDK::SendBroadcast(const string& target, const nlohmann::json& msg)
 	{
-		schema::BroadcastRequest payload(target, msg.dump());
+		schema::BroadcastRequest payload(target, msg.dump().c_str());
 		queuePayload(payload);
 	}
 

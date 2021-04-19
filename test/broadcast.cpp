@@ -20,7 +20,7 @@ TEST_CASE("Broadcasting", "[broadcast]")
     msg.who = 12345;
     msg.item = "Thunderfury, Blessed Blade of the Windseeker";
 
-    gs::BroadcastRequest req("rare-drop", nlohmann::json(msg).dump());
+    gs::BroadcastRequest req("rare-drop", gamelink::string(nlohmann::json(msg).dump().c_str()));
 
     SerializeEqual(req, R"({
         "action": "broadcast", 

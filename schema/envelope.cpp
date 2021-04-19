@@ -105,7 +105,7 @@ namespace gamelink
 			else if (n.is_object() || n.is_array())
 			{
 				p.type = JSON_ATOM_LITERAL;
-				p.stringValue = n.dump();
+				p.stringValue = gamelink::string(n.dump().c_str());
 			}
 		}
 

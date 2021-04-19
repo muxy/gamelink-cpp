@@ -4,6 +4,7 @@
 
 #include "catch2/catch.hpp"
 #include "nlohmann/json.hpp"
+#include "constrained_types.h"
 #include <iostream>
 
 template<typename T>
@@ -35,6 +36,21 @@ inline bool JSONEquals(const std::string& in, const std::string& expect)
 {
     nlohmann::json input = nlohmann::json::parse(in);
     nlohmann::json expected = nlohmann::json::parse(expect);
+    if (input != expected)
+    {
+        std::cerr << "Mismatch: (input)\n";
+        std::cerr << input.dump(2) << "\n===== (expected): \n";
+        std::cerr << expected.dump(2) << "\n\n";
+        return false;
+    }
+
+    return true;
+}
+
+inline bool JSONEquals(const ConstrainedString& in, const ConstrainedString& expect)
+{
+    nlohmann::json input = nlohmann::json::parse(in.c_str());
+    nlohmann::json expected = nlohmann::json::parse(expect.c_str());
     if (input != expected)
     {
         std::cerr << "Mismatch: (input)\n";
