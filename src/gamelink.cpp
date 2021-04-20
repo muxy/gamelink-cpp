@@ -114,10 +114,10 @@ namespace gamelink
 			success = schema::ParseResponse(bytes, length, authResp);
 			if (success)
 			{
-				_onAuthenticate.invoke(authResp);
-
 				_user = new schema::User(authResp.data.jwt);
 				_storedJWT = authResp.data.jwt;
+
+				_onAuthenticate.invoke(authResp);
 			}
 		}
 		else if (env.meta.action == "get")
@@ -198,6 +198,11 @@ namespace gamelink
 	const schema::User* SDK::GetUser() const
 	{
 		return _user;
+	}
+
+	const char * SDK::GetClientId() const
+	{
+		return _storedClientId.c_str();
 	}
 
 	void SDK::HandleReconnect()
