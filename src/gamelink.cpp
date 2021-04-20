@@ -296,6 +296,17 @@ namespace gamelink
 		}
 	}
 
+	void SDK::SubscribeToSKU(const string& sku)
+	{
+		schema::SubscribeTransactionsRequest payload(sku);
+		queuePayload(payload);
+	}
+
+	void SDK::SubscribeToAllPurchases()
+	{
+		SubscribeToSKU("*");
+	}
+
 	uint32_t SDK::OnTwitchPurchaseBits(std::function<void(const schema::TwitchPurchaseBitsResponse<nlohmann::json>&)> callback)
 	{
 		return _onTwitchPurchaseBits.set(callback, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
