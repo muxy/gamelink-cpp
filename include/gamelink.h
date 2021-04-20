@@ -319,6 +319,11 @@ namespace gamelink
 		///         has been recieved.
 		const schema::User* GetUser() const;
 
+		/// Gets the ClientID that was last passed into AuthenticateWithPIN or AuthenticateWithJWT
+		///
+		/// @return c-string representation of the input ClientID
+		const char * GetClientId() const;	
+
 		/// Sets the OnDebugMessage callback. This is invoked for debugging purposes only.
 		/// There can only be one OnDebugMessage callback registered.
 		///

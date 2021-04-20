@@ -77,6 +77,7 @@ TEST_CASE("SDK PIN Authentication", "[sdk][authentication][pin]")
 	uint32_t calls = 0;
 	sdk.AuthenticateWithPIN("client_id", "pin", [&](const gamelink::schema::AuthenticateResponse& resp)
 	{
+		REQUIRE(sdk.IsAuthenticated());
 		REQUIRE(resp.data.jwt == "test-jwt");
 		calls++;
 	});
