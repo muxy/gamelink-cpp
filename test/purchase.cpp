@@ -14,9 +14,12 @@ TEST_CASE("Purchase deserialization", "[purchase][deserialization]")
 			"target": "twitchBitsPurchase"
 		},
 		"data": {
+			"id": "123-512-abwe",
 			"sku": "test-sku",
 			"displayName": "Test User",
 			"userId": "12345",
+			"cost": 42, 
+			"timestamp": 100, 
 			"username": "test-user",
 			"additional": "extra-data"
 		}
@@ -46,9 +49,12 @@ TEST_CASE("SDK Twitch Bits Purchase Response", "[sdk][purchase][twitch]")
 			"target": "twitchBitsPurchase"
 		},
 		"data": {
+			"id": "123-512-abwe",
 			"sku": "test-sku",
 			"displayName": "Test User",
 			"userId": "12345",
+			"cost": 42, 
+			"timestamp": 100, 
 			"username": "test-user",
 			"additional": "extra-data"
 		}
@@ -62,4 +68,26 @@ TEST_CASE("SDK Twitch Bits Purchase Response", "[sdk][purchase][twitch]")
 	sdk.ReceiveMessage(json, strlen(json));
 
 	REQUIRE(received);
+}
+
+
+TEST_CASE("Purchase subsciptions", "[purchase]")
+{
+	gamelink::SDK sdk;
+	sdk.SubscribeToSKU("spicy-ketchup");
+
+	REQUIRE(sdk.HasPayloads());
+	sdk.ForeachPayload([](const gamelink::Payload* payload) {
+		REQUIRE(JSONEquals(payload->data, R"({
+            "action": "subscribe", 
+            "data": {
+                "topic_id": "spicy-ketchup"
+            }, 
+            "params": {
+                "request_id": 65535, 
+                "target": "twitchPurchaseBits"
+            }
+        })"));
+	});
+	REQUIRE(!sdk.HasPayloads());
 }

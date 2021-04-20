@@ -399,6 +399,12 @@ namespace gamelink
 		/// @param[in] id A handle obtained from calling OnStateUpdate. Invalid handles are ignored.
 		void DetachOnStateUpdate(uint32_t id);
 
+		/// Starts subscribing to TwitchPurchaseBits updates for a specific SKU
+		void SubscribeToSKU(const string& sku);
+
+		/// Subscribes to all SKUs.
+		void SubscribeToAllPurchases();
+
 		/// Sets the OnTwitchPurchaseBits callback. This callback is invoked when twitch purchase
 		/// message is received.
 		/// @remarks The twitch purchase message has been authenticated and deduplicated by the server.
@@ -648,7 +654,6 @@ namespace gamelink
 		///
 		/// @param[in] id A handle obtained from calling OnDatastream. Invalid handles are ignored.
 		void DetachOnDatastream(uint32_t);
-
 	private:
 		void debugLogPayload(const Payload*);
 
