@@ -49,6 +49,9 @@ TEST_CASE("Poll Creation", "[poll][creation]")
 TEST_CASE("Poll Update Response (De)Serialization", "[poll][update]")
 {
 	gs::PollUpdateResponse pollResponse;
+	pollResponse.data.count = 3;
+	pollResponse.data.mean = 0.0;
+	pollResponse.data.sum = 0.0;
 	pollResponse.data.poll.pollId = "poll-id";
 	pollResponse.data.poll.prompt = "Yes or No?";
 	pollResponse.data.poll.options = {"Yes", "No"};
@@ -60,6 +63,10 @@ TEST_CASE("Poll Update Response (De)Serialization", "[poll][update]")
 			"target": "poll"
 		},
 		"data": {
+			"count": 3, 
+			"mean": 0.0, 
+			"sum": 0.0,
+
 			"results": [1, 2],
 			"poll": {
 				"poll_id": "poll-id",
@@ -75,6 +82,10 @@ TEST_CASE("Poll Update Response (De)Serialization", "[poll][update]")
 			"target": "poll"
 		},
 		"data": {
+			"count": 3, 
+			"mean": 0.0, 
+			"sum": 0.0,
+
 			"results": [1, 2],
 			"poll": {
 				"poll_id": "poll-id",
@@ -156,7 +167,7 @@ TEST_CASE("SDK Poll Get Results", "[sdk][poll][results]")
 		REQUIRE(poll.data.poll.pollId == "something-else");
 	});
 
-	const char * msg = R"({
+	const char* msg = R"({
 		 "data": {
             "poll": {
                 "poll_id": "something-else",
@@ -229,6 +240,10 @@ TEST_CASE("SDK Poll Update Response", "[sdk][poll][update]")
 			"target": "poll"
 		},
 		"data": {
+			"sum": 2.0, 
+			"count": 5, 
+			"mean": 1.2,
+
 			"poll": {
 				"poll_id": "test-poll",
 				"prompt": "Choose one",
@@ -244,6 +259,5 @@ TEST_CASE("SDK Poll Update Response", "[sdk][poll][update]")
 	});
 
 	sdk.ReceiveMessage(json, strlen(json));
-
 	REQUIRE(received);
 }
