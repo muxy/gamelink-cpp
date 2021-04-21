@@ -630,8 +630,8 @@ namespace gamelink
 		template<typename T>
 		void SendBroadcast(const string& topic, const T& value)
 		{
-			nlohmann::json js = nlohmann::json(value);
-			SendBroadcast(topic, js);
+			schema::BroadcastRequest<T> payload(topic, value);
+			queuePayload(payload);
 		}
 
 		/// Sends a broadcast to all viewers on the channel using the extension.

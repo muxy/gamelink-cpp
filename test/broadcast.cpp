@@ -20,7 +20,7 @@ TEST_CASE("Broadcasting", "[broadcast]")
     msg.who = 12345;
     msg.item = "Thunderfury, Blessed Blade of the Windseeker";
 
-    gs::BroadcastRequest req("rare-drop", gamelink::string(nlohmann::json(msg).dump().c_str()));
+    gs::BroadcastRequest<BroadcastMessage> req("rare-drop", msg);
 
     SerializeEqual(req, R"({
         "action": "broadcast", 
@@ -29,7 +29,7 @@ TEST_CASE("Broadcasting", "[broadcast]")
         }, 
         "data": {
             "topic": "rare-drop", 
-            "message": "{\"item\":\"Thunderfury, Blessed Blade of the Windseeker\",\"who\":12345}"
+            "data": { "item": "Thunderfury, Blessed Blade of the Windseeker","who":12345}
         }
     })");
 }
@@ -54,7 +54,7 @@ TEST_CASE("Broadcast", "[sdk][broadcast]")
             "action":"broadcast",
             "data":{
                 "topic": "sticker", 
-                "message": "{\"sticker\":\"Good Work!\"}"
+                "data": { "sticker": "Good Work!" }
             },
             "params":{
                 "request_id":65535

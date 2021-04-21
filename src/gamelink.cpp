@@ -523,9 +523,9 @@ namespace gamelink
 		queuePayload(payload);
 	};
 
-	void SDK::SendBroadcast(const string& target, const nlohmann::json& msg)
+	void SDK::SendBroadcast(const string& topic, const nlohmann::json& msg)
 	{
-		schema::BroadcastRequest payload(target, msg.dump().c_str());
+		schema::BroadcastRequest<nlohmann::json> payload(topic, msg);
 		queuePayload(payload);
 	}
 
