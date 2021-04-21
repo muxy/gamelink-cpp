@@ -10,5 +10,11 @@ namespace gamelink
 			action = string("subscribe");
 			params.target = string("datastream");
 		}
+
+		UnsubscribeDatastreamRequest::UnsubscribeDatastreamRequest()
+		{
+			action = string("unsubscribe");
+			params.target = string("datastream");
+		}
 	}
 }

@@ -33,6 +33,11 @@ namespace gamelink
 			explicit SubscribeDatastreamRequest();
 		};
 
+		struct UnsubscribeDatastreamRequest : SendEnvelope<UnsubscribeTopicRequestBody>
+		{
+			/// Creates a UnsubscribeDatastreamRequest
+			explicit UnsubscribeDatastreamRequest();
+		};
 	}
 }
 

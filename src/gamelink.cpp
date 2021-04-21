@@ -200,7 +200,7 @@ namespace gamelink
 		return _user;
 	}
 
-	const char * SDK::GetClientId() const
+	const char* SDK::GetClientId() const
 	{
 		return _storedClientId.c_str();
 	}
@@ -210,7 +210,7 @@ namespace gamelink
 		if (!(_storedJWT == gamelink::string("")))
 		{
 			schema::AuthenticateWithJWTRequest p(_storedClientId, _storedJWT);
-			Payload * payload = new Payload(gamelink::string(to_string(p).c_str()));
+			Payload* payload = new Payload(gamelink::string(to_string(p).c_str()));
 			debugLogPayload(payload);
 
 			_lock.lock();
@@ -532,6 +532,12 @@ namespace gamelink
 	void SDK::SubscribeToDatastream()
 	{
 		schema::SubscribeDatastreamRequest payload;
+		queuePayload(payload);
+	}
+
+	void SDK::UnsubscribeToDatastream()
+	{
+		schema::UnsubscribeDatastreamRequest payload;
 		queuePayload(payload);
 	}
 
