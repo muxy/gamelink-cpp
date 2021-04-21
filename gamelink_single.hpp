@@ -9,8 +9,24 @@
 
 // Support custom string types.
 #ifndef MUXY_GAMELINK_CUSTOM_STRING_TYPE
-#include <string>
-#define MUXY_GAMELINK_CUSTOM_STRING_TYPE std::string
+#	include <string>
+#	define MUXY_GAMELINK_CUSTOM_STRING_TYPE std::string
+#else
+#	define MUXY_GAMELINK_REQUIRES_STRING_JSON_OVERLOAD 1
+#endif
+
+#ifdef MUXY_GAMELINK_CUSTOM_STRING_INCLUDE
+#include MUXY_GAMELINK_CUSTOM_STRING_INCLUDE
+#endif
+
+// Support custom lock types. 
+#ifndef MUXY_GAMELINK_CUSTOM_LOCK_TYPE
+#include <mutex>
+#define MUXY_GAMELINK_CUSTOM_LOCK_TYPE std::mutex
+#endif
+
+#ifdef MUXY_GAMELINK_CUSTOM_LOCK_INCLUDE
+#include MUXY_GAMELINK_CUSTOM_LOCK_INCLUDE
 #endif
 
 #ifndef NO_JSON_INCLUDE
@@ -22,12 +38,45 @@ namespace gamelink
 	/// This can be controlled by defining `MUXY_GAMELINK_CUSTOM_STRING_TYPE`.
 	/// By default, MUXY_GAMELINK_CUSTOM_STRING_TYPE is std::string
 	/// This string should
+	///     * Have a default constructor that creates an empty ("") string.
+	///     * Be Copy constructable and copy assignable.
+	///     * Be Move constructable and move assignable.
 	///     * Provide a constructor from a null-terminated c-string of chars
-	///     * Provide operator== with another instance of the string type.
-	///     * Provide a c_str() that returns a pointer to the first element of a
+	///     * Provide const operator== with another const reference of the string type. 
+	///     * Provide a const .size() that returns an integer of the length of the string, 
+	///       excluding any null terminator. This should return an uint32_t.
+	///     * Provide a const .c_str() that returns a pointer to the first element of a
 	///       null-terminated array of utf8 encoded chars.
 	typedef MUXY_GAMELINK_CUSTOM_STRING_TYPE string;
+
+	/// This can be controlled by defining `MUXY_GAMELINK_CUSTOM_LOCK_TYPE`
+	/// By default, MUXY_GAMELINK_CUSTOM_LOCK_TYPE is std::mutex
+	/// This lock type should
+	///     * Have a default constructor that creates a valid, unlocked lock.
+	///     * May be uncopyable and unmovable.
+	/// 	* Provide .lock(), .unlock() and bool .try_lock()
+	/// 	* .try_lock() should true upon lock aquisition, and false otherwise.
+	typedef MUXY_GAMELINK_CUSTOM_LOCK_TYPE lock;
 }
+
+#ifdef MUXY_GAMELINK_REQUIRES_STRING_JSON_OVERLOAD
+namespace nlohmann
+{
+	template<>
+	struct adl_serializer<gamelink::string> 
+	{
+		static void to_json(json& j, const gamelink::string& s)
+		{
+			j = json::string_t(s.c_str());
+		}
+
+		static void from_json(const json& j, gamelink::string& s)
+		{
+			s = gamelink::string(j.get<json::string_t>().c_str());
+		}
+	};
+}
+#endif
 
 #endif
 
@@ -711,6 +760,7 @@ namespace gamelink
 #define MUXY_GAMELINK_SCHEMA_PURCHASE_H
 
 
+
 namespace gamelink
 {
 	namespace schema
@@ -718,14 +768,20 @@ namespace gamelink
 		template<typename T>
 		struct TwitchPurchaseBitsResponseBody
 		{
+            string id;
 			string sku;
 			string displayName;
 			string userId;
 			string username;
 
+			int cost;
+            int64_t timestamp;
+
 			T additional;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_5(TwitchPurchaseBitsResponseBody,
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_8(TwitchPurchaseBitsResponseBody,
+												"id", 
+												id,
 												"sku",
 												sku,
 												"displayName",
@@ -734,6 +790,10 @@ namespace gamelink
 												userId,
 												"username",
 												username,
+												"cost", 
+												cost, 
+												"timestamp", 
+												timestamp,
 												"additional",
 												additional);
 		};
@@ -741,6 +801,12 @@ namespace gamelink
 		template<typename T>
 		struct TwitchPurchaseBitsResponse : ReceiveEnvelope<TwitchPurchaseBitsResponseBody<T>>
 		{
+		};
+		
+		struct SubscribeTransactionsRequest : SendEnvelope<SubscribeTopicRequestBody>
+		{
+			/// Creates a SubscribeTransactionsRequest
+			explicit SubscribeTransactionsRequest(const string& SKU);
 		};
 	}
 }
@@ -931,7 +997,16 @@ namespace gamelink
 			/// options array.
 			std::vector<int> results;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(GetPollResponseBody, "poll", poll, "results", results);
+			/// Arithmetic mean of all poll values, including ones that outside the [0, 32) range.
+			double mean;
+
+			/// Sum of all poll values, including ones that outside the [0, 32) range.
+			double sum;
+
+			/// Number of responses, including ones that outside the [0, 32) range.
+			int32_t count;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_5(GetPollResponseBody, "poll", poll, "results", results, "mean", mean, "sum", sum, "count", count);
 		};
 
 		struct PollUpdateBody
@@ -943,7 +1018,16 @@ namespace gamelink
 			/// options array.
 			std::vector<int> results;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(PollUpdateBody, "poll", poll, "results", results);
+			/// Arithmetic mean of all poll values, including ones that outside the [0, 32) range.
+			double mean;
+
+			/// Sum of all poll values, including ones that outside the [0, 32) range.
+			double sum;
+
+			/// Number of responses, including ones that outside the [0, 32) range.
+			int32_t count;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_5(PollUpdateBody, "poll", poll, "results", results, "mean", mean, "sum", sum, "count", count);
 		};
 
 		template<typename T>
@@ -1256,10 +1340,22 @@ namespace gamelink
 #define INCLUDE_MUXY_GAMELINK_H
 
 
-#include <queue>
+#include <deque>
 
 namespace gamelink
 {
+	// Utility function
+	template<typename T>
+	const schema::Error* FirstError(const schema::ReceiveEnvelope<T>& recv)
+	{
+		if (recv.errors.empty())
+		{
+			return NULL;
+		}
+
+		return &recv.errors[0];
+	}
+	
 	class Payload
 	{
 	public:
@@ -1272,7 +1368,7 @@ namespace gamelink
 	{
 		static const uint32_t CALLBACK_PERSISTENT = 0;
 		static const uint32_t CALLBACK_ONESHOT = 1;
-		static const uint32_t CALLBACK_ONESHOT_CONSUMED = 2;
+		static const uint32_t CALLBACK_REMOVED = 2;
 
 		template<typename T>
 		class Callback
@@ -1280,10 +1376,10 @@ namespace gamelink
 		public:
 			typedef void (*RawFunctionPointer)(void*, const T&);
 
-			Callback(uint32_t id, uint16_t targetRequestId, uint32_t oneShotStatus)
-				: id(id)
-				, targetRequestId(targetRequestId)
-				, oneShotStatus(oneShotStatus)
+			Callback(uint32_t id, uint16_t targetRequestId, uint32_t status)
+				: _id(id)
+				, _targetRequestId(targetRequestId)
+				, _status(status)
 				, _rawCallback(nullptr)
 				, _user(nullptr)
 			{
@@ -1298,11 +1394,6 @@ namespace gamelink
 				else if (_callback)
 				{
 					_callback(v);
-				}
-
-				if (oneShotStatus == CALLBACK_ONESHOT)
-				{
-					oneShotStatus = CALLBACK_ONESHOT_CONSUMED;
 				}
 			}
 
@@ -1345,10 +1436,9 @@ namespace gamelink
 				return false;
 			}
 
-			uint32_t id;
-			uint16_t targetRequestId;
-			uint32_t oneShotStatus;
-
+			uint32_t _id;
+			uint16_t _targetRequestId;
+			uint32_t _status;
 		private:
 			RawFunctionPointer _rawCallback;
 			void* _user;
@@ -1363,8 +1453,16 @@ namespace gamelink
 		{
 		public:
 			CallbackCollection()
-				: currentHandle(0)
+				: _currentHandle(0)
 			{
+			}
+
+			~CallbackCollection()
+			{
+				for (uint32_t i = 0; i < _callbacks.size(); ++i)
+				{
+					delete _callbacks[i];
+				}
 			}
 
 			typedef void (*RawFunctionPointer)(void*, const T&);
@@ -1378,10 +1476,12 @@ namespace gamelink
 			uint32_t set(std::function<void(const T&)> fn, uint16_t requestId, uint32_t flags)
 			{
 				uint32_t id = nextID();
-				Callback<T> cb(id, requestId, flags);
-				cb.set(fn);
+				Callback<T>* cb = new Callback<T>(id, requestId, flags);
+				cb->set(fn);
 
-				callbacks.emplace_back(std::move(cb));
+				_lock.lock();
+				_callbacks.push_back(cb);
+				_lock.unlock();
 
 				return id;
 			}
@@ -1389,34 +1489,70 @@ namespace gamelink
 			uint32_t set(RawFunctionPointer fn, void* user, uint16_t requestId, uint32_t flags)
 			{
 				uint32_t id = nextID();
-				Callback<T> cb(id, requestId, flags);
-				cb.set(fn, user);
+				Callback<T>* cb = new Callback<T>(id, requestId, flags);
+				cb->set(fn, user);
 
-				callbacks.emplace_back(std::move(cb));
+				_lock.lock();
+				_callbacks.push_back(cb);
+				_lock.unlock();
 
 				return id;
 			}
 
 			void remove(uint32_t id)
 			{
-				callbacks.erase(std::remove_if(callbacks.begin(), callbacks.end(), [id](const Callback<T>& cb) { return cb.id == id; }),
-								callbacks.end());
+				_lock.lock();
+				for (uint32_t i = 0; i < _callbacks.size(); ++i)
+				{
+					if (_callbacks[i]->_id == id)
+					{
+						_callbacks[i]->_status = CALLBACK_REMOVED;
+					}
+				}
+				_lock.unlock();
 			}
 
+			// This must not be called recursively.
 			void invoke(const T& v)
 			{
+				std::vector<Callback<T>*> copy;
 				uint16_t requestId = v.meta.request_id;
-				for (uint32_t i = 0; i < callbacks.size(); ++i)
+
+				_lock.lock();
+				copy = _callbacks;
+				_lock.unlock();
+
+				// Invoke the copied callbacks.
+				for (uint32_t i = 0; i < copy.size(); ++i)
 				{
-					if (callbacks[i].targetRequestId == ANY_REQUEST_ID || callbacks[i].targetRequestId == requestId)
+					if (copy[i]->_targetRequestId == ANY_REQUEST_ID || copy[i]->_targetRequestId == requestId)
 					{
-						callbacks[i].invoke(v);
+						// Invoke if valid to do so.
+						if (copy[i]->_status == CALLBACK_PERSISTENT || copy[i]->_status == CALLBACK_ONESHOT)
+						{
+							copy[i]->invoke(v);
+						}
+
+						if (copy[i]->_status == CALLBACK_ONESHOT)
+						{
+							copy[i]->_status = CALLBACK_REMOVED;
+						}
 					}
 				}
 
-				callbacks.erase(std::remove_if(callbacks.begin(), callbacks.end(),
-											   [](const Callback<T>& cb) { return cb.oneShotStatus == CALLBACK_ONESHOT_CONSUMED; }),
-								callbacks.end());
+				_lock.lock();
+				auto it = std::remove_if(_callbacks.begin(), _callbacks.end(), [](const Callback<T>* cb)
+				{
+					if (cb->_status == CALLBACK_REMOVED)
+					{
+						delete cb;
+						return true;
+					}
+					return false;
+				});
+
+				_callbacks.erase(it, _callbacks.end());
+				_lock.unlock();
 			}
 
 		private:
@@ -1425,13 +1561,15 @@ namespace gamelink
 				// Store a byte to determine if the id returned from a set operation belongs to this
 				// collection of callbacks.
 				static const uint32_t MASK = 0x0FFFFFFFu;
-				uint32_t id = (currentHandle & (MASK)) | (static_cast<uint32_t>(IDMask) << 24);
-				currentHandle = (currentHandle + 1) & 0x0FFFFFFFu;
+				uint32_t id = (_currentHandle & (MASK)) | (static_cast<uint32_t>(IDMask) << 24);
+				_currentHandle = (_currentHandle + 1) & 0x0FFFFFFFu;
 				return id;
 			}
 
-			uint32_t currentHandle;
-			std::vector<Callback<T>> callbacks;
+			uint32_t _currentHandle;
+			gamelink::lock _lock;
+
+			std::vector<Callback<T>*> _callbacks;
 		};
 	}
 
@@ -1458,6 +1596,11 @@ namespace gamelink
 		/// @return Returns true if the message was parsed correctly.
 		bool ReceiveMessage(const char* bytes, uint32_t length);
 
+		/// Call this after a websocket reconnect after disconnect.
+		/// This queues in an authorization message before any additional
+		/// messages are sent.
+		void HandleReconnect();
+
 		/// Returns true if there are a non-zero amount of payloads to send.
 		///
 		/// @return returns if there are payloads to send.
@@ -1470,15 +1613,27 @@ namespace gamelink
 		template<typename T>
 		void ForeachPayload(const T& networkCallback)
 		{
-			while (HasPayloads())
+			while (true)
 			{
-				Payload* payload = _queuedPayloads.front();
-				_queuedPayloads.pop();
+				Payload* payload = NULL;
+				_lock.lock();
+				if (HasPayloads())
+				{
+					payload = _queuedPayloads.front();
+					_queuedPayloads.pop_front();
+					_lock.unlock();
+				}
+				else
+				{
+					_lock.unlock();
+					break;
+				}
 
-				networkCallback(payload);
-
-				// Clean up send
-				delete payload;
+				if (payload)
+				{
+					networkCallback(payload);
+					delete payload;
+				}
 			}
 		}
 
@@ -1500,6 +1655,11 @@ namespace gamelink
 		/// @return The currently authenticated user, or null if no authentication message
 		///         has been recieved.
 		const schema::User* GetUser() const;
+
+		/// Gets the ClientID that was last passed into AuthenticateWithPIN or AuthenticateWithJWT
+		///
+		/// @return c-string representation of the input ClientID
+		const char * GetClientId() const;	
 
 		/// Sets the OnDebugMessage callback. This is invoked for debugging purposes only.
 		/// There can only be one OnDebugMessage callback registered.
@@ -1580,6 +1740,12 @@ namespace gamelink
 		///
 		/// @param[in] id A handle obtained from calling OnStateUpdate. Invalid handles are ignored.
 		void DetachOnStateUpdate(uint32_t id);
+
+		/// Starts subscribing to TwitchPurchaseBits updates for a specific SKU
+		void SubscribeToSKU(const string& sku);
+
+		/// Subscribes to all SKUs.
+		void SubscribeToAllPurchases();
 
 		/// Sets the OnTwitchPurchaseBits callback. This callback is invoked when twitch purchase
 		/// message is received.
@@ -1830,19 +1996,27 @@ namespace gamelink
 		///
 		/// @param[in] id A handle obtained from calling OnDatastream. Invalid handles are ignored.
 		void DetachOnDatastream(uint32_t);
-
 	private:
 		void debugLogPayload(const Payload*);
 
 		template<typename T>
 		void queuePayload(const T& p)
 		{
-			Payload* payload = new Payload(to_string(p));
+			Payload* payload = new Payload(gamelink::string(to_string(p).c_str()));
 			debugLogPayload(payload);
-			_queuedPayloads.push(payload);
+
+			_lock.lock();
+			_queuedPayloads.push_back(payload);
+			_lock.unlock();
 		}
 
-		std::queue<Payload*> _queuedPayloads;
+		// Fields stored to handle reconnects
+		gamelink::string _storedJWT;
+		gamelink::string _storedClientId;
+
+		gamelink::lock _lock;
+
+		std::deque<Payload*> _queuedPayloads;
 		schema::User* _user;
 
 		uint16_t _currentRequestId;
@@ -2043,7 +2217,7 @@ namespace gamelink
 			else if (n.is_object() || n.is_array())
 			{
 				p.type = JSON_ATOM_LITERAL;
-				p.stringValue = n.dump();
+				p.stringValue = gamelink::string(n.dump().c_str());
 			}
 		}
 
@@ -2116,6 +2290,21 @@ namespace gamelink
 
 namespace gamelink
 {
+    namespace schema
+    {
+        SubscribeTransactionsRequest::SubscribeTransactionsRequest(const string& SKU)
+        {
+            action = string("subscribe");
+            params.target = string("twitchPurchaseBits");
+            data.topic_id = SKU;
+        }        
+    }
+}
+
+
+
+namespace gamelink
+{
 	namespace schema
 	{
 		GetStateRequest::GetStateRequest(const char* target)
@@ -2165,7 +2354,7 @@ namespace gamelink
 		while (HasPayloads())
 		{
 			Payload* send = _queuedPayloads.front();
-			_queuedPayloads.pop();
+			_queuedPayloads.pop_front();
 			delete send;
 		}
 	}
@@ -2201,15 +2390,27 @@ namespace gamelink
 
 	void SDK::ForeachPayload(SDK::NetworkCallback networkCallback, void* user)
 	{
-		while (HasPayloads())
+		while (true)
 		{
-			Payload* payload = _queuedPayloads.front();
-			_queuedPayloads.pop();
+			Payload* payload = NULL;
+			_lock.lock();
+			if (HasPayloads())
+			{
+				payload = _queuedPayloads.front();
+				_queuedPayloads.pop_front();
+				_lock.unlock();
+			}
+			else
+			{
+				_lock.unlock();
+				break;
+			}
 
-			networkCallback(user, payload);
-
-			// Clean up send
-			delete payload;
+			if (payload)
+			{
+				networkCallback(user, payload);
+				delete payload;
+			}
 		}
 	}
 
@@ -2244,8 +2445,10 @@ namespace gamelink
 			success = schema::ParseResponse(bytes, length, authResp);
 			if (success)
 			{
+				_user = new schema::User(authResp.data.jwt);
+				_storedJWT = authResp.data.jwt;
+
 				_onAuthenticate.invoke(authResp);
-				this->_user = new schema::User(authResp.data.jwt);
 			}
 		}
 		else if (env.meta.action == "get")
@@ -2326,6 +2529,25 @@ namespace gamelink
 	const schema::User* SDK::GetUser() const
 	{
 		return _user;
+	}
+
+	const char * SDK::GetClientId() const
+	{
+		return _storedClientId.c_str();
+	}
+
+	void SDK::HandleReconnect()
+	{
+		if (!(_storedJWT == gamelink::string("")))
+		{
+			schema::AuthenticateWithJWTRequest p(_storedClientId, _storedJWT);
+			Payload * payload = new Payload(gamelink::string(to_string(p).c_str()));
+			debugLogPayload(payload);
+
+			_lock.lock();
+			_queuedPayloads.push_front(payload);
+			_lock.unlock();
+		}
 	}
 
 	// Callbacks
@@ -2410,6 +2632,17 @@ namespace gamelink
 		}
 	}
 
+	void SDK::SubscribeToSKU(const string& sku)
+	{
+		schema::SubscribeTransactionsRequest payload(sku);
+		queuePayload(payload);
+	}
+
+	void SDK::SubscribeToAllPurchases()
+	{
+		SubscribeToSKU("*");
+	}
+
 	uint32_t SDK::OnTwitchPurchaseBits(std::function<void(const schema::TwitchPurchaseBitsResponse<nlohmann::json>&)> callback)
 	{
 		return _onTwitchPurchaseBits.set(callback, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
@@ -2435,6 +2668,8 @@ namespace gamelink
 	void SDK::AuthenticateWithPIN(const string& clientId, const string& pin)
 	{
 		schema::AuthenticateWithPINRequest payload(clientId, pin);
+		_storedClientId = clientId;
+
 		queuePayload(payload);
 	}
 
@@ -2442,6 +2677,8 @@ namespace gamelink
 	SDK::AuthenticateWithPIN(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback)
 	{
 		schema::AuthenticateWithPINRequest payload(clientId, pin);
+		_storedClientId = clientId;
+
 		uint16_t id = nextRequestId();
 
 		payload.params.request_id = id;
@@ -2456,6 +2693,8 @@ namespace gamelink
 								  void* user)
 	{
 		schema::AuthenticateWithPINRequest payload(clientId, pin);
+		_storedClientId = clientId;
+
 		uint16_t id = nextRequestId();
 
 		payload.params.request_id = id;
@@ -2467,6 +2706,8 @@ namespace gamelink
 	void SDK::AuthenticateWithJWT(const string& clientId, const string& jwt)
 	{
 		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
+		_storedClientId = clientId;
+
 		queuePayload(payload);
 	}
 
@@ -2474,6 +2715,8 @@ namespace gamelink
 	SDK::AuthenticateWithJWT(const string& clientId, const string& jwt, std::function<void(const schema::AuthenticateResponse&)> callback)
 	{
 		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
+		_storedClientId = clientId;
+
 		uint16_t id = nextRequestId();
 
 		payload.params.request_id = id;
@@ -2488,6 +2731,8 @@ namespace gamelink
 								  void* user)
 	{
 		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
+		_storedClientId = clientId;
+
 		uint16_t id = nextRequestId();
 
 		payload.params.request_id = id;
@@ -2605,7 +2850,7 @@ namespace gamelink
 
 	void SDK::SendBroadcast(const string& target, const nlohmann::json& msg)
 	{
-		schema::BroadcastRequest payload(target, msg.dump());
+		schema::BroadcastRequest payload(target, msg.dump().c_str());
 		queuePayload(payload);
 	}
 

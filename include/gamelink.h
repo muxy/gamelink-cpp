@@ -542,8 +542,13 @@ namespace gamelink
 		/// Updates come through the OnPollUpdate callback.
 		/// Once a poll stops receiving new votes, the subscription will stop receiving new updates.
 		///
-		/// @param[in] pollId The Poll ID to create
+		/// @param[in] pollId The Poll ID to subscribe to
 		void SubscribeToPoll(const string& pollId);
+
+		/// Unsubscribes to updates for a given poll
+		///
+		/// @param[in] pollId The Poll ID to unsubscribe to
+		void UnsubscribeToPoll(const string& pollId);
 
 		/// Deletes the poll with the given ID.
 		///

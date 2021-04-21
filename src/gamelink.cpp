@@ -444,6 +444,12 @@ namespace gamelink
 		queuePayload(packet);
 	}
 
+	void SDK::UnsubscribeToPoll(const string& pollId)
+	{
+		schema::UnsubscribePollRequest packet(pollId);
+		queuePayload(packet);
+	}
+
 	void SDK::SubscribeToPoll(const string& pollId)
 	{
 		schema::SubscribePollRequest packet(pollId);

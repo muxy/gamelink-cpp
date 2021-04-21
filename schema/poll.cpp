@@ -36,5 +36,12 @@ namespace gamelink
 			params.target = string("poll");
 			data.topic_id = string(pollId);
 		}
+
+		UnsubscribePollRequest::UnsubscribePollRequest(const string& pollId)
+		{
+			action = string("unsubscribe");
+			params.target = string("poll");
+			data.topic_id = string(pollId);
+		}
 	}
 }
