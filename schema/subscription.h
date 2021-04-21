@@ -12,6 +12,13 @@ namespace gamelink
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SubscribeTopicRequestBody, "topic_id", topic_id);
 		};
+
+		struct UnsubscribeTopicRequestBody
+		{
+			string topic_id;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(UnsubscribeTopicRequestBody, "topic_id", topic_id);
+		};
 	}
 }
 

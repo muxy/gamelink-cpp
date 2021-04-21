@@ -103,7 +103,16 @@ namespace gamelink
 			/// options array.
 			std::vector<int> results;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(GetPollResponseBody, "poll", poll, "results", results);
+			/// Arithmetic mean of all poll values, including ones that outside the [0, 32) range.
+			double mean;
+
+			/// Sum of all poll values, including ones that outside the [0, 32) range.
+			double sum;
+
+			/// Number of responses, including ones that outside the [0, 32) range.
+			int32_t count;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_5(GetPollResponseBody, "poll", poll, "results", results, "mean", mean, "sum", sum, "count", count);
 		};
 
 		struct PollUpdateBody
@@ -115,7 +124,16 @@ namespace gamelink
 			/// options array.
 			std::vector<int> results;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(PollUpdateBody, "poll", poll, "results", results);
+			/// Arithmetic mean of all poll values, including ones that outside the [0, 32) range.
+			double mean;
+
+			/// Sum of all poll values, including ones that outside the [0, 32) range.
+			double sum;
+
+			/// Number of responses, including ones that outside the [0, 32) range.
+			int32_t count;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_5(PollUpdateBody, "poll", poll, "results", results, "mean", mean, "sum", sum, "count", count);
 		};
 
 		template<typename T>
@@ -180,6 +198,15 @@ namespace gamelink
 			/// @param[in] pollId The ID of the poll to subscribe to updates for.
 			explicit SubscribePollRequest(const string& pollId);
 		};
+
+		
+		struct UnsubscribePollRequest : SendEnvelope<UnsubscribeTopicRequestBody>
+		{
+			/// Creates a UnsubscribePollRequest.
+			/// @param[in] pollId The ID of the poll to subscribe to updates for.
+			explicit UnsubscribePollRequest(const string& pollId);
+		};
+
 
 		struct PollUpdateResponse : ReceiveEnvelope<PollUpdateBody>
 		{
