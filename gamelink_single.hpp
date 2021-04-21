@@ -750,6 +750,13 @@ namespace gamelink
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SubscribeTopicRequestBody, "topic_id", topic_id);
 		};
+
+		struct UnsubscribeTopicRequestBody
+		{
+			string topic_id;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(UnsubscribeTopicRequestBody, "topic_id", topic_id);
+		};
 	}
 }
 
@@ -1093,6 +1100,15 @@ namespace gamelink
 			explicit SubscribePollRequest(const string& pollId);
 		};
 
+		
+		struct UnsubscribePollRequest : SendEnvelope<UnsubscribeTopicRequestBody>
+		{
+			/// Creates a UnsubscribePollRequest.
+			/// @param[in] pollId The ID of the poll to subscribe to updates for.
+			explicit UnsubscribePollRequest(const string& pollId);
+		};
+
+
 		struct PollUpdateResponse : ReceiveEnvelope<PollUpdateBody>
 		{
 		};
@@ -1330,6 +1346,11 @@ namespace gamelink
 			explicit SubscribeDatastreamRequest();
 		};
 
+		struct UnsubscribeDatastreamRequest : SendEnvelope<UnsubscribeTopicRequestBody>
+		{
+			/// Creates a UnsubscribeDatastreamRequest
+			explicit UnsubscribeDatastreamRequest();
+		};
 	}
 }
 
@@ -1355,7 +1376,7 @@ namespace gamelink
 
 		return &recv.errors[0];
 	}
-	
+
 	class Payload
 	{
 	public:
@@ -1439,6 +1460,7 @@ namespace gamelink
 			uint32_t _id;
 			uint16_t _targetRequestId;
 			uint32_t _status;
+
 		private:
 			RawFunctionPointer _rawCallback;
 			void* _user;
@@ -1541,8 +1563,7 @@ namespace gamelink
 				}
 
 				_lock.lock();
-				auto it = std::remove_if(_callbacks.begin(), _callbacks.end(), [](const Callback<T>* cb)
-				{
+				auto it = std::remove_if(_callbacks.begin(), _callbacks.end(), [](const Callback<T>* cb) {
 					if (cb->_status == CALLBACK_REMOVED)
 					{
 						delete cb;
@@ -1659,7 +1680,7 @@ namespace gamelink
 		/// Gets the ClientID that was last passed into AuthenticateWithPIN or AuthenticateWithJWT
 		///
 		/// @return c-string representation of the input ClientID
-		const char * GetClientId() const;	
+		const char* GetClientId() const;
 
 		/// Sets the OnDebugMessage callback. This is invoked for debugging purposes only.
 		/// There can only be one OnDebugMessage callback registered.
@@ -1879,8 +1900,13 @@ namespace gamelink
 		/// Updates come through the OnPollUpdate callback.
 		/// Once a poll stops receiving new votes, the subscription will stop receiving new updates.
 		///
-		/// @param[in] pollId The Poll ID to create
+		/// @param[in] pollId The Poll ID to subscribe to
 		void SubscribeToPoll(const string& pollId);
+
+		/// Unsubscribes to updates for a given poll
+		///
+		/// @param[in] pollId The Poll ID to unsubscribe to
+		void UnsubscribeToPoll(const string& pollId);
 
 		/// Deletes the poll with the given ID.
 		///
@@ -1977,6 +2003,9 @@ namespace gamelink
 		/// Sends a request to subscribe to the datastream.
 		void SubscribeToDatastream();
 
+		/// Sends a request to unsubscribe to the datastream.
+		void UnsubscribeToDatastream();
+
 		/// Sets a OnDatastream callback. This callback is invoked when a datastream update
 		/// message is received.
 		///
@@ -1996,6 +2025,7 @@ namespace gamelink
 		///
 		/// @param[in] id A handle obtained from calling OnDatastream. Invalid handles are ignored.
 		void DetachOnDatastream(uint32_t);
+
 	private:
 		void debugLogPayload(const Payload*);
 
@@ -2105,6 +2135,12 @@ namespace gamelink
 		SubscribeDatastreamRequest::SubscribeDatastreamRequest()
 		{
 			action = string("subscribe");
+			params.target = string("datastream");
+		}
+
+		UnsubscribeDatastreamRequest::UnsubscribeDatastreamRequest()
+		{
+			action = string("unsubscribe");
 			params.target = string("datastream");
 		}
 	}
@@ -2280,6 +2316,13 @@ namespace gamelink
 		SubscribePollRequest::SubscribePollRequest(const string& pollId)
 		{
 			action = string("subscribe");
+			params.target = string("poll");
+			data.topic_id = string(pollId);
+		}
+
+		UnsubscribePollRequest::UnsubscribePollRequest(const string& pollId)
+		{
+			action = string("unsubscribe");
 			params.target = string("poll");
 			data.topic_id = string(pollId);
 		}
@@ -2531,7 +2574,7 @@ namespace gamelink
 		return _user;
 	}
 
-	const char * SDK::GetClientId() const
+	const char* SDK::GetClientId() const
 	{
 		return _storedClientId.c_str();
 	}
@@ -2541,7 +2584,7 @@ namespace gamelink
 		if (!(_storedJWT == gamelink::string("")))
 		{
 			schema::AuthenticateWithJWTRequest p(_storedClientId, _storedJWT);
-			Payload * payload = new Payload(gamelink::string(to_string(p).c_str()));
+			Payload* payload = new Payload(gamelink::string(to_string(p).c_str()));
 			debugLogPayload(payload);
 
 			_lock.lock();
@@ -2775,6 +2818,12 @@ namespace gamelink
 		queuePayload(packet);
 	}
 
+	void SDK::UnsubscribeToPoll(const string& pollId)
+	{
+		schema::UnsubscribePollRequest packet(pollId);
+		queuePayload(packet);
+	}
+
 	void SDK::SubscribeToPoll(const string& pollId)
 	{
 		schema::SubscribePollRequest packet(pollId);
@@ -2857,6 +2906,12 @@ namespace gamelink
 	void SDK::SubscribeToDatastream()
 	{
 		schema::SubscribeDatastreamRequest payload;
+		queuePayload(payload);
+	}
+
+	void SDK::UnsubscribeToDatastream()
+	{
+		schema::UnsubscribeDatastreamRequest payload;
 		queuePayload(payload);
 	}
 

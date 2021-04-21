@@ -18,7 +18,7 @@ namespace gamelink
 
 		return &recv.errors[0];
 	}
-	
+
 	class Payload
 	{
 	public:
@@ -102,6 +102,7 @@ namespace gamelink
 			uint32_t _id;
 			uint16_t _targetRequestId;
 			uint32_t _status;
+
 		private:
 			RawFunctionPointer _rawCallback;
 			void* _user;
@@ -204,8 +205,7 @@ namespace gamelink
 				}
 
 				_lock.lock();
-				auto it = std::remove_if(_callbacks.begin(), _callbacks.end(), [](const Callback<T>* cb)
-				{
+				auto it = std::remove_if(_callbacks.begin(), _callbacks.end(), [](const Callback<T>* cb) {
 					if (cb->_status == CALLBACK_REMOVED)
 					{
 						delete cb;
@@ -322,7 +322,7 @@ namespace gamelink
 		/// Gets the ClientID that was last passed into AuthenticateWithPIN or AuthenticateWithJWT
 		///
 		/// @return c-string representation of the input ClientID
-		const char * GetClientId() const;	
+		const char* GetClientId() const;
 
 		/// Sets the OnDebugMessage callback. This is invoked for debugging purposes only.
 		/// There can only be one OnDebugMessage callback registered.
@@ -645,6 +645,9 @@ namespace gamelink
 		/// Sends a request to subscribe to the datastream.
 		void SubscribeToDatastream();
 
+		/// Sends a request to unsubscribe to the datastream.
+		void UnsubscribeToDatastream();
+
 		/// Sets a OnDatastream callback. This callback is invoked when a datastream update
 		/// message is received.
 		///
@@ -664,6 +667,7 @@ namespace gamelink
 		///
 		/// @param[in] id A handle obtained from calling OnDatastream. Invalid handles are ignored.
 		void DetachOnDatastream(uint32_t);
+
 	private:
 		void debugLogPayload(const Payload*);
 
