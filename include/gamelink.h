@@ -407,8 +407,13 @@ namespace gamelink
 		/// Starts subscribing to TwitchPurchaseBits updates for a specific SKU
 		void SubscribeToSKU(const string& sku);
 
+		void UnsubscribeFromSKU(const string& sku);
+
 		/// Subscribes to all SKUs.
 		void SubscribeToAllPurchases();
+
+		/// Unsubscribes from all SKUs.
+		void UnsubscribeFromAllPurchases();
 
 		/// Sets the OnTwitchPurchaseBits callback. This callback is invoked when twitch purchase
 		/// message is received.
@@ -548,7 +553,7 @@ namespace gamelink
 		/// Unsubscribes to updates for a given poll
 		///
 		/// @param[in] pollId The Poll ID to unsubscribe to
-		void UnsubscribeToPoll(const string& pollId);
+		void UnsubscribeFromPoll(const string& pollId);
 
 		/// Deletes the poll with the given ID.
 		///
@@ -646,7 +651,7 @@ namespace gamelink
 		void SubscribeToDatastream();
 
 		/// Sends a request to unsubscribe to the datastream.
-		void UnsubscribeToDatastream();
+		void UnsubscribeFromDatastream();
 
 		/// Sets a OnDatastream callback. This callback is invoked when a datastream update
 		/// message is received.

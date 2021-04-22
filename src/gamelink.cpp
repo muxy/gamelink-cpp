@@ -312,6 +312,17 @@ namespace gamelink
 		SubscribeToSKU("*");
 	}
 
+	void SDK::UnsubscribeFromSKU(const string& sku)
+	{
+		schema::UnsubscribeTransactionsRequest payload(sku);
+		queuePayload(payload);
+	}
+
+	void SDK::UnsubscribeFromAllPurchases()
+	{
+		UnsubscribeFromSKU("*");
+	}
+
 	uint32_t SDK::OnTwitchPurchaseBits(std::function<void(const schema::TwitchPurchaseBitsResponse<nlohmann::json>&)> callback)
 	{
 		return _onTwitchPurchaseBits.set(callback, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
@@ -444,7 +455,7 @@ namespace gamelink
 		queuePayload(packet);
 	}
 
-	void SDK::UnsubscribeToPoll(const string& pollId)
+	void SDK::UnsubscribeFromPoll(const string& pollId)
 	{
 		schema::UnsubscribePollRequest packet(pollId);
 		queuePayload(packet);
@@ -535,7 +546,7 @@ namespace gamelink
 		queuePayload(payload);
 	}
 
-	void SDK::UnsubscribeToDatastream()
+	void SDK::UnsubscribeFromDatastream()
 	{
 		schema::UnsubscribeDatastreamRequest payload;
 		queuePayload(payload);

@@ -51,6 +51,12 @@ namespace gamelink
 			/// Creates a SubscribeTransactionsRequest
 			explicit SubscribeTransactionsRequest(const string& SKU);
 		};
+
+		struct UnsubscribeTransactionsRequest : SendEnvelope<UnsubscribeTopicRequestBody>
+		{
+			/// Creates a UnsubscribeTransactionsRequest
+			explicit UnsubscribeTransactionsRequest(const string& SKU);
+		};
 	}
 }
 
