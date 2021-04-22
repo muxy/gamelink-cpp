@@ -1292,17 +1292,26 @@ namespace gamelink
 {
     namespace schema
     {
+        template<typename T>
         struct BroadcastRequestBody
         {
-            string message;
+            T data;
             string topic;
 
-            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(BroadcastRequestBody, "message", message, "topic", topic);
+            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(BroadcastRequestBody, "data", data, "topic", topic);
         };
 
-        struct BroadcastRequest : SendEnvelope<BroadcastRequestBody>
+        template<typename T>
+        struct BroadcastRequest : SendEnvelope<BroadcastRequestBody<T>>
         {
-            BroadcastRequest(const string& topic, const string& msg);
+            BroadcastRequest(const string& topic, const T& data)
+            {
+                this->action = string("broadcast");
+                this->params.target = string("");
+
+                this->data.topic = topic;
+                this->data.data = data;
+            }
         };
 
         struct BroadcastResponse : ReceiveEnvelope<OKResponseBody>
@@ -1988,8 +1997,8 @@ namespace gamelink
 		template<typename T>
 		void SendBroadcast(const string& topic, const T& value)
 		{
-			nlohmann::json js = nlohmann::json(value);
-			SendBroadcast(topic, js);
+			schema::BroadcastRequest<T> payload(topic, value);
+			queuePayload(payload);
 		}
 
 		/// Sends a broadcast to all viewers on the channel using the extension.
@@ -2108,23 +2117,6 @@ namespace gamelink
 	}
 }
 
-
-
-
-namespace gamelink
-{
-    namespace schema
-    {
-        BroadcastRequest::BroadcastRequest(const string& topic, const string& msg)
-        {
-            action = string("broadcast");
-            params.target = string("");
-
-            data.topic = topic;
-            data.message = msg;
-        }
-    }
-}
 
 
 
@@ -2897,9 +2889,9 @@ namespace gamelink
 		queuePayload(payload);
 	};
 
-	void SDK::SendBroadcast(const string& target, const nlohmann::json& msg)
+	void SDK::SendBroadcast(const string& topic, const nlohmann::json& msg)
 	{
-		schema::BroadcastRequest payload(target, msg.dump().c_str());
+		schema::BroadcastRequest<nlohmann::json> payload(topic, msg);
 		queuePayload(payload);
 	}
 
