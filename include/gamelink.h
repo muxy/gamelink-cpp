@@ -405,8 +405,13 @@ namespace gamelink
 		void DetachOnStateUpdate(uint32_t id);
 
 		/// Starts subscribing to TwitchPurchaseBits updates for a specific SKU
+		///
+		/// @param[in] sku SKU of item to subscribe to
 		void SubscribeToSKU(const string& sku);
 
+		/// Unsubscribes from a specific SKU listened to by SubscribeToSKU
+		///
+		/// @param[in] sku SKU of item to unsubscribe to
 		void UnsubscribeFromSKU(const string& sku);
 
 		/// Subscribes to all SKUs.

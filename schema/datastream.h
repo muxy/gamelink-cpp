@@ -35,7 +35,7 @@ namespace gamelink
 
 		struct UnsubscribeDatastreamRequest : SendEnvelope<UnsubscribeTopicRequestBody>
 		{
-			/// Creates a UnsubscribeDatastreamRequest
+			/// Creates an UnsubscribeDatastreamRequest
 			explicit UnsubscribeDatastreamRequest();
 		};
 	}

@@ -69,7 +69,7 @@ namespace gamelink
 
 		struct UnsubscribeTransactionsRequest : SendEnvelope<UnsubscribePurchaseRequestBody>
 		{
-			/// Creates a UnsubscribeTransactionsRequest
+			/// Creates an UnsubscribeTransactionsRequest
 			explicit UnsubscribeTransactionsRequest(const string& SKU);
 		};
 	}

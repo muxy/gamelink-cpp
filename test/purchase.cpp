@@ -46,7 +46,7 @@ TEST_CASE("SDK Twitch Bits Purchase Response", "[sdk][purchase][twitch]")
 		"meta": {
 			"action": "update",
 			"request_id": 3,
-			"target": "twitchBitsPurchase"
+			"target": "twitchPurchaseBits"
 		},
 		"data": {
 			"id": "123-512-abwe",
@@ -66,7 +66,6 @@ TEST_CASE("SDK Twitch Bits Purchase Response", "[sdk][purchase][twitch]")
 	});
 
 	sdk.ReceiveMessage(json, strlen(json));
-
 	REQUIRE(received);
 }
 
@@ -81,7 +80,7 @@ TEST_CASE("Purchase subsciptions", "[purchase]")
 		REQUIRE(JSONEquals(payload->data, R"({
             "action": "subscribe", 
             "data": {
-                "topic_id": "spicy-ketchup"
+                "sku": "spicy-ketchup"
             }, 
             "params": {
                 "request_id": 65535, 
@@ -89,5 +88,6 @@ TEST_CASE("Purchase subsciptions", "[purchase]")
             }
         })"));
 	});
+
 	REQUIRE(!sdk.HasPayloads());
 }
