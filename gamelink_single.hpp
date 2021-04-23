@@ -809,11 +809,32 @@ namespace gamelink
 		struct TwitchPurchaseBitsResponse : ReceiveEnvelope<TwitchPurchaseBitsResponseBody<T>>
 		{
 		};
+
+
+		struct SubscribePurchaseRequestBody
+		{
+			string sku;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SubscribePurchaseRequestBody, "sku", sku);
+		};
+
+		struct UnsubscribePurchaseRequestBody
+		{
+			string sku;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(UnsubscribePurchaseRequestBody, "sku", sku);
+		};
 		
-		struct SubscribeTransactionsRequest : SendEnvelope<SubscribeTopicRequestBody>
+		struct SubscribeTransactionsRequest : SendEnvelope<SubscribePurchaseRequestBody>
 		{
 			/// Creates a SubscribeTransactionsRequest
 			explicit SubscribeTransactionsRequest(const string& SKU);
+		};
+
+		struct UnsubscribeTransactionsRequest : SendEnvelope<UnsubscribePurchaseRequestBody>
+		{
+			/// Creates a UnsubscribeTransactionsRequest
+			explicit UnsubscribeTransactionsRequest(const string& SKU);
 		};
 	}
 }
@@ -1774,8 +1795,13 @@ namespace gamelink
 		/// Starts subscribing to TwitchPurchaseBits updates for a specific SKU
 		void SubscribeToSKU(const string& sku);
 
+		void UnsubscribeFromSKU(const string& sku);
+
 		/// Subscribes to all SKUs.
 		void SubscribeToAllPurchases();
+
+		/// Unsubscribes from all SKUs.
+		void UnsubscribeFromAllPurchases();
 
 		/// Sets the OnTwitchPurchaseBits callback. This callback is invoked when twitch purchase
 		/// message is received.
@@ -1915,7 +1941,7 @@ namespace gamelink
 		/// Unsubscribes to updates for a given poll
 		///
 		/// @param[in] pollId The Poll ID to unsubscribe to
-		void UnsubscribeToPoll(const string& pollId);
+		void UnsubscribeFromPoll(const string& pollId);
 
 		/// Deletes the poll with the given ID.
 		///
@@ -2013,7 +2039,7 @@ namespace gamelink
 		void SubscribeToDatastream();
 
 		/// Sends a request to unsubscribe to the datastream.
-		void UnsubscribeToDatastream();
+		void UnsubscribeFromDatastream();
 
 		/// Sets a OnDatastream callback. This callback is invoked when a datastream update
 		/// message is received.
@@ -2331,8 +2357,15 @@ namespace gamelink
         {
             action = string("subscribe");
             params.target = string("twitchPurchaseBits");
-            data.topic_id = SKU;
-        }        
+            data.sku = SKU;
+        }
+
+        UnsubscribeTransactionsRequest::UnsubscribeTransactionsRequest(const string& SKU)
+        {
+            action = string("unsubscribe");
+            params.target = string("twitchPurchaseBits");
+            data.sku = SKU;
+        }
     }
 }
 
@@ -2533,7 +2566,7 @@ namespace gamelink
 					_onStateUpdate.invoke(resp);
 				}
 			}
-			else if (env.meta.target == "twitchBitsPurchase")
+			else if (env.meta.target == "twitchPurchaseBits")
 			{
 				schema::TwitchPurchaseBitsResponse<nlohmann::json> resp;
 				success = schema::ParseResponse(bytes, length, resp);
@@ -2678,6 +2711,17 @@ namespace gamelink
 		SubscribeToSKU("*");
 	}
 
+	void SDK::UnsubscribeFromSKU(const string& sku)
+	{
+		schema::UnsubscribeTransactionsRequest payload(sku);
+		queuePayload(payload);
+	}
+
+	void SDK::UnsubscribeFromAllPurchases()
+	{
+		UnsubscribeFromSKU("*");
+	}
+
 	uint32_t SDK::OnTwitchPurchaseBits(std::function<void(const schema::TwitchPurchaseBitsResponse<nlohmann::json>&)> callback)
 	{
 		return _onTwitchPurchaseBits.set(callback, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
@@ -2810,7 +2854,7 @@ namespace gamelink
 		queuePayload(packet);
 	}
 
-	void SDK::UnsubscribeToPoll(const string& pollId)
+	void SDK::UnsubscribeFromPoll(const string& pollId)
 	{
 		schema::UnsubscribePollRequest packet(pollId);
 		queuePayload(packet);
@@ -2901,7 +2945,7 @@ namespace gamelink
 		queuePayload(payload);
 	}
 
-	void SDK::UnsubscribeToDatastream()
+	void SDK::UnsubscribeFromDatastream()
 	{
 		schema::UnsubscribeDatastreamRequest payload;
 		queuePayload(payload);

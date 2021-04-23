@@ -167,7 +167,7 @@ namespace gamelink
 					_onStateUpdate.invoke(resp);
 				}
 			}
-			else if (env.meta.target == "twitchBitsPurchase")
+			else if (env.meta.target == "twitchPurchaseBits")
 			{
 				schema::TwitchPurchaseBitsResponse<nlohmann::json> resp;
 				success = schema::ParseResponse(bytes, length, resp);
