@@ -202,7 +202,7 @@ namespace gamelink
 		
 		struct UnsubscribePollRequest : SendEnvelope<UnsubscribeTopicRequestBody>
 		{
-			/// Creates a UnsubscribePollRequest.
+			/// Creates an UnsubscribePollRequest.
 			/// @param[in] pollId The ID of the poll to subscribe to updates for.
 			explicit UnsubscribePollRequest(const string& pollId);
 		};

@@ -45,16 +45,31 @@ namespace gamelink
 		struct TwitchPurchaseBitsResponse : ReceiveEnvelope<TwitchPurchaseBitsResponseBody<T>>
 		{
 		};
+
+
+		struct SubscribePurchaseRequestBody
+		{
+			string sku;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SubscribePurchaseRequestBody, "sku", sku);
+		};
+
+		struct UnsubscribePurchaseRequestBody
+		{
+			string sku;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(UnsubscribePurchaseRequestBody, "sku", sku);
+		};
 		
-		struct SubscribeTransactionsRequest : SendEnvelope<SubscribeTopicRequestBody>
+		struct SubscribeTransactionsRequest : SendEnvelope<SubscribePurchaseRequestBody>
 		{
 			/// Creates a SubscribeTransactionsRequest
 			explicit SubscribeTransactionsRequest(const string& SKU);
 		};
 
-		struct UnsubscribeTransactionsRequest : SendEnvelope<UnsubscribeTopicRequestBody>
+		struct UnsubscribeTransactionsRequest : SendEnvelope<UnsubscribePurchaseRequestBody>
 		{
-			/// Creates a UnsubscribeTransactionsRequest
+			/// Creates an UnsubscribeTransactionsRequest
 			explicit UnsubscribeTransactionsRequest(const string& SKU);
 		};
 	}
