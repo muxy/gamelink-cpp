@@ -8,9 +8,9 @@
 namespace gamelink
 {
 	Payload::Payload(string data)
-	{
-		this->data = data;
-	}
+		:waitingForResponse(ANY_REQUEST_ID)
+		,data(data)
+	{}
 
 	SDK::SDK()
 		: _user(NULL)
@@ -20,18 +20,16 @@ namespace gamelink
 	SDK::~SDK()
 	{
 		// Clean up unsent messages
-		while (HasPayloads())
+		for (uint32_t i = 0; i < _queuedPayloads.size(); ++i)
 		{
-			Payload* send = _queuedPayloads.front();
-			_queuedPayloads.pop_front();
-			delete send;
+			delete _queuedPayloads[i];
 		}
 	}
 
-	uint16_t SDK::nextRequestId()
+	RequestId SDK::nextRequestId()
 	{
 		// Wrap around at 32k
-		uint16_t id = (_currentRequestId++ & 0x7F);
+		RequestId id = (_currentRequestId++ & 0x7F);
 		return id;
 	}
 
@@ -54,7 +52,17 @@ namespace gamelink
 
 	bool SDK::HasPayloads() const
 	{
-		return _queuedPayloads.size() > 0;
+		if (_queuedPayloads.size() > 0) 
+		{
+			if (_queuedPayloads.front()->waitingForResponse != ANY_REQUEST_ID)
+			{
+				return false;
+			}
+
+			return true;
+		}
+
+		return false;
 	}
 
 	void SDK::ForeachPayload(SDK::NetworkCallback networkCallback, void* user)
@@ -77,7 +85,11 @@ namespace gamelink
 
 			if (payload)
 			{
-				networkCallback(user, payload);
+				if (payload->data.size() > 0)
+				{
+					networkCallback(user, payload);
+				}
+
 				delete payload;
 			}
 		}
@@ -92,6 +104,32 @@ namespace gamelink
 		{
 			return false;
 		}
+
+		_lock.lock();
+		// Set any waits for the id just received to any_request_id
+		for (uint32_t i = 0; i < _queuedPayloads.size(); ++i)
+		{
+			if (_queuedPayloads[i]->waitingForResponse == env.meta.request_id && env.meta.request_id != ANY_REQUEST_ID)
+			{
+				_queuedPayloads[i]->waitingForResponse = ANY_REQUEST_ID;
+			}
+		}
+
+		// Clear any waits at the front of the queue.
+		while (_queuedPayloads.size() > 0)
+		{
+			Payload * p = _queuedPayloads.front();
+			if (p->waitingForResponse == ANY_REQUEST_ID && p->data.size() == 0)
+			{
+				_queuedPayloads.pop_front();
+				delete p;
+			}
+			else
+			{
+				break;
+			}
+		}
+		_lock.unlock();
 
 		if (_onDebugMessage.valid())
 		{
@@ -235,14 +273,24 @@ namespace gamelink
 		_onDebugMessage.clear();
 	}
 
+	void SDK::WaitForResponse(RequestId req)
+	{
+		Payload* wait = new Payload("");
+		wait->waitingForResponse = req;
+
+		_lock.lock();
+		_queuedPayloads.push_back(wait);
+		_lock.unlock();
+	}
+
 	uint32_t SDK::OnPollUpdate(std::function<void(const schema::PollUpdateResponse& pollResponse)> callback)
 	{
-		return _onPollUpdate.set(callback, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		return _onPollUpdate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
 	}
 
 	uint32_t SDK::OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr)
 	{
-		return _onPollUpdate.set(callback, ptr, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		return _onPollUpdate.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
 	}
 
 	void SDK::DetachOnPollUpdate(uint32_t id)
@@ -259,12 +307,12 @@ namespace gamelink
 
 	uint32_t SDK::OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> callback)
 	{
-		return _onAuthenticate.set(callback, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		return _onAuthenticate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
 	}
 
 	uint32_t SDK::OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr)
 	{
-		return _onAuthenticate.set(callback, ptr, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		return _onAuthenticate.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
 	}
 
 	void SDK::DetachOnAuthenticate(uint32_t id)
@@ -281,12 +329,12 @@ namespace gamelink
 
 	uint32_t SDK::OnStateUpdate(std::function<void(const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback)
 	{
-		return _onStateUpdate.set(callback, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		return _onStateUpdate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
 	}
 
 	uint32_t SDK::OnStateUpdate(void (*callback)(void*, const schema::SubscribeStateUpdateResponse<nlohmann::json>&), void* ptr)
 	{
-		return _onStateUpdate.set(callback, ptr, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		return _onStateUpdate.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
 	}
 
 	void SDK::DetachOnStateUpdate(uint32_t id)
@@ -301,36 +349,36 @@ namespace gamelink
 		}
 	}
 
-	void SDK::SubscribeToSKU(const string& sku)
+	RequestId SDK::SubscribeToSKU(const string& sku)
 	{
 		schema::SubscribeTransactionsRequest payload(sku);
-		queuePayload(payload);
+		return queuePayload(payload);
 	}
 
-	void SDK::SubscribeToAllPurchases()
+	RequestId SDK::SubscribeToAllPurchases()
 	{
-		SubscribeToSKU("*");
+		return SubscribeToSKU("*");
 	}
 
-	void SDK::UnsubscribeFromSKU(const string& sku)
+	RequestId SDK::UnsubscribeFromSKU(const string& sku)
 	{
 		schema::UnsubscribeTransactionsRequest payload(sku);
-		queuePayload(payload);
+		return queuePayload(payload);
 	}
 
-	void SDK::UnsubscribeFromAllPurchases()
+	RequestId SDK::UnsubscribeFromAllPurchases()
 	{
-		UnsubscribeFromSKU("*");
+		return UnsubscribeFromSKU("*");
 	}
 
 	uint32_t SDK::OnTwitchPurchaseBits(std::function<void(const schema::TwitchPurchaseBitsResponse<nlohmann::json>&)> callback)
 	{
-		return _onTwitchPurchaseBits.set(callback, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		return _onTwitchPurchaseBits.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
 	}
 
 	uint32_t SDK::OnTwitchPurchaseBits(void (*callback)(void*, const schema::TwitchPurchaseBitsResponse<nlohmann::json>&), void* ptr)
 	{
-		return _onTwitchPurchaseBits.set(callback, ptr, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		return _onTwitchPurchaseBits.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
 	}
 
 	void SDK::DetachOnTwitchPurchaseBits(uint32_t id)
@@ -345,29 +393,26 @@ namespace gamelink
 		}
 	}
 
-	void SDK::AuthenticateWithPIN(const string& clientId, const string& pin)
+	RequestId SDK::AuthenticateWithPIN(const string& clientId, const string& pin)
 	{
 		schema::AuthenticateWithPINRequest payload(clientId, pin);
 		_storedClientId = clientId;
 
-		queuePayload(payload);
+		return queuePayload(payload);
 	}
 
-	void
+	RequestId
 	SDK::AuthenticateWithPIN(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback)
 	{
 		schema::AuthenticateWithPINRequest payload(clientId, pin);
 		_storedClientId = clientId;
 
-		uint16_t id = nextRequestId();
-
-		payload.params.request_id = id;
-		queuePayload(payload);
-
+		RequestId id = queuePayload(payload);
 		_onAuthenticate.set(callback, id, detail::CALLBACK_ONESHOT);
+		return id;
 	}
 
-	void SDK::AuthenticateWithPIN(const string& clientId,
+	RequestId SDK::AuthenticateWithPIN(const string& clientId,
 								  const string& pin,
 								  void (*callback)(void*, const schema::AuthenticateResponse&),
 								  void* user)
@@ -375,37 +420,31 @@ namespace gamelink
 		schema::AuthenticateWithPINRequest payload(clientId, pin);
 		_storedClientId = clientId;
 
-		uint16_t id = nextRequestId();
-
-		payload.params.request_id = id;
-		queuePayload(payload);
-
+		RequestId id = queuePayload(payload);
 		_onAuthenticate.set(callback, user, id, detail::CALLBACK_ONESHOT);
+		return id;
 	}
 
-	void SDK::AuthenticateWithJWT(const string& clientId, const string& jwt)
+	RequestId SDK::AuthenticateWithJWT(const string& clientId, const string& jwt)
 	{
 		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
 		_storedClientId = clientId;
 
-		queuePayload(payload);
+		return queuePayload(payload);
 	}
 
-	void
+	RequestId
 	SDK::AuthenticateWithJWT(const string& clientId, const string& jwt, std::function<void(const schema::AuthenticateResponse&)> callback)
 	{
 		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
 		_storedClientId = clientId;
 
-		uint16_t id = nextRequestId();
-
-		payload.params.request_id = id;
-		queuePayload(payload);
-
+		RequestId id = queuePayload(payload);
 		_onAuthenticate.set(callback, id, detail::CALLBACK_ONESHOT);
+		return id;
 	}
 
-	void SDK::AuthenticateWithJWT(const string& clientId,
+	RequestId SDK::AuthenticateWithJWT(const string& clientId,
 								  const string& jwt,
 								  void (*callback)(void*, const schema::AuthenticateResponse&),
 								  void* user)
@@ -413,117 +452,105 @@ namespace gamelink
 		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
 		_storedClientId = clientId;
 
-		uint16_t id = nextRequestId();
-
-		payload.params.request_id = id;
-		queuePayload(payload);
-
+		RequestId id = queuePayload(payload);
 		_onAuthenticate.set(callback, user, id, detail::CALLBACK_ONESHOT);
+		return id;
 	}
 
-	void SDK::GetPoll(const string& pollId)
+	RequestId SDK::GetPoll(const string& pollId)
 	{
 		schema::GetPollRequest packet(pollId);
-		queuePayload(packet);
+		return queuePayload(packet);
 	}
 
-	void SDK::GetPoll(const string& pollId, std::function<void(const schema::GetPollResponse&)> callback)
+	RequestId SDK::GetPoll(const string& pollId, std::function<void(const schema::GetPollResponse&)> callback)
 	{
 		schema::GetPollRequest payload(pollId);
-		uint16_t id = nextRequestId();
-
-		payload.params.request_id = id;
-		queuePayload(payload);
-
+		
+		RequestId id = queuePayload(payload);
 		_onGetPoll.set(callback, id, detail::CALLBACK_ONESHOT);
+		return id;
 	}
 
-	void SDK::GetPoll(const string& pollId, void (*callback)(void*, const schema::GetPollResponse&), void* user)
+	RequestId SDK::GetPoll(const string& pollId, void (*callback)(void*, const schema::GetPollResponse&), void* user)
 	{
 		schema::GetPollRequest payload(pollId);
-		uint16_t id = nextRequestId();
 
-		payload.params.request_id = id;
-		queuePayload(payload);
-
+		RequestId id = queuePayload(payload);
 		_onGetPoll.set(callback, user, id, detail::CALLBACK_ONESHOT);
+		return id;
 	}
 
-	void SDK::CreatePoll(const string& pollId, const string& prompt, const std::vector<string>& options)
+	RequestId SDK::CreatePoll(const string& pollId, const string& prompt, const std::vector<string>& options)
 	{
 		schema::CreatePollRequest packet(pollId, prompt, options);
-		queuePayload(packet);
+		return queuePayload(packet);
 	}
 
-	void SDK::UnsubscribeFromPoll(const string& pollId)
+	RequestId SDK::UnsubscribeFromPoll(const string& pollId)
 	{
 		schema::UnsubscribePollRequest packet(pollId);
-		queuePayload(packet);
+		return queuePayload(packet);
 	}
 
-	void SDK::SubscribeToPoll(const string& pollId)
+	RequestId SDK::SubscribeToPoll(const string& pollId)
 	{
 		schema::SubscribePollRequest packet(pollId);
-		queuePayload(packet);
+		return queuePayload(packet);
 	}
 
-	void SDK::DeletePoll(const string& pollId)
+	RequestId SDK::DeletePoll(const string& pollId)
 	{
 		schema::DeletePollRequest payload(pollId);
-		queuePayload(payload);
+		return queuePayload(payload);
 	}
 
-	void SDK::SetState(const char* target, const nlohmann::json& value)
+	RequestId SDK::SetState(const char* target, const nlohmann::json& value)
 	{
 		schema::SetStateRequest<nlohmann::json> payload(target, value);
-		queuePayload(payload);
+		return queuePayload(payload);
 	}
 
-	void SDK::GetState(const char* target)
+	RequestId SDK::GetState(const char* target)
 	{
 		schema::GetStateRequest payload(target);
-		queuePayload(payload);
+		return queuePayload(payload);
 	}
 
-	void SDK::GetState(const char* target, std::function<void(const schema::GetStateResponse<nlohmann::json>&)> callback)
+	RequestId SDK::GetState(const char* target, std::function<void(const schema::GetStateResponse<nlohmann::json>&)> callback)
 	{
 		schema::GetStateRequest payload(target);
-		uint16_t id = nextRequestId();
-
-		payload.params.request_id = id;
-		queuePayload(payload);
-
+		RequestId id = queuePayload(payload);
 		_onGetState.set(callback, id, detail::CALLBACK_ONESHOT);
+		return id;
 	}
 
-	void SDK::GetState(const char* target, void (*callback)(void*, const schema::GetStateResponse<nlohmann::json>&), void* user)
+	RequestId SDK::GetState(const char* target, void (*callback)(void*, const schema::GetStateResponse<nlohmann::json>&), void* user)
 	{
 		schema::GetStateRequest payload(target);
-		uint16_t id = nextRequestId();
 
-		payload.params.request_id = id;
-		queuePayload(payload);
-
+		RequestId id = queuePayload(payload);
 		_onGetState.set(callback, user, id, detail::CALLBACK_ONESHOT);
+		return id;
 	}
 
-	void SDK::SubscribeToStateUpdates(const char* target)
+	RequestId SDK::SubscribeToStateUpdates(const char* target)
 	{
 		schema::SubscribeStateRequest payload(target);
-		queuePayload(payload);
+		return queuePayload(payload);
 	}
 
-	void SDK::UpdateState(const char* target, const string& operation, const string& path, const schema::JsonAtom& atom)
+	RequestId SDK::UpdateState(const char* target, const string& operation, const string& path, const schema::JsonAtom& atom)
 	{
 		schema::PatchOperation op;
 		op.operation = operation;
 		op.path = path;
 		op.value = atom;
 
-		UpdateState(target, &op, &op + 1);
+		return UpdateState(target, &op, &op + 1);
 	}
 
-	void SDK::UpdateState(const char* target, const schema::PatchOperation* begin, const schema::PatchOperation* end)
+	RequestId SDK::UpdateState(const char* target, const schema::PatchOperation* begin, const schema::PatchOperation* end)
 	{
 		schema::PatchStateRequest payload(target);
 		std::vector<schema::PatchOperation> updates;
@@ -531,35 +558,35 @@ namespace gamelink
 		std::copy(begin, end, updates.begin());
 
 		payload.data.state = std::move(updates);
-		queuePayload(payload);
+		return queuePayload(payload);
 	};
 
-	void SDK::SendBroadcast(const string& topic, const nlohmann::json& msg)
+	RequestId SDK::SendBroadcast(const string& topic, const nlohmann::json& msg)
 	{
 		schema::BroadcastRequest<nlohmann::json> payload(topic, msg);
-		queuePayload(payload);
+		return queuePayload(payload);
 	}
 
-	void SDK::SubscribeToDatastream()
+	RequestId SDK::SubscribeToDatastream()
 	{
 		schema::SubscribeDatastreamRequest payload;
-		queuePayload(payload);
+		return queuePayload(payload);
 	}
 
-	void SDK::UnsubscribeFromDatastream()
+	RequestId SDK::UnsubscribeFromDatastream()
 	{
 		schema::UnsubscribeDatastreamRequest payload;
-		queuePayload(payload);
+		return queuePayload(payload);
 	}
 
 	uint32_t SDK::OnDatastream(std::function<void(const schema::DatastreamUpdate&)> callback)
 	{
-		return _onDatastreamUpdate.set(callback, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		return _onDatastreamUpdate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
 	}
 
 	uint32_t SDK::OnDatastream(void (*callback)(void*, const schema::DatastreamUpdate&), void* user)
 	{
-		return _onDatastreamUpdate.set(callback, user, detail::ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		return _onDatastreamUpdate.set(callback, user, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
 	}
 
 	void SDK::DetachOnDatastream(uint32_t id)
