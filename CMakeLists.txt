@@ -44,7 +44,7 @@ endif()
 
 # Documentation
 file(GLOB SCHEMA_PUBLIC_HEADERS "schema/*.h")
-file(GLOB SRC_PUBLIC_HEADERS "src/*.hpp")
+file(GLOB SRC_PUBLIC_HEADERS "include/*.h")
 
 set(PUBLIC_HEADERS ${SCHEMA_PUBLIC_HEADERS} ${SRC_PUBLIC_HEADERS})
 set(DOXYGEN_INDEX_FILE "doxygen/html/index.html")

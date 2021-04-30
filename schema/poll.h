@@ -198,7 +198,6 @@ namespace gamelink
 			/// @param[in] pollId The ID of the poll to subscribe to updates for.
 			explicit SubscribePollRequest(const string& pollId);
 		};
-
 		
 		struct UnsubscribePollRequest : SendEnvelope<UnsubscribeTopicRequestBody>
 		{

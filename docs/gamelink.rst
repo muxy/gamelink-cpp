@@ -6,6 +6,8 @@ Configuration
 ---------------
 .. doxygentypedef:: string
 
+.. doxygentypedef:: lock
+
 Schema
 -------
 The schema library, contained in the namespace `gamelink::schema` are projections of the 
@@ -67,24 +69,21 @@ JSONAtom
 
 Generic Bodies
 ~~~~~~~~~~~~~~
-.. doxygenstruct:: gamelink::schema::bodies::EmptyBody
-.. doxygenstruct:: gamelink::schema::bodies::OKResponseBody
+.. doxygenstruct:: gamelink::schema::EmptyBody
+.. doxygenstruct:: gamelink::schema::OKResponseBody
     :members:
 
 Authentication
 ~~~~~~~~~~~~~~
 
-.. doxygenstruct:: gamelink::schema::bodies::AuthenticateWithPINBody
+.. doxygenstruct:: gamelink::schema::AuthenticateWithPINRequestBody
     :members:
-    :undoc-members:
 
-.. doxygenstruct:: gamelink::schema::bodies::AuthenticateWithJWTBody
+.. doxygenstruct:: gamelink::schema::AuthenticateWithJWTRequestBody
     :members:
-    :undoc-members:
 
-.. doxygenstruct:: gamelink::schema::bodies::JWTResponseBody
+.. doxygenstruct:: gamelink::schema::AuthenticateJWTResponseBody
     :members:
-    :undoc-members:
 
 .. doxygenstruct:: gamelink::schema::SubscribeAuthenticationRequest
     :members: data
@@ -111,10 +110,10 @@ by the user-developer type.
 .. doxygenvariable:: gamelink::schema::STATE_TARGET_CHANNEL
 .. doxygenvariable:: gamelink::schema::STATE_TARGET_EXTENSION
 
-.. doxygenstruct:: gamelink::schema::bodies::SetStateBody
+.. doxygenstruct:: gamelink::schema::SetStateRequestBody
     :members:
 
-.. doxygenstruct:: gamelink::schema::bodies::StateResponse
+.. doxygenstruct:: gamelink::schema::StateResponseBody
     :members:
 
 .. doxygenstruct:: gamelink::schema::SetStateRequest
@@ -129,41 +128,34 @@ by the user-developer type.
 .. doxygenstruct:: gamelink::schema::GetStateResponse
     :members: data
 
-.. doxygenstruct:: gamelink::schema::bodies::UpdateOperation
+.. doxygenstruct:: gamelink::schema::PatchOperation
     :members:
-    :undoc-members:
 
-.. doxygenstruct:: gamelink::schema::bodies::UpdateStateBody
+.. doxygenstruct:: gamelink::schema::PatchStateRequestBody
     :members:
-    :undoc-members:
 
-.. doxygenstruct:: gamelink::schema::UpdateStateRequest
+.. doxygenstruct:: gamelink::schema::PatchStateRequest
     :members: UpdateStateRequest, data
 
-.. doxygenstruct:: gamelink::schema::bodies::SubscribeStateBody
+.. doxygenstruct:: gamelink::schema::StateUpdateBody
     :members:
-    :undoc-members:
 
-.. doxygenstruct:: gamelink::schema::bodies::StateSubscriptionUpdate
+.. doxygenstruct:: gamelink::schema::SubscribeStateUpdateResponse
     :members:
-    :undoc-members:
 
 .. doxygenstruct:: gamelink::schema::SubscribeStateRequest
     :members: SubscribeStateRequest, data
 
 Polling 
 ~~~~~~~~~
-.. doxygenstruct:: gamelink::schema::bodies::GetPollBody
+.. doxygenstruct:: gamelink::schema::GetPollRequestBody
     :members:
-    :undoc-members:
 
-.. doxygenstruct:: gamelink::schema::bodies::CreatePollBody
+.. doxygenstruct:: gamelink::schema::CreatePollRequestBody
     :members:
-    :undoc-members:
 
-.. doxygenstruct:: gamelink::schema::bodies::CreateUserDataPollBody
+.. doxygenstruct:: gamelink::schema::CreatePollWithUserDataRequestBody
     :members:
-    :undoc-members:
 
 .. doxygenstruct:: gamelink::schema::GetPollRequest
     :members: GetPollRequest, data
@@ -171,5 +163,17 @@ Polling
 .. doxygenstruct:: gamelink::schema::CreatePollRequest
     :members: CreatePollRequest, data
 
-.. doxygenstruct:: gamelink::schema::CreateUserDataPollRequest
-    :members: CreateUserDataPollRequest, data
+.. doxygenstruct:: gamelink::schema::CreatePollWithUserDataRequest
+    :members: CreatePollWithUserDataRequest, data
+
+SDK Object
+-------------
+.. doxygenfunction:: gamelink::FirstError
+.. doxygentypedef:: gamelink::RequestId
+.. doxygenvariable:: gamelink::ANY_REQUEST_ID
+
+.. doxygenclass:: gamelink::Payload
+    :members:
+
+.. doxygenclass:: gamelink::SDK
+    :members:
