@@ -181,7 +181,7 @@ TEST_CASE("SDK Poll Get Results", "[sdk][poll][results]")
 			]
         },
         "meta":{
-            "request_id":1,
+            "request_id":2,
             "action": "get",
             "target":"poll"
         }

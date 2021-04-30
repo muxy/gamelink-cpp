@@ -69,7 +69,6 @@ TEST_CASE("SDK Twitch Bits Purchase Response", "[sdk][purchase][twitch]")
 	REQUIRE(received);
 }
 
-
 TEST_CASE("Purchase subsciptions", "[purchase]")
 {
 	gamelink::SDK sdk;
