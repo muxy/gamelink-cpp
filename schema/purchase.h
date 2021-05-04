@@ -11,15 +11,28 @@ namespace gamelink
 		template<typename T>
 		struct TwitchPurchaseBitsResponseBody
 		{
+			/// The ID of the purchase, unique for each unique purchase
             string id;
-			string sku;
-			string displayName;
-			string userId;
-			string username;
 
+			/// SKU of the item
+			string sku;
+
+			/// Human readable display name of the product
+			string displayName;
+
+			/// UserID of the user who purchased the product
+			string userId;
+
+			/// Human readable username of the user who purchased the product
+			string userName;
+
+			/// Cost in coins of the product
 			int cost;
+
+			/// Millisecond unix timestamp of the purchase.
             int64_t timestamp;
 
+			/// Arbitrary additional data, added by the extension to this purchase receipt.
 			T additional;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_8(TwitchPurchaseBitsResponseBody,
@@ -32,7 +45,7 @@ namespace gamelink
 												"userId",
 												userId,
 												"username",
-												username,
+												userName,
 												"cost", 
 												cost, 
 												"timestamp", 

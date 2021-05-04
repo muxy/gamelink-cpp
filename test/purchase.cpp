@@ -33,7 +33,7 @@ TEST_CASE("Purchase deserialization", "[purchase][deserialization]")
 	REQUIRE(resp.data.sku == "test-sku");
 	REQUIRE(resp.data.displayName == "Test User");
 	REQUIRE(resp.data.userId == "12345");
-	REQUIRE(resp.data.username == "test-user");
+	REQUIRE(resp.data.userName == "test-user");
 	REQUIRE(resp.data.additional == "extra-data");
 }
 
