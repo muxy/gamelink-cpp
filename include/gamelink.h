@@ -31,7 +31,6 @@ namespace gamelink
 	/// Constant RequestId that represents the "don't care" request id.
 	static const RequestId ANY_REQUEST_ID = 0xFFFF;
 
-
 	/// Payload represents a block of data to be sent through the websocket.
 	class Payload
 	{
@@ -250,7 +249,10 @@ namespace gamelink
 	}
 
 
-	/// Not thread safe.
+	/// The SDK class exposes functionality to interact with the Gamelink SDK.
+	/// 
+	/// @remark Most functions are thread safe, and can be called from multiple threads 
+	///         concurrently, unless specifically denoted.
 	class SDK
 	{
 	public:
@@ -266,9 +268,15 @@ namespace gamelink
 		SDK& operator=(SDK&&);
 
 		/// Receives a character buffer as a message. This function
-		/// may invoke callbacks.
+		/// may invoke any callbacks that have been attached.
+		/// @warning This function must only be called from one thread, and must not be 
+		///          invoked recursively. This function will invoke any callbacks in the same 
+		///          thread it is called in. Any arguments to any callbacks invoked by this
+		///          function only live until the callback returns. This means that rescheduling
+		///          a callback must copy any parameters.
 		///
 		/// @param[in] bytes Pointer to contiguous array of bytes that represent a network message.
+		///                  This byte array must stay live until ReceiveMessage terminates.
 		/// @param[in] length Length of the bytes array.
 		/// @return Returns true if the message was parsed correctly.
 		bool ReceiveMessage(const char* bytes, uint32_t length);
@@ -279,11 +287,16 @@ namespace gamelink
 		void HandleReconnect();
 
 		/// Returns true if there are a non-zero amount of payloads to send.
+		/// @remark This method is thread safe, but it is possible for 
+		///         `if (HasPayloads()) { ForEachPayload(...) }` to execute
+		///         the callback to ForEachPayload zero times.
 		///
 		/// @return returns if there are payloads to send.
 		bool HasPayloads() const;
 
 		/// Invokes a callable type for each avaliable payload.
+		/// May invoke the callback zero times if there are no outstanding payloads.
+		/// Does not internally sleep.
 		///
 		/// @param[in] networkCallback callback invoked once for each available payload.
 		///                            must be in the form networkCallback(const Payload*)
@@ -294,7 +307,7 @@ namespace gamelink
 			{
 				Payload* payload = NULL;
 				_lock.lock();
-				if (HasPayloads())
+				if (HasPayloadsNoLock())
 				{
 					payload = _queuedPayloads.front();
 					_queuedPayloads.pop_front();
@@ -317,9 +330,13 @@ namespace gamelink
 			}
 		}
 
+		/// Type used in ForeachPayload below. Takes in the user pointer as the first argument, 
+		/// and a pointer to a payload as the second parameter.
 		typedef void (*NetworkCallback)(void*, const Payload*);
 
 		/// Invokes a function pointer for each avaliable payload.
+		/// May invoke the callback zero times if there are no outstanding payloads.
+		/// Does not internally sleep.
 		///
 		/// @param[in] cb Callback to be invoked for each avaliable payload
 		/// @param[in] user User pointer that is passed into the callback
@@ -330,7 +347,7 @@ namespace gamelink
 		/// @return true if an authentication message has been received.
 		bool IsAuthenticated() const;
 
-		/// Gets the currently authenticated user.
+		/// Gets the currently authenticated user. Will return NULL if !IsAuthenticated()
 		///
 		/// @return The currently authenticated user, or null if no authentication message
 		///         has been recieved.
@@ -338,7 +355,8 @@ namespace gamelink
 
 		/// Gets the ClientID that was last passed into AuthenticateWithPIN or AuthenticateWithJWT
 		///
-		/// @return c-string representation of the input ClientID
+		/// @return c-string representation of the input ClientID. This pointer is valid as long
+		///         as the SDK object.
 		const char* GetClientId() const;
 
 		/// Sets the OnDebugMessage callback. This is invoked for debugging purposes only.
@@ -743,6 +761,8 @@ namespace gamelink
 	private:
 		void debugLogPayload(const Payload*);
 
+		bool HasPayloadsNoLock() const;
+
 		template<typename T>
 		RequestId queuePayload(T& p)
 		{
@@ -764,7 +784,7 @@ namespace gamelink
 		gamelink::string _storedJWT;
 		gamelink::string _storedClientId;
 
-		gamelink::lock _lock;
+		mutable gamelink::lock _lock;
 
 		std::deque<Payload*> _queuedPayloads;
 		schema::User* _user;

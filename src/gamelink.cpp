@@ -1,6 +1,3 @@
-#ifndef INCLUDE_MUXY_GAMELINK_CPP
-#define INCLUDE_MUXY_GAMELINK_CPP
-
 #include "gamelink.h"
 #include <cstdio>
 #include <iostream>
@@ -52,6 +49,15 @@ namespace gamelink
 
 	bool SDK::HasPayloads() const
 	{
+		_lock.lock();
+		bool result = HasPayloadsNoLock();
+		_lock.unlock();
+		
+		return result;
+	}
+
+	bool SDK::HasPayloadsNoLock() const
+	{
 		if (_queuedPayloads.size() > 0) 
 		{
 			if (_queuedPayloads.front()->waitingForResponse != ANY_REQUEST_ID)
@@ -71,7 +77,7 @@ namespace gamelink
 		{
 			Payload* payload = NULL;
 			_lock.lock();
-			if (HasPayloads())
+			if (HasPayloadsNoLock())
 			{
 				payload = _queuedPayloads.front();
 				_queuedPayloads.pop_front();
@@ -283,323 +289,9 @@ namespace gamelink
 		_lock.unlock();
 	}
 
-	uint32_t SDK::OnPollUpdate(std::function<void(const schema::PollUpdateResponse& pollResponse)> callback)
-	{
-		return _onPollUpdate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	uint32_t SDK::OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr)
-	{
-		return _onPollUpdate.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	void SDK::DetachOnPollUpdate(uint32_t id)
-	{
-		if (_onPollUpdate.validateId(id))
-		{
-			_onPollUpdate.remove(id);
-		}
-		else
-		{
-			_onDebugMessage.invoke("Invalid ID passed into DetachOnPollUpdate");
-		}
-	}
-
-	uint32_t SDK::OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> callback)
-	{
-		return _onAuthenticate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	uint32_t SDK::OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr)
-	{
-		return _onAuthenticate.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	void SDK::DetachOnAuthenticate(uint32_t id)
-	{
-		if (_onAuthenticate.validateId(id))
-		{
-			_onAuthenticate.remove(id);
-		}
-		else
-		{
-			_onDebugMessage.invoke("Invalid ID passed into DetachOnAuthenticate");
-		}
-	}
-
-	uint32_t SDK::OnStateUpdate(std::function<void(const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback)
-	{
-		return _onStateUpdate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	uint32_t SDK::OnStateUpdate(void (*callback)(void*, const schema::SubscribeStateUpdateResponse<nlohmann::json>&), void* ptr)
-	{
-		return _onStateUpdate.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	void SDK::DetachOnStateUpdate(uint32_t id)
-	{
-		if (_onStateUpdate.validateId(id))
-		{
-			_onStateUpdate.remove(id);
-		}
-		else
-		{
-			_onDebugMessage.invoke("Invalid ID passed into OnStateUpdate");
-		}
-	}
-
-	RequestId SDK::SubscribeToSKU(const string& sku)
-	{
-		schema::SubscribeTransactionsRequest payload(sku);
-		return queuePayload(payload);
-	}
-
-	RequestId SDK::SubscribeToAllPurchases()
-	{
-		return SubscribeToSKU("*");
-	}
-
-	RequestId SDK::UnsubscribeFromSKU(const string& sku)
-	{
-		schema::UnsubscribeTransactionsRequest payload(sku);
-		return queuePayload(payload);
-	}
-
-	RequestId SDK::UnsubscribeFromAllPurchases()
-	{
-		return UnsubscribeFromSKU("*");
-	}
-
-	uint32_t SDK::OnTwitchPurchaseBits(std::function<void(const schema::TwitchPurchaseBitsResponse<nlohmann::json>&)> callback)
-	{
-		return _onTwitchPurchaseBits.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	uint32_t SDK::OnTwitchPurchaseBits(void (*callback)(void*, const schema::TwitchPurchaseBitsResponse<nlohmann::json>&), void* ptr)
-	{
-		return _onTwitchPurchaseBits.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	void SDK::DetachOnTwitchPurchaseBits(uint32_t id)
-	{
-		if (_onTwitchPurchaseBits.validateId(id))
-		{
-			_onTwitchPurchaseBits.remove(id);
-		}
-		else
-		{
-			_onDebugMessage.invoke("Invalid ID passed into DetachOnTwitchPurchaseBits");
-		}
-	}
-
-	RequestId SDK::AuthenticateWithPIN(const string& clientId, const string& pin)
-	{
-		schema::AuthenticateWithPINRequest payload(clientId, pin);
-		_storedClientId = clientId;
-
-		return queuePayload(payload);
-	}
-
-	RequestId
-	SDK::AuthenticateWithPIN(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback)
-	{
-		schema::AuthenticateWithPINRequest payload(clientId, pin);
-		_storedClientId = clientId;
-
-		RequestId id = queuePayload(payload);
-		_onAuthenticate.set(callback, id, detail::CALLBACK_ONESHOT);
-		return id;
-	}
-
-	RequestId SDK::AuthenticateWithPIN(const string& clientId,
-								  const string& pin,
-								  void (*callback)(void*, const schema::AuthenticateResponse&),
-								  void* user)
-	{
-		schema::AuthenticateWithPINRequest payload(clientId, pin);
-		_storedClientId = clientId;
-
-		RequestId id = queuePayload(payload);
-		_onAuthenticate.set(callback, user, id, detail::CALLBACK_ONESHOT);
-		return id;
-	}
-
-	RequestId SDK::AuthenticateWithJWT(const string& clientId, const string& jwt)
-	{
-		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
-		_storedClientId = clientId;
-
-		return queuePayload(payload);
-	}
-
-	RequestId
-	SDK::AuthenticateWithJWT(const string& clientId, const string& jwt, std::function<void(const schema::AuthenticateResponse&)> callback)
-	{
-		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
-		_storedClientId = clientId;
-
-		RequestId id = queuePayload(payload);
-		_onAuthenticate.set(callback, id, detail::CALLBACK_ONESHOT);
-		return id;
-	}
-
-	RequestId SDK::AuthenticateWithJWT(const string& clientId,
-								  const string& jwt,
-								  void (*callback)(void*, const schema::AuthenticateResponse&),
-								  void* user)
-	{
-		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
-		_storedClientId = clientId;
-
-		RequestId id = queuePayload(payload);
-		_onAuthenticate.set(callback, user, id, detail::CALLBACK_ONESHOT);
-		return id;
-	}
-
-	RequestId SDK::GetPoll(const string& pollId)
-	{
-		schema::GetPollRequest packet(pollId);
-		return queuePayload(packet);
-	}
-
-	RequestId SDK::GetPoll(const string& pollId, std::function<void(const schema::GetPollResponse&)> callback)
-	{
-		schema::GetPollRequest payload(pollId);
-		
-		RequestId id = queuePayload(payload);
-		_onGetPoll.set(callback, id, detail::CALLBACK_ONESHOT);
-		return id;
-	}
-
-	RequestId SDK::GetPoll(const string& pollId, void (*callback)(void*, const schema::GetPollResponse&), void* user)
-	{
-		schema::GetPollRequest payload(pollId);
-
-		RequestId id = queuePayload(payload);
-		_onGetPoll.set(callback, user, id, detail::CALLBACK_ONESHOT);
-		return id;
-	}
-
-	RequestId SDK::CreatePoll(const string& pollId, const string& prompt, const std::vector<string>& options)
-	{
-		schema::CreatePollRequest packet(pollId, prompt, options);
-		return queuePayload(packet);
-	}
-
-	RequestId SDK::UnsubscribeFromPoll(const string& pollId)
-	{
-		schema::UnsubscribePollRequest packet(pollId);
-		return queuePayload(packet);
-	}
-
-	RequestId SDK::SubscribeToPoll(const string& pollId)
-	{
-		schema::SubscribePollRequest packet(pollId);
-		return queuePayload(packet);
-	}
-
-	RequestId SDK::DeletePoll(const string& pollId)
-	{
-		schema::DeletePollRequest payload(pollId);
-		return queuePayload(payload);
-	}
-
-	RequestId SDK::SetState(const char* target, const nlohmann::json& value)
-	{
-		schema::SetStateRequest<nlohmann::json> payload(target, value);
-		return queuePayload(payload);
-	}
-
-	RequestId SDK::GetState(const char* target)
-	{
-		schema::GetStateRequest payload(target);
-		return queuePayload(payload);
-	}
-
-	RequestId SDK::GetState(const char* target, std::function<void(const schema::GetStateResponse<nlohmann::json>&)> callback)
-	{
-		schema::GetStateRequest payload(target);
-		RequestId id = queuePayload(payload);
-		_onGetState.set(callback, id, detail::CALLBACK_ONESHOT);
-		return id;
-	}
-
-	RequestId SDK::GetState(const char* target, void (*callback)(void*, const schema::GetStateResponse<nlohmann::json>&), void* user)
-	{
-		schema::GetStateRequest payload(target);
-
-		RequestId id = queuePayload(payload);
-		_onGetState.set(callback, user, id, detail::CALLBACK_ONESHOT);
-		return id;
-	}
-
-	RequestId SDK::SubscribeToStateUpdates(const char* target)
-	{
-		schema::SubscribeStateRequest payload(target);
-		return queuePayload(payload);
-	}
-
-	RequestId SDK::UpdateState(const char* target, const string& operation, const string& path, const schema::JsonAtom& atom)
-	{
-		schema::PatchOperation op;
-		op.operation = operation;
-		op.path = path;
-		op.value = atom;
-
-		return UpdateState(target, &op, &op + 1);
-	}
-
-	RequestId SDK::UpdateState(const char* target, const schema::PatchOperation* begin, const schema::PatchOperation* end)
-	{
-		schema::PatchStateRequest payload(target);
-		std::vector<schema::PatchOperation> updates;
-		updates.resize(end - begin);
-		std::copy(begin, end, updates.begin());
-
-		payload.data.state = std::move(updates);
-		return queuePayload(payload);
-	};
-
 	RequestId SDK::SendBroadcast(const string& topic, const nlohmann::json& msg)
 	{
 		schema::BroadcastRequest<nlohmann::json> payload(topic, msg);
 		return queuePayload(payload);
 	}
-
-	RequestId SDK::SubscribeToDatastream()
-	{
-		schema::SubscribeDatastreamRequest payload;
-		return queuePayload(payload);
-	}
-
-	RequestId SDK::UnsubscribeFromDatastream()
-	{
-		schema::UnsubscribeDatastreamRequest payload;
-		return queuePayload(payload);
-	}
-
-	uint32_t SDK::OnDatastream(std::function<void(const schema::DatastreamUpdate&)> callback)
-	{
-		return _onDatastreamUpdate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	uint32_t SDK::OnDatastream(void (*callback)(void*, const schema::DatastreamUpdate&), void* user)
-	{
-		return _onDatastreamUpdate.set(callback, user, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	void SDK::DetachOnDatastream(uint32_t id)
-	{
-		if (_onDatastreamUpdate.validateId(id))
-		{
-			_onDatastreamUpdate.remove(id);
-		}
-		else
-		{
-			_onDebugMessage.invoke("Invalid ID passed into DetachOnDatastream");
-		}
-	}
 }
-
-#endif
