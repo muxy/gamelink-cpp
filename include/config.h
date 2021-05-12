@@ -51,6 +51,7 @@ namespace gamelink
 	///     * May be uncopyable and unmovable.
 	/// 	* Provide .lock(), .unlock() and bool .try_lock()
 	/// 	* .try_lock() should true upon lock aquisition, and false otherwise.
+	///     * Does not have to be recursive
 	typedef MUXY_GAMELINK_CUSTOM_LOCK_TYPE lock;
 }
 
