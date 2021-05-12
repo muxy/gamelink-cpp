@@ -166,6 +166,14 @@ Polling
 .. doxygenstruct:: gamelink::schema::CreatePollWithUserDataRequest
     :members: CreatePollWithUserDataRequest, data
 
+Purchases
+~~~~~~~~~~~~~
+.. doxygenstruct:: gamelink::schema::TwitchPurchaseBitsResponseBody
+    :members:
+
+.. doxygenstruct:: gamelink::schema::TwitchPurchaseBitsResponse
+    :members: data
+
 SDK Object
 -------------
 .. doxygenfunction:: gamelink::FirstError
