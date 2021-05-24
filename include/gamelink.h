@@ -483,7 +483,7 @@ namespace gamelink
 		///
 		/// @param[in] callback Callback to invoke when a twitch purchase message is received.
 		/// @return Returns an integer handle to the callback, to be used in DetachOnTwitchPurchaseBits.
-		uint32_t OnTwitchPurchaseBits(std::function<void(const schema::TwitchPurchaseBitsResponse<nlohmann::json>&)> callback);
+		uint32_t OnTwitchPurchaseBits(std::function<void(const schema::TwitchPurchaseBitsResponse<nlohmann::json>&)> Callback);
 
 		/// Sets the OnTwitchPurchaseBits callback. This callback is invoked when twitch purchase
 		/// message is received.
@@ -492,12 +492,12 @@ namespace gamelink
 		/// @param[in] callback Callback to invoke when a twitch purchase message is received.
 		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
 		/// @return Returns an integer handle to the callback, to be used in DetachOnTwitchPurchaseBits.
-		uint32_t OnTwitchPurchaseBits(void (*callback)(void*, const schema::TwitchPurchaseBitsResponse<nlohmann::json>&), void* ptr);
+		uint32_t OnTwitchPurchaseBits(void (*Callback)(void*, const schema::TwitchPurchaseBitsResponse<nlohmann::json>&), void* Ptr);
 
 		/// Detaches an OnTwitchPurchaseBits callback.
 		///
 		/// @param[in] id A handle obtained from calling OnTwitchPurchaseBits. Invalid handles are ignored.
-		void DetachOnTwitchPurchaseBits(uint32_t id);
+		void DetachOnTwitchPurchaseBits(uint32_t Id);
 
 		/// Queues an authentication request using a PIN code, as received by the user from an
 		/// extension's config view.
@@ -505,7 +505,7 @@ namespace gamelink
 		/// @param[in] clientId The extension's client ID
 		/// @param[in] pin 		The PIN input from the broadcaster
 		/// @return RequestId of the generated request
-		RequestId AuthenticateWithPIN(const string& clientId, const string& pin);
+		RequestId AuthenticateWithPIN(const string& ClientId, const string& PIN);
 
 		/// Queues an authentication request using a PIN code, as received by the user from an
 		/// extension's config view.
@@ -518,7 +518,7 @@ namespace gamelink
 		///                     is responded to.
 		/// @return RequestId of the generated request
 		RequestId
-		AuthenticateWithPIN(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback);
+		AuthenticateWithPIN(const string& ClientId, const string& PIN, std::function<void(const schema::AuthenticateResponse&)> Callback);
 
 		/// Queues an authentication request using a PIN code, as received by the user from an
 		/// extension's config view.
@@ -531,17 +531,17 @@ namespace gamelink
 		///                     is responded to.
 		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
 		/// @return RequestId of the generated request
-		RequestId AuthenticateWithPIN(const string& clientId,
-								 const string& pin,
-								 void (*callback)(void*, const schema::AuthenticateResponse&),
-								 void* user);
+		RequestId AuthenticateWithPIN(const string& ClientId,
+								 const string& PIN,
+								 void (*Callback)(void*, const schema::AuthenticateResponse&),
+								 void* User);
 
 		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
 		///
 		/// @param[in] clientId The extension's client ID
 		/// @param[in] jwt 		The stored JWT from a previous authentication
 		/// @return RequestId of the generated request
-		RequestId AuthenticateWithJWT(const string& clientId, const string& jwt);
+		RequestId AuthenticateWithJWT(const string& ClientId, const string& JWT);
 
 		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
 		/// This overload attaches a one-shot callback to be called when the authentication response
@@ -553,7 +553,7 @@ namespace gamelink
 		///                     is responded to.
 		/// @return RequestId of the generated request
 		RequestId
-		AuthenticateWithJWT(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback);
+		AuthenticateWithJWT(const string& ClientId, const string& PIN, std::function<void(const schema::AuthenticateResponse&)> Callback);
 
 		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
 		/// This overload attaches a one-shot callback to be called when the authentication response
@@ -565,10 +565,43 @@ namespace gamelink
 		///                     is responded to.
 		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
 		/// @return RequestId of the generated request
-		RequestId AuthenticateWithJWT(const string& clientId,
-								 const string& pin,
-								 void (*callback)(void*, const schema::AuthenticateResponse&),
-								 void* user);
+		RequestId AuthenticateWithJWT(const string& ClientId,
+								 const string& PIN,
+								 void (*Callback)(void*, const schema::AuthenticateResponse&),
+								 void* User);
+
+		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
+		///
+		/// @param[in] clientId The extension's client ID
+		/// @param[in] jwt 		The stored JWT from a previous authentication
+		/// @return RequestId of the generated request
+		RequestId AuthenticateWithRefreshToken(const string& ClientId, const string& JWT);
+
+		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
+		/// This overload attaches a one-shot callback to be called when the authentication response
+		/// message is received.
+		///
+		/// @param[in] clientId The extension's client ID
+		/// @param[in] jwt 		The stored JWT from a previous authentication
+		/// @param[in] callback Callback that is invoked once when this authentication request
+		///                     is responded to.
+		/// @return RequestId of the generated request
+		RequestId AuthenticateWithRefreshToken(const string& ClientId, const string& RefreshToken, std::function<void(const schema::AuthenticateResponse&)> Callback);
+
+		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
+		/// This overload attaches a one-shot callback to be called when the authentication response
+		/// message is received.
+		///
+		/// @param[in] clientId The extension's client ID
+		/// @param[in] jwt 		The stored JWT from a previous authentication
+		/// @param[in] callback Callback that is invoked once when this authentication request
+		///                     is responded to.
+		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
+		/// @return RequestId of the generated request
+		RequestId AuthenticateWithRefreshToken(const string& ClientId,
+								 const string& RefreshToken,
+								 void (*Callback)(void*, const schema::AuthenticateResponse&),
+								 void* User);
 
 		// Poll stuff, all async.
 
@@ -781,6 +814,7 @@ namespace gamelink
 		}
 
 		// Fields stored to handle reconnects
+		gamelink::string _storedRefresh;
 		gamelink::string _storedJWT;
 		gamelink::string _storedClientId;
 

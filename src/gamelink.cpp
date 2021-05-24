@@ -5,9 +5,10 @@
 namespace gamelink
 {
 	Payload::Payload(string data)
-		:waitingForResponse(ANY_REQUEST_ID)
-		,data(data)
-	{}
+		: waitingForResponse(ANY_REQUEST_ID)
+		, data(data)
+	{
+	}
 
 	SDK::SDK()
 		: _user(NULL)
@@ -52,13 +53,13 @@ namespace gamelink
 		_lock.lock();
 		bool result = HasPayloadsNoLock();
 		_lock.unlock();
-		
+
 		return result;
 	}
 
 	bool SDK::HasPayloadsNoLock() const
 	{
-		if (_queuedPayloads.size() > 0) 
+		if (_queuedPayloads.size() > 0)
 		{
 			if (_queuedPayloads.front()->waitingForResponse != ANY_REQUEST_ID)
 			{
@@ -124,7 +125,7 @@ namespace gamelink
 		// Clear any waits at the front of the queue.
 		while (_queuedPayloads.size() > 0)
 		{
-			Payload * p = _queuedPayloads.front();
+			Payload* p = _queuedPayloads.front();
 			if (p->waitingForResponse == ANY_REQUEST_ID && p->data.size() == 0)
 			{
 				_queuedPayloads.pop_front();
@@ -158,8 +159,9 @@ namespace gamelink
 			success = schema::ParseResponse(bytes, length, authResp);
 			if (success)
 			{
-				_user = new schema::User(authResp.data.jwt);
+				_user = new schema::User(authResp.data.jwt, authResp.data.refresh);
 				_storedJWT = authResp.data.jwt;
+				_storedRefresh = authResp.data.refresh;
 
 				_onAuthenticate.invoke(authResp);
 			}

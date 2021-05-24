@@ -2,21 +2,21 @@
 
 namespace gamelink
 {
-    uint32_t SDK::OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> callback)
+    uint32_t SDK::OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> Callback)
 	{
-		return _onAuthenticate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		return _onAuthenticate.set(Callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
 	}
 
-	uint32_t SDK::OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr)
+	uint32_t SDK::OnAuthenticate(void (*Callback)(void*, const schema::AuthenticateResponse&), void* Ptr)
 	{
-		return _onAuthenticate.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		return _onAuthenticate.set(Callback, Ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
 	}
 
-	void SDK::DetachOnAuthenticate(uint32_t id)
+	void SDK::DetachOnAuthenticate(uint32_t Id)
 	{
-		if (_onAuthenticate.validateId(id))
+		if (_onAuthenticate.validateId(Id))
 		{
-			_onAuthenticate.remove(id);
+			_onAuthenticate.remove(Id);
 		}
 		else
 		{
@@ -25,67 +25,96 @@ namespace gamelink
 	}
 
     
-	RequestId SDK::AuthenticateWithPIN(const string& clientId, const string& pin)
+	RequestId SDK::AuthenticateWithPIN(const string& ClientId, const string& Pin)
 	{
-		schema::AuthenticateWithPINRequest payload(clientId, pin);
-		_storedClientId = clientId;
+		schema::AuthenticateWithPINRequest Payload(ClientId, Pin);
+		_storedClientId = ClientId;
 
-		return queuePayload(payload);
+		return queuePayload(Payload);
 	}
 
-	RequestId
-	SDK::AuthenticateWithPIN(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback)
+	RequestId SDK::AuthenticateWithPIN(const string& ClientId, const string& Pin, std::function<void(const schema::AuthenticateResponse&)> Callback)
 	{
-		schema::AuthenticateWithPINRequest payload(clientId, pin);
-		_storedClientId = clientId;
+		schema::AuthenticateWithPINRequest Payload(ClientId, Pin);
+		_storedClientId = ClientId;
 
-		RequestId id = queuePayload(payload);
-		_onAuthenticate.set(callback, id, detail::CALLBACK_ONESHOT);
-		return id;
+		RequestId Id = queuePayload(Payload);
+		_onAuthenticate.set(Callback, Id, detail::CALLBACK_ONESHOT);
+		return Id;
 	}
 
-	RequestId SDK::AuthenticateWithPIN(const string& clientId,
-								  const string& pin,
+	RequestId SDK::AuthenticateWithPIN(const string& ClientId,
+								  const string& Pin,
 								  void (*callback)(void*, const schema::AuthenticateResponse&),
-								  void* user)
+								  void* User)
 	{
-		schema::AuthenticateWithPINRequest payload(clientId, pin);
-		_storedClientId = clientId;
+		schema::AuthenticateWithPINRequest Payload(ClientId, Pin);
+		_storedClientId = ClientId;
 
-		RequestId id = queuePayload(payload);
-		_onAuthenticate.set(callback, user, id, detail::CALLBACK_ONESHOT);
-		return id;
+		RequestId Id = queuePayload(Payload);
+		_onAuthenticate.set(callback, User, Id, detail::CALLBACK_ONESHOT);
+		return Id;
 	}
 
-	RequestId SDK::AuthenticateWithJWT(const string& clientId, const string& jwt)
+	RequestId SDK::AuthenticateWithJWT(const string& ClientId, const string& JWT)
 	{
-		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
-		_storedClientId = clientId;
+		schema::AuthenticateWithJWTRequest Payload(ClientId, JWT);
+		_storedClientId = ClientId;
 
-		return queuePayload(payload);
+		return queuePayload(Payload);
 	}
 
-	RequestId
-	SDK::AuthenticateWithJWT(const string& clientId, const string& jwt, std::function<void(const schema::AuthenticateResponse&)> callback)
+	RequestId SDK::AuthenticateWithJWT(const string& ClientId, const string& JWT, std::function<void(const schema::AuthenticateResponse&)> Callback)
 	{
-		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
-		_storedClientId = clientId;
+		schema::AuthenticateWithJWTRequest Payload(ClientId, JWT);
+		_storedClientId = ClientId;
 
-		RequestId id = queuePayload(payload);
-		_onAuthenticate.set(callback, id, detail::CALLBACK_ONESHOT);
-		return id;
+		RequestId Id = queuePayload(Payload);
+		_onAuthenticate.set(Callback, Id, detail::CALLBACK_ONESHOT);
+		return Id;
 	}
 
-	RequestId SDK::AuthenticateWithJWT(const string& clientId,
-								  const string& jwt,
+	RequestId SDK::AuthenticateWithJWT(const string& ClientId,
+								  const string& JWT,
 								  void (*callback)(void*, const schema::AuthenticateResponse&),
-								  void* user)
+								  void* User)
 	{
-		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
-		_storedClientId = clientId;
+		schema::AuthenticateWithJWTRequest Payload(ClientId, JWT);
+		_storedClientId = ClientId;
 
-		RequestId id = queuePayload(payload);
-		_onAuthenticate.set(callback, user, id, detail::CALLBACK_ONESHOT);
-		return id;
+		RequestId Id = queuePayload(Payload);
+		_onAuthenticate.set(callback, User, Id, detail::CALLBACK_ONESHOT);
+		return Id;
+	}
+
+	RequestId SDK::AuthenticateWithRefreshToken(const string& ClientId, const string& RefreshToken)
+	{
+		schema::AuthenticateWithRefreshTokenRequest Payload(ClientId, RefreshToken);
+		_storedClientId = ClientId;
+
+		return queuePayload(Payload);
+	}
+
+	RequestId SDK::AuthenticateWithRefreshToken(const string& ClientId, const string& RefreshToken, std::function<void(const schema::AuthenticateResponse&)> Callback)
+	{
+		schema::AuthenticateWithRefreshTokenRequest Payload(ClientId, RefreshToken);
+		_storedClientId = ClientId;
+
+		RequestId Id = queuePayload(Payload);
+		_onAuthenticate.set(Callback, Id, detail::CALLBACK_ONESHOT);
+		return Id;
+	}
+
+	RequestId SDK::AuthenticateWithRefreshToken(const string& ClientId,
+								  const string& RefreshToken,
+								  void (*Callback)(void*, const schema::AuthenticateResponse&),
+								  void* User)
+	{
+		schema::AuthenticateWithRefreshTokenRequest Payload(ClientId, RefreshToken);
+		_storedClientId = ClientId;
+
+		RequestId Id = queuePayload(Payload);
+		_onAuthenticate.set(Callback, User, Id, detail::CALLBACK_ONESHOT);
+		return Id;
 	}
 }
