@@ -53,7 +53,6 @@ namespace gamelink
 
 		struct AuthenticateWithRefreshTokenRequestBody
 		{
-			/// maybe call this refreshToken, but its currently refresh on the go side
 			string refresh;
 
 			/// Client ID, as obtained from Twitch. 
@@ -61,12 +60,6 @@ namespace gamelink
 			string client_id;
 		};
 		MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithRefreshTokenRequestBody, "refresh", refresh, "client_id", client_id);
-
-		//tshanks: may need to hold the refresh token in here? not sure yet
-		//struct AuthenticateRefreshTokenResponseBody
-		//{
-		//};
-		//MUXY_GAMELINK_SERIALIZE_1(AuthenticateRefreshTokenResponseBody, "refresh", refresh);
 
 		struct AuthenticateWithRefreshTokenRequest : SendEnvelope<AuthenticateWithRefreshTokenRequestBody>
 		{
