@@ -10,36 +10,36 @@ namespace gamelink
 			params.target = string("authentication");
 		}
 
-		AuthenticateWithPINRequest::AuthenticateWithPINRequest(const string& ClientId, const string& PIN)
+		AuthenticateWithPINRequest::AuthenticateWithPINRequest(const string& clientId, const string& pin)
 		{
 			action = string("authenticate");
 			params.target = string("");
-			data.pin = PIN;
-			data.client_id = ClientId;
+			data.pin = pin;
+			data.client_id = clientId;
 		}
 
-		AuthenticateWithJWTRequest::AuthenticateWithJWTRequest(const string& ClientId, const string& JWT)
+		AuthenticateWithJWTRequest::AuthenticateWithJWTRequest(const string& clientId, const string& jwt)
 		{
 			action = string("authenticate");
 			params.target = string("");
-			data.jwt = JWT;
-			data.client_id = ClientId;
+			data.jwt = jwt;
+			data.client_id = clientId;
 		}
 
-		AuthenticateWithRefreshTokenRequest::AuthenticateWithRefreshTokenRequest(const string& ClientId, const string& RefreshToken)
+		AuthenticateWithRefreshTokenRequest::AuthenticateWithRefreshTokenRequest(const string& clientId, const string& refreshToken)
 		{
 			action = string("authenticate");
 			params.target = string("");
-			data.refresh = RefreshToken;
-			data.client_id = ClientId;
+			data.refresh = refreshToken;
+			data.client_id = clientId;
 		}
 
-		User::User(string JWT, string RefreshToken)
-			: JWT(std::move(JWT))
-			, RefreshToken(std::move(RefreshToken))
+		User::User(string jwt, string refreshToken)
+			: jwt(std::move(jwt))
+			, refreshToken(std::move(refreshToken))
 		{
 		}
-		const string& User::GetJWT() const { return this->JWT; }
-		const string& User::GetRefreshToken() const { return this->RefreshToken; }
+		const string& User::GetJWT() const { return this->jwt; }
+		const string& User::GetRefreshToken() const { return this->refreshToken; }
 	}
 }

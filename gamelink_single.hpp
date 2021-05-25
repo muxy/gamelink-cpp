@@ -788,9 +788,9 @@ namespace gamelink
 		struct AuthenticateWithPINRequest : SendEnvelope<AuthenticateWithPINRequestBody>
 		{
 			/// Creates an authorization request.
-			/// @param[in] ClientId Client ID.
-			/// @param[in] PIN PIN obtained from user input.
-			AuthenticateWithPINRequest(const string& ClientId, const string& PIN);
+			/// @param[in] clientId Client ID.
+			/// @param[in] pin PIN obtained from user input.
+			AuthenticateWithPINRequest(const string& clientId, const string& pin);
 		};
 
 
@@ -809,16 +809,15 @@ namespace gamelink
 		struct AuthenticateWithJWTRequest : SendEnvelope<AuthenticateWithJWTRequestBody>
 		{
 			/// Creates an authorization request
-			/// @param[in] ClientId Client ID.
-			/// @param[in] JWT JWT obtained from previous authorizations.
-			AuthenticateWithJWTRequest(const string& ClientId, const string& JWT);
+			/// @param[in] clientId Client ID.
+			/// @param[in] jwt JWT obtained from previous authorizations.
+			AuthenticateWithJWTRequest(const string& clientId, const string& jwt);
 		};
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 		struct AuthenticateWithRefreshTokenRequestBody
 		{
-			/// maybe call this refreshToken, but its currently refresh on the go side
 			string refresh;
 
 			/// Client ID, as obtained from Twitch. 
@@ -827,18 +826,12 @@ namespace gamelink
 		};
 		MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithRefreshTokenRequestBody, "refresh", refresh, "client_id", client_id);
 
-		//tshanks: may need to hold the refresh token in here? not sure yet
-		//struct AuthenticateRefreshTokenResponseBody
-		//{
-		//};
-		//MUXY_GAMELINK_SERIALIZE_1(AuthenticateRefreshTokenResponseBody, "refresh", refresh);
-
 		struct AuthenticateWithRefreshTokenRequest : SendEnvelope<AuthenticateWithRefreshTokenRequestBody>
 		{
 			/// Creates an authorization request
-			/// @param[in] ClientId Client Id.
+			/// @param[in] clientId Client Id.
 			/// @param[in] RefreshToken Refresh token obtained from authorization.
-			AuthenticateWithRefreshTokenRequest(const string& ClientId, const string& RefreshToken);
+			AuthenticateWithRefreshTokenRequest(const string& clientId, const string& refreshToken);
 		};
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -874,14 +867,14 @@ namespace gamelink
 		class User
 		{
 		public:
-			explicit User(string JWT, string RefreshToken);
+			explicit User(string jwt, string refreshToken);
 
 			const string& GetJWT() const;
 			const string& GetRefreshToken() const;
 			// string GetOpaqueID();
 		private:
-			string JWT;
-			string RefreshToken;
+			string jwt;
+			string refreshToken;
 		};
 	}
 }
@@ -1929,7 +1922,7 @@ namespace gamelink
 		///
 		/// @param[in] callback Callback to invoke when a twitch purchase message is received.
 		/// @return Returns an integer handle to the callback, to be used in DetachOnTwitchPurchaseBits.
-		uint32_t OnTwitchPurchaseBits(std::function<void(const schema::TwitchPurchaseBitsResponse<nlohmann::json>&)> Callback);
+		uint32_t OnTwitchPurchaseBits(std::function<void(const schema::TwitchPurchaseBitsResponse<nlohmann::json>&)> callback);
 
 		/// Sets the OnTwitchPurchaseBits callback. This callback is invoked when twitch purchase
 		/// message is received.
@@ -1938,12 +1931,12 @@ namespace gamelink
 		/// @param[in] callback Callback to invoke when a twitch purchase message is received.
 		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
 		/// @return Returns an integer handle to the callback, to be used in DetachOnTwitchPurchaseBits.
-		uint32_t OnTwitchPurchaseBits(void (*Callback)(void*, const schema::TwitchPurchaseBitsResponse<nlohmann::json>&), void* Ptr);
+		uint32_t OnTwitchPurchaseBits(void (*Callback)(void*, const schema::TwitchPurchaseBitsResponse<nlohmann::json>&), void* ptr);
 
 		/// Detaches an OnTwitchPurchaseBits callback.
 		///
 		/// @param[in] id A handle obtained from calling OnTwitchPurchaseBits. Invalid handles are ignored.
-		void DetachOnTwitchPurchaseBits(uint32_t Id);
+		void DetachOnTwitchPurchaseBits(uint32_t id);
 
 		/// Queues an authentication request using a PIN code, as received by the user from an
 		/// extension's config view.
@@ -1951,7 +1944,7 @@ namespace gamelink
 		/// @param[in] clientId The extension's client ID
 		/// @param[in] pin 		The PIN input from the broadcaster
 		/// @return RequestId of the generated request
-		RequestId AuthenticateWithPIN(const string& ClientId, const string& PIN);
+		RequestId AuthenticateWithPIN(const string& clientId, const string& pin);
 
 		/// Queues an authentication request using a PIN code, as received by the user from an
 		/// extension's config view.
@@ -1964,7 +1957,7 @@ namespace gamelink
 		///                     is responded to.
 		/// @return RequestId of the generated request
 		RequestId
-		AuthenticateWithPIN(const string& ClientId, const string& PIN, std::function<void(const schema::AuthenticateResponse&)> Callback);
+		AuthenticateWithPIN(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback);
 
 		/// Queues an authentication request using a PIN code, as received by the user from an
 		/// extension's config view.
@@ -1977,17 +1970,17 @@ namespace gamelink
 		///                     is responded to.
 		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
 		/// @return RequestId of the generated request
-		RequestId AuthenticateWithPIN(const string& ClientId,
-								 const string& PIN,
-								 void (*Callback)(void*, const schema::AuthenticateResponse&),
-								 void* User);
+		RequestId AuthenticateWithPIN(const string& clientId,
+								 const string& pin,
+								 void (*callback)(void*, const schema::AuthenticateResponse&),
+								 void* user);
 
 		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
 		///
 		/// @param[in] clientId The extension's client ID
 		/// @param[in] jwt 		The stored JWT from a previous authentication
 		/// @return RequestId of the generated request
-		RequestId AuthenticateWithJWT(const string& ClientId, const string& JWT);
+		RequestId AuthenticateWithJWT(const string& clientId, const string& jwt);
 
 		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
 		/// This overload attaches a one-shot callback to be called when the authentication response
@@ -1999,7 +1992,7 @@ namespace gamelink
 		///                     is responded to.
 		/// @return RequestId of the generated request
 		RequestId
-		AuthenticateWithJWT(const string& ClientId, const string& PIN, std::function<void(const schema::AuthenticateResponse&)> Callback);
+		AuthenticateWithJWT(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback);
 
 		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
 		/// This overload attaches a one-shot callback to be called when the authentication response
@@ -2011,43 +2004,43 @@ namespace gamelink
 		///                     is responded to.
 		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
 		/// @return RequestId of the generated request
-		RequestId AuthenticateWithJWT(const string& ClientId,
-								 const string& PIN,
-								 void (*Callback)(void*, const schema::AuthenticateResponse&),
-								 void* User);
+		RequestId AuthenticateWithJWT(const string& clientId,
+								 const string& pin,
+								 void (*callback)(void*, const schema::AuthenticateResponse&),
+								 void* user);
 
 		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
 		///
-		/// @param[in] clientId The extension's client ID
-		/// @param[in] jwt 		The stored JWT from a previous authentication
+		/// @param[in] clientId 	The extension's client ID
+		/// @param[in] refreshToken The stored refresh token from a previous authentication
 		/// @return RequestId of the generated request
-		RequestId AuthenticateWithRefreshToken(const string& ClientId, const string& JWT);
-
-		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
-		/// This overload attaches a one-shot callback to be called when the authentication response
-		/// message is received.
-		///
-		/// @param[in] clientId The extension's client ID
-		/// @param[in] jwt 		The stored JWT from a previous authentication
-		/// @param[in] callback Callback that is invoked once when this authentication request
-		///                     is responded to.
-		/// @return RequestId of the generated request
-		RequestId AuthenticateWithRefreshToken(const string& ClientId, const string& RefreshToken, std::function<void(const schema::AuthenticateResponse&)> Callback);
+		RequestId AuthenticateWithRefreshToken(const string& clientId, const string& refreshToken);
 
 		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
 		/// This overload attaches a one-shot callback to be called when the authentication response
 		/// message is received.
 		///
-		/// @param[in] clientId The extension's client ID
-		/// @param[in] jwt 		The stored JWT from a previous authentication
-		/// @param[in] callback Callback that is invoked once when this authentication request
-		///                     is responded to.
-		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
+		/// @param[in] clientId 	The extension's client ID
+		/// @param[in] refreshToken The stored refresh token from a previous authentication
+		/// @param[in] callback 	Callback that is invoked once when this authentication request
+		///                     	is responded to.
 		/// @return RequestId of the generated request
-		RequestId AuthenticateWithRefreshToken(const string& ClientId,
-								 const string& RefreshToken,
-								 void (*Callback)(void*, const schema::AuthenticateResponse&),
-								 void* User);
+		RequestId AuthenticateWithRefreshToken(const string& clientId, const string& refreshToken, std::function<void(const schema::AuthenticateResponse&)> callback);
+
+		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
+		/// This overload attaches a one-shot callback to be called when the authentication response
+		/// message is received.
+		///
+		/// @param[in] clientId 	The extension's client ID
+		/// @param[in] refreshToken The stored refresh token from a previous authentication
+		/// @param[in] callback 	Callback that is invoked once when this authentication request
+		///                     	is responded to.
+		/// @param[in] user     	User pointer that is passed into the callback whenever it is invoked.
+		/// @return RequestId of the generated request
+		RequestId AuthenticateWithRefreshToken(const string& clientId,
+								 const string& refreshToken,
+								 void (*callback)(void*, const schema::AuthenticateResponse&),
+								 void* user);
 
 		// Poll stuff, all async.
 
@@ -2303,37 +2296,37 @@ namespace gamelink
 			params.target = string("authentication");
 		}
 
-		AuthenticateWithPINRequest::AuthenticateWithPINRequest(const string& ClientId, const string& PIN)
+		AuthenticateWithPINRequest::AuthenticateWithPINRequest(const string& clientId, const string& pin)
 		{
 			action = string("authenticate");
 			params.target = string("");
-			data.pin = PIN;
-			data.client_id = ClientId;
+			data.pin = pin;
+			data.client_id = clientId;
 		}
 
-		AuthenticateWithJWTRequest::AuthenticateWithJWTRequest(const string& ClientId, const string& JWT)
+		AuthenticateWithJWTRequest::AuthenticateWithJWTRequest(const string& clientId, const string& jwt)
 		{
 			action = string("authenticate");
 			params.target = string("");
-			data.jwt = JWT;
-			data.client_id = ClientId;
+			data.jwt = jwt;
+			data.client_id = clientId;
 		}
 
-		AuthenticateWithRefreshTokenRequest::AuthenticateWithRefreshTokenRequest(const string& ClientId, const string& RefreshToken)
+		AuthenticateWithRefreshTokenRequest::AuthenticateWithRefreshTokenRequest(const string& clientId, const string& refreshToken)
 		{
 			action = string("authenticate");
 			params.target = string("");
-			data.refresh = RefreshToken;
-			data.client_id = ClientId;
+			data.refresh = refreshToken;
+			data.client_id = clientId;
 		}
 
-		User::User(string JWT, string RefreshToken)
-			: JWT(std::move(JWT))
-			, RefreshToken(std::move(RefreshToken))
+		User::User(string jwt, string refreshToken)
+			: jwt(std::move(jwt))
+			, refreshToken(std::move(refreshToken))
 		{
 		}
-		const string& User::GetJWT() const { return this->JWT; }
-		const string& User::GetRefreshToken() const { return this->RefreshToken; }
+		const string& User::GetJWT() const { return this->jwt; }
+		const string& User::GetRefreshToken() const { return this->refreshToken; }
 	}
 }
 
@@ -2895,21 +2888,21 @@ namespace gamelink
 
 namespace gamelink
 {
-    uint32_t SDK::OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> Callback)
+    uint32_t SDK::OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> callback)
 	{
-		return _onAuthenticate.set(Callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		return _onAuthenticate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
 	}
 
-	uint32_t SDK::OnAuthenticate(void (*Callback)(void*, const schema::AuthenticateResponse&), void* Ptr)
+	uint32_t SDK::OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr)
 	{
-		return _onAuthenticate.set(Callback, Ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		return _onAuthenticate.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
 	}
 
-	void SDK::DetachOnAuthenticate(uint32_t Id)
+	void SDK::DetachOnAuthenticate(uint32_t id)
 	{
-		if (_onAuthenticate.validateId(Id))
+		if (_onAuthenticate.validateId(id))
 		{
-			_onAuthenticate.remove(Id);
+			_onAuthenticate.remove(id);
 		}
 		else
 		{
@@ -2918,97 +2911,97 @@ namespace gamelink
 	}
 
     
-	RequestId SDK::AuthenticateWithPIN(const string& ClientId, const string& Pin)
+	RequestId SDK::AuthenticateWithPIN(const string& clientId, const string& pin)
 	{
-		schema::AuthenticateWithPINRequest Payload(ClientId, Pin);
-		_storedClientId = ClientId;
+		schema::AuthenticateWithPINRequest payload(clientId, pin);
+		_storedClientId = clientId;
 
-		return queuePayload(Payload);
+		return queuePayload(payload);
 	}
 
-	RequestId SDK::AuthenticateWithPIN(const string& ClientId, const string& Pin, std::function<void(const schema::AuthenticateResponse&)> Callback)
+	RequestId SDK::AuthenticateWithPIN(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback)
 	{
-		schema::AuthenticateWithPINRequest Payload(ClientId, Pin);
-		_storedClientId = ClientId;
+		schema::AuthenticateWithPINRequest payload(clientId, pin);
+		_storedClientId = clientId;
 
-		RequestId Id = queuePayload(Payload);
-		_onAuthenticate.set(Callback, Id, detail::CALLBACK_ONESHOT);
-		return Id;
+		RequestId id = queuePayload(payload);
+		_onAuthenticate.set(callback, id, detail::CALLBACK_ONESHOT);
+		return id;
 	}
 
-	RequestId SDK::AuthenticateWithPIN(const string& ClientId,
-								  const string& Pin,
+	RequestId SDK::AuthenticateWithPIN(const string& clientId,
+								  const string& pin,
 								  void (*callback)(void*, const schema::AuthenticateResponse&),
-								  void* User)
+								  void* user)
 	{
-		schema::AuthenticateWithPINRequest Payload(ClientId, Pin);
-		_storedClientId = ClientId;
+		schema::AuthenticateWithPINRequest payload(clientId, pin);
+		_storedClientId = clientId;
 
-		RequestId Id = queuePayload(Payload);
-		_onAuthenticate.set(callback, User, Id, detail::CALLBACK_ONESHOT);
-		return Id;
+		RequestId id = queuePayload(payload);
+		_onAuthenticate.set(callback, user, id, detail::CALLBACK_ONESHOT);
+		return id;
 	}
 
-	RequestId SDK::AuthenticateWithJWT(const string& ClientId, const string& JWT)
+	RequestId SDK::AuthenticateWithJWT(const string& clientId, const string& jwt)
 	{
-		schema::AuthenticateWithJWTRequest Payload(ClientId, JWT);
-		_storedClientId = ClientId;
+		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
+		_storedClientId = clientId;
 
-		return queuePayload(Payload);
+		return queuePayload(payload);
 	}
 
-	RequestId SDK::AuthenticateWithJWT(const string& ClientId, const string& JWT, std::function<void(const schema::AuthenticateResponse&)> Callback)
+	RequestId SDK::AuthenticateWithJWT(const string& clientId, const string& jwt, std::function<void(const schema::AuthenticateResponse&)> callback)
 	{
-		schema::AuthenticateWithJWTRequest Payload(ClientId, JWT);
-		_storedClientId = ClientId;
+		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
+		_storedClientId = clientId;
 
-		RequestId Id = queuePayload(Payload);
-		_onAuthenticate.set(Callback, Id, detail::CALLBACK_ONESHOT);
-		return Id;
+		RequestId id = queuePayload(payload);
+		_onAuthenticate.set(callback, id, detail::CALLBACK_ONESHOT);
+		return id;
 	}
 
-	RequestId SDK::AuthenticateWithJWT(const string& ClientId,
-								  const string& JWT,
+	RequestId SDK::AuthenticateWithJWT(const string& clientId,
+								  const string& jwt,
 								  void (*callback)(void*, const schema::AuthenticateResponse&),
-								  void* User)
+								  void* user)
 	{
-		schema::AuthenticateWithJWTRequest Payload(ClientId, JWT);
-		_storedClientId = ClientId;
+		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
+		_storedClientId = clientId;
 
-		RequestId Id = queuePayload(Payload);
-		_onAuthenticate.set(callback, User, Id, detail::CALLBACK_ONESHOT);
-		return Id;
+		RequestId id = queuePayload(payload);
+		_onAuthenticate.set(callback, user, id, detail::CALLBACK_ONESHOT);
+		return id;
 	}
 
-	RequestId SDK::AuthenticateWithRefreshToken(const string& ClientId, const string& RefreshToken)
+	RequestId SDK::AuthenticateWithRefreshToken(const string& clientId, const string& refreshToken)
 	{
-		schema::AuthenticateWithRefreshTokenRequest Payload(ClientId, RefreshToken);
-		_storedClientId = ClientId;
+		schema::AuthenticateWithRefreshTokenRequest payload(clientId, refreshToken);
+		_storedClientId = clientId;
 
-		return queuePayload(Payload);
+		return queuePayload(payload);
 	}
 
-	RequestId SDK::AuthenticateWithRefreshToken(const string& ClientId, const string& RefreshToken, std::function<void(const schema::AuthenticateResponse&)> Callback)
+	RequestId SDK::AuthenticateWithRefreshToken(const string& clientId, const string& refreshToken, std::function<void(const schema::AuthenticateResponse&)> callback)
 	{
-		schema::AuthenticateWithRefreshTokenRequest Payload(ClientId, RefreshToken);
-		_storedClientId = ClientId;
+		schema::AuthenticateWithRefreshTokenRequest payload(clientId, refreshToken);
+		_storedClientId = clientId;
 
-		RequestId Id = queuePayload(Payload);
-		_onAuthenticate.set(Callback, Id, detail::CALLBACK_ONESHOT);
-		return Id;
+		RequestId id = queuePayload(payload);
+		_onAuthenticate.set(callback, id, detail::CALLBACK_ONESHOT);
+		return id;
 	}
 
-	RequestId SDK::AuthenticateWithRefreshToken(const string& ClientId,
-								  const string& RefreshToken,
-								  void (*Callback)(void*, const schema::AuthenticateResponse&),
-								  void* User)
+	RequestId SDK::AuthenticateWithRefreshToken(const string& clientId,
+								  const string& refreshToken,
+								  void (*callback)(void*, const schema::AuthenticateResponse&),
+								  void* user)
 	{
-		schema::AuthenticateWithRefreshTokenRequest Payload(ClientId, RefreshToken);
-		_storedClientId = ClientId;
+		schema::AuthenticateWithRefreshTokenRequest payload(clientId, refreshToken);
+		_storedClientId = clientId;
 
-		RequestId Id = queuePayload(Payload);
-		_onAuthenticate.set(Callback, User, Id, detail::CALLBACK_ONESHOT);
-		return Id;
+		RequestId id = queuePayload(payload);
+		_onAuthenticate.set(callback, user, id, detail::CALLBACK_ONESHOT);
+		return id;
 	}
 }
 

@@ -23,9 +23,9 @@ namespace gamelink
 		struct AuthenticateWithPINRequest : SendEnvelope<AuthenticateWithPINRequestBody>
 		{
 			/// Creates an authorization request.
-			/// @param[in] ClientId Client ID.
-			/// @param[in] PIN PIN obtained from user input.
-			AuthenticateWithPINRequest(const string& ClientId, const string& PIN);
+			/// @param[in] clientId Client ID.
+			/// @param[in] pin PIN obtained from user input.
+			AuthenticateWithPINRequest(const string& clientId, const string& pin);
 		};
 
 
@@ -44,9 +44,9 @@ namespace gamelink
 		struct AuthenticateWithJWTRequest : SendEnvelope<AuthenticateWithJWTRequestBody>
 		{
 			/// Creates an authorization request
-			/// @param[in] ClientId Client ID.
-			/// @param[in] JWT JWT obtained from previous authorizations.
-			AuthenticateWithJWTRequest(const string& ClientId, const string& JWT);
+			/// @param[in] clientId Client ID.
+			/// @param[in] jwt JWT obtained from previous authorizations.
+			AuthenticateWithJWTRequest(const string& clientId, const string& jwt);
 		};
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -64,9 +64,9 @@ namespace gamelink
 		struct AuthenticateWithRefreshTokenRequest : SendEnvelope<AuthenticateWithRefreshTokenRequestBody>
 		{
 			/// Creates an authorization request
-			/// @param[in] ClientId Client Id.
+			/// @param[in] clientId Client Id.
 			/// @param[in] RefreshToken Refresh token obtained from authorization.
-			AuthenticateWithRefreshTokenRequest(const string& ClientId, const string& RefreshToken);
+			AuthenticateWithRefreshTokenRequest(const string& clientId, const string& refreshToken);
 		};
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -102,14 +102,14 @@ namespace gamelink
 		class User
 		{
 		public:
-			explicit User(string JWT, string RefreshToken);
+			explicit User(string jwt, string refreshToken);
 
 			const string& GetJWT() const;
 			const string& GetRefreshToken() const;
 			// string GetOpaqueID();
 		private:
-			string JWT;
-			string RefreshToken;
+			string jwt;
+			string refreshToken;
 		};
 	}
 }
