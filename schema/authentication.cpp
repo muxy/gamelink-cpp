@@ -39,7 +39,14 @@ namespace gamelink
 			, refreshToken(std::move(refreshToken))
 		{
 		}
-		const string& User::GetJWT() const { return this->jwt; }
-		const string& User::GetRefreshToken() const { return this->refreshToken; }
+		const string& User::GetJWT() const 
+		{ 
+			return jwt; 
+		}
+		
+		const string& User::GetRefreshToken() const 
+		{ 
+			return refreshToken; 
+		}
 	}
 }

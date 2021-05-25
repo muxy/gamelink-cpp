@@ -56,7 +56,7 @@ namespace gamelink
 			string refresh;
 
 			/// Client ID, as obtained from Twitch. 
-			//needs to be 'clientId' everywhere to match network as much as possible. NETWORK == camelCase
+			// TODO: Needs to be 'clientId' everywhere to match network as much as possible (when that change takes place, remove this when it does). NETWORK == camelCase
 			string client_id;
 		};
 		MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithRefreshTokenRequestBody, "refresh", refresh, "client_id", client_id);
@@ -87,7 +87,6 @@ namespace gamelink
 			/// Signed JWT. Will expire.
 			string jwt;
 
-			// call this refreshToken later?
 			string refresh;
 		};
 		MUXY_GAMELINK_SERIALIZE_2(AuthenticateResponseBody, "jwt", jwt, "refresh", refresh);
@@ -102,7 +101,7 @@ namespace gamelink
 		class User
 		{
 		public:
-			explicit User(string jwt, string refreshToken);
+			User(string jwt, string refreshToken);
 
 			const string& GetJWT() const;
 			const string& GetRefreshToken() const;

@@ -253,9 +253,9 @@ namespace gamelink
 
 	void SDK::HandleReconnect()
 	{
-		if (!(_storedJWT == gamelink::string("")))
+		if (!(_storedRefresh == gamelink::string("")))
 		{
-			schema::AuthenticateWithJWTRequest p(_storedClientId, _storedJWT);
+			schema::AuthenticateWithRefreshTokenRequest p(_storedClientId, _storedRefresh);
 			Payload* payload = new Payload(gamelink::string(to_string(p).c_str()));
 			debugLogPayload(payload);
 
