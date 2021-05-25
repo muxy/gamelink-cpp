@@ -772,6 +772,9 @@ namespace gamelink
 {
 	namespace schema
 	{
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 		struct AuthenticateWithPINRequestBody
 		{
 			/// PIN string, as obtained from the REST API
@@ -781,6 +784,17 @@ namespace gamelink
 			string client_id;
 		};
 		MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithPINRequestBody, "pin", pin, "client_id", client_id);
+		
+		struct AuthenticateWithPINRequest : SendEnvelope<AuthenticateWithPINRequestBody>
+		{
+			/// Creates an authorization request.
+			/// @param[in] clientId Client ID.
+			/// @param[in] pin PIN obtained from user input.
+			AuthenticateWithPINRequest(const string& clientId, const string& pin);
+		};
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 		struct AuthenticateWithJWTRequestBody
 		{
@@ -792,12 +806,35 @@ namespace gamelink
 		};
 		MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithJWTRequestBody, "jwt", jwt, "client_id", client_id);
 
-		struct AuthenticateJWTResponseBody
+		struct AuthenticateWithJWTRequest : SendEnvelope<AuthenticateWithJWTRequestBody>
 		{
-			/// Signed JWT. Will expire.
-			string jwt;
+			/// Creates an authorization request
+			/// @param[in] clientId Client ID.
+			/// @param[in] jwt JWT obtained from previous authorizations.
+			AuthenticateWithJWTRequest(const string& clientId, const string& jwt);
 		};
-		MUXY_GAMELINK_SERIALIZE_1(AuthenticateJWTResponseBody, "jwt", jwt);
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		struct AuthenticateWithRefreshTokenRequestBody
+		{
+			string refresh;
+
+			/// Client ID, as obtained from Twitch. 
+			// TODO: Needs to be 'clientId' everywhere to match network as much as possible (when that change takes place, remove this when it does). NETWORK == camelCase
+			string client_id;
+		};
+		MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithRefreshTokenRequestBody, "refresh", refresh, "client_id", client_id);
+
+		struct AuthenticateWithRefreshTokenRequest : SendEnvelope<AuthenticateWithRefreshTokenRequestBody>
+		{
+			/// Creates an authorization request
+			/// @param[in] clientId Client Id.
+			/// @param[in] RefreshToken Refresh token obtained from authorization.
+			AuthenticateWithRefreshTokenRequest(const string& clientId, const string& refreshToken);
+		};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 		struct SubscribeAuthenticationRequest : SendEnvelope<EmptyBody>
 		{
@@ -808,35 +845,35 @@ namespace gamelink
 		{
 		};
 
-		struct AuthenticateWithPINRequest : SendEnvelope<AuthenticateWithPINRequestBody>
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		struct AuthenticateResponseBody
 		{
-			/// Creates an authorization request.
-			/// @param[in] clientID Client ID.
-			/// @param[in] pin PIN obtained from user input.
-			AuthenticateWithPINRequest(const string& clientID, const string& pin);
+			/// Signed JWT. Will expire.
+			string jwt;
+
+			string refresh;
+		};
+		MUXY_GAMELINK_SERIALIZE_2(AuthenticateResponseBody, "jwt", jwt, "refresh", refresh);
+
+		struct AuthenticateResponse : ReceiveEnvelope<AuthenticateResponseBody>
+		{
 		};
 
-		struct AuthenticateWithJWTRequest : SendEnvelope<AuthenticateWithJWTRequestBody>
-		{
-			/// Creates an authorization request
-			/// @param[in] clientID Client ID.
-			/// @param[in] jwt JWT obtained from previous authorizations.
-			AuthenticateWithJWTRequest(const string& clientID, const string& jwt);
-		};
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-		struct AuthenticateResponse : ReceiveEnvelope<AuthenticateJWTResponseBody>
-		{
-		};
 
 		class User
 		{
 		public:
-			explicit User(string jwt);
+			User(string jwt, string refreshToken);
 
 			const string& GetJWT() const;
+			const string& GetRefreshToken() const;
 			// string GetOpaqueID();
 		private:
 			string jwt;
+			string refreshToken;
 		};
 	}
 }
@@ -1170,15 +1207,28 @@ namespace gamelink
 		template<typename T>
 		struct TwitchPurchaseBitsResponseBody
 		{
+			/// The ID of the purchase, unique for each unique purchase
             string id;
-			string sku;
-			string displayName;
-			string userId;
-			string username;
 
+			/// SKU of the item
+			string sku;
+
+			/// Human readable display name of the product
+			string displayName;
+
+			/// UserID of the user who purchased the product
+			string userId;
+
+			/// Human readable username of the user who purchased the product
+			string userName;
+
+			/// Cost in coins of the product
 			int cost;
+
+			/// Millisecond unix timestamp of the purchase.
             int64_t timestamp;
 
+			/// Arbitrary additional data, added by the extension to this purchase receipt.
 			T additional;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_8(TwitchPurchaseBitsResponseBody,
@@ -1191,7 +1241,7 @@ namespace gamelink
 												"userId",
 												userId,
 												"username",
-												username,
+												userName,
 												"cost", 
 												cost, 
 												"timestamp", 
@@ -1880,7 +1930,7 @@ namespace gamelink
 		/// @param[in] callback Callback to invoke when a twitch purchase message is received.
 		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
 		/// @return Returns an integer handle to the callback, to be used in DetachOnTwitchPurchaseBits.
-		uint32_t OnTwitchPurchaseBits(void (*callback)(void*, const schema::TwitchPurchaseBitsResponse<nlohmann::json>&), void* ptr);
+		uint32_t OnTwitchPurchaseBits(void (*Callback)(void*, const schema::TwitchPurchaseBitsResponse<nlohmann::json>&), void* ptr);
 
 		/// Detaches an OnTwitchPurchaseBits callback.
 		///
@@ -1955,6 +2005,39 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId AuthenticateWithJWT(const string& clientId,
 								 const string& pin,
+								 void (*callback)(void*, const schema::AuthenticateResponse&),
+								 void* user);
+
+		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
+		///
+		/// @param[in] clientId 	The extension's client ID
+		/// @param[in] refreshToken The stored refresh token from a previous authentication
+		/// @return RequestId of the generated request
+		RequestId AuthenticateWithRefreshToken(const string& clientId, const string& refreshToken);
+
+		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
+		/// This overload attaches a one-shot callback to be called when the authentication response
+		/// message is received.
+		///
+		/// @param[in] clientId 	The extension's client ID
+		/// @param[in] refreshToken The stored refresh token from a previous authentication
+		/// @param[in] callback 	Callback that is invoked once when this authentication request
+		///                     	is responded to.
+		/// @return RequestId of the generated request
+		RequestId AuthenticateWithRefreshToken(const string& clientId, const string& refreshToken, std::function<void(const schema::AuthenticateResponse&)> callback);
+
+		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
+		/// This overload attaches a one-shot callback to be called when the authentication response
+		/// message is received.
+		///
+		/// @param[in] clientId 	The extension's client ID
+		/// @param[in] refreshToken The stored refresh token from a previous authentication
+		/// @param[in] callback 	Callback that is invoked once when this authentication request
+		///                     	is responded to.
+		/// @param[in] user     	User pointer that is passed into the callback whenever it is invoked.
+		/// @return RequestId of the generated request
+		RequestId AuthenticateWithRefreshToken(const string& clientId,
+								 const string& refreshToken,
 								 void (*callback)(void*, const schema::AuthenticateResponse&),
 								 void* user);
 
@@ -2169,6 +2252,7 @@ namespace gamelink
 		}
 
 		// Fields stored to handle reconnects
+		gamelink::string _storedRefresh;
 		gamelink::string _storedJWT;
 		gamelink::string _storedClientId;
 
@@ -2211,30 +2295,43 @@ namespace gamelink
 			params.target = string("authentication");
 		}
 
-		AuthenticateWithPINRequest::AuthenticateWithPINRequest(const string& client, const string& pin)
+		AuthenticateWithPINRequest::AuthenticateWithPINRequest(const string& clientId, const string& pin)
 		{
 			action = string("authenticate");
 			params.target = string("");
 			data.pin = pin;
-			data.client_id = client;
+			data.client_id = clientId;
 		}
 
-		AuthenticateWithJWTRequest::AuthenticateWithJWTRequest(const string& client, const string& jwt)
+		AuthenticateWithJWTRequest::AuthenticateWithJWTRequest(const string& clientId, const string& jwt)
 		{
 			action = string("authenticate");
 			params.target = string("");
 			data.jwt = jwt;
-			data.client_id = client;
+			data.client_id = clientId;
 		}
 
-		User::User(string jwt)
+		AuthenticateWithRefreshTokenRequest::AuthenticateWithRefreshTokenRequest(const string& clientId, const string& refreshToken)
+		{
+			action = string("authenticate");
+			params.target = string("");
+			data.refresh = refreshToken;
+			data.client_id = clientId;
+		}
+
+		User::User(string jwt, string refreshToken)
 			: jwt(std::move(jwt))
+			, refreshToken(std::move(refreshToken))
 		{
 		}
-
-		const string& User::GetJWT() const
-		{
-			return this->jwt;
+		const string& User::GetJWT() const 
+		{ 
+			return jwt; 
+		}
+		
+		const string& User::GetRefreshToken() const 
+		{ 
+			return refreshToken; 
 		}
 	}
 }
@@ -2500,9 +2597,10 @@ namespace gamelink
 namespace gamelink
 {
 	Payload::Payload(string data)
-		:waitingForResponse(ANY_REQUEST_ID)
-		,data(data)
-	{}
+		: waitingForResponse(ANY_REQUEST_ID)
+		, data(data)
+	{
+	}
 
 	SDK::SDK()
 		: _user(NULL)
@@ -2547,13 +2645,13 @@ namespace gamelink
 		_lock.lock();
 		bool result = HasPayloadsNoLock();
 		_lock.unlock();
-		
+
 		return result;
 	}
 
 	bool SDK::HasPayloadsNoLock() const
 	{
-		if (_queuedPayloads.size() > 0) 
+		if (_queuedPayloads.size() > 0)
 		{
 			if (_queuedPayloads.front()->waitingForResponse != ANY_REQUEST_ID)
 			{
@@ -2619,7 +2717,7 @@ namespace gamelink
 		// Clear any waits at the front of the queue.
 		while (_queuedPayloads.size() > 0)
 		{
-			Payload * p = _queuedPayloads.front();
+			Payload* p = _queuedPayloads.front();
 			if (p->waitingForResponse == ANY_REQUEST_ID && p->data.size() == 0)
 			{
 				_queuedPayloads.pop_front();
@@ -2653,8 +2751,9 @@ namespace gamelink
 			success = schema::ParseResponse(bytes, length, authResp);
 			if (success)
 			{
-				_user = new schema::User(authResp.data.jwt);
+				_user = new schema::User(authResp.data.jwt, authResp.data.refresh);
 				_storedJWT = authResp.data.jwt;
+				_storedRefresh = authResp.data.refresh;
 
 				_onAuthenticate.invoke(authResp);
 			}
@@ -2746,9 +2845,9 @@ namespace gamelink
 
 	void SDK::HandleReconnect()
 	{
-		if (!(_storedJWT == gamelink::string("")))
+		if (!(_storedRefresh == gamelink::string("")))
 		{
-			schema::AuthenticateWithJWTRequest p(_storedClientId, _storedJWT);
+			schema::AuthenticateWithRefreshTokenRequest p(_storedClientId, _storedRefresh);
 			Payload* payload = new Payload(gamelink::string(to_string(p).c_str()));
 			debugLogPayload(payload);
 
@@ -2826,8 +2925,7 @@ namespace gamelink
 		return queuePayload(payload);
 	}
 
-	RequestId
-	SDK::AuthenticateWithPIN(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback)
+	RequestId SDK::AuthenticateWithPIN(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback)
 	{
 		schema::AuthenticateWithPINRequest payload(clientId, pin);
 		_storedClientId = clientId;
@@ -2858,8 +2956,7 @@ namespace gamelink
 		return queuePayload(payload);
 	}
 
-	RequestId
-	SDK::AuthenticateWithJWT(const string& clientId, const string& jwt, std::function<void(const schema::AuthenticateResponse&)> callback)
+	RequestId SDK::AuthenticateWithJWT(const string& clientId, const string& jwt, std::function<void(const schema::AuthenticateResponse&)> callback)
 	{
 		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
 		_storedClientId = clientId;
@@ -2875,6 +2972,37 @@ namespace gamelink
 								  void* user)
 	{
 		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
+		_storedClientId = clientId;
+
+		RequestId id = queuePayload(payload);
+		_onAuthenticate.set(callback, user, id, detail::CALLBACK_ONESHOT);
+		return id;
+	}
+
+	RequestId SDK::AuthenticateWithRefreshToken(const string& clientId, const string& refreshToken)
+	{
+		schema::AuthenticateWithRefreshTokenRequest payload(clientId, refreshToken);
+		_storedClientId = clientId;
+
+		return queuePayload(payload);
+	}
+
+	RequestId SDK::AuthenticateWithRefreshToken(const string& clientId, const string& refreshToken, std::function<void(const schema::AuthenticateResponse&)> callback)
+	{
+		schema::AuthenticateWithRefreshTokenRequest payload(clientId, refreshToken);
+		_storedClientId = clientId;
+
+		RequestId id = queuePayload(payload);
+		_onAuthenticate.set(callback, id, detail::CALLBACK_ONESHOT);
+		return id;
+	}
+
+	RequestId SDK::AuthenticateWithRefreshToken(const string& clientId,
+								  const string& refreshToken,
+								  void (*callback)(void*, const schema::AuthenticateResponse&),
+								  void* user)
+	{
+		schema::AuthenticateWithRefreshTokenRequest payload(clientId, refreshToken);
 		_storedClientId = clientId;
 
 		RequestId id = queuePayload(payload);
