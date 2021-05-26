@@ -56,37 +56,6 @@ namespace gamelink
 		return id;
 	}
 
-	RequestId SDK::AuthenticateWithJWT(const string& clientId, const string& jwt)
-	{
-		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
-		_storedClientId = clientId;
-
-		return queuePayload(payload);
-	}
-
-	RequestId SDK::AuthenticateWithJWT(const string& clientId, const string& jwt, std::function<void(const schema::AuthenticateResponse&)> callback)
-	{
-		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
-		_storedClientId = clientId;
-
-		RequestId id = queuePayload(payload);
-		_onAuthenticate.set(callback, id, detail::CALLBACK_ONESHOT);
-		return id;
-	}
-
-	RequestId SDK::AuthenticateWithJWT(const string& clientId,
-								  const string& jwt,
-								  void (*callback)(void*, const schema::AuthenticateResponse&),
-								  void* user)
-	{
-		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
-		_storedClientId = clientId;
-
-		RequestId id = queuePayload(payload);
-		_onAuthenticate.set(callback, user, id, detail::CALLBACK_ONESHOT);
-		return id;
-	}
-
 	RequestId SDK::AuthenticateWithRefreshToken(const string& clientId, const string& refreshToken)
 	{
 		schema::AuthenticateWithRefreshTokenRequest payload(clientId, refreshToken);

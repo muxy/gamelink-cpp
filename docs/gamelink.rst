@@ -79,23 +79,11 @@ Authentication
 .. doxygenstruct:: gamelink::schema::AuthenticateWithPINRequestBody
     :members:
 
-.. doxygenstruct:: gamelink::schema::AuthenticateWithJWTRequestBody
-    :members:
-
-.. doxygenstruct:: gamelink::schema::AuthenticateJWTResponseBody
-    :members:
-
 .. doxygenstruct:: gamelink::schema::SubscribeAuthenticationRequest
     :members: data
 
 .. doxygenstruct:: gamelink::schema::SubscribeAuthenticationResponse
     :members: data
-
-.. doxygenstruct:: gamelink::schema::AuthenticateWithPINRequest
-    :members: AuthenticateWithPINRequest, data
-
-.. doxygenstruct:: gamelink::schema::AuthenticateWithJWTRequest
-    :members: AuthenticateWithJWTRequest, data
 
 .. doxygenstruct:: gamelink::schema::AuthenticateResponse
     :members: data

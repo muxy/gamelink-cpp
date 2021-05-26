@@ -25,20 +25,6 @@ TEST_CASE("Authentication Serialization", "[auth][serialization]")
             "client_id": "not-a-client-id"
         }
     })");
-
-	gamelink::schema::AuthenticateWithJWTRequest jwtAuth("not-a-client-id", "eyJhbG...");
-	jwtAuth.params.request_id = 42;
-
-	SerializeEqual(jwtAuth, R"({
-        "action": "authenticate", 
-        "params": {
-            "request_id": 42
-        },
-        "data": {
-            "jwt": "eyJhbG...",
-            "client_id": "not-a-client-id"
-        }
-    })");
 }
 
 TEST_CASE("Authentication Deserialization", "[auth][deserialization]")
@@ -109,48 +95,4 @@ TEST_CASE("SDK PIN Authentication", "[sdk][authentication][pin]")
 	REQUIRE(sdk.GetUser()->GetJWT() == gamelink::string(jwt.c_str()));
 	REQUIRE(!sdk.HasPayloads());
 	REQUIRE(calls == 1);
-}
-
-TEST_CASE("SDK JWT Authentication", "[sdk][authentication][jwt]")
-{
-	gamelink::SDK sdk;
-	std::string jwt = "test-jwt";
-
-	// Test initial state
-	REQUIRE(!sdk.IsAuthenticated());
-	REQUIRE(sdk.GetUser() == NULL);
-	REQUIRE(!sdk.HasPayloads());
-
-	// Verify generated auth request
-	uint32_t calls = 0;
-	sdk.AuthenticateWithJWT("client_id", jwt.c_str(), [&](const gamelink::schema::AuthenticateResponse& resp) {
-		REQUIRE(resp.data.jwt == "test-jwt");
-		calls++;
-	});
-
-	REQUIRE(sdk.HasPayloads());
-
-	sdk.ForeachPayload([](const gamelink::Payload* send) {
-		REQUIRE(JSONEquals(send->data,
-						   R"({"action":"authenticate","data":{"client_id":"client_id","jwt":"test-jwt"},"params":{"request_id":1}})"));
-	});
-
-	REQUIRE(!sdk.HasPayloads());
-
-	// Verify state after successful auth
-	const char* msg = R"({
-		"meta": {
-			"request_id": 1,
-			"action": "authenticate"
-		},
-
-		"data": {
-			"jwt": "test-jwt"
-		}
-	})";
-	sdk.ReceiveMessage(msg, strlen(msg));
-
-	REQUIRE(sdk.IsAuthenticated());
-	REQUIRE(sdk.GetUser()->GetJWT() == gamelink::string(jwt.c_str()));
-	REQUIRE(!sdk.HasPayloads());
 }

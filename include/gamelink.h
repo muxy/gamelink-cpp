@@ -538,40 +538,6 @@ namespace gamelink
 
 		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
 		///
-		/// @param[in] clientId The extension's client ID
-		/// @param[in] jwt 		The stored JWT from a previous authentication
-		/// @return RequestId of the generated request
-		RequestId AuthenticateWithJWT(const string& clientId, const string& jwt);
-
-		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
-		/// This overload attaches a one-shot callback to be called when the authentication response
-		/// message is received.
-		///
-		/// @param[in] clientId The extension's client ID
-		/// @param[in] jwt 		The stored JWT from a previous authentication
-		/// @param[in] callback Callback that is invoked once when this authentication request
-		///                     is responded to.
-		/// @return RequestId of the generated request
-		RequestId
-		AuthenticateWithJWT(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback);
-
-		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
-		/// This overload attaches a one-shot callback to be called when the authentication response
-		/// message is received.
-		///
-		/// @param[in] clientId The extension's client ID
-		/// @param[in] jwt 		The stored JWT from a previous authentication
-		/// @param[in] callback Callback that is invoked once when this authentication request
-		///                     is responded to.
-		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
-		/// @return RequestId of the generated request
-		RequestId AuthenticateWithJWT(const string& clientId,
-								 const string& pin,
-								 void (*callback)(void*, const schema::AuthenticateResponse&),
-								 void* user);
-
-		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
-		///
 		/// @param[in] clientId 	The extension's client ID
 		/// @param[in] refreshToken The stored refresh token from a previous authentication
 		/// @return RequestId of the generated request
