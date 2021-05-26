@@ -793,27 +793,6 @@ namespace gamelink
 			AuthenticateWithPINRequest(const string& clientId, const string& pin);
 		};
 
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-		struct AuthenticateWithJWTRequestBody
-		{
-			/// JWT string, as obtained from previous authorizations
-			string jwt;
-
-			/// Client ID, as obtained from Twitch.
-			string client_id;
-		};
-		MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithJWTRequestBody, "jwt", jwt, "client_id", client_id);
-
-		struct AuthenticateWithJWTRequest : SendEnvelope<AuthenticateWithJWTRequestBody>
-		{
-			/// Creates an authorization request
-			/// @param[in] clientId Client ID.
-			/// @param[in] jwt JWT obtained from previous authorizations.
-			AuthenticateWithJWTRequest(const string& clientId, const string& jwt);
-		};
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 		struct AuthenticateWithRefreshTokenRequestBody
@@ -2303,14 +2282,6 @@ namespace gamelink
 			data.client_id = clientId;
 		}
 
-		AuthenticateWithJWTRequest::AuthenticateWithJWTRequest(const string& clientId, const string& jwt)
-		{
-			action = string("authenticate");
-			params.target = string("");
-			data.jwt = jwt;
-			data.client_id = clientId;
-		}
-
 		AuthenticateWithRefreshTokenRequest::AuthenticateWithRefreshTokenRequest(const string& clientId, const string& refreshToken)
 		{
 			action = string("authenticate");
@@ -2941,37 +2912,6 @@ namespace gamelink
 								  void* user)
 	{
 		schema::AuthenticateWithPINRequest payload(clientId, pin);
-		_storedClientId = clientId;
-
-		RequestId id = queuePayload(payload);
-		_onAuthenticate.set(callback, user, id, detail::CALLBACK_ONESHOT);
-		return id;
-	}
-
-	RequestId SDK::AuthenticateWithJWT(const string& clientId, const string& jwt)
-	{
-		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
-		_storedClientId = clientId;
-
-		return queuePayload(payload);
-	}
-
-	RequestId SDK::AuthenticateWithJWT(const string& clientId, const string& jwt, std::function<void(const schema::AuthenticateResponse&)> callback)
-	{
-		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
-		_storedClientId = clientId;
-
-		RequestId id = queuePayload(payload);
-		_onAuthenticate.set(callback, id, detail::CALLBACK_ONESHOT);
-		return id;
-	}
-
-	RequestId SDK::AuthenticateWithJWT(const string& clientId,
-								  const string& jwt,
-								  void (*callback)(void*, const schema::AuthenticateResponse&),
-								  void* user)
-	{
-		schema::AuthenticateWithJWTRequest payload(clientId, jwt);
 		_storedClientId = clientId;
 
 		RequestId id = queuePayload(payload);

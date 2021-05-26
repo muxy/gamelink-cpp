@@ -18,14 +18,6 @@ namespace gamelink
 			data.client_id = clientId;
 		}
 
-		AuthenticateWithJWTRequest::AuthenticateWithJWTRequest(const string& clientId, const string& jwt)
-		{
-			action = string("authenticate");
-			params.target = string("");
-			data.jwt = jwt;
-			data.client_id = clientId;
-		}
-
 		AuthenticateWithRefreshTokenRequest::AuthenticateWithRefreshTokenRequest(const string& clientId, const string& refreshToken)
 		{
 			action = string("authenticate");
