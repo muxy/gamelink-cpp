@@ -1,14 +1,17 @@
-## Schema Tests
-To run the schema tests:
+# GameLink
 
-  1. create a build directory and CD into it: `mkdir build && cd build`
-  2. Generate the cmake build system in the build directory: `cmake ..`
-  3. Build the binary: `cmake --build .`
-  4. Run the tests: `./schema_tests`
+This repo contains a C++ library that provides access to Muxy’s GameLink API. The library is distributed as a single-file, header-only library for ease of integration.
 
-## Docs
-To build the documentation
+## Integrating the library
+The repo contains a pre-compiled version of the single header library in the root of the project, `gamelink_single.hpp`. You may also compile the library from source by using the CMake project target `amalgam` to generate the library header file.
 
-  1. Ensure that you have doxygen and sphinx installed.
-  2. Run cmake, and then run `make Doxygen && make Sphinx`
-  3. Distribute the docs/sphinx directory
+## Documentation
+The library is documented using in-line Doxygen-style comments in `include/gamelink.h`. A distributable form of the documentation can be built using Doxygen and Sphinx.
+
+## Configuration
+Near the top of `gamelink_single.hpp` there are two configuration macros, `MUXY_GAMELINK_CUSTOM_STRING_TYPE` and 
+`MUXY_GAMELINK_CUSTOM_LOCK_TYPE` that can be defined to modify the string and lock types used by the C++ library.
+The inline documentation describes the required methods and behaviors that the string and lock types must satisfy.
+
+## Testing
+The test suite can be built through the CMake target `tests`.
