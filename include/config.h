@@ -1,6 +1,6 @@
 #pragma once
-#ifndef MUXY_GAMELINK_CONFIG_H
-#define MUXY_GAMELINK_CONFIG_H
+
+#include "third_party/nlohmann/json.hpp"
 
 // Support custom string types.
 #ifndef MUXY_GAMELINK_CUSTOM_STRING_TYPE
@@ -24,9 +24,6 @@
 #include MUXY_GAMELINK_CUSTOM_LOCK_INCLUDE
 #endif
 
-#ifndef NO_JSON_INCLUDE
-#include <nlohmann/json.hpp>
-#endif
 
 namespace gamelink
 {
@@ -74,4 +71,3 @@ namespace nlohmann
 }
 #endif
 
-#endif

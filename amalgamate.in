@@ -1,10 +1,9 @@
 #!/bin/bash
 
 OUTPUT_HEADER=gamelink_single.hpp
-# These msut be topologically sorted. Generally this means that
-# config.h, then serialization.h, envelope.h, then subscription.h followed by all other files.
+# These must be topologically sorted. Generally this means that
+# serialization.h, envelope.h, then subscription.h followed by all other files.
 INPUT_HEADERS=(
-    ./include/config.h 
     ./schema/serialization.h 
     ./schema/envelope.h 
     ./schema/subscription.h 
@@ -26,6 +25,21 @@ echo "" >> $OUTPUT_HEADER
 echo "" >> $OUTPUT_HEADER
 echo "#ifndef MUXY_GAMELINK_SINGLE_HPP" >> $OUTPUT_HEADER
 echo "#define MUXY_GAMELINK_SINGLE_HPP" >> $OUTPUT_HEADER
+echo "" >> $OUTPUT_HEADER
+
+# Config begin
+echo "#ifndef MUXY_GAMELINK_CONFIG_H"  >> $OUTPUT_HEADER
+echo "#define MUXY_GAMELINK_CONFIG_H" >> $OUTPUT_HEADER
+echo "" >> $OUTPUT_HEADER
+
+echo "#ifndef MUXY_NO_JSON_INCLUDE" >> $OUTPUT_HEADER
+cat ./third_party/nlohmann/json.hpp >> $OUTPUT_HEADER
+echo "#endif" >> $OUTPUT_HEADER
+
+cat ./include/config.h | sed 's/#include ".*"//g' | sed 's/#pragma once//g'  >> $OUTPUT_HEADER
+
+echo "#endif" >> $OUTPUT_HEADER
+# Config end
 
 for file in  ${INPUT_HEADERS[@]}; do 
     # Remove any includes in quotes, and pragma once before amalgamating.
