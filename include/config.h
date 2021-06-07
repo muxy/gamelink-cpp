@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./third_party/nlohmann/json.hpp"
+#include "third_party/nlohmann/json.hpp"
 
 // Support custom string types.
 #ifndef MUXY_GAMELINK_CUSTOM_STRING_TYPE
