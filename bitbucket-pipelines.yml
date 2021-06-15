@@ -12,5 +12,6 @@ pipelines:
               - ./amalgamate.sh
               - cmake --build build --target tests
               - cmake --build build --target amalgam_compile_check
+              - cmake --build build --target cgamelink
               - ./build/tests
               - ./build/amalgam_compile_check

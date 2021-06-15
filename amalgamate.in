@@ -17,6 +17,8 @@ INPUT_HEADERS=(
     ./schema/state.h 
     
     ./include/gamelink.h
+
+    ./include/gamelink_c.h
 )
 
 INPUT_SOURCES=(@AMALGAM_PUBLIC_SOURCES@)

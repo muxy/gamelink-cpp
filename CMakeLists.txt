@@ -118,3 +118,6 @@ if(OPENSSL_INCLUDE_DIR)
     add_dependencies(examples authenticate voting state broadcast)
 endif()
 endif()
+
+# Shared library 
+add_library(cgamelink SHARED ${SDK_SOURCES}  ${SCHEMA_SOURCES})
