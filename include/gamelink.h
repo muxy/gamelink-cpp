@@ -499,6 +499,12 @@ namespace gamelink
 		/// @param[in] id A handle obtained from calling OnTwitchPurchaseBits. Invalid handles are ignored.
 		void DetachOnTwitchPurchaseBits(uint32_t id);
 
+		/// Deauths the user from the server. Additional requests will not succeed until another
+		/// successful authentication request is sent.
+		///
+		/// @return RequestId of the generated request
+		RequestId Deauthenticate();
+
 		/// Queues an authentication request using a PIN code, as received by the user from an
 		/// extension's config view.
 		///
