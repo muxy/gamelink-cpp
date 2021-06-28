@@ -1,4 +1,3 @@
-
 // Simulate including a header with gamelink_single.hpp before 
 // trying to define the implementation.
 #include "gamelink_single.hpp"
@@ -9,5 +8,11 @@
 int main()
 {
     gamelink::SDK sdk;
-    return 0;
+    bool isAuthenticated = sdk.IsAuthenticated();
+    if (!isAuthenticated)
+    {
+        return 0;
+    }
+
+    return 1;
 }
