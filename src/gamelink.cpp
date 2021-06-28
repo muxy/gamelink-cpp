@@ -159,9 +159,13 @@ namespace gamelink
 			success = schema::ParseResponse(bytes, length, authResp);
 			if (success)
 			{
-				_user = new schema::User(authResp.data.jwt, authResp.data.refresh);
-				_storedJWT = authResp.data.jwt;
-				_storedRefresh = authResp.data.refresh;
+				const schema::Error * err = FirstError(authResp);
+				if (!err)
+				{
+					_user = new schema::User(authResp.data.jwt, authResp.data.refresh);
+					_storedJWT = authResp.data.jwt;
+					_storedRefresh = authResp.data.refresh;
+				}
 
 				_onAuthenticate.invoke(authResp);
 			}
@@ -231,6 +235,10 @@ namespace gamelink
 					_onDatastreamUpdate.invoke(resp);
 				}
 			}
+		}
+		else
+		{
+			success = true;
 		}
 
 		return success;

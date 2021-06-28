@@ -1,7 +1,5 @@
 #pragma once
 
-#include "third_party/nlohmann/json.hpp"
-
 // Support custom string types.
 #ifndef MUXY_GAMELINK_CUSTOM_STRING_TYPE
 #	include <string>
@@ -23,7 +21,6 @@
 #ifdef MUXY_GAMELINK_CUSTOM_LOCK_INCLUDE
 #include MUXY_GAMELINK_CUSTOM_LOCK_INCLUDE
 #endif
-
 
 namespace gamelink
 {
@@ -52,22 +49,6 @@ namespace gamelink
 	typedef MUXY_GAMELINK_CUSTOM_LOCK_TYPE lock;
 }
 
-#ifdef MUXY_GAMELINK_REQUIRES_STRING_JSON_OVERLOAD
-namespace nlohmann
-{
-	template<>
-	struct adl_serializer<gamelink::string> 
-	{
-		static void to_json(json& j, const gamelink::string& s)
-		{
-			j = json::string_t(s.c_str());
-		}
-
-		static void from_json(const json& j, gamelink::string& s)
-		{
-			s = gamelink::string(j.get<json::string_t>().c_str());
-		}
-	};
-}
-#endif
-
+// These includes are removed during amalgamation, but are here for non-amalgamated builds.
+#include "third_party/nlohmann/json.hpp"
+#include "config_footer.h"

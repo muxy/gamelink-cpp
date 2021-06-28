@@ -17,8 +17,6 @@ INPUT_HEADERS=(
     ./schema/state.h 
     
     ./include/gamelink.h
-
-    ./include/gamelink_c.h
 )
 
 INPUT_SOURCES=(@AMALGAM_PUBLIC_SOURCES@)
@@ -34,12 +32,16 @@ echo "#ifndef MUXY_GAMELINK_CONFIG_H"  >> $OUTPUT_HEADER
 echo "#define MUXY_GAMELINK_CONFIG_H" >> $OUTPUT_HEADER
 echo "" >> $OUTPUT_HEADER
 
-echo "#ifndef MUXY_NO_JSON_INCLUDE" >> $OUTPUT_HEADER
-cat ./third_party/nlohmann/json.hpp >> $OUTPUT_HEADER
-echo "#endif" >> $OUTPUT_HEADER
-
 cat ./include/config.h | sed 's/#include ".*"//g' | sed 's/#pragma once//g'  >> $OUTPUT_HEADER
 
+echo "#ifndef MUXY_NO_JSON_INCLUDE" >> $OUTPUT_HEADER
+cat ./third_party/nlohmann/json.hpp >> $OUTPUT_HEADER
+echo "" >> $OUTPUT_HEADER
+echo "#endif" >> $OUTPUT_HEADER
+
+cat ./include/config_footer.h | sed 's/#include ".*"//g' | sed 's/#pragma once//g'  >> $OUTPUT_HEADER
+
+echo "" >> $OUTPUT_HEADER
 echo "#endif" >> $OUTPUT_HEADER
 # Config end
 

@@ -2,6 +2,7 @@
 #include "util.h"
 
 #include "schema/authentication.h"
+#include "gamelink.h"
 
 TEST_CASE("Can deserialize with missing properties", "[deserialize]")
 {
