@@ -7,7 +7,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 project(Gamelink)
 
 # Settings
-set(CMAKE_CXX_FLAGS "-Wall -DFMT_HEADER_ONLY=1")
+set(CMAKE_CXX_FLAGS "-Wall -DFMT_HEADER_ONLY=1 -DJSON_NOEXCEPTION=1 -fno-exceptions")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 
 include_directories(.)
@@ -18,6 +18,7 @@ include_directories(third_party)
 file(GLOB SCHEMA_SOURCES "schema/*.cpp")
 file(GLOB SDK_TEST_SOURCES "test/*.cpp")
 file(GLOB SDK_SOURCES "src/*.cpp")
+file(GLOB C_SOURCES "c_library/*.cpp")
 
 file(GLOB DEMO_SOURCES "*.cpp")
 list(APPEND DEMO_SOURCES "websocket_network/websocket.cpp")
@@ -120,4 +121,8 @@ endif()
 endif()
 
 # Shared library 
-add_library(cgamelink SHARED ${SDK_SOURCES}  ${SCHEMA_SOURCES})
+add_library(cgamelink SHARED ${SDK_SOURCES} ${SCHEMA_SOURCES} ${C_SOURCES})
+
+add_executable(cgamelink_compile_check "clibrary_check.cpp")
+target_link_libraries(cgamelink_compile_check cgamelink)
+add_dependencies(cgamelink_compile_check cgamelink)

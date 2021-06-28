@@ -50,6 +50,29 @@ TEST_CASE("Authentication Deserialization", "[auth][deserialization]")
 	REQUIRE(resp.data.jwt == "eyJhbG...");
 }
 
+TEST_CASE("SDK doesn't authenticate on error", "[sdk][authentication]")
+{
+	gamelink::SDK sdk;
+
+	REQUIRE(!sdk.IsAuthenticated());
+	const char* msg = R"({
+		"meta": {
+			"request_id": 1,
+			"action": "authenticate"
+		},
+
+		"errors": [{
+			"number": 403, 
+			"title": "Not authorized", 
+			"detail": "You're not authorized"
+		}]
+	})";
+
+	bool ok = sdk.ReceiveMessage(msg, strlen(msg));
+	REQUIRE(ok);
+	REQUIRE(!sdk.IsAuthenticated());
+}
+
 TEST_CASE("SDK PIN Authentication", "[sdk][authentication][pin]")
 {
 	gamelink::SDK sdk;
@@ -95,4 +118,7 @@ TEST_CASE("SDK PIN Authentication", "[sdk][authentication][pin]")
 	REQUIRE(sdk.GetUser()->GetJWT() == gamelink::string(jwt.c_str()));
 	REQUIRE(!sdk.HasPayloads());
 	REQUIRE(calls == 1);
+
+	sdk.Deauthenticate();
+	REQUIRE(!sdk.IsAuthenticated());
 }

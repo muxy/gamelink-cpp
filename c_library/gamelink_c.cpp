@@ -1,7 +1,7 @@
 #include "gamelink.h"
 #include "gamelink_c.h"
 
-typedef struct MGL_GenericPointer { const void *Obj; };
+struct MGL_GenericPointer { const void *Obj; };
 
 MuxyGameLink MuxyGameLink_Make(void)
 {
@@ -32,7 +32,7 @@ void MuxyGameLink_ForeachPayload(MuxyGameLink GameLink, void (*Callback)(void*, 
 
 }
 
-size_t MuxyGameLink_Payload_GetSize(MGL_Payload Payload)
+uint32_t MuxyGameLink_Payload_GetSize(MGL_Payload Payload)
 {
     const gamelink::Payload *MGLPayload = static_cast<const gamelink::Payload*>(Payload.Obj);
     return MGLPayload->data.size();
@@ -214,13 +214,13 @@ void MuxyGameLink_DetachOnDatastream(MuxyGameLink GameLink, uint32_t OnDatastrea
     SDK->DetachOnDatastream(OnDatastreamHandle);
 }
 
-size_t MuxyGameLink_Schema_DatastreamUpdate_GetEventCount(MGL_Schema_DatastreamUpdate DatastreamUpdate)
+uint32_t MuxyGameLink_Schema_DatastreamUpdate_GetEventCount(MGL_Schema_DatastreamUpdate DatastreamUpdate)
 {
     const gamelink::schema::DatastreamUpdateBody *DSU = static_cast<const gamelink::schema::DatastreamUpdateBody*>(DatastreamUpdate.Obj);
     return DSU->events.size();
 }
 
-MGL_Schema_DatastreamEvent MuxyGameLink_Schema_DatastreamUpdate_GetEventAt(MGL_Schema_DatastreamUpdate DatastreamUpdate, size_t AtIndex)
+MGL_Schema_DatastreamEvent MuxyGameLink_Schema_DatastreamUpdate_GetEventAt(MGL_Schema_DatastreamUpdate DatastreamUpdate, uint32_t AtIndex)
 {
     const gamelink::schema::DatastreamUpdateBody *DSU = static_cast<const gamelink::schema::DatastreamUpdateBody*>(DatastreamUpdate.Obj);
 

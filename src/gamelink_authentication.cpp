@@ -24,6 +24,14 @@ namespace gamelink
 		}
 	}
 
+	RequestId SDK::Deauthenticate()
+	{
+		// TODO: Send a deauth attempt, instead of just nulling out the user object here.
+		delete _user;
+		_user = nullptr;
+
+		return ANY_REQUEST_ID;
+	}
     
 	RequestId SDK::AuthenticateWithPIN(const string& clientId, const string& pin)
 	{

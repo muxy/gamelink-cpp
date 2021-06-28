@@ -37,8 +37,9 @@ namespace gamelink
 		friend class SDK;
 		explicit Payload(string data);
 		RequestId waitingForResponse;
+
 	public:
-		/// Data to be sent. 
+		/// Data to be sent.
 		const string data;
 	};
 
@@ -117,6 +118,7 @@ namespace gamelink
 			uint32_t _id;
 			RequestId _targetRequestId;
 			uint32_t _status;
+
 		private:
 			RawFunctionPointer _rawCallback;
 			void* _user;
@@ -248,10 +250,9 @@ namespace gamelink
 		};
 	}
 
-
 	/// The SDK class exposes functionality to interact with the Gamelink SDK.
-	/// 
-	/// @remark Most functions are thread safe, and can be called from multiple threads 
+	///
+	/// @remark Most functions are thread safe, and can be called from multiple threads
 	///         concurrently, unless specifically denoted.
 	class SDK
 	{
@@ -269,8 +270,8 @@ namespace gamelink
 
 		/// Receives a character buffer as a message. This function
 		/// may invoke any callbacks that have been attached.
-		/// @warning This function must only be called from one thread, and must not be 
-		///          invoked recursively. This function will invoke any callbacks in the same 
+		/// @warning This function must only be called from one thread, and must not be
+		///          invoked recursively. This function will invoke any callbacks in the same
 		///          thread it is called in. Any arguments to any callbacks invoked by this
 		///          function only live until the callback returns. This means that rescheduling
 		///          a callback must copy any parameters.
@@ -287,7 +288,7 @@ namespace gamelink
 		void HandleReconnect();
 
 		/// Returns true if there are a non-zero amount of payloads to send.
-		/// @remark This method is thread safe, but it is possible for 
+		/// @remark This method is thread safe, but it is possible for
 		///         `if (HasPayloads()) { ForEachPayload(...) }` to execute
 		///         the callback to ForEachPayload zero times.
 		///
@@ -330,7 +331,7 @@ namespace gamelink
 			}
 		}
 
-		/// Type used in ForeachPayload below. Takes in the user pointer as the first argument, 
+		/// Type used in ForeachPayload below. Takes in the user pointer as the first argument,
 		/// and a pointer to a payload as the second parameter.
 		typedef void (*NetworkCallback)(void*, const Payload*);
 
@@ -380,13 +381,13 @@ namespace gamelink
 
 		/// Waits for a request to be responded to before sending further requests.
 		/// @remark WaitForResponse is used to ensure a serializing of requests on the server.
-		///			As an example, issuing back-to-back calls to DeletePoll, CreatePoll is 
+		///			As an example, issuing back-to-back calls to DeletePoll, CreatePoll is
 		///         a common way to reset a poll. However, if DeletePoll happens after CreatePoll
-		///         it can result in the newly created poll being immediately destroyed. 
+		///         it can result in the newly created poll being immediately destroyed.
 		///         To prevent such reorderings, do id = DeletePoll(); WaitForResponse(id); CreatePoll()
-		/// 
+		///
 		/// @remark Waiting for the same request multiple times is a no-op.
-		/// @warning Waiting for an invalid request id will result in no further messages sent. This 
+		/// @warning Waiting for an invalid request id will result in no further messages sent. This
 		///          API does not check for request id validity.
 		///
 		/// @param[in] req A request id, as returned from an API call.
@@ -499,6 +500,12 @@ namespace gamelink
 		/// @param[in] id A handle obtained from calling OnTwitchPurchaseBits. Invalid handles are ignored.
 		void DetachOnTwitchPurchaseBits(uint32_t id);
 
+		/// Deauths the user from the server. Additional requests will not succeed until another
+		/// successful authentication request is sent.
+		///
+		/// @return RequestId of the generated request
+		RequestId Deauthenticate();
+
 		/// Queues an authentication request using a PIN code, as received by the user from an
 		/// extension's config view.
 		///
@@ -532,9 +539,9 @@ namespace gamelink
 		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
 		/// @return RequestId of the generated request
 		RequestId AuthenticateWithPIN(const string& clientId,
-								 const string& pin,
-								 void (*callback)(void*, const schema::AuthenticateResponse&),
-								 void* user);
+									  const string& pin,
+									  void (*callback)(void*, const schema::AuthenticateResponse&),
+									  void* user);
 
 		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
 		///
@@ -552,7 +559,9 @@ namespace gamelink
 		/// @param[in] callback 	Callback that is invoked once when this authentication request
 		///                     	is responded to.
 		/// @return RequestId of the generated request
-		RequestId AuthenticateWithRefreshToken(const string& clientId, const string& refreshToken, std::function<void(const schema::AuthenticateResponse&)> callback);
+		RequestId AuthenticateWithRefreshToken(const string& clientId,
+											   const string& refreshToken,
+											   std::function<void(const schema::AuthenticateResponse&)> callback);
 
 		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
 		/// This overload attaches a one-shot callback to be called when the authentication response
@@ -565,9 +574,9 @@ namespace gamelink
 		/// @param[in] user     	User pointer that is passed into the callback whenever it is invoked.
 		/// @return RequestId of the generated request
 		RequestId AuthenticateWithRefreshToken(const string& clientId,
-								 const string& refreshToken,
-								 void (*callback)(void*, const schema::AuthenticateResponse&),
-								 void* user);
+											   const string& refreshToken,
+											   void (*callback)(void*, const schema::AuthenticateResponse&),
+											   void* user);
 
 		// Poll stuff, all async.
 
@@ -757,6 +766,7 @@ namespace gamelink
 		///
 		/// @param[in] id A handle obtained from calling OnDatastream. Invalid handles are ignored.
 		void DetachOnDatastream(uint32_t);
+
 	private:
 		void debugLogPayload(const Payload*);
 
