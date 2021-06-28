@@ -29,7 +29,7 @@ int main()
 		if (response.errors.empty())
 		{
 			std::cout << "Authenticated with PIN, got jwt: " << response.data.jwt << "\n";
-			examples::SaveJWT(response.data.jwt);
+			examples::SaveRefresh(response.data.refresh);
 		}
 		else
 		{

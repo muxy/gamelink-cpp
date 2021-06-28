@@ -57,6 +57,9 @@ namespace gamelink
 	///     * Does not have to be recursive
 	typedef MUXY_GAMELINK_CUSTOM_LOCK_TYPE lock;
 }
+
+// These includes are removed during amalgamation, but are here for non-amalgamated builds.
+
 #ifndef MUXY_NO_JSON_INCLUDE
 /*
     __ _____ _____ _____
@@ -28219,8 +28222,6 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId SetState(const char* target, const nlohmann::json& value);
 
-		RequestId SetStateRaw(const char* target, const char * str, bool& ok);
-
 		/// Queues a request to get state.
 		///
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
@@ -28244,16 +28245,6 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId GetState(const char* target, void (*callback)(void*, const schema::GetStateResponse<nlohmann::json>&), void* user);
 
-		/// Queues a request to do a single JSON Patch operation on the state object.
-		/// This will generate a StateUpdate event.
-		///
-		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
-		/// @param[in] operation A JSON Patch operation
-		/// @param[in] path A JSON Patch path.
-		/// @param[in] atom The value to use in the patch operation
-		/// @return RequestId of the generated request
-		RequestId UpdateState(const char* target, const string& operation, const string& path, const schema::JsonAtom& atom);
-
 		/// Queues a request to do many JSON Patch operations on the state object.
 		/// This will generate a StateUpdate event.
 		///
@@ -28262,6 +28253,55 @@ namespace gamelink
 		/// @param[in] end Pointer one past the last element in an array of UpdateOperations
 		/// @return RequestId of the generated request
 		RequestId UpdateState(const char* target, const schema::PatchOperation* begin, const schema::PatchOperation* end);
+
+		/// Helper function that will call UpdateState with the input object as the value.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] obj The value to use in the patch operation
+		/// @return RequestId of the generated request
+		template<typename T>
+		RequestId UpdateStateWithObject(const char * target, const char * operation, const string& path, const T& obj)
+		{
+			nlohmann::json js = nlohmann::json(obj);
+			return UpdateStateWithJson(target, operation, path, js);
+		}
+
+		/// Helper function that will call UpdateState with the input array as the value.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] begin Pointer to the first element in an array of serializable objects.
+		/// @param[in] end Pointer to one past the last element in an array of serializable objects.
+		/// @return RequestId of the generated request
+		template<typename T>
+		RequestId UpdateStateWithArray(const char * target, const char * operation, const string& path, const T * begin, const T * end)
+		{
+			nlohmann::json js = nlohmann::json::array();
+
+			int index = 0;
+			while (begin != end)
+			{
+				js[index] = nlohmann::json(*begin);
+				++begin;
+			}
+
+			return UpdateStateWithJson(target, operation, path, js);
+		}
+
+		RequestId UpdateStateWithInteger(const char * target, const char * operation, const string& path, int64_t i);
+		RequestId UpdateStateWithDouble(const char * target, const char * operation, const string& path, double d);
+		RequestId UpdateStateWithString(const char * target, const char * operation, const string& path, const string& s);
+		RequestId UpdateStateWithNull(const char * target, const char * operation, const string& path);
+
+		/// Helper function that will call UpdateState with operation='add_intermediates' with 
+		/// the input json object as the value.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] js The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateStateWithJson(const char * target, const char * operation, const string& path, const nlohmann::json& js);
 
 		/// Starts subscribing to state updates for the given target.
 		/// Updates come through the OnStateUpdate callback
@@ -29277,19 +29317,6 @@ namespace gamelink
 		return queuePayload(payload);
 	}
 
-	RequestId SDK::SetStateRaw(const char * target, const char * str, bool& ok)
-	{
-		nlohmann::json js = nlohmann::json::parse(str, nullptr, false, false);
-		if (js.is_discarded())
-		{
-			ok = false;
-			return ANY_REQUEST_ID;
-		}
-
-		ok = true;
-		return SetState(target, js);
-	}
-
 	RequestId SDK::GetState(const char* target, std::function<void(const schema::GetStateResponse<nlohmann::json>&)> callback)
 	{
 		schema::GetStateRequest payload(target);
@@ -29313,16 +29340,6 @@ namespace gamelink
 		return queuePayload(payload);
 	}
 
-	RequestId SDK::UpdateState(const char* target, const string& operation, const string& path, const schema::JsonAtom& atom)
-	{
-		schema::PatchOperation op;
-		op.operation = operation;
-		op.path = path;
-		op.value = atom;
-
-		return UpdateState(target, &op, &op + 1);
-	}
-
 	RequestId SDK::UpdateState(const char* target, const schema::PatchOperation* begin, const schema::PatchOperation* end)
 	{
 		schema::PatchStateRequest payload(target);
@@ -29333,5 +29350,65 @@ namespace gamelink
 		payload.data.state = std::move(updates);
 		return queuePayload(payload);
 	};
+
+	RequestId SDK::UpdateStateWithInteger(const char* target, const char * operation, const string& path, int64_t i)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromInteger(i);
+
+		return UpdateState(target, &op, &op + 1);
+	}
+
+	RequestId SDK::UpdateStateWithDouble(const char* target, const char * operation, const string& path, double d)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromDouble(d);
+
+		return UpdateState(target, &op, &op + 1);
+	}
+
+	RequestId SDK::UpdateStateWithString(const char* target, const char * operation, const string& path, const string& str)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromString(str);
+
+		return UpdateState(target, &op, &op + 1);
+	}
+
+	RequestId SDK::UpdateStateWithLiteral(const char* target, const char * operation, const string& path, const string& str)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromLiteral(str);
+
+		return UpdateState(target, &op, &op + 1);
+	}
+
+	RequestId SDK::UpdateStateWithNull(const char* target, const char * operation, const string& path)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomNull();
+
+		return UpdateState(target, &op, &op + 1);
+	}
+
+	RequestId SDK::UpdateStateWithJson(const char* target, const char * operation, const string& path, const nlohmann::json& js)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromLiteral(js.dump());
+
+		return UpdateState(target, &op, &op + 1);
+	}
 }
 #endif

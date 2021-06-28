@@ -690,16 +690,6 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId GetState(const char* target, void (*callback)(void*, const schema::GetStateResponse<nlohmann::json>&), void* user);
 
-		/// Queues a request to do a single JSON Patch operation on the state object.
-		/// This will generate a StateUpdate event.
-		///
-		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
-		/// @param[in] operation A JSON Patch operation
-		/// @param[in] path A JSON Patch path.
-		/// @param[in] atom The value to use in the patch operation
-		/// @return RequestId of the generated request
-		RequestId UpdateState(const char* target, const string& operation, const string& path, const schema::JsonAtom& atom);
-
 		/// Queues a request to do many JSON Patch operations on the state object.
 		/// This will generate a StateUpdate event.
 		///
@@ -708,6 +698,94 @@ namespace gamelink
 		/// @param[in] end Pointer one past the last element in an array of UpdateOperations
 		/// @return RequestId of the generated request
 		RequestId UpdateState(const char* target, const schema::PatchOperation* begin, const schema::PatchOperation* end);
+
+		/// Helper function that will call UpdateState with the input object as the value.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] obj The value to use in the patch operation
+		/// @return RequestId of the generated request
+		template<typename T>
+		RequestId UpdateStateWithObject(const char * target, const char * operation, const string& path, const T& obj)
+		{
+			nlohmann::json js = nlohmann::json(obj);
+			return UpdateStateWithJson(target, operation, path, js);
+		}
+
+		/// Helper function that will call UpdateState with the input array as the value.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] begin Pointer to the first element in an array of serializable objects.
+		/// @param[in] end Pointer to one past the last element in an array of serializable objects.
+		/// @return RequestId of the generated request
+		template<typename T>
+		RequestId UpdateStateWithArray(const char * target, const char * operation, const string& path, const T * begin, const T * end)
+		{
+			nlohmann::json js = nlohmann::json::array();
+
+			int index = 0;
+			while (begin != end)
+			{
+				js[index] = nlohmann::json(*begin);
+				++begin;
+			}
+
+			return UpdateStateWithJson(target, operation, path, js);
+		}
+
+		/// Helper function that will call UpdateState with the input integer as the value.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] i The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateStateWithInteger(const char * target, const char * operation, const string& path, int64_t i);
+
+		/// Helper function that will call UpdateState with the input double as the value.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] d The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateStateWithDouble(const char * target, const char * operation, const string& path, double d);
+
+		/// Helper function that will call UpdateState with the input string as the value.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] s The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateStateWithString(const char * target, const char * operation, const string& path, const string& s);
+
+		/// Helper function that will call UpdateState with the input json object literal as the value.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] js The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateStateWithLiteral(const char * target, const char * operation, const string& path, const string& js);
+
+		/// Helper function that will call UpdateState with null as the value.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @return RequestId of the generated request
+		RequestId UpdateStateWithNull(const char * target, const char * operation, const string& path);
+
+		/// Helper function that will call UpdateState the input json object as the value.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] js The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateStateWithJson(const char * target, const char * operation, const string& path, const nlohmann::json& js);
 
 		/// Starts subscribing to state updates for the given target.
 		/// Updates come through the OnStateUpdate callback

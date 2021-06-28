@@ -43,23 +43,23 @@ namespace examples
         return Configuration();
     }
 
-    inline void SaveJWT(const std::string& jwt)
+    inline void SaveRefresh(const std::string& refresh)
     {
-        std::ofstream jwtFile("../jwt", std::ios::trunc);
-        jwtFile << jwt;
+        std::ofstream refreshFile("../refresh", std::ios::trunc);
+        refreshFile << refresh;
     }
 
-    inline std::string LoadJWT() 
+    inline std::string LoadRefresh() 
     {
-        std::ifstream jwtFile("../jwt");
-        if (!jwtFile)
+        std::ifstream refreshFile("../refresh");
+        if (!refreshFile)
         {
-            std::cout << "Couldn't load saved jwt. Run the authenticate demo first\n";
+            std::cout << "Couldn't load saved refresh. Run the authenticate demo first\n";
             std::terminate();
         }
 
         std::string result;
-        jwtFile >> result;
+        refreshFile >> result;
 
         return result;
     }
