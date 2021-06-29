@@ -36,10 +36,10 @@ namespace gamelink
 		};
 
 		/// Channel State target
-		static const char* STATE_TARGET_CHANNEL = "channel";
+		static const char STATE_TARGET_CHANNEL[] = "channel";
 
 		/// Extension State target
-		static const char* STATE_TARGET_EXTENSION = "extension";
+		static const char STATE_TARGET_EXTENSION[] = "extension";
 
 		template<typename T>
 		struct SetStateRequest : SendEnvelope<SetStateRequestBody<T>>
