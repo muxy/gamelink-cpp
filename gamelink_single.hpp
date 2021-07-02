@@ -26726,6 +26726,16 @@ namespace gamelink
 
 		MUXY_GAMELINK_SERIALIZE_3(Error, "number", number, "title", title, "detail", detail)
 
+		// Patch operation used to send patches
+		struct PatchOperation
+		{
+			string operation;
+			string path;
+			JsonAtom value;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PatchOperation, "op", operation, "path", path, "value", value);
+		};
+
 		/// ReceiveEnvelope
 		template<typename T>
 		struct ReceiveEnvelope
@@ -27416,6 +27426,7 @@ namespace gamelink
 
 
 
+
 #endif
 
 
@@ -27456,10 +27467,10 @@ namespace gamelink
 		};
 
 		/// Channel State target
-		static const char* STATE_TARGET_CHANNEL = "channel";
+		static const char STATE_TARGET_CHANNEL[] = "channel";
 
 		/// Extension State target
-		static const char* STATE_TARGET_EXTENSION = "extension";
+		static const char STATE_TARGET_EXTENSION[] = "extension";
 
 		template<typename T>
 		struct SetStateRequest : SendEnvelope<SetStateRequestBody<T>>
@@ -27499,16 +27510,6 @@ namespace gamelink
 		template<typename T>
 		struct GetStateResponse : ReceiveEnvelope<StateResponseBody<T>>
 		{
-		};
-
-		// Update state
-		struct PatchOperation
-		{
-			string operation;
-			string path;
-			JsonAtom value;
-
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PatchOperation, "op", operation, "path", path, "value", value);
 		};
 
 		struct PatchStateRequestBody
@@ -27553,6 +27554,123 @@ namespace gamelink
 }
 #endif
 
+
+#ifndef MUXY_GAMELINK_SCHEMA_GAMECONFIG_H
+#define MUXY_GAMELINK_SCHEMA_GAMECONFIG_H
+
+
+
+namespace gamelink
+{
+    namespace schema
+    {
+        struct SetConfigRequestBody
+        {
+            nlohmann::json config;
+            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SetConfigRequestBody, "config", config); 
+        };
+
+        struct GetConfigRequestBody
+        {
+            // Either 'channel', 'extension' or 'combined'
+            string configId;
+
+            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(GetConfigRequestBody, "config_id", configId);
+        };
+
+        struct ConfigResponseBody
+        {
+            nlohmann::json config;
+            string configId;
+
+            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ConfigResponseBody, "config", config, "config_id", configId);
+        };
+        
+        struct ConfigUpdateBody
+        {
+            nlohmann::json config;
+            string topicId;
+
+            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ConfigUpdateBody, "config", config, "topic_id", topicId);
+        };
+
+        struct CombinedState
+        {
+            nlohmann::json channel;
+            nlohmann::json extension;
+            string configId;
+
+            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(CombinedState, "channel", channel, "extension", extension, "config_id", configId);
+        };
+
+        struct CombinedStateResponseBody
+        {
+            CombinedState config;
+            string configId;
+            
+            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(CombinedStateResponseBody, "config", config, "config_id", configId);
+        };
+
+        struct SubscribeConfigRequestBody
+        {
+            string configId;
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SubscribeConfigRequestBody, "config_id", configId);
+        };
+
+        struct UnsubscribeConfigRequestBody
+        {
+            string configId;
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(UnsubscribeConfigRequestBody, "config_id", configId);
+        };
+        
+		struct PatchConfigRequestBody
+		{
+			std::vector<PatchOperation> config;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(PatchConfigRequestBody, "config", config);
+		};
+
+		struct PatchConfigRequest : SendEnvelope<PatchConfigRequestBody>
+		{
+		};
+
+        static const char CONFIG_TARGET_CHANNEL[] = "channel";
+        static const char CONFIG_TARGET_EXTENSION[] = "extension";
+
+        struct GetConfigRequest : SendEnvelope<GetConfigRequestBody>
+        {
+            /// Creates a GetConfig request.
+            /// @param[in] target one of the CONFIG_TARGET constants 
+            explicit GetConfigRequest(const char* target);
+        };
+
+        struct SetConfigRequest : SendEnvelope<SetConfigRequestBody>
+        {
+            explicit SetConfigRequest(const nlohmann::json& js);
+        };
+
+        struct GetConfigResponse : ReceiveEnvelope<ConfigResponseBody>
+        {};
+
+        struct GetCombinedConfigResponse : ReceiveEnvelope<CombinedStateResponseBody>
+        {};
+
+        struct SubscribeToConfigRequest : SendEnvelope<SubscribeConfigRequestBody>
+        {
+            explicit SubscribeToConfigRequest(const char* target);
+        };
+
+        struct UnsubscribeToConfigRequest : SendEnvelope<SubscribeConfigRequestBody>
+        {
+            explicit UnsubscribeToConfigRequest(const char* target);
+        };
+
+        struct ConfigUpdateResponse : ReceiveEnvelope<ConfigUpdateBody>
+		{
+		};
+    }
+}
+#endif
 
 #ifndef INCLUDE_MUXY_GAMELINK_H
 #define INCLUDE_MUXY_GAMELINK_H
@@ -28197,6 +28315,178 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId DeletePoll(const string& pollId);
 
+		// Config operations, all async.
+
+		/// Queues a request to get cofiguration. This overload attaches a one-shot callback to be
+		/// called when config is received.
+		///
+		/// @param[in] target   Either CONFIG_TARGET_CHANNEL or CONFIG_TARGET_EXTENSION
+		/// @param[in] callback Callback invoked when this get request is responded to.
+		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
+		/// @return RequestId of the generated request
+		RequestId GetConfig(const char* target, std::function<void(const schema::GetConfigResponse&)> callback);
+
+		/// Queues a request to get cofiguration. This overload attaches a one-shot callback to be
+		/// called when config is received.
+		///
+		/// @param[in] target   Either CONFIG_TARGET_CHANNEL or CONFIG_TARGET_EXTENSION
+		/// @param[in] callback Callback invoked when this get request is responded to.
+		/// @return RequestId of the generated request
+		RequestId GetConfig(const char* target, void (*callback)(void *, const schema::GetConfigResponse&), void*);
+
+		/// Queues a request to get combined cofiguration. This overload attaches a one-shot callback to be
+		/// called when config is received.
+		///
+		/// @param[in] callback Callback invoked when this get request is responded to.
+		/// @return RequestId of the generated request
+		RequestId GetCombinedConfig(std::function<void(const schema::GetCombinedConfigResponse&)> callback);
+
+		/// Queues a request to get combined cofiguration. This overload attaches a one-shot callback to be
+		/// called when config is received.
+		///
+		/// @param[in] callback Callback invoked when this get request is responded to.
+		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
+		/// @return RequestId of the generated request
+		RequestId GetCombinedConfig(void (*callback)(void *, const schema::GetCombinedConfigResponse&), void*);
+
+		/// Queues a request to do many JSON Patch operations on the channel config object.
+		/// This will generate a ConfigUpdate event.
+		///
+		/// @param[in] begin Pointer to the first element in an array of UpdateOperations
+		/// @param[in] end Pointer one past the last element in an array of UpdateOperations
+		/// @return RequestId of the generated request
+		RequestId UpdateChannelConfig(const schema::PatchOperation* begin, const schema::PatchOperation* end);
+
+		/// Updates channel configuration with an object, placed at a path.
+		///
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] obj The value to use in the patch operation
+		/// @return RequestId of the generated request
+		template<typename T>
+		RequestId UpdateChannelConfigWithObject(const char * operation, const string& path, const T& obj)
+		{
+			nlohmann::json js = nlohmann::json(obj);
+			return UpdateChannelConfigWithJson(operation, path, js);
+		}
+
+		/// Updates channel configuration with the input array as the value.
+		///
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] begin Pointer to the first element in an array of serializable objects.
+		/// @param[in] end Pointer to one past the last element in an array of serializable objects.
+		/// @return RequestId of the generated request
+		template<typename T>
+		RequestId UpdateChannelConfigWithArray(const char * operation, const string& path, const T * begin, const T * end)
+		{
+			nlohmann::json js = nlohmann::json::array();
+
+			int index = 0;
+			while (begin != end)
+			{
+				js[index] = nlohmann::json(*begin);
+				++begin;
+			}
+
+			return UpdateChannelConfigWithJson(operation, path, js);
+		}
+
+		/// Helper function that will call UpdateChannelConfig with the input integer as the value.
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] i The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateChannelConfigWithInteger(const char * operation, const string& path, int64_t i);
+
+		/// Helper function that will call UpdateChannelConfig with the input double as the value.
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] d The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateChannelConfigWithDouble(const char * operation, const string& path, double d);
+
+		/// Helper function that will call UpdateChannelConfig with the input string as the value.
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] s The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateChannelConfigWithString(const char * operation, const string& path, const string& s);
+
+		/// Helper function that will call UpdateChannelConfig with the input json object literal as the value.
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] js The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateChannelConfigWithLiteral(const char * operation, const string& path, const string& js);
+
+		/// Helper function that will call UpdateChannelConfig with null as the value.
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @return RequestId of the generated request
+		RequestId UpdateChannelConfigWithNull(const char * operation, const string& path);
+
+		/// Helper function that will call UpdateChannelConfig the input json object as the value.
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] js The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateChannelConfigWithJson(const char * operation, const string& path, const nlohmann::json& js);
+
+		/// Starts subscribing to configuration updates for a given target.
+		///
+		/// @param[in] target either CONFIG_TARGET_CHANNEL or CONFIG_TARGET_EXTENSION
+		/// @return RequestId of the generated request
+		RequestId SubscribeToConfigurationChanges(const char* target);
+
+		/// Stop subscribing to configuration updates for a given target.
+		///
+		/// @param[in] target either CONFIG_TARGET_CHANNEL or CONFIG_TARGET_EXTENSION
+		/// @return RequestId of the generated request
+		RequestId UnsubscribeToConfigurationChanges(const char* target);
+
+		/// Sets the current channel configuration. Will trigger OnConfigUpdate.
+		///
+		/// @param[in] value A serializable type. Will overwrite any existing configuration.
+		///                  Cannot be an array or primitive type.
+		/// @return RequestId of the generated request
+		template<typename T>
+		RequestId SetChannelConfig(const T& value)
+		{
+			nlohmann::json js = nlohmann::json(value);
+			return SetChannelConfig(js);
+		}
+
+		/// Sets the current channel configuration. Will trigger OnConfigUpdate.
+		///
+		/// @param[in] js The configuration to set
+		/// @return RequestId of the generated request
+		RequestId SetChannelConfig(const nlohmann::json& js);
+
+		/// Sets an OnConfigUpdate callback. This callback is invoked when a config update
+		/// message is received.
+		///
+		/// @param[in] callback Callback to invoke when a config update message is received.
+		/// @return Returns an integer handle to the callback, to be used in DetachOnConfigUpdate.
+		uint32_t OnConfigUpdate(std::function<void (const schema::ConfigUpdateResponse&)> callback);
+
+		/// Sets an OnConfigUpdate callback. This callback is invoked when a config update
+		/// message is received.
+		///
+		/// @param[in] callback Callback to invoke when a config update message is received.
+		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
+		/// @return Returns an integer handle to the callback, to be used in DetachOnConfigUpdate.
+		uint32_t OnConfigUpdate(void (*callback)(void*, const schema::ConfigUpdateResponse&), void * user);
+		
+		/// Detaches an OnConfigUpdate callback.
+		///
+		/// @param[in] id A handle obtained from calling OnConfigUpdate. Invalid handles are ignored.
+		void DetachOnConfigUpdate(uint32_t);
+
 		// State operations, all async.
 
 		/// Queues a request to replace the entirety of state with new information.
@@ -28289,15 +28579,54 @@ namespace gamelink
 			return UpdateStateWithJson(target, operation, path, js);
 		}
 
-		RequestId UpdateStateWithInteger(const char * target, const char * operation, const string& path, int64_t i);
-		RequestId UpdateStateWithDouble(const char * target, const char * operation, const string& path, double d);
-		RequestId UpdateStateWithString(const char * target, const char * operation, const string& path, const string& s);
-		RequestId UpdateStateWithNull(const char * target, const char * operation, const string& path);
-
-		/// Helper function that will call UpdateState with operation='add_intermediates' with 
-		/// the input json object as the value.
+		/// Helper function that will call UpdateState with the input integer as the value.
 		///
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] i The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateStateWithInteger(const char * target, const char * operation, const string& path, int64_t i);
+
+		/// Helper function that will call UpdateState with the input double as the value.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] d The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateStateWithDouble(const char * target, const char * operation, const string& path, double d);
+
+		/// Helper function that will call UpdateState with the input string as the value.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] s The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateStateWithString(const char * target, const char * operation, const string& path, const string& s);
+
+		/// Helper function that will call UpdateState with the input json object literal as the value.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] js The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateStateWithLiteral(const char * target, const char * operation, const string& path, const string& js);
+
+		/// Helper function that will call UpdateState with null as the value.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @return RequestId of the generated request
+		RequestId UpdateStateWithNull(const char * target, const char * operation, const string& path);
+
+		/// Helper function that will call UpdateState the input json object as the value.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] js The value to use in the patch operation
 		/// @return RequestId of the generated request
@@ -28341,14 +28670,14 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId UnsubscribeFromDatastream();
 
-		/// Sets a OnDatastream callback. This callback is invoked when a datastream update
+		/// Sets an OnDatastream callback. This callback is invoked when a datastream update
 		/// message is received.
 		///
 		/// @param[in] callback Callback to invoke when a datastream update message is received.
 		/// @return Returns an integer handle to the callback, to be used in DetachOnDatastream.
 		uint32_t OnDatastream(std::function<void(const schema::DatastreamUpdate&)> callback);
 
-		/// Sets a OnDatastream callback. This callback is invoked when a datastream update
+		/// Sets an OnDatastream callback. This callback is invoked when a datastream update
 		/// message is received.
 		///
 		/// @param[in] callback Callback to invoke when a datastream update message is received.
@@ -28408,6 +28737,10 @@ namespace gamelink
 		detail::CallbackCollection<schema::TwitchPurchaseBitsResponse<nlohmann::json>, 5> _onTwitchPurchaseBits;
 		detail::CallbackCollection<schema::GetPollResponse, 6> _onGetPoll;
 		detail::CallbackCollection<schema::DatastreamUpdate, 7> _onDatastreamUpdate;
+
+		detail::CallbackCollection<schema::GetConfigResponse, 8> _onGetConfig;
+		detail::CallbackCollection<schema::GetCombinedConfigResponse, 9> _onGetCombinedConfig;
+		detail::CallbackCollection<schema::ConfigUpdateResponse, 10> _onConfigUpdate;
 	};
 }
 
@@ -28616,6 +28949,41 @@ namespace gamelink
 	}
 }
 
+
+
+namespace gamelink
+{
+    namespace schema
+    {
+        GetConfigRequest::GetConfigRequest(const char* target)
+        {
+            action = string("get");
+			params.target = string("config");
+            data.configId = target;
+        }
+
+        SetConfigRequest::SetConfigRequest(const nlohmann::json& js)
+        {
+            action = string("set");
+			params.target = string("config");
+            data.config = js;
+        }
+
+        SubscribeToConfigRequest::SubscribeToConfigRequest(const char* target)
+        {
+            action = string("subscribe");
+            params.target = string("config");
+            data.configId = target;
+        }
+
+        UnsubscribeToConfigRequest::UnsubscribeToConfigRequest(const char* target)
+        {
+            action = string("unsubscribe");
+            params.target = string("config");
+            data.configId = target;
+        }
+    }
+}
 
 
 namespace gamelink
@@ -28898,8 +29266,7 @@ namespace gamelink
 					_onGetState.invoke(stateResp);
 				}
 			}
-
-			if (env.meta.target == "poll")
+			else if (env.meta.target == "poll")
 			{
 				schema::GetPollResponse pollResp;
 				success = schema::ParseResponse(bytes, length, pollResp);
@@ -28907,6 +29274,27 @@ namespace gamelink
 				if (success)
 				{
 					_onGetPoll.invoke(pollResp);
+				}
+			}
+			else if (env.meta.target == "config")
+			{
+				schema::GetConfigResponse configResp;
+				success = schema::ParseResponse(bytes, length, configResp);
+				if (success)
+				{
+					if (configResp.data.configId == "combined")
+					{
+						schema::GetCombinedConfigResponse combinedResp;
+						success = schema::ParseResponse(bytes, length, combinedResp);
+						if (success)
+						{
+							_onGetCombinedConfig.invoke(combinedResp);
+						}
+					}
+					else
+					{
+						_onGetConfig.invoke(configResp);
+					}
 				}
 			}
 		}
@@ -28949,6 +29337,15 @@ namespace gamelink
 				if (success)
 				{
 					_onDatastreamUpdate.invoke(resp);
+				}
+			}
+			else if (env.meta.target == "config")
+			{
+				schema::ConfigUpdateResponse resp;
+				success = schema::ParseResponse(bytes, length, resp);
+				if (success)
+				{
+					_onConfigUpdate.invoke(resp);
 				}
 			}
 		}
@@ -29117,6 +29514,158 @@ namespace gamelink
 		RequestId id = queuePayload(payload);
 		_onAuthenticate.set(callback, user, id, detail::CALLBACK_ONESHOT);
 		return id;
+	}
+}
+
+
+namespace gamelink
+{
+    RequestId SDK::GetConfig(const char* target, std::function<void(const schema::GetConfigResponse&)> callback)
+    {
+        schema::GetConfigRequest req(target);
+        RequestId id = queuePayload(req);
+
+        _onGetConfig.set(callback, id, detail::CALLBACK_ONESHOT);
+        return id;
+    }
+
+	RequestId SDK::GetConfig(const char* target, void (*callback)(void *, const schema::GetConfigResponse&), void* user)
+    {
+        schema::GetConfigRequest req(target);
+        RequestId id = queuePayload(req);
+
+        _onGetConfig.set(callback, user, id, detail::CALLBACK_ONESHOT);
+        return id;
+    }
+
+    RequestId SDK::GetCombinedConfig(std::function<void (const schema::GetCombinedConfigResponse&)> callback)
+    {
+        schema::GetConfigRequest req("combined");
+        RequestId id =  queuePayload(req);
+
+        _onGetCombinedConfig.set(callback, id, detail::CALLBACK_ONESHOT);
+        return id;
+    }
+
+    RequestId SDK::GetCombinedConfig(void (*callback)(void *, const schema::GetCombinedConfigResponse&), void* user)
+    {
+        schema::GetConfigRequest req("combined");
+        RequestId id =  queuePayload(req);
+
+        _onGetCombinedConfig.set(callback, user, id, detail::CALLBACK_ONESHOT);
+        return id;
+    }
+
+    RequestId SDK::SubscribeToConfigurationChanges(const char* target)
+    {
+        schema::SubscribeToConfigRequest req(target);
+        return queuePayload(req);
+    }
+
+    RequestId SDK::UnsubscribeToConfigurationChanges(const char* target)
+    {
+        schema::UnsubscribeToConfigRequest req(target);
+        return queuePayload(req);
+    }
+
+    RequestId SDK::SetChannelConfig(const nlohmann::json& js)
+    {
+        schema::SetConfigRequest req(js);
+        return queuePayload(req);
+    }
+
+    uint32_t SDK::OnConfigUpdate(std::function<void(const schema::ConfigUpdateResponse&)> callback)
+    {
+        return _onConfigUpdate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+    }
+
+    uint32_t SDK::OnConfigUpdate(void (*callback)(void*, const schema::ConfigUpdateResponse&), void* user)
+    {
+        return _onConfigUpdate.set(callback, user, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+    }
+
+    void SDK::DetachOnConfigUpdate(uint32_t id)
+    {
+        if (_onConfigUpdate.validateId(id))
+        {
+            _onConfigUpdate.remove(id);
+        }
+        else
+        {
+            _onDebugMessage.invoke("Invalid ID passed into DetachOnConfigUpdate");
+        }
+    }
+
+    RequestId SDK::UpdateChannelConfig(const schema::PatchOperation* begin, const schema::PatchOperation* end)
+	{
+		schema::PatchConfigRequest payload;
+		std::vector<schema::PatchOperation> updates;
+		updates.resize(end - begin);
+		std::copy(begin, end, updates.begin());
+
+		payload.data.config = std::move(updates);
+		return queuePayload(payload);
+	}
+
+
+	RequestId SDK::UpdateChannelConfigWithInteger(const char * operation, const string& path, int64_t i)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromInteger(i);
+
+		return UpdateChannelConfig(&op, &op + 1);
+	}
+
+	RequestId SDK::UpdateChannelConfigWithDouble(const char * operation, const string& path, double d)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromDouble(d);
+
+		return UpdateChannelConfig(&op, &op + 1);
+	}
+
+	RequestId SDK::UpdateChannelConfigWithString(const char * operation, const string& path, const string& str)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromString(str);
+
+		return UpdateChannelConfig(&op, &op + 1);
+	}
+
+	RequestId SDK::UpdateChannelConfigWithLiteral(const char * operation, const string& path, const string& str)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromLiteral(str);
+
+		return UpdateChannelConfig(&op, &op + 1);
+	}
+
+	RequestId SDK::UpdateChannelConfigWithNull(const char * operation, const string& path)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomNull();
+
+		return UpdateChannelConfig(&op, &op + 1);
+	}
+
+	RequestId SDK::UpdateChannelConfigWithJson(const char * operation, const string& path, const nlohmann::json& js)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromLiteral(string(js.dump().c_str()));
+
+		return UpdateChannelConfig(&op, &op + 1);
 	}
 }
 
@@ -29349,7 +29898,7 @@ namespace gamelink
 
 		payload.data.state = std::move(updates);
 		return queuePayload(payload);
-	};
+	}
 
 	RequestId SDK::UpdateStateWithInteger(const char* target, const char * operation, const string& path, int64_t i)
 	{
@@ -29406,7 +29955,7 @@ namespace gamelink
 		schema::PatchOperation op;
 		op.operation = operation;
 		op.path = path;
-		op.value = schema::atomFromLiteral(js.dump());
+		op.value = schema::atomFromLiteral(string(js.dump().c_str()));
 
 		return UpdateState(target, &op, &op + 1);
 	}

@@ -11,4 +11,5 @@
 #include "subscription.h"
 #include "broadcast.h"
 #include "datastream.h"
+#include "game_config.h"
 #endif

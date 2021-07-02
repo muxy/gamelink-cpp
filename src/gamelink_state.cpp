@@ -68,7 +68,7 @@ namespace gamelink
 
 		payload.data.state = std::move(updates);
 		return queuePayload(payload);
-	};
+	}
 
 	RequestId SDK::UpdateStateWithInteger(const char* target, const char * operation, const string& path, int64_t i)
 	{
