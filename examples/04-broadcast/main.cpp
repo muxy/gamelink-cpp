@@ -68,9 +68,9 @@ int main()
 
 	bool done = false;
 	examples::Configuration cfg = examples::LoadConfiguration();
-	std::string jwt = examples::LoadJWT();
+	std::string refresh = examples::LoadRefresh();
 
-	sdk.AuthenticateWithJWT(cfg.clientID, jwt);
+	sdk.AuthenticateWithRefreshToken(cfg.clientID, refresh);
 
 	Character gandalf;
 	gandalf.name = "Gandalf";

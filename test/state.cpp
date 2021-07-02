@@ -313,7 +313,7 @@ TEST_CASE("SDK Update State", "[sdk][state]")
 {
 	gamelink::SDK sdk;
 
-	sdk.UpdateState(gamelink::schema::STATE_TARGET_CHANNEL, "replace", "/name", gamelink::schema::atomFromString("whatever"));
+	sdk.UpdateStateWithString(gamelink::schema::STATE_TARGET_CHANNEL, "replace", "/name", "whatever");
 	sdk.ForeachPayload([](const gamelink::Payload* send) {
 		REQUIRE(JSONEquals(send->data,
 						   R"({

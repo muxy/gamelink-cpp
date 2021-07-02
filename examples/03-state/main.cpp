@@ -68,9 +68,9 @@ int main()
 
 	bool done = false;
 	examples::Configuration cfg = examples::LoadConfiguration();
-	std::string jwt = examples::LoadJWT();
+	std::string refresh = examples::LoadRefresh();
 
-	sdk.AuthenticateWithJWT(cfg.clientID, jwt);
+	sdk.AuthenticateWithRefreshToken(cfg.clientID, refresh);
 
 	Character gandalf;
 	gandalf.name = "Gandalf";
@@ -89,11 +89,15 @@ int main()
 	sdk.SetState(gamelink::schema::STATE_TARGET_CHANNEL, gandalf);
 
 	// Level up int
-	sdk.UpdateState(gamelink::schema::STATE_TARGET_CHANNEL, "replace", "/int", gamelink::schema::atomFromInteger(19));
+	sdk.UpdateStateWithInteger(gamelink::schema::STATE_TARGET_CHANNEL, "replace", "/int", 19);
 
 	// Learn a useful spell
-	sdk.UpdateState(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/spellbook/-",
-					gamelink::schema::atomFromLiteral(R"({ "name": "Fireball", "level": 3 })"));
+	Spell fireball { "Fireball", 3 };
+	sdk.UpdateStateWithObject(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/spellbook/3", fireball);
+
+	// Actually, learn lightning bolt.
+	Spell lightningBolt { "Lightning Bolt", 3 };
+	sdk.UpdateStateWithObject(gamelink::schema::STATE_TARGET_CHANNEL, "replace", "/spellbook/3", lightningBolt);
 
 	// Get state now:
 	sdk.GetState(gamelink::schema::STATE_TARGET_CHANNEL, [](const gamelink::schema::GetStateResponse<nlohmann::json>& state) {
@@ -109,7 +113,7 @@ int main()
 	sdk.SubscribeToStateUpdates(gamelink::schema::STATE_TARGET_CHANNEL);
 
 	// Forget a spell
-	sdk.UpdateState(gamelink::schema::STATE_TARGET_CHANNEL, "remove", "/spellbook/1", gamelink::schema::atomNull());
+	sdk.UpdateStateWithNull(gamelink::schema::STATE_TARGET_CHANNEL, "remove", "/spellbook/1");
 
 	sdk.ForeachPayload([&](const gamelink::Payload* send) { websocket.send(send->data.c_str(), send->data.size()); });
 	while (!done)

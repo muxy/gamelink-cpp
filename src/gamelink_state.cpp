@@ -59,16 +59,6 @@ namespace gamelink
 		return queuePayload(payload);
 	}
 
-	RequestId SDK::UpdateState(const char* target, const string& operation, const string& path, const schema::JsonAtom& atom)
-	{
-		schema::PatchOperation op;
-		op.operation = operation;
-		op.path = path;
-		op.value = atom;
-
-		return UpdateState(target, &op, &op + 1);
-	}
-
 	RequestId SDK::UpdateState(const char* target, const schema::PatchOperation* begin, const schema::PatchOperation* end)
 	{
 		schema::PatchStateRequest payload(target);
@@ -79,4 +69,64 @@ namespace gamelink
 		payload.data.state = std::move(updates);
 		return queuePayload(payload);
 	};
+
+	RequestId SDK::UpdateStateWithInteger(const char* target, const char * operation, const string& path, int64_t i)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromInteger(i);
+
+		return UpdateState(target, &op, &op + 1);
+	}
+
+	RequestId SDK::UpdateStateWithDouble(const char* target, const char * operation, const string& path, double d)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromDouble(d);
+
+		return UpdateState(target, &op, &op + 1);
+	}
+
+	RequestId SDK::UpdateStateWithString(const char* target, const char * operation, const string& path, const string& str)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromString(str);
+
+		return UpdateState(target, &op, &op + 1);
+	}
+
+	RequestId SDK::UpdateStateWithLiteral(const char* target, const char * operation, const string& path, const string& str)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromLiteral(str);
+
+		return UpdateState(target, &op, &op + 1);
+	}
+
+	RequestId SDK::UpdateStateWithNull(const char* target, const char * operation, const string& path)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomNull();
+
+		return UpdateState(target, &op, &op + 1);
+	}
+
+	RequestId SDK::UpdateStateWithJson(const char* target, const char * operation, const string& path, const nlohmann::json& js)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromLiteral(string(js.dump().c_str()));
+
+		return UpdateState(target, &op, &op + 1);
+	}
 }

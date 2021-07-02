@@ -36,9 +36,9 @@ int main()
 	});
 
 	examples::Configuration cfg = examples::LoadConfiguration();
-	std::string jwt = examples::LoadJWT();
+	std::string refresh = examples::LoadRefresh();
 
-	sdk.AuthenticateWithJWT(cfg.clientID, jwt);
+	sdk.AuthenticateWithRefreshToken(cfg.clientID, refresh);
 	sdk.CreatePoll("vote-and-win", "Who's your favorite?", {"Me", "Him", "Her"});
 	sdk.SubscribeToPoll("vote-and-win");
 
