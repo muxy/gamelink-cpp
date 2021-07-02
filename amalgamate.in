@@ -15,6 +15,7 @@ INPUT_HEADERS=(
     ./schema/purchase.h
     ./schema/schema.h 
     ./schema/state.h 
+    ./schema/game_config.h
     
     ./include/gamelink.h
 )

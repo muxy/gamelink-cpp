@@ -81,16 +81,6 @@ namespace gamelink
 		{
 		};
 
-		// Update state
-		struct PatchOperation
-		{
-			string operation;
-			string path;
-			JsonAtom value;
-
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PatchOperation, "op", operation, "path", path, "value", value);
-		};
-
 		struct PatchStateRequestBody
 		{
 			/// Either 'channel' or 'extension', based on the target.

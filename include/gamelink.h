@@ -642,6 +642,178 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId DeletePoll(const string& pollId);
 
+		// Config operations, all async.
+
+		/// Queues a request to get cofiguration. This overload attaches a one-shot callback to be
+		/// called when config is received.
+		///
+		/// @param[in] target   Either CONFIG_TARGET_CHANNEL or CONFIG_TARGET_EXTENSION
+		/// @param[in] callback Callback invoked when this get request is responded to.
+		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
+		/// @return RequestId of the generated request
+		RequestId GetConfig(const char* target, std::function<void(const schema::GetConfigResponse&)> callback);
+
+		/// Queues a request to get cofiguration. This overload attaches a one-shot callback to be
+		/// called when config is received.
+		///
+		/// @param[in] target   Either CONFIG_TARGET_CHANNEL or CONFIG_TARGET_EXTENSION
+		/// @param[in] callback Callback invoked when this get request is responded to.
+		/// @return RequestId of the generated request
+		RequestId GetConfig(const char* target, void (*callback)(void *, const schema::GetConfigResponse&), void*);
+
+		/// Queues a request to get combined cofiguration. This overload attaches a one-shot callback to be
+		/// called when config is received.
+		///
+		/// @param[in] callback Callback invoked when this get request is responded to.
+		/// @return RequestId of the generated request
+		RequestId GetCombinedConfig(std::function<void(const schema::GetCombinedConfigResponse&)> callback);
+
+		/// Queues a request to get combined cofiguration. This overload attaches a one-shot callback to be
+		/// called when config is received.
+		///
+		/// @param[in] callback Callback invoked when this get request is responded to.
+		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
+		/// @return RequestId of the generated request
+		RequestId GetCombinedConfig(void (*callback)(void *, const schema::GetCombinedConfigResponse&), void*);
+
+		/// Queues a request to do many JSON Patch operations on the channel config object.
+		/// This will generate a ConfigUpdate event.
+		///
+		/// @param[in] begin Pointer to the first element in an array of UpdateOperations
+		/// @param[in] end Pointer one past the last element in an array of UpdateOperations
+		/// @return RequestId of the generated request
+		RequestId UpdateChannelConfig(const schema::PatchOperation* begin, const schema::PatchOperation* end);
+
+		/// Updates channel configuration with an object, placed at a path.
+		///
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] obj The value to use in the patch operation
+		/// @return RequestId of the generated request
+		template<typename T>
+		RequestId UpdateChannelConfigWithObject(const char * operation, const string& path, const T& obj)
+		{
+			nlohmann::json js = nlohmann::json(obj);
+			return UpdateChannelConfigWithJson(operation, path, js);
+		}
+
+		/// Updates channel configuration with the input array as the value.
+		///
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] begin Pointer to the first element in an array of serializable objects.
+		/// @param[in] end Pointer to one past the last element in an array of serializable objects.
+		/// @return RequestId of the generated request
+		template<typename T>
+		RequestId UpdateChannelConfigWithArray(const char * operation, const string& path, const T * begin, const T * end)
+		{
+			nlohmann::json js = nlohmann::json::array();
+
+			int index = 0;
+			while (begin != end)
+			{
+				js[index] = nlohmann::json(*begin);
+				++begin;
+			}
+
+			return UpdateChannelConfigWithJson(operation, path, js);
+		}
+
+		/// Helper function that will call UpdateChannelConfig with the input integer as the value.
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] i The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateChannelConfigWithInteger(const char * operation, const string& path, int64_t i);
+
+		/// Helper function that will call UpdateChannelConfig with the input double as the value.
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] d The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateChannelConfigWithDouble(const char * operation, const string& path, double d);
+
+		/// Helper function that will call UpdateChannelConfig with the input string as the value.
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] s The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateChannelConfigWithString(const char * operation, const string& path, const string& s);
+
+		/// Helper function that will call UpdateChannelConfig with the input json object literal as the value.
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] js The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateChannelConfigWithLiteral(const char * operation, const string& path, const string& js);
+
+		/// Helper function that will call UpdateChannelConfig with null as the value.
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @return RequestId of the generated request
+		RequestId UpdateChannelConfigWithNull(const char * operation, const string& path);
+
+		/// Helper function that will call UpdateChannelConfig the input json object as the value.
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] js The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateChannelConfigWithJson(const char * operation, const string& path, const nlohmann::json& js);
+
+		/// Starts subscribing to configuration updates for a given target.
+		///
+		/// @param[in] target either CONFIG_TARGET_CHANNEL or CONFIG_TARGET_EXTENSION
+		/// @return RequestId of the generated request
+		RequestId SubscribeToConfigurationChanges(const char* target);
+
+		/// Stop subscribing to configuration updates for a given target.
+		///
+		/// @param[in] target either CONFIG_TARGET_CHANNEL or CONFIG_TARGET_EXTENSION
+		/// @return RequestId of the generated request
+		RequestId UnsubscribeToConfigurationChanges(const char* target);
+
+		/// Sets the current channel configuration. Will trigger OnConfigUpdate.
+		///
+		/// @param[in] value A serializable type. Will overwrite any existing configuration.
+		///                  Cannot be an array or primitive type.
+		/// @return RequestId of the generated request
+		template<typename T>
+		RequestId SetChannelConfig(const T& value)
+		{
+			nlohmann::json js = nlohmann::json(value);
+			return SetChannelConfig(js);
+		}
+
+		/// Sets the current channel configuration. Will trigger OnConfigUpdate.
+		///
+		/// @param[in] js The configuration to set
+		/// @return RequestId of the generated request
+		RequestId SetChannelConfig(const nlohmann::json& js);
+
+		/// Sets an OnConfigUpdate callback. This callback is invoked when a config update
+		/// message is received.
+		///
+		/// @param[in] callback Callback to invoke when a config update message is received.
+		/// @return Returns an integer handle to the callback, to be used in DetachOnConfigUpdate.
+		uint32_t OnConfigUpdate(std::function<void (const schema::ConfigUpdateResponse&)> callback);
+
+		/// Sets an OnConfigUpdate callback. This callback is invoked when a config update
+		/// message is received.
+		///
+		/// @param[in] callback Callback to invoke when a config update message is received.
+		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
+		/// @return Returns an integer handle to the callback, to be used in DetachOnConfigUpdate.
+		uint32_t OnConfigUpdate(void (*callback)(void*, const schema::ConfigUpdateResponse&), void * user);
+		
+		/// Detaches an OnConfigUpdate callback.
+		///
+		/// @param[in] id A handle obtained from calling OnConfigUpdate. Invalid handles are ignored.
+		void DetachOnConfigUpdate(uint32_t);
+
 		// State operations, all async.
 
 		/// Queues a request to replace the entirety of state with new information.
@@ -825,14 +997,14 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId UnsubscribeFromDatastream();
 
-		/// Sets a OnDatastream callback. This callback is invoked when a datastream update
+		/// Sets an OnDatastream callback. This callback is invoked when a datastream update
 		/// message is received.
 		///
 		/// @param[in] callback Callback to invoke when a datastream update message is received.
 		/// @return Returns an integer handle to the callback, to be used in DetachOnDatastream.
 		uint32_t OnDatastream(std::function<void(const schema::DatastreamUpdate&)> callback);
 
-		/// Sets a OnDatastream callback. This callback is invoked when a datastream update
+		/// Sets an OnDatastream callback. This callback is invoked when a datastream update
 		/// message is received.
 		///
 		/// @param[in] callback Callback to invoke when a datastream update message is received.
@@ -892,6 +1064,10 @@ namespace gamelink
 		detail::CallbackCollection<schema::TwitchPurchaseBitsResponse<nlohmann::json>, 5> _onTwitchPurchaseBits;
 		detail::CallbackCollection<schema::GetPollResponse, 6> _onGetPoll;
 		detail::CallbackCollection<schema::DatastreamUpdate, 7> _onDatastreamUpdate;
+
+		detail::CallbackCollection<schema::GetConfigResponse, 8> _onGetConfig;
+		detail::CallbackCollection<schema::GetCombinedConfigResponse, 9> _onGetCombinedConfig;
+		detail::CallbackCollection<schema::ConfigUpdateResponse, 10> _onConfigUpdate;
 	};
 }
 

@@ -182,8 +182,7 @@ namespace gamelink
 					_onGetState.invoke(stateResp);
 				}
 			}
-
-			if (env.meta.target == "poll")
+			else if (env.meta.target == "poll")
 			{
 				schema::GetPollResponse pollResp;
 				success = schema::ParseResponse(bytes, length, pollResp);
@@ -191,6 +190,27 @@ namespace gamelink
 				if (success)
 				{
 					_onGetPoll.invoke(pollResp);
+				}
+			}
+			else if (env.meta.target == "config")
+			{
+				schema::GetConfigResponse configResp;
+				success = schema::ParseResponse(bytes, length, configResp);
+				if (success)
+				{
+					if (configResp.data.configId == "combined")
+					{
+						schema::GetCombinedConfigResponse combinedResp;
+						success = schema::ParseResponse(bytes, length, combinedResp);
+						if (success)
+						{
+							_onGetCombinedConfig.invoke(combinedResp);
+						}
+					}
+					else
+					{
+						_onGetConfig.invoke(configResp);
+					}
 				}
 			}
 		}
@@ -233,6 +253,15 @@ namespace gamelink
 				if (success)
 				{
 					_onDatastreamUpdate.invoke(resp);
+				}
+			}
+			else if (env.meta.target == "config")
+			{
+				schema::ConfigUpdateResponse resp;
+				success = schema::ParseResponse(bytes, length, resp);
+				if (success)
+				{
+					_onConfigUpdate.invoke(resp);
 				}
 			}
 		}
