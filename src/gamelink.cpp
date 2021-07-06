@@ -4,6 +4,47 @@
 
 namespace gamelink
 {
+	static const size_t CONNECTION_URL_BUFFER_LENGTH = 256;
+	static const char CONNECTION_URL_SANDBOX[] = "sandbox.gamelink.muxy.io";
+	static const char CONNECTION_URL_PRODUCTION[] = "gamelink.muxy.io";
+
+	string WebsocketConnectionURL(const string& clientID, ConnectionStage stage)
+	{
+		char buffer[CONNECTION_URL_BUFFER_LENGTH];
+		// Ignore obviously too-large client IDs
+		if (clientID.size() > 100)
+		{
+			return string("");
+		}
+
+		const char * url = nullptr;
+		if (stage == CONNECTION_STAGE_PRODUCTION)
+		{
+			url = CONNECTION_URL_PRODUCTION;
+		}
+		else if (stage == CONNECTION_STAGE_SANDBOX)
+		{
+			url = CONNECTION_URL_SANDBOX;
+		}
+
+		if (!url)
+		{
+			return string("");
+		}
+
+		int output = snprintf(buffer, CONNECTION_URL_BUFFER_LENGTH, "%s/%d.%d.%d/%s",
+			url,
+			MUXY_GAMELINK_VERSION_MAJOR, MUXY_GAMELINK_VERSION_MINOR, MUXY_GAMELINK_VERSION_PATCH,
+			clientID.c_str());
+
+		if (output > 0 && output < CONNECTION_URL_BUFFER_LENGTH)
+		{
+			return string(buffer);
+		}
+
+		return string("");
+	}
+
 	Payload::Payload(string data)
 		: waitingForResponse(ANY_REQUEST_ID)
 		, data(data)

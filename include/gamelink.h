@@ -250,6 +250,21 @@ namespace gamelink
 		};
 	}
 
+	enum ConnectionStage
+	{
+		CONNECTION_STAGE_PRODUCTION,
+		CONNECTION_STAGE_SANDBOX,
+	};
+
+	/// Returns the URL to connect to for the given clientID and stage.
+	/// This returned URL doesn't have the protocol ('ws://' or 'wss://') prefix.
+	///
+	/// @param[in] clientId The extension's client ID.
+	/// @param[in] stage The stage to connect to, either CONNECTION_STAGE_PRODUCTION or
+	///                  CONNECTION_STAGE_SANDBOX.
+	/// @return Returns the URL to connect to. Returns an empty string on error.
+	string WebsocketConnectionURL(const string& clientId, ConnectionStage stage);
+
 	/// The SDK class exposes functionality to interact with the Gamelink SDK.
 	///
 	/// @remark Most functions are thread safe, and can be called from multiple threads
