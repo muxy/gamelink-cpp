@@ -13,10 +13,12 @@
 
 int main()
 {
+	examples::Configuration cfg = examples::LoadConfiguration();
 	gamelink::SDK sdk;
 
 	// Set up network connection
-	WebsocketConnection websocket("sandbox.gamelink.muxy.io", 80);
+	std::string url = gamelink::WebsocketConnectionURL(cfg.clientID, gamelink::CONNECTION_STAGE_SANDBOX);
+	WebsocketConnection websocket(url, 80);
 	websocket.onMessage([&](const char* bytes, uint32_t len) { sdk.ReceiveMessage(bytes, len); });
 
 	// Setup the debug logger.
@@ -35,7 +37,6 @@ int main()
 		done = true;
 	});
 
-	examples::Configuration cfg = examples::LoadConfiguration();
 	std::string refresh = examples::LoadRefresh();
 
 	sdk.AuthenticateWithRefreshToken(cfg.clientID, refresh);

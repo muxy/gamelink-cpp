@@ -57,10 +57,12 @@ struct Character
 
 int main()
 {
+	examples::Configuration config = examples::LoadConfiguration();
 	gamelink::SDK sdk;
 
 	// Set up network connection
-	WebsocketConnection websocket("sandbox.gamelink.muxy.io", 80);
+	std::string url = gamelink::WebsocketConnectionURL(config.clientID, gamelink::CONNECTION_STAGE_SANDBOX);
+	WebsocketConnection websocket(url, 80);
 	websocket.onMessage([&](const char* bytes, uint32_t len) { sdk.ReceiveMessage(bytes, len); });
 
 	// Setup the debug logger.
