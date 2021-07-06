@@ -7,11 +7,12 @@
 int main()
 {
 	examples::Configuration config = examples::LoadConfiguration();
-
 	gamelink::SDK sdk;
 
 	// Setup the connection
-	WebsocketConnection connection("sandbox.gamelink.muxy.io", 80);
+	std::string url = gamelink::WebsocketConnectionURL(config.clientID, gamelink::CONNECTION_STAGE_SANDBOX);
+	WebsocketConnection connection(url, 80);
+	
 	connection.onMessage([&](const char* bytes, uint32_t len) { sdk.ReceiveMessage(bytes, len); });
 
 	// Setup the debug logger.

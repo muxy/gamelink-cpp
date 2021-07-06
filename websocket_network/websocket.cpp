@@ -254,7 +254,7 @@ void connect(lws_sorted_usec_list_t* queue);
 
 struct Impl
 {
-	Impl(const std::string& dHost, uint16_t dPort, WebsocketConnection* conn)
+	Impl(const std::string& url, uint16_t dPort, WebsocketConnection* conn)
 		: lwsCtx(nullptr)
 		, client(nullptr)
 	{
@@ -288,7 +288,22 @@ struct Impl
 		// Schedule a connection in 100 usecs.
 		lws_sul_schedule(lwsCtx, 0, &queue, connect, 100);
 
-		host = dHost;
+		for (size_t i = 0; i < url.size(); ++i)
+		{
+			if (url[i] == '/')
+			{
+				host = url.substr(0, i);
+				path = url.substr(i);
+				break;
+			}
+		}
+
+		if (host.empty())
+		{
+			host = url;
+			path = "/";
+		}
+
 		port = dPort;
 	}
 
@@ -311,6 +326,7 @@ struct Impl
 	std::function<void(const char*, uint32_t)> callback;
 
 	std::string host;
+	std::string path;
 	uint16_t port;
 };
 
@@ -383,6 +399,7 @@ void connect(lws_sorted_usec_list_t* queue)
 
 	info.port = impl->port;
 	info.address = impl->host.c_str();
+	info.path = impl->path.c_str();
 
 	// Likely need to attempt to do this and then fallback to insecure if needed.
 	// info.ssl_connection = LCCSCF_USE_SSL;
@@ -390,7 +407,6 @@ void connect(lws_sorted_usec_list_t* queue)
 	// Setup a user_data that points to the impl instance for access in the protocol callbacks
 	info.opaque_user_data = impl;
 
-	info.path = "/";
 	info.host = info.address;
 	info.origin = info.address;
 
@@ -412,9 +428,9 @@ WebsocketConnection::~WebsocketConnection()
 	delete impl;
 }
 
-WebsocketConnection::WebsocketConnection(const std::string& host, uint16_t port)
+WebsocketConnection::WebsocketConnection(const std::string& url, uint16_t port)
 {
-	impl = new Impl(host, port, this);
+	impl = new Impl(url, port, this);
 }
 
 int WebsocketConnection::run()
