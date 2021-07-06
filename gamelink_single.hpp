@@ -9,6 +9,10 @@
 
 
 
+#define MUXY_GAMELINK_VERSION_MAJOR 0
+#define MUXY_GAMELINK_VERSION_MINOR 0
+#define MUXY_GAMELINK_VERSION_PATCH 1
+
 // Support custom string types.
 #ifndef MUXY_GAMELINK_CUSTOM_STRING_TYPE
 #	include <string>
@@ -27923,6 +27927,21 @@ namespace gamelink
 		};
 	}
 
+	enum ConnectionStage
+	{
+		CONNECTION_STAGE_PRODUCTION,
+		CONNECTION_STAGE_SANDBOX,
+	};
+
+	/// Returns the URL to connect to for the given clientID and stage.
+	/// This returned URL doesn't have the protocol ('ws://' or 'wss://') prefix.
+	///
+	/// @param[in] clientId The extension's client ID.
+	/// @param[in] stage The stage to connect to, either CONNECTION_STAGE_PRODUCTION or
+	///                  CONNECTION_STAGE_SANDBOX.
+	/// @return Returns the URL to connect to. Returns an empty string on error.
+	string WebsocketConnectionURL(const string& clientId, ConnectionStage stage);
+
 	/// The SDK class exposes functionality to interact with the Gamelink SDK.
 	///
 	/// @remark Most functions are thread safe, and can be called from multiple threads
@@ -29088,6 +29107,47 @@ namespace gamelink
 
 namespace gamelink
 {
+	static const size_t CONNECTION_URL_BUFFER_LENGTH = 256;
+	static const char CONNECTION_URL_SANDBOX[] = "sandbox.gamelink.muxy.io";
+	static const char CONNECTION_URL_PRODUCTION[] = "gamelink.muxy.io";
+
+	string WebsocketConnectionURL(const string& clientID, ConnectionStage stage)
+	{
+		char buffer[CONNECTION_URL_BUFFER_LENGTH];
+		// Ignore obviously too-large client IDs
+		if (clientID.size() > 100)
+		{
+			return string("");
+		}
+
+		const char * url = nullptr;
+		if (stage == CONNECTION_STAGE_PRODUCTION)
+		{
+			url = CONNECTION_URL_PRODUCTION;
+		}
+		else if (stage == CONNECTION_STAGE_SANDBOX)
+		{
+			url = CONNECTION_URL_SANDBOX;
+		}
+
+		if (!url)
+		{
+			return string("");
+		}
+
+		int output = snprintf(buffer, CONNECTION_URL_BUFFER_LENGTH, "%s/%d.%d.%d/%s",
+			url,
+			MUXY_GAMELINK_VERSION_MAJOR, MUXY_GAMELINK_VERSION_MINOR, MUXY_GAMELINK_VERSION_PATCH,
+			clientID.c_str());
+
+		if (output > 0 && output < CONNECTION_URL_BUFFER_LENGTH)
+		{
+			return string(buffer);
+		}
+
+		return string("");
+	}
+
 	Payload::Payload(string data)
 		: waitingForResponse(ANY_REQUEST_ID)
 		, data(data)
