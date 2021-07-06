@@ -1,5 +1,9 @@
 #pragma once
 
+#define MUXY_GAMELINK_VERSION_MAJOR 0
+#define MUXY_GAMELINK_VERSION_MINOR 0
+#define MUXY_GAMELINK_VERSION_REVISION 1
+
 // Support custom string types.
 #ifndef MUXY_GAMELINK_CUSTOM_STRING_TYPE
 #	include <string>
