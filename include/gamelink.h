@@ -43,6 +43,12 @@ namespace gamelink
 		const string data;
 	};
 
+	enum ConnectionStage
+	{
+		CONNECTION_STAGE_PRODUCTION,
+		CONNECTION_STAGE_SANDBOX,
+	};
+
 	namespace detail
 	{
 		static const uint32_t CALLBACK_PERSISTENT = 0;
@@ -248,13 +254,27 @@ namespace gamelink
 
 			std::vector<Callback<T>*> _callbacks;
 		};
-	}
 
-	enum ConnectionStage
-	{
-		CONNECTION_STAGE_PRODUCTION,
-		CONNECTION_STAGE_SANDBOX,
-	};
+		/// Returns the URL to connect for the given clientID, stage, projection
+		/// and projection version. This function should be called instead of 
+		/// WebsocketConnectionURL when writing a projection into a different language.
+		///
+		/// @param[in] clientId The extension's client ID.
+		/// @param[in] stage The stage to connect to, either CONNECTION_STAGE_PRODUCTION or
+		///                  CONNECTION_STAGE_SANDBOX.
+		/// @param[in] projection The projection name. Must be under 8 characters, and must
+		/// 					  be a URL-safe string. Examples are 'c' or 'csharp'
+		/// @param[in] projectionMajor The major version of this projection.
+		/// @param[in] projectionMinor The minor version of this projection.
+		/// @param[in] projectionPatch The patch version of this projection.
+		/// @return Returns the URL to connect to. Returns an empty string on error.
+		string ProjectionWebsocketConnectionURL(
+			const string& clientId,
+			ConnectionStage stage,
+			const string& projection,
+			int projectionMajor, int projectionMinor, int projectionPatch);
+
+	}
 
 	/// Returns the URL to connect to for the given clientID and stage.
 	/// This returned URL doesn't have the protocol ('ws://' or 'wss://') prefix.

@@ -89,7 +89,6 @@ namespace gamelink
 		return queuePayload(payload);
 	}
 
-
 	RequestId SDK::UpdateChannelConfigWithInteger(const char * operation, const string& path, int64_t i)
 	{
 		schema::PatchOperation op;

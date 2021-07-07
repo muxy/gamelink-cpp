@@ -8,6 +8,57 @@ namespace gamelink
 	static const char CONNECTION_URL_SANDBOX[] = "sandbox.gamelink.muxy.io";
 	static const char CONNECTION_URL_PRODUCTION[] = "gamelink.muxy.io";
 
+	namespace detail
+	{
+		string ProjectionWebsocketConnectionURL(
+			const string& clientId, 
+			ConnectionStage stage, 
+			const string& projection, 
+			int projectionMajor, int projectionMinor, int projectionPatch)
+		{
+			char buffer[CONNECTION_URL_BUFFER_LENGTH];
+			// Ignore obviously too-large client IDs
+			if (clientId.size() > 100)
+			{
+				return string("");
+			}
+
+			const char * url = nullptr;
+			if (stage == CONNECTION_STAGE_PRODUCTION)
+			{
+				url = CONNECTION_URL_PRODUCTION;
+			}
+			else if (stage == CONNECTION_STAGE_SANDBOX)
+			{
+				url = CONNECTION_URL_SANDBOX;
+			}
+
+			if (!url)
+			{
+				return string("");
+			}
+
+			if (projectionMajor < 0 || projectionMinor < 0 || projectionPatch < 0)
+			{
+				return string("");
+			}
+
+			int output = snprintf(buffer, CONNECTION_URL_BUFFER_LENGTH, "%s/%d.%d.%d/%s/%d.%d.%d/%s",
+				url,
+				MUXY_GAMELINK_VERSION_MAJOR, MUXY_GAMELINK_VERSION_MINOR, MUXY_GAMELINK_VERSION_PATCH,
+				projection.c_str(),
+				projectionMajor, projectionMinor, projectionPatch,
+				clientId.c_str());
+
+			if (output > 0 && output < CONNECTION_URL_BUFFER_LENGTH)
+			{
+				return string(buffer);
+			}
+
+			return string("");
+		}
+	}
+
 	string WebsocketConnectionURL(const string& clientID, ConnectionStage stage)
 	{
 		char buffer[CONNECTION_URL_BUFFER_LENGTH];

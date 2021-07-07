@@ -27720,6 +27720,12 @@ namespace gamelink
 		const string data;
 	};
 
+	enum ConnectionStage
+	{
+		CONNECTION_STAGE_PRODUCTION,
+		CONNECTION_STAGE_SANDBOX,
+	};
+
 	namespace detail
 	{
 		static const uint32_t CALLBACK_PERSISTENT = 0;
@@ -27925,13 +27931,27 @@ namespace gamelink
 
 			std::vector<Callback<T>*> _callbacks;
 		};
-	}
 
-	enum ConnectionStage
-	{
-		CONNECTION_STAGE_PRODUCTION,
-		CONNECTION_STAGE_SANDBOX,
-	};
+		/// Returns the URL to connect for the given clientID, stage, projection
+		/// and projection version. This function should be called instead of 
+		/// WebsocketConnectionURL when writing a projection into a different language.
+		///
+		/// @param[in] clientId The extension's client ID.
+		/// @param[in] stage The stage to connect to, either CONNECTION_STAGE_PRODUCTION or
+		///                  CONNECTION_STAGE_SANDBOX.
+		/// @param[in] projection The projection name. Must be under 8 characters, and must
+		/// 					  be a URL-safe string. Examples are 'c' or 'csharp'
+		/// @param[in] projectionMajor The major version of this projection.
+		/// @param[in] projectionMinor The minor version of this projection.
+		/// @param[in] projectionPatch The patch version of this projection.
+		/// @return Returns the URL to connect to. Returns an empty string on error.
+		string ProjectionWebsocketConnectionURL(
+			const string& clientId,
+			ConnectionStage stage,
+			const string& projection,
+			int projectionMajor, int projectionMinor, int projectionPatch);
+
+	}
 
 	/// Returns the URL to connect to for the given clientID and stage.
 	/// This returned URL doesn't have the protocol ('ws://' or 'wss://') prefix.
@@ -29111,6 +29131,57 @@ namespace gamelink
 	static const char CONNECTION_URL_SANDBOX[] = "sandbox.gamelink.muxy.io";
 	static const char CONNECTION_URL_PRODUCTION[] = "gamelink.muxy.io";
 
+	namespace detail
+	{
+		string ProjectionWebsocketConnectionURL(
+			const string& clientId, 
+			ConnectionStage stage, 
+			const string& projection, 
+			int projectionMajor, int projectionMinor, int projectionPatch)
+		{
+			char buffer[CONNECTION_URL_BUFFER_LENGTH];
+			// Ignore obviously too-large client IDs
+			if (clientId.size() > 100)
+			{
+				return string("");
+			}
+
+			const char * url = nullptr;
+			if (stage == CONNECTION_STAGE_PRODUCTION)
+			{
+				url = CONNECTION_URL_PRODUCTION;
+			}
+			else if (stage == CONNECTION_STAGE_SANDBOX)
+			{
+				url = CONNECTION_URL_SANDBOX;
+			}
+
+			if (!url)
+			{
+				return string("");
+			}
+
+			if (projectionMajor < 0 || projectionMinor < 0 || projectionPatch < 0)
+			{
+				return string("");
+			}
+
+			int output = snprintf(buffer, CONNECTION_URL_BUFFER_LENGTH, "%s/%d.%d.%d/%s/%d.%d.%d/%s",
+				url,
+				MUXY_GAMELINK_VERSION_MAJOR, MUXY_GAMELINK_VERSION_MINOR, MUXY_GAMELINK_VERSION_PATCH,
+				projection.c_str(),
+				projectionMajor, projectionMinor, projectionPatch,
+				clientId.c_str());
+
+			if (output > 0 && output < CONNECTION_URL_BUFFER_LENGTH)
+			{
+				return string(buffer);
+			}
+
+			return string("");
+		}
+	}
+
 	string WebsocketConnectionURL(const string& clientID, ConnectionStage stage)
 	{
 		char buffer[CONNECTION_URL_BUFFER_LENGTH];
@@ -29666,7 +29737,6 @@ namespace gamelink
 		payload.data.config = std::move(updates);
 		return queuePayload(payload);
 	}
-
 
 	RequestId SDK::UpdateChannelConfigWithInteger(const char * operation, const string& path, int64_t i)
 	{
