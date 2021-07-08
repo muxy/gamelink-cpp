@@ -9,8 +9,16 @@ const char* CONFIG_TARGET_EXTENSION = schema::CONFIG_TARGET_EXTENSION;
 MGL_RequestId MuxyGameLink_SetChannelConfig(MuxyGameLink GameLink, const char* JsonString)
 {
 	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
-	nlohmann::json Json = nlohmann::json(JsonString);
-	return Instance->SetChannelConfig(Json);
+	nlohmann::json Json = nlohmann::json::parse(JsonString, nullptr, false);
+	if (!Json.is_discarded())
+	{
+		return Instance->SetChannelConfig(Json);
+	}
+	else
+	{
+		Instance->InvokeOnDebugMessage(gamelink::string("Couldn't parse config"));
+		return gamelink::ANY_REQUEST_ID;
+	}
 }
 
 MGL_RequestId MuxyGameLink_GetConfig(MuxyGameLink GameLink,

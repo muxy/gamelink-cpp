@@ -9,8 +9,16 @@ const char* STATE_TARGET_EXTENSION = schema::STATE_TARGET_EXTENSION;
 MGL_RequestId MuxyGameLink_SetState(MuxyGameLink GameLink, const char* Target, const char* JsonString)
 {
 	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
-	nlohmann::json Json = nlohmann::json(JsonString);
-	return Instance->SetState(Target, Json);
+	nlohmann::json Json = nlohmann::json::parse(JsonString, nullptr, false);
+	if (!Json.is_discarded())
+	{
+		return Instance->SetState(Target, Json);
+	}
+	else
+	{
+		Instance->InvokeOnDebugMessage(gamelink::string("Couldn't parse state"));
+		return gamelink::ANY_REQUEST_ID;
+	}
 }
 
 MGL_RequestId MuxyGameLink_GetState(MuxyGameLink GameLink,
@@ -79,7 +87,7 @@ MGL_RequestId MuxyGameLink_SubscribeToStateUpdates(MuxyGameLink GameLink, const 
 	return Instance->SubscribeToStateUpdates(Target);
 }
 
-MGL_RequestId MuxyGameLink_UnsubscribeToStateUpdates(MuxyGameLink GameLink, const char* Target)
+MGL_RequestId MuxyGameLink_UnsubscribeFromStateUpdates(MuxyGameLink GameLink, const char* Target)
 {
 	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
 	return Instance->UnsubscribeFromStateUpdates(Target);

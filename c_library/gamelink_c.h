@@ -98,6 +98,12 @@ extern "C"
 	void MuxyGameLink_Kill(MuxyGameLink GameLink);
 
 	/*
+		Debug message set
+	*/
+	void MuxyGameLink_SetOnDebugMessage(MuxyGameLink GameLink, void (*Callback)(void* UserData, const char* Message), void* UserData);
+	void MuxyGameLink_DetachOnDebugMessage(MuxyGameLink GameLink);
+
+	/*
 		SDK network send and receive functions
 	*/
 	void MuxyGameLink_ForeachPayload(MuxyGameLink GameLink, void (*Callback)(void* UserData, MGL_Payload Payload), void* UserData);
@@ -178,7 +184,7 @@ extern "C"
 	MGL_RequestId MuxyGameLink_UpdateStateWithNull(MuxyGameLink GameLink, const char* Target, const char* Operation, const char* Path);
 
 	MGL_RequestId MuxyGameLink_SubscribeToStateUpdates(MuxyGameLink GameLink, const char* Target);
-	MGL_RequestId MuxyGameLink_UnsubscribeToStateUpdates(MuxyGameLink GameLink, const char* Target);
+	MGL_RequestId MuxyGameLink_UnsubscribeFromStateUpdates(MuxyGameLink GameLink, const char* Target);
 
 	MGL_RequestId MuxyGameLink_OnStateUpdate(MuxyGameLink GameLink,
 											 void (*Callback)(void* UserData, MGL_Schema_StateUpdateResponse UpdateResp),
@@ -196,7 +202,7 @@ extern "C"
 	MGL_RequestId MuxyGameLink_SetChannelConfig(MuxyGameLink GameLink, const char* JsonString);
 	MGL_RequestId MuxyGameLink_GetConfig(MuxyGameLink GameLink,
 										 const char* Target,
-										 void (*Callback)(void* UserData, MGL_Schema_ConfigResponse StateResp));
+										 void (*Callback)(void* UserData, MGL_Schema_ConfigResponse StateResp), void* UserData);
 
 	const char* MuxyGameLink_Schema_ConfigResponse_GetConfigID(MGL_Schema_ConfigResponse);
 	char* MuxyGameLink_Schema_ConfigResponse_MakeJson(MGL_Schema_ConfigResponse);

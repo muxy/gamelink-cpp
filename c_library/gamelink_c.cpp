@@ -20,6 +20,21 @@ void MuxyGameLink_Kill(MuxyGameLink GameLink)
 	delete SDK;
 }
 
+void MuxyGameLink_SetOnDebugMessage(MuxyGameLink GameLink, void (*Callback)(void* UserData, const char* Message), void* UserData)
+{
+	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
+	SDK->OnDebugMessage([=](const gamelink::string& DebugMessage)
+	{
+		Callback(UserData, DebugMessage.c_str());
+	});
+}
+
+void MuxyGameLink_DetachOnDebugMessage(MuxyGameLink GameLink)
+{
+	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
+	SDK->DetachOnDebugMessage();
+}
+
 // Payload begin
 void MuxyGameLink_ForeachPayload(MuxyGameLink GameLink, void (*Callback)(void*, MGL_Payload), void* UserData)
 {
@@ -187,8 +202,16 @@ const char* MuxyGameLink_Schema_User_GetRefreshToken(MGL_Schema_User User)
 MGL_RequestId MuxyGameLink_SendBroadcast(MuxyGameLink GameLink, const char* Target, const char* JsonString)
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	nlohmann::json Json = nlohmann::json(JsonString);
-	return SDK->SendBroadcast(Target, Json);
+	nlohmann::json Json = nlohmann::json::parse(JsonString, nullptr, false);
+	if (!Json.is_discarded())
+	{
+		return SDK->SendBroadcast(Target, Json);
+	}
+	else
+	{
+		SDK->InvokeOnDebugMessage(gamelink::string("Couldn't parse broadcast"));
+		return gamelink::ANY_REQUEST_ID;
+	}
 }
 
 MGL_RequestId MuxyGameLink_SubscribeToDatastream(MuxyGameLink GameLink)

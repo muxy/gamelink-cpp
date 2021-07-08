@@ -414,6 +414,10 @@ namespace gamelink
 		/// Detaches the OnDebugMessage callback, so no additional calls will be made.
 		void DetachOnDebugMessage();
 
+		/// Invokes the OnDebugMessage callback with the given message. Generally used
+		/// by language projections, and not intended for general usage.
+		void InvokeOnDebugMessage(const string& msg);
+
 		/// Waits for a request to be responded to before sending further requests.
 		/// @remark WaitForResponse is used to ensure a serializing of requests on the server.
 		///			As an example, issuing back-to-back calls to DeletePoll, CreatePoll is
@@ -1057,7 +1061,6 @@ namespace gamelink
 		///
 		/// @param[in] id A handle obtained from calling OnDatastream. Invalid handles are ignored.
 		void DetachOnDatastream(uint32_t);
-
 	private:
 		void debugLogPayload(const Payload*);
 
