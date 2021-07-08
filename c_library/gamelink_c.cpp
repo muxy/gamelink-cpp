@@ -29,7 +29,6 @@ void MuxyGameLink_ForeachPayload(MuxyGameLink GameLink, void (*Callback)(void*, 
 
         Callback(UserData, WPayload);
 	});
-
 }
 
 uint32_t MuxyGameLink_Payload_GetSize(MGL_Payload Payload)
@@ -158,13 +157,23 @@ MGL_Schema_User MuxyGameLink_GetUser(MuxyGameLink GameLink)
 const char* MuxyGameLink_Schema_User_GetJWT(MGL_Schema_User User)
 {
     const gamelink::schema::User* MGLUser = static_cast<const gamelink::schema::User*>(User.Obj);
-    return MGLUser->GetRefreshToken().c_str();
+    if (MGLUser) 
+    {
+        return MGLUser->GetRefreshToken().c_str();
+    }
+
+    return "";
 }
 
 const char* MuxyGameLink_Schema_User_GetRefreshToken(MGL_Schema_User User)
 {
     const gamelink::schema::User* MGLUser = static_cast<const gamelink::schema::User*>(User.Obj);
-    return MGLUser->GetJWT().c_str();
+    if (MGLUser) 
+    {
+        return MGLUser->GetJWT().c_str();
+    }
+    
+    return "";
 }
 
 MGL_RequestId MuxyGameLink_SetState(MuxyGameLink GameLink, const char *Target, const char *JsonString)
@@ -337,8 +346,13 @@ int64_t MuxyGameLink_Schema_TwitchPurchaseBits_GetTimestamp(MGL_Schema_TwitchPur
     return TPB->timestamp;
 }
 
-const char* MuxyGameLink_Schema_TwitchPurchaseBits_GetAdditionalJson(MGL_Schema_TwitchPurchaseBitsResponse TPBResp)
+char* MuxyGameLink_Schema_TwitchPurchaseBits_MakeAdditionalJson(MGL_Schema_TwitchPurchaseBitsResponse TPBResp)
 {
     const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB = static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
-    return TPB->additional.dump().c_str();
+    return strdup(TPB->additional.dump().c_str());
+}
+
+void MuxyGameLink_Schema_TwitchPurchaseBits_KillAdditionalJson(char* Json)
+{
+    free(Json);
 }
