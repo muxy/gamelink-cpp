@@ -809,7 +809,7 @@ namespace gamelink
 		///
 		/// @param[in] target either CONFIG_TARGET_CHANNEL or CONFIG_TARGET_EXTENSION
 		/// @return RequestId of the generated request
-		RequestId UnsubscribeToConfigurationChanges(const char* target);
+		RequestId UnsubscribeFromConfigurationChanges(const char* target);
 
 		/// Sets the current channel configuration. Will trigger OnConfigUpdate.
 		///
@@ -1000,6 +1000,12 @@ namespace gamelink
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		/// @return RequestId of the generated request
 		RequestId SubscribeToStateUpdates(const char* target);
+
+		/// Stops subscribing to state updates for the given target.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @return RequestId of the generated request
+		RequestId UnsubscribeFromStateUpdates(const char* target);
 
 		/// Sends a broadcast to all viewers on the channel using the extension.
 		/// @remark The serialized size of the value parameter must be under 8 kilobytes.

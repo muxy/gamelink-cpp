@@ -25,7 +25,7 @@ namespace gamelink
             data.configId = target;
         }
 
-        UnsubscribeToConfigRequest::UnsubscribeToConfigRequest(const char* target)
+        UnsubscribeFromConfigRequest::UnsubscribeFromConfigRequest(const char* target)
         {
             action = string("unsubscribe");
             params.target = string("config");

@@ -18,7 +18,6 @@ void MuxyGameLink_Kill(MuxyGameLink GameLink)
 }
 
 // Payload begin
-
 void MuxyGameLink_ForeachPayload(MuxyGameLink GameLink, void (*Callback)(void*, MGL_Payload), void* UserData)
 {
     gamelink::SDK *SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
@@ -105,6 +104,12 @@ bool MuxyGameLink_ReceiveMessage(MuxyGameLink GameLink, const char* Bytes, uint3
     return SDK->ReceiveMessage(Bytes, Length);
 }
 
+void MuxyGameLink_WaitForResponse(MuxyGameLink GameLink, MGL_RequestId Request)
+{
+    gamelink::SDK *SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
+    return SDK->WaitForResponse(Request);
+}
+
 MGL_RequestId MuxyGameLink_AuthenticateWithPIN(MuxyGameLink GameLink,
                                   const char* ClientId, const char* PIN,
 								  void (*Callback)(void*, MGL_Schema_AuthenticateResponse),
@@ -174,13 +179,6 @@ const char* MuxyGameLink_Schema_User_GetRefreshToken(MGL_Schema_User User)
     }
     
     return "";
-}
-
-MGL_RequestId MuxyGameLink_SetState(MuxyGameLink GameLink, const char *Target, const char *JsonString)
-{
-    gamelink::SDK *SDK = static_cast<gamelink::SDK*>(GameLink.SDK); 
-    nlohmann::json Json = nlohmann::json(JsonString);
-    return SDK->SetState(Target, Json);
 }
 
 MGL_RequestId MuxyGameLink_SendBroadcast(MuxyGameLink GameLink, const char *Target, const char *JsonString)

@@ -104,9 +104,9 @@ namespace gamelink
             explicit SubscribeToConfigRequest(const char* target);
         };
 
-        struct UnsubscribeToConfigRequest : SendEnvelope<SubscribeConfigRequestBody>
+        struct UnsubscribeFromConfigRequest : SendEnvelope<SubscribeConfigRequestBody>
         {
-            explicit UnsubscribeToConfigRequest(const char* target);
+            explicit UnsubscribeFromConfigRequest(const char* target);
         };
 
         struct ConfigUpdateResponse : ReceiveEnvelope<ConfigUpdateBody>

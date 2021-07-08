@@ -51,6 +51,26 @@ extern "C"
 		const void* Obj;
 	} MGL_Schema_User;
 
+	typedef struct 
+	{
+		const void* Obj;
+	} MGL_Schema_StateResponse;
+
+	typedef struct 
+	{
+		const void* Obj;
+	} MGL_Schema_StateUpdateResponse;
+
+	typedef struct 
+	{
+		const void* Obj;
+	} MGL_Schema_ConfigResponse;
+
+	typedef struct 
+	{
+		const void* Obj;
+	} MGL_Schema_ConfigUpdateResponse;
+
 	typedef struct
 	{
 		const void* Obj;
@@ -84,6 +104,7 @@ extern "C"
 	uint32_t MuxyGameLink_Payload_GetSize(MGL_Payload Payload);
 	const char* MuxyGameLink_Payload_GetData(MGL_Payload Payload);
 	bool MuxyGameLink_ReceiveMessage(MuxyGameLink GameLink, const char* Bytes, uint32_t Length);
+	void MuxyGameLink_WaitForResponse(MuxyGameLink GameLink, MGL_RequestId Request);
 
 	/* 
 		SDK Error manipulation functions
@@ -128,7 +149,55 @@ extern "C"
 	/* 
 		State functions
 	*/
+	extern const char * STATE_TARGET_CHANNEL;
+	extern const char * STATE_TARGET_EXTENSION;
+
 	MGL_RequestId MuxyGameLink_SetState(MuxyGameLink GameLink, const char* Target, const char* JsonString);
+	MGL_RequestId MuxyGameLink_GetState(MuxyGameLink GameLink, const char* Target, void (*Callback)(void* UserData, MGL_Schema_StateResponse StateResp), void* UserData);
+
+	char * MuxyGameLink_Schema_StateResponse_MakeJson(MGL_Schema_StateResponse);
+	void MuxyGameLink_Schema_StateResponse_KillJson(char *);
+
+	MGL_RequestId MuxyGameLink_UpdateStateWithInteger(MuxyGameLink GameLink, const char* Target, const char* Operation, const char* Path, int64_t Value);
+	MGL_RequestId MuxyGameLink_UpdateStateWithDouble(MuxyGameLink GameLink, const char* Target, const char* Operation, const char* Path, double Value);
+	MGL_RequestId MuxyGameLink_UpdateStateWithString(MuxyGameLink GameLink, const char* Target, const char* Operation, const char* Path, const char* Value);
+	MGL_RequestId MuxyGameLink_UpdateStateWithLiteral(MuxyGameLink GameLink, const char* Target, const char* Operation, const char* Path, const char* Json);
+	MGL_RequestId MuxyGameLink_UpdateStateWithNull(MuxyGameLink GameLink, const char* Target, const char* Operation, const char* Path);
+
+	MGL_RequestId MuxyGameLink_SubscribeToStateUpdates(MuxyGameLink GameLink, const char* Target);
+	MGL_RequestId MuxyGameLink_UnsubscribeToStateUpdates(MuxyGameLink GameLink, const char* Target);
+
+	MGL_RequestId MuxyGameLink_OnStateUpdate(MuxyGameLink GameLink, void (*Callback)(void* UserData, MGL_Schema_StateUpdateResponse UpdateResp), void* UserData);
+	const char * MuxyGameLink_Schema_StateUpdateResponse_GetTarget(MGL_Schema_StateUpdateResponse Response);
+	char * MuxyGameLink_Schema_StateUpdateResponse_MakeJson(MGL_Schema_StateUpdateResponse Response);
+	void MuxyGameLink_Schema_StateUpdateResponse_KillJson(char *);
+
+	/*
+		Config functions
+	*/
+	extern const char* CONFIG_TARGET_CHANNEL;
+	extern const char* CONFIG_TARGET_EXTENSION;
+
+	MGL_RequestId MuxyGameLink_SetChannelConfig(MuxyGameLink GameLink, const char* JsonString);
+	MGL_RequestId MuxyGameLink_GetConfig(MuxyGameLink GameLink, const char* Target, void (*Callback)(void* UserData, MGL_Schema_ConfigResponse StateResp));
+
+	const char * MuxyGameLink_Schema_ConfigResponse_GetConfigID(MGL_Schema_ConfigResponse);
+	char * MuxyGameLink_Schema_ConfigResponse_MakeJson(MGL_Schema_ConfigResponse);
+	void MuxyGameLink_Schema_ConfigResponse_KillJson(char *);
+
+	MGL_RequestId MuxyGameLink_UpdateChannelConfigWithInteger(MuxyGameLink GameLink, const char* Operation, const char* Path, int64_t Value);
+	MGL_RequestId MuxyGameLink_UpdateChannelConfigWithDouble(MuxyGameLink GameLink, const char* Operation, const char* Path, double Value);
+	MGL_RequestId MuxyGameLink_UpdateChannelConfigWithString(MuxyGameLink GameLink, const char* Operation, const char* Path, const char* Value);
+	MGL_RequestId MuxyGameLink_UpdateChannelConfigWithLiteral(MuxyGameLink GameLink, const char* Operation, const char* Path, const char* Json);
+	MGL_RequestId MuxyGameLink_UpdateChannelConfigWithNull(MuxyGameLink GameLink, const char* Operation, const char* Path);
+
+	MGL_RequestId MuxyGameLink_SubscribeToConfigurationChanges(MuxyGameLink GameLink, const char* Target);
+	MGL_RequestId MuxyGameLink_UnsubscribeToConfigurationChanges(MuxyGameLink GameLink, const char* Target);
+	MGL_RequestId MuxyGameLink_OnConfigUpdate(MuxyGameLink GameLink, void (*Callback)(void* UserData, MGL_Schema_ConfigUpdateResponse UpdateResp), void* UserData);
+
+	const char * MuxyGameLink_Schema_ConfigUpdateResponse_GetConfigID(MGL_Schema_ConfigUpdateResponse);
+	char * MuxyGameLink_Schema_ConfigUpdateResponse_MakeJson(MGL_Schema_ConfigUpdateResponse);
+	void MuxyGameLink_Schema_ConfigUpdateResponse_KillJson(char *);
 
 	/* 
 		Broadcast functions

@@ -44,9 +44,9 @@ namespace gamelink
         return queuePayload(req);
     }
 
-    RequestId SDK::UnsubscribeToConfigurationChanges(const char* target)
+    RequestId SDK::UnsubscribeFromConfigurationChanges(const char* target)
     {
-        schema::UnsubscribeToConfigRequest req(target);
+        schema::UnsubscribeFromConfigRequest req(target);
         return queuePayload(req);
     }
 
