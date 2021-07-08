@@ -414,6 +414,10 @@ namespace gamelink
 		/// Detaches the OnDebugMessage callback, so no additional calls will be made.
 		void DetachOnDebugMessage();
 
+		/// Invokes the OnDebugMessage callback with the given message. Generally used
+		/// by language projections, and not intended for general usage.
+		void InvokeOnDebugMessage(const string& msg);
+
 		/// Waits for a request to be responded to before sending further requests.
 		/// @remark WaitForResponse is used to ensure a serializing of requests on the server.
 		///			As an example, issuing back-to-back calls to DeletePoll, CreatePoll is
@@ -809,7 +813,7 @@ namespace gamelink
 		///
 		/// @param[in] target either CONFIG_TARGET_CHANNEL or CONFIG_TARGET_EXTENSION
 		/// @return RequestId of the generated request
-		RequestId UnsubscribeToConfigurationChanges(const char* target);
+		RequestId UnsubscribeFromConfigurationChanges(const char* target);
 
 		/// Sets the current channel configuration. Will trigger OnConfigUpdate.
 		///
@@ -1001,6 +1005,12 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId SubscribeToStateUpdates(const char* target);
 
+		/// Stops subscribing to state updates for the given target.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @return RequestId of the generated request
+		RequestId UnsubscribeFromStateUpdates(const char* target);
+
 		/// Sends a broadcast to all viewers on the channel using the extension.
 		/// @remark The serialized size of the value parameter must be under 8 kilobytes.
 		///
@@ -1051,7 +1061,6 @@ namespace gamelink
 		///
 		/// @param[in] id A handle obtained from calling OnDatastream. Invalid handles are ignored.
 		void DetachOnDatastream(uint32_t);
-
 	private:
 		void debugLogPayload(const Payload*);
 

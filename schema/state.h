@@ -119,6 +119,13 @@ namespace gamelink
 		struct SubscribeStateUpdateResponse : ReceiveEnvelope<StateUpdateBody<T>>
 		{
 		};
+
+		struct UnsubscribeStateRequest : SendEnvelope<UnsubscribeTopicRequestBody>
+		{
+			/// Creates a SubscribeState request
+			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+			explicit UnsubscribeStateRequest(const char* target);
+		};
 	}
 }
 #endif

@@ -410,6 +410,11 @@ namespace gamelink
 		_onDebugMessage.clear();
 	}
 
+	void SDK::InvokeOnDebugMessage(const string& message)
+	{
+		_onDebugMessage.invoke(message);
+	}
+
 	void SDK::WaitForResponse(RequestId req)
 	{
 		Payload* wait = new Payload("");

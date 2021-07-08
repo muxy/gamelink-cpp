@@ -24,5 +24,12 @@ namespace gamelink
 			params.target = string("state");
 			data.topic_id = string(target);
 		}
+
+		UnsubscribeStateRequest::UnsubscribeStateRequest(const char* target)
+		{
+			action = string("unsubscribe");
+			params.target = string("state");
+			data.topic_id = string(target);
+		}
 	}
 }

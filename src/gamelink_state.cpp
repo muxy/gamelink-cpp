@@ -59,6 +59,12 @@ namespace gamelink
 		return queuePayload(payload);
 	}
 
+	RequestId SDK::UnsubscribeFromStateUpdates(const char* target)
+	{
+		schema::UnsubscribeStateRequest payload(target);
+		return queuePayload(payload);
+	}
+
 	RequestId SDK::UpdateState(const char* target, const schema::PatchOperation* begin, const schema::PatchOperation* end)
 	{
 		schema::PatchStateRequest payload(target);
