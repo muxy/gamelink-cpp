@@ -23,7 +23,7 @@ MGL_RequestId MuxyGameLink_SetState(MuxyGameLink GameLink, const char* Target, c
 
 MGL_RequestId MuxyGameLink_GetState(MuxyGameLink GameLink,
 									const char* Target,
-									void (*Callback)(void* UserData, MGL_Schema_StateResponse StateResp),
+									MGL_StateResponseCallback Callback,
 									void* UserData)
 {
 	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
@@ -35,41 +35,32 @@ MGL_RequestId MuxyGameLink_GetState(MuxyGameLink GameLink,
 	});
 }
 
-char* MuxyGameLink_Schema_StateResponse_MakeJson(MGL_Schema_StateResponse Response)
+MGL_String MuxyGameLink_Schema_StateResponse_GetJson(MGL_Schema_StateResponse Response)
 {
 	const schema::GetStateResponse<nlohmann::json>* StateResponse =
 		static_cast<const schema::GetStateResponse<nlohmann::json>*>(Response.Obj);
-	return strdup(StateResponse->data.state.dump().c_str());
+	return MuxyGameLink_StrDup(StateResponse->data.state.dump().c_str());
 }
 
-void MuxyGameLink_Schema_StateResponse_KillJson(char* Json)
-{
-	free(Json);
-}
-
-MGL_RequestId
-MuxyGameLink_UpdateStateWithInteger(MuxyGameLink GameLink, const char* Target, const char* Operation, const char* Path, int64_t Value)
+MGL_RequestId MuxyGameLink_UpdateStateWithInteger(MuxyGameLink GameLink, const char* Target, const char* Operation, const char* Path, int64_t Value)
 {
 	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
 	return Instance->UpdateStateWithInteger(Target, Operation, Path, Value);
 }
 
-MGL_RequestId
-MuxyGameLink_UpdateStateWithDouble(MuxyGameLink GameLink, const char* Target, const char* Operation, const char* Path, double Value)
+MGL_RequestId MuxyGameLink_UpdateStateWithDouble(MuxyGameLink GameLink, const char* Target, const char* Operation, const char* Path, double Value)
 {
 	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
 	return Instance->UpdateStateWithDouble(Target, Operation, Path, Value);
 }
 
-MGL_RequestId
-MuxyGameLink_UpdateStateWithString(MuxyGameLink GameLink, const char* Target, const char* Operation, const char* Path, const char* Value)
+MGL_RequestId MuxyGameLink_UpdateStateWithString(MuxyGameLink GameLink, const char* Target, const char* Operation, const char* Path, const char* Value)
 {
 	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
 	return Instance->UpdateStateWithString(Target, Operation, Path, gamelink::string(Value));
 }
 
-MGL_RequestId
-MuxyGameLink_UpdateStateWithLiteral(MuxyGameLink GameLink, const char* Target, const char* Operation, const char* Path, const char* Json)
+MGL_RequestId MuxyGameLink_UpdateStateWithLiteral(MuxyGameLink GameLink, const char* Target, const char* Operation, const char* Path, const char* Json)
 {
 	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
 	return Instance->UpdateStateWithLiteral(Target, Operation, Path, gamelink::string(Json));
@@ -93,9 +84,7 @@ MGL_RequestId MuxyGameLink_UnsubscribeFromStateUpdates(MuxyGameLink GameLink, co
 	return Instance->UnsubscribeFromStateUpdates(Target);
 }
 
-MGL_RequestId MuxyGameLink_OnStateUpdate(MuxyGameLink GameLink,
-										 void (*Callback)(void* UserData, MGL_Schema_StateUpdateResponse UpdateResp),
-										 void* UserData)
+uint32_t MuxyGameLink_OnStateUpdate(MuxyGameLink GameLink, MGL_StateUpdateResponseCallback Callback, void* UserData)
 {
 	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
 	return Instance->OnStateUpdate([Callback, UserData](const schema::SubscribeStateUpdateResponse<nlohmann::json>& UpdateResponse) {
@@ -104,6 +93,12 @@ MGL_RequestId MuxyGameLink_OnStateUpdate(MuxyGameLink GameLink,
 
 		Callback(UserData, Response);
 	});
+}
+
+void MuxyGameLink_DetachOnStateUpdate(MuxyGameLink GameLink, uint32_t Id)
+{
+	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
+	Instance->DetachOnStateUpdate(Id);
 }
 
 const char* MuxyGameLink_Schema_StateUpdateResponse_GetTarget(MGL_Schema_StateUpdateResponse Response)
@@ -124,14 +119,9 @@ const char* MuxyGameLink_Schema_StateUpdateResponse_GetTarget(MGL_Schema_StateUp
 	return STATE_TARGET_CHANNEL;
 }
 
-char* MuxyGameLink_Schema_StateUpdateResponse_MakeJson(MGL_Schema_StateUpdateResponse Response)
+MGL_String MuxyGameLink_Schema_StateUpdateResponse_GetJson(MGL_Schema_StateUpdateResponse Response)
 {
 	const schema::SubscribeStateUpdateResponse<nlohmann::json>* UpdateResponse =
 		static_cast<const schema::SubscribeStateUpdateResponse<nlohmann::json>*>(Response.Obj);
-	return strdup(UpdateResponse->data.state.dump().c_str());
-}
-
-void MuxyGameLink_Schema_StateUpdateResponse_KillJson(char* Json)
-{
-	free(Json);
+	return MuxyGameLink_StrDup(UpdateResponse->data.state.dump().c_str());
 }

@@ -23,7 +23,7 @@ MGL_RequestId MuxyGameLink_SetChannelConfig(MuxyGameLink GameLink, const char* J
 
 MGL_RequestId MuxyGameLink_GetConfig(MuxyGameLink GameLink,
 									 const char* Target,
-									 void (*Callback)(void* UserData, MGL_Schema_ConfigResponse StateResp),
+									 MGL_ConfigResponseCallback Callback,
 									 void* UserData)
 {
 	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
@@ -51,15 +51,10 @@ const char* MuxyGameLink_Schema_ConfigResponse_GetConfigID(MGL_Schema_ConfigResp
 	return CONFIG_TARGET_CHANNEL;
 }
 
-char* MuxyGameLink_Schema_ConfigResponse_MakeJson(MGL_Schema_ConfigResponse ConfigResponse)
+MGL_String MuxyGameLink_Schema_ConfigResponse_GetJson(MGL_Schema_ConfigResponse ConfigResponse)
 {
 	const schema::GetConfigResponse* Response = static_cast<const schema::GetConfigResponse*>(ConfigResponse.Obj);
-	return strdup(Response->data.config.dump().c_str());
-}
-
-void MuxyGameLink_Schema_ConfigResponse_KillJson(char* Json)
-{
-	free(Json);
+	return MuxyGameLink_StrDup(Response->data.config.dump().c_str());
 }
 
 MGL_RequestId MuxyGameLink_UpdateChannelConfigWithInteger(MuxyGameLink GameLink, const char* Operation, const char* Path, int64_t Value)
@@ -104,9 +99,7 @@ MGL_RequestId MuxyGameLink_UnsubscribeToConfigurationChanges(MuxyGameLink GameLi
 	return Instance->UnsubscribeFromConfigurationChanges(Target);
 }
 
-MGL_RequestId MuxyGameLink_OnConfigUpdate(MuxyGameLink GameLink,
-										  void (*Callback)(void* UserData, MGL_Schema_ConfigUpdateResponse UpdateResp),
-										  void* UserData)
+uint32_t MuxyGameLink_OnConfigUpdate(MuxyGameLink GameLink, MGL_ConfigUpdateResponseCallback Callback, void* UserData)
 {
 	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
 	return Instance->OnConfigUpdate([Callback, UserData](const schema::ConfigUpdateResponse& UpdateResponse) {
@@ -115,6 +108,12 @@ MGL_RequestId MuxyGameLink_OnConfigUpdate(MuxyGameLink GameLink,
 
 		Callback(UserData, Response);
 	});
+}
+
+void MuxyGameLink_DetachOnConfigUpdate(MuxyGameLink GameLink, uint32_t Id)
+{
+	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
+	Instance->DetachOnConfigUpdate(Id);
 }
 
 const char* MuxyGameLink_Schema_ConfigUpdateResponse_GetConfigID(MGL_Schema_ConfigUpdateResponse UpdateResponse)
@@ -133,67 +132,8 @@ const char* MuxyGameLink_Schema_ConfigUpdateResponse_GetConfigID(MGL_Schema_Conf
 	return CONFIG_TARGET_CHANNEL;
 }
 
-char* MuxyGameLink_Schema_ConfigUpdateResponse_MakeJson(MGL_Schema_ConfigUpdateResponse UpdateResponse)
+MGL_String MuxyGameLink_Schema_ConfigUpdateResponse_GetJson(MGL_Schema_ConfigUpdateResponse UpdateResponse)
 {
 	const schema::ConfigUpdateResponse* Response = static_cast<const schema::ConfigUpdateResponse*>(UpdateResponse.Obj);
-	return strdup(Response->data.config.dump().c_str());
+	return MuxyGameLink_StrDup(Response->data.config.dump().c_str());
 }
-
-void MuxyGameLink_Schema_ConfigUpdateResponse_KillJson(char* Json)
-{
-	free(Json);
-}
-
-/*
-MGL_RequestId MuxyGameLink_SubscribeToStateUpdates(MuxyGameLink GameLink, const char* Target)
-{
-	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
-	return Instance->SubscribeToStateUpdates(Target);
-}
-
-MGL_RequestId MuxyGameLink_UnsubscribeToStateUpdates(MuxyGameLink GameLink, const char* Target)
-{
-	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
-	return Instance->UnsubscribeFromStateUpdates(Target);
-}
-
-MGL_RequestId MuxyGameLink_OnStateUpdate(MuxyGameLink GameLink, void (*Callback)(void* UserData, MGL_Schema_StateUpdateResponse UpdateResp),
-void* UserData)
-{
-	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
-	return Instance->OnStateUpdate([Callback, UserData](const schema::SubscribeStateUpdateResponse<nlohmann::json>& UpdateResponse)
-	{
-		MGL_Schema_StateUpdateResponse Response;
-		Response.Obj = &UpdateResponse;
-
-		Callback(UserData, Response);
-	});
-}
-
-const char * MuxyGameLink_Schema_StateUpdateResponse_GetTarget(MGL_Schema_StateUpdateResponse Response)
-{
-	const schema::SubscribeStateUpdateResponse<nlohmann::json> * UpdateResponse = static_cast<const
-schema::SubscribeStateUpdateResponse<nlohmann::json>*>(Response.Obj); if (UpdateResponse->data.topic_id == "channel")
-	{
-		// Make sure to return the global one declared in the C header.
-		return STATE_TARGET_CHANNEL;
-	}
-	else if (UpdateResponse->data.topic_id == "extension")
-	{
-		return STATE_TARGET_EXTENSION;
-	}
-
-	// Should be unreachable.
-	return STATE_TARGET_CHANNEL;
-}
-
-char * MuxyGameLink_Schema_StateUpdateResponse_MakeJson(MGL_Schema_StateUpdateResponse Response)
-{
-	const schema::SubscribeStateUpdateResponse<nlohmann::json> * UpdateResponse = static_cast<const
-schema::SubscribeStateUpdateResponse<nlohmann::json>*>(Response.Obj); return strdup(UpdateResponse->data.state.dump().c_str());
-}
-
-void MuxyGameLink_Schema_StateUpdateResponse_KillJson(char * Json)
-{
-	free(Json);
-}*/

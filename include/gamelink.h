@@ -45,7 +45,7 @@ namespace gamelink
 
 	enum ConnectionStage
 	{
-		CONNECTION_STAGE_PRODUCTION,
+		CONNECTION_STAGE_PRODUCTION = 0,
 		CONNECTION_STAGE_SANDBOX,
 	};
 

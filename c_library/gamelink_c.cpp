@@ -1,10 +1,44 @@
 #include "gamelink_c.h"
 #include "gamelink.h"
 
-struct MGL_GenericPointer
+char* MuxyGameLink_StrDup(const char *Str)
 {
-	const void* Obj;
-};
+    char *Dst = NULL;
+    if (Str)
+    {
+        Dst = (char*) malloc(strlen(Str) + 1);
+		if (!Dst)
+		{
+			return nullptr;
+		}
+
+        strcpy(Dst, Str);
+    }
+    else
+    {
+        Dst = (char*) malloc(1);  
+		if (!Dst)
+		{
+			return nullptr;
+		}
+
+        Dst[0] = '\0';
+    }
+
+    return Dst;
+}
+
+char* MuxyGameLink_ProjectionWebsocketConnectionURL(const char* clientID, MGL_ConnectionStage stage, const char* projection, int projectionMajor, int projectionMinor, int projectionPatch)
+{
+	gamelink::string URL = gamelink::detail::ProjectionWebsocketConnectionURL(
+		gamelink::string(clientID),
+		static_cast<gamelink::ConnectionStage>(stage), 
+		gamelink::string(projection), 
+		projectionMajor, projectionMinor, projectionPatch);
+
+	return MuxyGameLink_StrDup(URL.c_str());
+}
+
 
 MuxyGameLink MuxyGameLink_Make(void)
 {
@@ -20,7 +54,22 @@ void MuxyGameLink_Kill(MuxyGameLink GameLink)
 	delete SDK;
 }
 
-void MuxyGameLink_SetOnDebugMessage(MuxyGameLink GameLink, void (*Callback)(void* UserData, const char* Message), void* UserData)
+void MuxyGameLink_FreeString(MGL_String Str)
+{
+    free(Str);
+}
+
+uint32_t MuxyGameLink_Strlen(MGL_String Str)
+{
+	if (!Str)
+	{
+		return 0;
+	}
+
+	return static_cast<uint32_t>(strlen(Str));
+}
+
+void MuxyGameLink_OnDebugMessage(MuxyGameLink GameLink, MGL_OnDebugMessageCallback Callback, void* UserData)
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
 	SDK->OnDebugMessage([=](const gamelink::string& DebugMessage)
@@ -36,7 +85,7 @@ void MuxyGameLink_DetachOnDebugMessage(MuxyGameLink GameLink)
 }
 
 // Payload begin
-void MuxyGameLink_ForeachPayload(MuxyGameLink GameLink, void (*Callback)(void*, MGL_Payload), void* UserData)
+void MuxyGameLink_ForeachPayload(MuxyGameLink GameLink, MGL_PayloadCallback Callback, void* UserData)
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
 	SDK->ForeachPayload([Callback, UserData](const gamelink::Payload* Payload) {
@@ -64,19 +113,18 @@ const char* MuxyGameLink_Payload_GetData(MGL_Payload Payload)
 // Error begin
 MGL_Error MuxyGameLink_Schema_GetFirstError(void* Resp, MGL_SCHEMA_RESPONSE_TYPE RespType)
 {
-	MGL_GenericPointer* GP = (MGL_GenericPointer*)Resp;
 	const gamelink::schema::Error* MGLErr = NULL;
 
 	switch (RespType)
 	{
 	case MGL_SCHEMA_RESPONSE_AUTHENTICATE: {
-		const gamelink::schema::AuthenticateResponse* Auth = static_cast<const gamelink::schema::AuthenticateResponse*>(GP->Obj);
+		const gamelink::schema::AuthenticateResponse* Auth = static_cast<const gamelink::schema::AuthenticateResponse*>(Resp);
 		MGLErr = gamelink::FirstError(*Auth);
 		break;
 	}
 	case MGL_SCHEMA_RESPONSE_TWITCHPURCHASEBITS: {
 		const gamelink::schema::TwitchPurchaseBitsResponse<nlohmann::json>* TPB =
-			static_cast<const gamelink::schema::TwitchPurchaseBitsResponse<nlohmann::json>*>(GP->Obj);
+			static_cast<const gamelink::schema::TwitchPurchaseBitsResponse<nlohmann::json>*>(Resp);
 		MGLErr = gamelink::FirstError(*TPB);
 		break;
 	}
@@ -101,11 +149,13 @@ uint32_t MuxyGameLink_Error_GetCode(MGL_Error Error)
 	const gamelink::schema::Error* GLError = static_cast<const gamelink::schema::Error*>(Error.Obj);
 	return GLError->number;
 }
+
 const char* MuxyGameLink_Error_GetTitle(MGL_Error Error)
 {
 	const gamelink::schema::Error* GLError = static_cast<const gamelink::schema::Error*>(Error.Obj);
 	return GLError->title.c_str();
 }
+
 const char* MuxyGameLink_Error_GetDetail(MGL_Error Error)
 {
 	const gamelink::schema::Error* GLError = static_cast<const gamelink::schema::Error*>(Error.Obj);
@@ -129,7 +179,7 @@ void MuxyGameLink_WaitForResponse(MuxyGameLink GameLink, MGL_RequestId Request)
 MGL_RequestId MuxyGameLink_AuthenticateWithPIN(MuxyGameLink GameLink,
 											   const char* ClientId,
 											   const char* PIN,
-											   void (*Callback)(void*, MGL_Schema_AuthenticateResponse),
+                                               MGL_AuthenticateResponseCallback Callback,
 											   void* UserData)
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
@@ -147,7 +197,7 @@ MGL_RequestId MuxyGameLink_AuthenticateWithPIN(MuxyGameLink GameLink,
 MGL_RequestId MuxyGameLink_AuthenticateWithRefreshToken(MuxyGameLink GameLink,
 														const char* ClientId,
 														const char* RefreshToken,
-														void (*Callback)(void*, MGL_Schema_AuthenticateResponse),
+                                                        MGL_AuthenticateResponseCallback Callback,
 														void* UserData)
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
@@ -168,7 +218,7 @@ bool MuxyGameLink_IsAuthenticated(MuxyGameLink GameLink)
 	return SDK->IsAuthenticated();
 }
 
-MGL_Schema_User MuxyGameLink_GetUser(MuxyGameLink GameLink)
+MGL_Schema_User MuxyGameLink_GetSchemaUser(MuxyGameLink GameLink)
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
 	MGL_Schema_User User;
@@ -226,7 +276,7 @@ MGL_RequestId MuxyGameLink_UnsubscribeFromDatastream(MuxyGameLink GameLink)
 	return SDK->UnsubscribeFromDatastream();
 }
 
-uint32_t MuxyGameLink_OnDatastream(MuxyGameLink GameLink, void (*Callback)(void*, MGL_Schema_DatastreamUpdate), void* UserData)
+uint32_t MuxyGameLink_OnDatastream(MuxyGameLink GameLink, MGL_DatastreamUpdateCallback Callback, void* UserData)
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
 
@@ -256,135 +306,113 @@ MGL_Schema_DatastreamEvent MuxyGameLink_Schema_DatastreamUpdate_GetEventAt(MGL_S
 {
 	const gamelink::schema::DatastreamUpdateBody* DSU = static_cast<const gamelink::schema::DatastreamUpdateBody*>(DatastreamUpdate.Obj);
 
-	// Careful, if the vec resizes and the pointer changes, there will be old references to it.
-	// User should handle data in the callback, make copies / use the data / do whatever
 	MGL_Schema_DatastreamEvent WDSEvent;
 	WDSEvent.Obj = &DSU->events[AtIndex];
 
 	return WDSEvent;
 }
 
-char* MuxyGameLink_Schema_DatastreamEvent_MakeJson(MGL_Schema_DatastreamEvent DatastreamEvent)
+MGL_String MuxyGameLink_Schema_DatastreamEvent_GetJson(MGL_Schema_DatastreamEvent DatastreamEvent)
 {
-	const gamelink::schema::DatastreamEvent* DSE = static_cast<const gamelink::schema::DatastreamEvent*>(DatastreamEvent.Obj);
-	char* EventJson = strdup(DSE->event.dump().c_str());
-
-	return EventJson;
+    const gamelink::schema::DatastreamEvent *DSE = static_cast<const gamelink::schema::DatastreamEvent*>(DatastreamEvent.Obj);
+    return MuxyGameLink_StrDup(DSE->event.dump().c_str());
 }
 
-void MuxyGameLink_Schema_DatastreamEvent_KillJson(char* DatastreamEventJson)
+int64_t	MuxyGameLink_Schema_DatastreamEvent_GetTimestamp(MGL_Schema_DatastreamEvent DatastreamEvent)
 {
-	free(DatastreamEventJson);
-}
-
-int64_t MuxyGameLink_Schema_DatastreamEvent_GetTimestamp(MGL_Schema_DatastreamEvent DatastreamEvent)
-{
-	const gamelink::schema::DatastreamEvent* DSE = static_cast<const gamelink::schema::DatastreamEvent*>(DatastreamEvent.Obj);
-	return DSE->timestamp;
+    const gamelink::schema::DatastreamEvent *DSE = static_cast<const gamelink::schema::DatastreamEvent*>(DatastreamEvent.Obj);
+    return DSE->timestamp;
 }
 
 MGL_RequestId MuxyGameLink_SubscribeToSKU(MuxyGameLink GameLink, const char* SKU)
 {
-	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	return SDK->SubscribeToSKU(SKU);
+    gamelink::SDK *SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
+    return SDK->SubscribeToSKU(SKU);
 }
 
 MGL_RequestId MuxyGameLink_UnsubscribeFromSKU(MuxyGameLink GameLink, const char* SKU)
 {
-	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	return SDK->UnsubscribeFromSKU(SKU);
+    gamelink::SDK *SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
+    return SDK->UnsubscribeFromSKU(SKU);
 }
 
 MGL_RequestId MuxyGameLink_SubscribeToAllPurchases(MuxyGameLink GameLink)
 {
-	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	return SDK->SubscribeToAllPurchases();
+    gamelink::SDK *SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
+    return SDK->SubscribeToAllPurchases();
 }
 
 MGL_RequestId MuxyGameLink_UnsubscribeFromAllPurchases(MuxyGameLink GameLink)
 {
-	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	return SDK->UnsubscribeFromAllPurchases();
+    gamelink::SDK *SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
+    return SDK->UnsubscribeFromAllPurchases();
 }
 
-uint32_t
-MuxyGameLink_OnTwitchPurchaseBits(MuxyGameLink GameLink, void (*Callback)(void*, MGL_Schema_TwitchPurchaseBitsResponse), void* UserData)
+uint32_t MuxyGameLink_OnTwitchPurchaseBits(MuxyGameLink GameLink, MGL_TwitchPurchaseBitsResponseCallback Callback, void* UserData)
 {
-	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	uint32_t res =
-		SDK->OnTwitchPurchaseBits([Callback, UserData](const gamelink::schema::TwitchPurchaseBitsResponse<nlohmann::json>& TPBResp) {
-			MGL_Schema_TwitchPurchaseBitsResponse WTPBResp;
-			WTPBResp.Obj = &TPBResp;
+    gamelink::SDK *SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
+    uint32_t res = SDK->OnTwitchPurchaseBits([Callback, UserData](const gamelink::schema::TwitchPurchaseBitsResponse<nlohmann::json> &TPBResp)
+    {
+        MGL_Schema_TwitchPurchaseBitsResponse WTPBResp;
+        WTPBResp.Obj = &TPBResp;
 
-			Callback(UserData, WTPBResp);
-		});
+        Callback(UserData, WTPBResp);
+    });
 
-	return res;
+    return res;
 }
 
 void MuxyGameLink_DetachOnTwitchPurchaseBits(MuxyGameLink GameLink, uint32_t id)
 {
-	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	SDK->DetachOnTwitchPurchaseBits(id);
+    gamelink::SDK *SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
+    SDK->DetachOnTwitchPurchaseBits(id);
 }
 
 const char* MuxyGameLink_Schema_TwitchPurchaseBits_GetId(MGL_Schema_TwitchPurchaseBitsResponse TPBResp)
 {
-	const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB =
-		static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
-	return TPB->id.c_str();
+    const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB = static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
+    return TPB->id.c_str();
 }
 
 const char* MuxyGameLink_Schema_TwitchPurchaseBits_GetSKU(MGL_Schema_TwitchPurchaseBitsResponse TPBResp)
 {
-	const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB =
-		static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
-	return TPB->sku.c_str();
+    const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB = static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
+    return TPB->sku.c_str();
 }
 
 const char* MuxyGameLink_Schema_TwitchPurchaseBits_GetDisplayName(MGL_Schema_TwitchPurchaseBitsResponse TPBResp)
 {
-	const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB =
-		static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
-	return TPB->displayName.c_str();
+    const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB = static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
+    return TPB->displayName.c_str();
 }
 
 const char* MuxyGameLink_Schema_TwitchPurchaseBits_GetUserId(MGL_Schema_TwitchPurchaseBitsResponse TPBResp)
 {
-	const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB =
-		static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
-	return TPB->userId.c_str();
+    const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB = static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
+    return TPB->userId.c_str();
 }
 
 const char* MuxyGameLink_Schema_TwitchPurchaseBits_GetUserName(MGL_Schema_TwitchPurchaseBitsResponse TPBResp)
 {
-	const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB =
-		static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
-	return TPB->userName.c_str();
+    const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB = static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
+    return TPB->userName.c_str();
 }
 
 int32_t MuxyGameLink_Schema_TwitchPurchaseBits_GetCost(MGL_Schema_TwitchPurchaseBitsResponse TPBResp)
 {
-	const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB =
-		static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
-	return TPB->cost;
+    const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB = static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
+    return TPB->cost;
 }
 
 int64_t MuxyGameLink_Schema_TwitchPurchaseBits_GetTimestamp(MGL_Schema_TwitchPurchaseBitsResponse TPBResp)
 {
-	const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB =
-		static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
-	return TPB->timestamp;
+    const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB = static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
+    return TPB->timestamp;
 }
 
-char* MuxyGameLink_Schema_TwitchPurchaseBits_MakeAdditionalJson(MGL_Schema_TwitchPurchaseBitsResponse TPBResp)
+MGL_String MuxyGameLink_Schema_TwitchPurchaseBits_GetJson(MGL_Schema_TwitchPurchaseBitsResponse TPBResp)
 {
-	const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB =
-		static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
-	return strdup(TPB->additional.dump().c_str());
+    const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB = static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
+    return MuxyGameLink_StrDup(TPB->additional.dump().c_str());
 }
 
-void MuxyGameLink_Schema_TwitchPurchaseBits_KillAdditionalJson(char* Json)
-{
-	free(Json);
-}

@@ -7,8 +7,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 project(Gamelink)
 
 # Settings
-set(CMAKE_CXX_FLAGS "-Wall -DFMT_HEADER_ONLY=1 -DJSON_NOEXCEPTION=1 -fno-exceptions")
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
+add_compile_definitions("FMT_HEADER_ONLY=1" "JSON_NOEXCEPTION" "_HAS_EXCEPTIONS=0")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set(CMAKE_CXX_FLAGS "/EHs-c- /GR-")
+else()
+    set(CMAKE_CXX_FLAGS "-Wall -fno-exceptions")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g")
+endif()
 
 include_directories(.)
 include_directories(include)
@@ -122,6 +127,7 @@ endif()
 
 # Shared library 
 add_library(cgamelink SHARED ${SDK_SOURCES} ${SCHEMA_SOURCES} ${C_SOURCES})
+target_compile_definitions(cgamelink PRIVATE "MUXY_CLIB_EXPORT")
 
 add_executable(cgamelink_compile_check "clibrary_check.cpp")
 target_link_libraries(cgamelink_compile_check cgamelink)
