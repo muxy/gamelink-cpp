@@ -27554,6 +27554,13 @@ namespace gamelink
 		struct SubscribeStateUpdateResponse : ReceiveEnvelope<StateUpdateBody<T>>
 		{
 		};
+
+		struct UnsubscribeStateRequest : SendEnvelope<UnsubscribeTopicRequestBody>
+		{
+			/// Creates a SubscribeState request
+			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+			explicit UnsubscribeStateRequest(const char* target);
+		};
 	}
 }
 #endif
@@ -27664,9 +27671,9 @@ namespace gamelink
             explicit SubscribeToConfigRequest(const char* target);
         };
 
-        struct UnsubscribeToConfigRequest : SendEnvelope<SubscribeConfigRequestBody>
+        struct UnsubscribeFromConfigRequest : SendEnvelope<SubscribeConfigRequestBody>
         {
-            explicit UnsubscribeToConfigRequest(const char* target);
+            explicit UnsubscribeFromConfigRequest(const char* target);
         };
 
         struct ConfigUpdateResponse : ReceiveEnvelope<ConfigUpdateBody>
@@ -27722,7 +27729,7 @@ namespace gamelink
 
 	enum ConnectionStage
 	{
-		CONNECTION_STAGE_PRODUCTION,
+		CONNECTION_STAGE_PRODUCTION = 0,
 		CONNECTION_STAGE_SANDBOX,
 	};
 
@@ -28090,6 +28097,10 @@ namespace gamelink
 
 		/// Detaches the OnDebugMessage callback, so no additional calls will be made.
 		void DetachOnDebugMessage();
+
+		/// Invokes the OnDebugMessage callback with the given message. Generally used
+		/// by language projections, and not intended for general usage.
+		void InvokeOnDebugMessage(const string& msg);
 
 		/// Waits for a request to be responded to before sending further requests.
 		/// @remark WaitForResponse is used to ensure a serializing of requests on the server.
@@ -28486,7 +28497,7 @@ namespace gamelink
 		///
 		/// @param[in] target either CONFIG_TARGET_CHANNEL or CONFIG_TARGET_EXTENSION
 		/// @return RequestId of the generated request
-		RequestId UnsubscribeToConfigurationChanges(const char* target);
+		RequestId UnsubscribeFromConfigurationChanges(const char* target);
 
 		/// Sets the current channel configuration. Will trigger OnConfigUpdate.
 		///
@@ -28678,6 +28689,12 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId SubscribeToStateUpdates(const char* target);
 
+		/// Stops subscribing to state updates for the given target.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @return RequestId of the generated request
+		RequestId UnsubscribeFromStateUpdates(const char* target);
+
 		/// Sends a broadcast to all viewers on the channel using the extension.
 		/// @remark The serialized size of the value parameter must be under 8 kilobytes.
 		///
@@ -28728,7 +28745,6 @@ namespace gamelink
 		///
 		/// @param[in] id A handle obtained from calling OnDatastream. Invalid handles are ignored.
 		void DetachOnDatastream(uint32_t);
-
 	private:
 		void debugLogPayload(const Payload*);
 
@@ -29015,7 +29031,7 @@ namespace gamelink
             data.configId = target;
         }
 
-        UnsubscribeToConfigRequest::UnsubscribeToConfigRequest(const char* target)
+        UnsubscribeFromConfigRequest::UnsubscribeFromConfigRequest(const char* target)
         {
             action = string("unsubscribe");
             params.target = string("config");
@@ -29116,6 +29132,13 @@ namespace gamelink
 		SubscribeStateRequest::SubscribeStateRequest(const char* target)
 		{
 			action = string("subscribe");
+			params.target = string("state");
+			data.topic_id = string(target);
+		}
+
+		UnsubscribeStateRequest::UnsubscribeStateRequest(const char* target)
+		{
+			action = string("unsubscribe");
 			params.target = string("state");
 			data.topic_id = string(target);
 		}
@@ -29533,6 +29556,11 @@ namespace gamelink
 		_onDebugMessage.clear();
 	}
 
+	void SDK::InvokeOnDebugMessage(const string& message)
+	{
+		_onDebugMessage.invoke(message);
+	}
+
 	void SDK::WaitForResponse(RequestId req)
 	{
 		Payload* wait = new Payload("");
@@ -29693,9 +29721,9 @@ namespace gamelink
         return queuePayload(req);
     }
 
-    RequestId SDK::UnsubscribeToConfigurationChanges(const char* target)
+    RequestId SDK::UnsubscribeFromConfigurationChanges(const char* target)
     {
-        schema::UnsubscribeToConfigRequest req(target);
+        schema::UnsubscribeFromConfigRequest req(target);
         return queuePayload(req);
     }
 
@@ -30016,6 +30044,12 @@ namespace gamelink
 	RequestId SDK::SubscribeToStateUpdates(const char* target)
 	{
 		schema::SubscribeStateRequest payload(target);
+		return queuePayload(payload);
+	}
+
+	RequestId SDK::UnsubscribeFromStateUpdates(const char* target)
+	{
+		schema::UnsubscribeStateRequest payload(target);
 		return queuePayload(payload);
 	}
 
