@@ -159,12 +159,6 @@ MGL_Error MuxyGameLink_Schema_GetFirstError(void* Resp, MGL_SCHEMA_RESPONSE_TYPE
 			MGLErr = gamelink::FirstError(*PUR);
 			break;
 		}
-		case MGL_RESPONSE_UPDATECHANNEL: 
-		{
-			const gamelink::schema::SubscribeStateUpdateResponse<nlohmann::json>* SSUR = static_cast<const gamelink::schema::SubscribeStateUpdateResponse<nlohmann::json>*>(Resp);
-			MGLErr = gamelink::FirstError(*SSUR);
-			break;
-		}
 		case MGL_RESPONSE_UPDATEDATASTREAM: 
 		{
 			const gamelink::schema::DatastreamUpdate* DSU = static_cast<const gamelink::schema::DatastreamUpdate*>(Resp);
