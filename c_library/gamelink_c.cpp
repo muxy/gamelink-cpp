@@ -112,77 +112,9 @@ const char* MuxyGameLink_Payload_GetData(MGL_Payload Payload)
 // Error begin
 MGL_Error MuxyGameLink_Schema_GetFirstError(void* Resp)
 {
-	const gamelink::schema::Error* MGLErr = NULL;
-
-	uint32_t RespType = UINT32_MAX;
-	memcpy(&RespType, Resp, sizeof(uint32_t));
-
-	switch (RespType)
-	{
-		case gamelink::ResponseType::AUTHENTICATE: 
-		{
-			const gamelink::schema::AuthenticateResponse* Auth = static_cast<const gamelink::schema::AuthenticateResponse*>(Resp);
-			MGLErr = gamelink::FirstError(*Auth);
-			break;
-		}
-		case gamelink::ResponseType::GETSTATE: 
-		{
-			const gamelink::schema::GetStateResponse<nlohmann::json>* GSR = static_cast<const gamelink::schema::GetStateResponse<nlohmann::json>*>(Resp);
-			MGLErr = gamelink::FirstError(*GSR);
-			break;
-		}
-		case gamelink::ResponseType::GETPOLL: 
-		{
-			const gamelink::schema::GetPollResponse* GPR = static_cast<const gamelink::schema::GetPollResponse*>(Resp);
-			MGLErr = gamelink::FirstError(*GPR);
-			break;
-		}
-		case gamelink::ResponseType::GETCONFIG: 
-		{
-			const gamelink::schema::GetConfigResponse* CR = static_cast<const gamelink::schema::GetConfigResponse*>(Resp);
-			MGLErr = gamelink::FirstError(*CR);
-			break;
-		}
-		case gamelink::ResponseType::GETCONFIGCOMBINED: 
-		{
-			const gamelink::schema::GetCombinedConfigResponse* CCR = static_cast<const gamelink::schema::GetCombinedConfigResponse*>(Resp);
-			MGLErr = gamelink::FirstError(*CCR);
-			break;
-		}
-		case gamelink::ResponseType::UPDATESTATE: 
-		{
-			const gamelink::schema::SubscribeStateUpdateResponse<nlohmann::json>* SUR = static_cast<const gamelink::schema::SubscribeStateUpdateResponse<nlohmann::json>*>(Resp);
-			MGLErr = gamelink::FirstError(*SUR);
-			break;
-		}
-		case gamelink::ResponseType::UPDATEPOLL: 
-		{
-			const gamelink::schema::PollUpdateResponse* PUR = static_cast<const gamelink::schema::PollUpdateResponse*>(Resp);
-			MGLErr = gamelink::FirstError(*PUR);
-			break;
-		}
-		case gamelink::ResponseType::UPDATEDATASTREAM: 
-		{
-			const gamelink::schema::DatastreamUpdate* DSU = static_cast<const gamelink::schema::DatastreamUpdate*>(Resp);
-			MGLErr = gamelink::FirstError(*DSU);
-			break;
-		}
-		case gamelink::ResponseType::UPDATECONFIG: 
-		{
-			const gamelink::schema::ConfigUpdateResponse* CUR = static_cast<const gamelink::schema::ConfigUpdateResponse*>(Resp);
-			MGLErr = gamelink::FirstError(*CUR);
-			break;
-		}
-		case gamelink::ResponseType::UPDATETWITCHPURCHASEBITS: 
-		{
-			const gamelink::schema::TwitchPurchaseBitsResponse<nlohmann::json>* TPB = static_cast<const gamelink::schema::TwitchPurchaseBitsResponse<nlohmann::json>*>(Resp);
-			MGLErr = gamelink::FirstError(*TPB);
-			break;
-		}
-
-		default: break;
-	}
-
+	const gamelink::schema::ReceiveEnvelopeCommon* Common = static_cast<gamelink::schema::ReceiveEnvelopeCommon*>(Resp);
+	const gamelink::schema::Error* MGLErr = gamelink::FirstError(*Common);
+	
 	MGL_Error WErr;
 	WErr.Obj = MGLErr;
 
