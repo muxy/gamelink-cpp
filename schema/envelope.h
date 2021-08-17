@@ -111,20 +111,23 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PatchOperation, "op", operation, "path", path, "value", value);
 		};
 
-		/// ReceiveEnvelope
-		template<typename T>
-		struct ReceiveEnvelope
+		struct ReceiveEnvelopeCommon
 		{
 			/// Metadata about this response
 			ReceiveMeta meta;
 
-			/// Data field. Will vary based on the response.
-			/// See the type documentation for more details.
-			T data;
-
 			/// Errors list. Mutually exclusive with data.
 			/// May contain more than one error.
 			std::vector<Error> errors;
+		};
+
+		/// ReceiveEnvelope
+		template<typename T>
+		struct ReceiveEnvelope : public ReceiveEnvelopeCommon
+		{
+			/// Data field. Will vary based on the response.
+			/// See the type documentation for more details.
+			T data;
 		};
 
 		template<typename T>

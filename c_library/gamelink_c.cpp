@@ -107,32 +107,14 @@ const char* MuxyGameLink_Payload_GetData(MGL_Payload Payload)
 	const gamelink::Payload* MGLPayload = static_cast<const gamelink::Payload*>(Payload.Obj);
 	return MGLPayload->data.c_str();
 }
-
 // Payload end
 
 // Error begin
-MGL_Error MuxyGameLink_Schema_GetFirstError(void* Resp, MGL_SCHEMA_RESPONSE_TYPE RespType)
+MGL_Error MuxyGameLink_Schema_GetFirstError(void* Resp)
 {
-	const gamelink::schema::Error* MGLErr = NULL;
-
-	switch (RespType)
-	{
-	case MGL_SCHEMA_RESPONSE_AUTHENTICATE: {
-		const gamelink::schema::AuthenticateResponse* Auth = static_cast<const gamelink::schema::AuthenticateResponse*>(Resp);
-		MGLErr = gamelink::FirstError(*Auth);
-		break;
-	}
-	case MGL_SCHEMA_RESPONSE_TWITCHPURCHASEBITS: {
-		const gamelink::schema::TwitchPurchaseBitsResponse<nlohmann::json>* TPB =
-			static_cast<const gamelink::schema::TwitchPurchaseBitsResponse<nlohmann::json>*>(Resp);
-		MGLErr = gamelink::FirstError(*TPB);
-		break;
-	}
-
-	default:
-		break;
-	}
-
+	const gamelink::schema::ReceiveEnvelopeCommon* Common = static_cast<gamelink::schema::ReceiveEnvelopeCommon*>(Resp);
+	const gamelink::schema::Error* MGLErr = gamelink::FirstError(*Common);
+	
 	MGL_Error WErr;
 	WErr.Obj = MGLErr;
 

@@ -13,16 +13,7 @@ namespace gamelink
 	/// @param[in] recv A receive envelope
 	/// @returns Pointer to first error in the errors array of the envelope. If no
 	///          such error exists, returns the null pointer.
-	template<typename T>
-	const schema::Error* FirstError(const schema::ReceiveEnvelope<T>& recv)
-	{
-		if (recv.errors.empty())
-		{
-			return NULL;
-		}
-
-		return &recv.errors[0];
-	}
+	const schema::Error* FirstError(const schema::ReceiveEnvelopeCommon& recv);
 
 	/// RequestId is an 16bit unsigned integer that represents a request.
 	/// Obtained through SDK methods.

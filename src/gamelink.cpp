@@ -96,6 +96,16 @@ namespace gamelink
 		return string("");
 	}
 
+	const schema::Error* FirstError(const schema::ReceiveEnvelopeCommon& recv)
+	{
+		if (recv.errors.empty())
+		{
+			return NULL;
+		}
+
+		return &recv.errors[0];
+	}
+
 	Payload::Payload(string data)
 		: waitingForResponse(ANY_REQUEST_ID)
 		, data(data)
@@ -268,7 +278,6 @@ namespace gamelink
 			{
 				schema::GetStateResponse<nlohmann::json> stateResp;
 				success = schema::ParseResponse(bytes, length, stateResp);
-
 				if (success)
 				{
 					_onGetState.invoke(stateResp);
@@ -278,7 +287,6 @@ namespace gamelink
 			{
 				schema::GetPollResponse pollResp;
 				success = schema::ParseResponse(bytes, length, pollResp);
-
 				if (success)
 				{
 					_onGetPoll.invoke(pollResp);
@@ -322,7 +330,6 @@ namespace gamelink
 			else if (env.meta.target == "channel")
 			{
 				schema::SubscribeStateUpdateResponse<nlohmann::json> resp;
-
 				success = schema::ParseResponse(bytes, length, resp);
 				if (success)
 				{
