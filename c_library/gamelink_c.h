@@ -27,22 +27,6 @@ extern "C"
 	typedef uint16_t MGL_RequestId;
 	static const MGL_RequestId ANY_REQUEST_ID = 0xFFFF;
 
-	enum MGL_SCHEMA_RESPONSE_TYPE
-	{
-		MGL_RESPONSE_AUTHENTICATE,
-		MGL_RESPONSE_GETSTATE,
-		MGL_RESPONSE_GETPOLL,
-		MGL_RESPONSE_GETCONFIG,
-		MGL_RESPONSE_GETCONFIGCOMBINED,
-		MGL_RESPONSE_UPDATESTATE,
-		MGL_RESPONSE_UPDATEPOLL,
-		MGL_RESPONSE_UPDATEDATASTREAM,
-		MGL_RESPONSE_UPDATECONFIG,
-		MGL_RESPONSE_UPDATETWITCHPURCHASEBITS,
-
-		MGL_SCHEMA_ENSURE_32 = 0xFFFFFFFFu
-	};
-
 	typedef struct
 	{
 		void* SDK;
@@ -180,11 +164,8 @@ extern "C"
 
 	/*
 		SDK Error manipulation functions
-
-		GetFirstError may not need MGL_SCHEMA_RESPONSE_TYPE in later versions of the library, as we will internally tag structs with the
-		RespType so the burden isn't on the caller.
 	*/
-	MUXY_CLIB_API MGL_Error MuxyGameLink_Schema_GetFirstError(void* Resp, MGL_SCHEMA_RESPONSE_TYPE RespType);
+	MUXY_CLIB_API MGL_Error MuxyGameLink_Schema_GetFirstError(void* Resp);
 	MUXY_CLIB_API bool MuxyGameLink_Error_IsValid(MGL_Error Error);
 	MUXY_CLIB_API uint32_t MuxyGameLink_Error_GetCode(MGL_Error Error);
 	MUXY_CLIB_API const char* MuxyGameLink_Error_GetTitle(MGL_Error Error);

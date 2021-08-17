@@ -115,6 +115,10 @@ namespace gamelink
 		template<typename T>
 		struct ReceiveEnvelope
 		{
+			// DO NOT MOVE RESPTYPE FROM HERE! IT MUST REMAIN THE FIRST MEMBER IN THE STRUCT!
+			// For ease of use in the C Library, we automatically tag types internally so the burden isn't on the caller
+			uint32_t respType;
+
 			/// Metadata about this response
 			ReceiveMeta meta;
 

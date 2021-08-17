@@ -249,6 +249,7 @@ namespace gamelink
 			// Authentication response
 			schema::AuthenticateResponse authResp;
 			success = schema::ParseResponse(bytes, length, authResp);
+			authResp.respType = ResponseType::AUTHENTICATE;
 			if (success)
 			{
 				const schema::Error * err = FirstError(authResp);
@@ -268,7 +269,7 @@ namespace gamelink
 			{
 				schema::GetStateResponse<nlohmann::json> stateResp;
 				success = schema::ParseResponse(bytes, length, stateResp);
-
+				stateResp.respType = ResponseType::GETSTATE;
 				if (success)
 				{
 					_onGetState.invoke(stateResp);
@@ -278,7 +279,7 @@ namespace gamelink
 			{
 				schema::GetPollResponse pollResp;
 				success = schema::ParseResponse(bytes, length, pollResp);
-
+				pollResp.respType = ResponseType::GETPOLL;
 				if (success)
 				{
 					_onGetPoll.invoke(pollResp);
@@ -288,12 +289,14 @@ namespace gamelink
 			{
 				schema::GetConfigResponse configResp;
 				success = schema::ParseResponse(bytes, length, configResp);
+				configResp.respType = ResponseType::GETCONFIG;
 				if (success)
 				{
 					if (configResp.data.configId == "combined")
 					{
 						schema::GetCombinedConfigResponse combinedResp;
 						success = schema::ParseResponse(bytes, length, combinedResp);
+						configResp.respType = ResponseType::GETCONFIGCOMBINED;
 						if (success)
 						{
 							_onGetCombinedConfig.invoke(combinedResp);
@@ -313,6 +316,7 @@ namespace gamelink
 				// Poll update response
 				// TODO Handle a UserDataPollUpdateResponse as well
 				schema::PollUpdateResponse pollResp;
+				pollResp.respType = ResponseType::UPDATEPOLL;
 				success = schema::ParseResponse<schema::PollUpdateResponse>(bytes, length, pollResp);
 				if (success)
 				{
@@ -322,8 +326,8 @@ namespace gamelink
 			else if (env.meta.target == "channel")
 			{
 				schema::SubscribeStateUpdateResponse<nlohmann::json> resp;
-
 				success = schema::ParseResponse(bytes, length, resp);
+				resp.respType = ResponseType::UPDATESTATE;
 				if (success)
 				{
 					_onStateUpdate.invoke(resp);
@@ -333,6 +337,7 @@ namespace gamelink
 			{
 				schema::TwitchPurchaseBitsResponse<nlohmann::json> resp;
 				success = schema::ParseResponse(bytes, length, resp);
+				resp.respType = ResponseType::UPDATETWITCHPURCHASEBITS;
 				if (success)
 				{
 					_onTwitchPurchaseBits.invoke(resp);
@@ -342,6 +347,7 @@ namespace gamelink
 			{
 				schema::DatastreamUpdate resp;
 				success = schema::ParseResponse(bytes, length, resp);
+				resp.respType = ResponseType::UPDATEDATASTREAM;
 				if (success)
 				{
 					_onDatastreamUpdate.invoke(resp);
@@ -351,6 +357,7 @@ namespace gamelink
 			{
 				schema::ConfigUpdateResponse resp;
 				success = schema::ParseResponse(bytes, length, resp);
+				resp.respType = ResponseType::UPDATECONFIG;
 				if (success)
 				{
 					_onConfigUpdate.invoke(resp);
