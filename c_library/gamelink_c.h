@@ -14,7 +14,7 @@ extern "C"
 	*/
 
 #	ifdef MUXY_CLIB_EXPORT
-#		ifdef MSVC_VER
+#		ifdef _MSC_VER
 #			define MUXY_CLIB_API __declspec(dllexport)
 #		else
 #			define MUXY_CLIB_API 
