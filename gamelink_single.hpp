@@ -26645,6 +26645,7 @@ namespace gamelink
 			JSON_ATOM_INT64,   //!< The int64Value field is valid, and the JSONAtom represents an integer.
 			JSON_ATOM_DOUBLE,  //!< The doubleValue field is valid, and the JSONAtom represents a double.
 			JSON_ATOM_STRING,  //!< The stringValue field is valid, and the JSONAtom represents a string.
+			JSON_ATOM_BOOLEAN, //!< The int64Value field is valid, and the JSONAtom represents a boolean. 0 is false, nonzero is true.
 			JSON_ATOM_LITERAL, //!< The stringValue field is valid, and is a JSON encoded object or array.
 
 			JSON_ATOM_FORCE_32 = 0xFFFFFFFF
@@ -26687,6 +26688,11 @@ namespace gamelink
 		/// @param[in] str JSON Literal
 		/// @return JsonAtom that contains the input literal
 		JsonAtom atomFromLiteral(const string& str);
+
+		/// Creates a JsonAtom that represents a boolean
+		/// @param[in] b boolean value
+		/// @return JsonAtom that contains the input literal
+		JsonAtom atomFromBoolean(bool b);
 
 		/// Creates a JsonAtom that represents null
 		/// @return A null JsonAtom
@@ -26740,20 +26746,23 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PatchOperation, "op", operation, "path", path, "value", value);
 		};
 
-		/// ReceiveEnvelope
-		template<typename T>
-		struct ReceiveEnvelope
+		struct ReceiveEnvelopeCommon
 		{
 			/// Metadata about this response
 			ReceiveMeta meta;
 
-			/// Data field. Will vary based on the response.
-			/// See the type documentation for more details.
-			T data;
-
 			/// Errors list. Mutually exclusive with data.
 			/// May contain more than one error.
 			std::vector<Error> errors;
+		};
+
+		/// ReceiveEnvelope
+		template<typename T>
+		struct ReceiveEnvelope : public ReceiveEnvelopeCommon
+		{
+			/// Data field. Will vary based on the response.
+			/// See the type documentation for more details.
+			T data;
 		};
 
 		template<typename T>
@@ -27643,6 +27652,7 @@ namespace gamelink
 
 		struct PatchConfigRequest : SendEnvelope<PatchConfigRequestBody>
 		{
+			PatchConfigRequest();
 		};
 
         static const char CONFIG_TARGET_CHANNEL[] = "channel";
@@ -27697,16 +27707,7 @@ namespace gamelink
 	/// @param[in] recv A receive envelope
 	/// @returns Pointer to first error in the errors array of the envelope. If no
 	///          such error exists, returns the null pointer.
-	template<typename T>
-	const schema::Error* FirstError(const schema::ReceiveEnvelope<T>& recv)
-	{
-		if (recv.errors.empty())
-		{
-			return NULL;
-		}
-
-		return &recv.errors[0];
-	}
+	const schema::Error* FirstError(const schema::ReceiveEnvelopeCommon& recv);
 
 	/// RequestId is an 16bit unsigned integer that represents a request.
 	/// Obtained through SDK methods.
@@ -28456,6 +28457,14 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId UpdateChannelConfigWithDouble(const char * operation, const string& path, double d);
 
+		/// Helper function that will call UpdateChannelConfig with the input boolean as the value.
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] b The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateChannelConfigWithBoolean(const char * operation, const string& path, bool b);
+
 		/// Helper function that will call UpdateChannelConfig with the input string as the value.
 		///
 		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
@@ -28646,6 +28655,15 @@ namespace gamelink
 		/// @param[in] d The value to use in the patch operation
 		/// @return RequestId of the generated request
 		RequestId UpdateStateWithDouble(const char * target, const char * operation, const string& path, double d);
+
+		/// Helper function that will call UpdateState with a boolean value
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] b The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateStateWithBoolean(const char * target, const char * operation, const string& path, bool b);
 
 		/// Helper function that will call UpdateState with the input string as the value.
 		///
@@ -28895,6 +28913,16 @@ namespace gamelink
 			return atom;
 		}
 
+		JsonAtom atomFromBoolean(bool b)
+		{
+			JsonAtom atom;
+
+			atom.type = JSON_ATOM_BOOLEAN;
+			atom.int64Value = b ? 1 : 0;
+
+			return atom;
+		}
+
 		JsonAtom atomFromString(const string& str)
 		{
 			JsonAtom atom;
@@ -28938,6 +28966,9 @@ namespace gamelink
 			case JSON_ATOM_STRING:
 				out = p.stringValue;
 				break;
+			case JSON_ATOM_BOOLEAN:
+				out = static_cast<bool>(p.int64Value);
+				break;
 			case JSON_ATOM_LITERAL:
 				out = nlohmann::json::parse(p.stringValue.c_str(), nullptr, false);
 				break;
@@ -28954,19 +28985,21 @@ namespace gamelink
 			if (n.is_null())
 			{
 				p.type = JSON_ATOM_NULL;
-				return;
 			}
 			else if (n.is_string())
 			{
 				p.type = JSON_ATOM_STRING;
 				p.stringValue = n.get<string>();
-				return;
 			}
 			else if (n.is_number_integer())
 			{
 				p.type = JSON_ATOM_INT64;
 				p.int64Value = n.get<int64_t>();
-				return;
+			}
+			else if (n.is_boolean())
+			{
+				p.type = JSON_ATOM_BOOLEAN;
+				p.int64Value = n.get<bool>();
 			}
 			else if (n.is_number())
 			{
@@ -29010,6 +29043,12 @@ namespace gamelink
 {
     namespace schema
     {
+		PatchConfigRequest::PatchConfigRequest()
+		{
+			action = string("patch");
+			params.target = string("config");
+		}
+
         GetConfigRequest::GetConfigRequest(const char* target)
         {
             action = string("get");
@@ -29242,6 +29281,16 @@ namespace gamelink
 		return string("");
 	}
 
+	const schema::Error* FirstError(const schema::ReceiveEnvelopeCommon& recv)
+	{
+		if (recv.errors.empty())
+		{
+			return NULL;
+		}
+
+		return &recv.errors[0];
+	}
+
 	Payload::Payload(string data)
 		: waitingForResponse(ANY_REQUEST_ID)
 		, data(data)
@@ -29414,7 +29463,6 @@ namespace gamelink
 			{
 				schema::GetStateResponse<nlohmann::json> stateResp;
 				success = schema::ParseResponse(bytes, length, stateResp);
-
 				if (success)
 				{
 					_onGetState.invoke(stateResp);
@@ -29424,7 +29472,6 @@ namespace gamelink
 			{
 				schema::GetPollResponse pollResp;
 				success = schema::ParseResponse(bytes, length, pollResp);
-
 				if (success)
 				{
 					_onGetPoll.invoke(pollResp);
@@ -29468,7 +29515,6 @@ namespace gamelink
 			else if (env.meta.target == "channel")
 			{
 				schema::SubscribeStateUpdateResponse<nlohmann::json> resp;
-
 				success = schema::ParseResponse(bytes, length, resp);
 				if (success)
 				{
@@ -29700,7 +29746,7 @@ namespace gamelink
     RequestId SDK::GetCombinedConfig(std::function<void (const schema::GetCombinedConfigResponse&)> callback)
     {
         schema::GetConfigRequest req("combined");
-        RequestId id =  queuePayload(req);
+        RequestId id = queuePayload(req);
 
         _onGetCombinedConfig.set(callback, id, detail::CALLBACK_ONESHOT);
         return id;
@@ -29709,7 +29755,7 @@ namespace gamelink
     RequestId SDK::GetCombinedConfig(void (*callback)(void *, const schema::GetCombinedConfigResponse&), void* user)
     {
         schema::GetConfigRequest req("combined");
-        RequestId id =  queuePayload(req);
+        RequestId id = queuePayload(req);
 
         _onGetCombinedConfig.set(callback, user, id, detail::CALLBACK_ONESHOT);
         return id;
@@ -29782,6 +29828,16 @@ namespace gamelink
 		op.operation = operation;
 		op.path = path;
 		op.value = schema::atomFromDouble(d);
+
+		return UpdateChannelConfig(&op, &op + 1);
+	}
+
+	RequestId SDK::UpdateChannelConfigWithBoolean(const char * operation, const string& path, bool b)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromBoolean(b);
 
 		return UpdateChannelConfig(&op, &op + 1);
 	}
@@ -30080,6 +30136,16 @@ namespace gamelink
 		op.operation = operation;
 		op.path = path;
 		op.value = schema::atomFromDouble(d);
+
+		return UpdateState(target, &op, &op + 1);
+	}
+
+	RequestId SDK::UpdateStateWithBoolean(const char* target, const char * operation, const string& path, bool b)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromBoolean(b);
 
 		return UpdateState(target, &op, &op + 1);
 	}
