@@ -16,6 +16,7 @@ namespace gamelink
 			JSON_ATOM_INT64,   //!< The int64Value field is valid, and the JSONAtom represents an integer.
 			JSON_ATOM_DOUBLE,  //!< The doubleValue field is valid, and the JSONAtom represents a double.
 			JSON_ATOM_STRING,  //!< The stringValue field is valid, and the JSONAtom represents a string.
+			JSON_ATOM_BOOLEAN, //!< The int64Value field is valid, and the JSONAtom represents a boolean. 0 is false, nonzero is true.
 			JSON_ATOM_LITERAL, //!< The stringValue field is valid, and is a JSON encoded object or array.
 
 			JSON_ATOM_FORCE_32 = 0xFFFFFFFF
@@ -58,6 +59,11 @@ namespace gamelink
 		/// @param[in] str JSON Literal
 		/// @return JsonAtom that contains the input literal
 		JsonAtom atomFromLiteral(const string& str);
+
+		/// Creates a JsonAtom that represents a boolean
+		/// @param[in] b boolean value
+		/// @return JsonAtom that contains the input literal
+		JsonAtom atomFromBoolean(bool b);
 
 		/// Creates a JsonAtom that represents null
 		/// @return A null JsonAtom

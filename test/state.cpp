@@ -428,3 +428,117 @@ TEST_CASE("SDK Subscription", "[sdk][state][subscription]")
 	REQUIRE(errors == 2);
 	REQUIRE(secondCalls == 2);
 }
+
+TEST_CASE("Update state", "[state]")
+{
+	gamelink::SDK sdk;
+
+	sdk.UpdateStateWithObject(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/character", nlohmann::json::parse(R"({
+		"class": "wizard"
+	})"));
+	validateSinglePayload(sdk, R"({
+		"action": "patch", 
+		"data": {
+			"state_id": "channel",
+			"state": [
+				{ "op": "add", "path": "/character", "value": { "class": "wizard" }}
+			]
+		}, 
+		"params": {
+			"request_id": 65535, 
+			"target": "state"
+		}
+	})");
+
+	sdk.UpdateStateWithBoolean(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/b", false);
+	validateSinglePayload(sdk, R"({
+		"action": "patch", 
+		"data": {
+			"state_id": "channel",
+			"state": [
+				{ "op": "add", "path": "/b", "value": false }
+			]
+		}, 
+		"params": {
+			"request_id": 65535, 
+			"target": "state"
+		}
+	})");
+
+	sdk.UpdateStateWithDouble(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/b", 44.15);
+	validateSinglePayload(sdk, R"({
+		"action": "patch", 
+		"data": {
+			"state_id": "channel",
+			"state": [
+				{ "op": "add", "path": "/b", "value": 44.15 }
+			]
+		}, 
+		"params": {
+			"request_id": 65535, 
+			"target": "state"
+		}
+	})");
+
+	sdk.UpdateStateWithInteger(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/b", -100);
+	validateSinglePayload(sdk, R"({
+		"action": "patch", 
+		"data": {
+			"state_id": "channel",
+			"state": [
+				{ "op": "add", "path": "/b", "value": -100 }
+			]
+		}, 
+		"params": {
+			"request_id": 65535, 
+			"target": "state"
+		}
+	})");
+
+	sdk.UpdateStateWithLiteral(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/b", R"([{ "literal": "json" }])");
+	validateSinglePayload(sdk, R"({
+		"action": "patch", 
+		"data": {
+			"state_id": "channel",
+			"state": [
+				{ "op": "add", "path": "/b", "value": [
+					{ "literal": "json" }
+				]}
+			]
+		}, 
+		"params": {
+			"request_id": 65535, 
+			"target": "state"
+		}
+	})");
+
+	sdk.UpdateStateWithNull(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/b");
+	validateSinglePayload(sdk, R"({
+		"action": "patch", 
+		"data": {
+			"state_id": "channel",
+			"state": [
+				{ "op": "add", "path": "/b", "value": null }
+			]
+		}, 
+		"params": {
+			"request_id": 65535, 
+			"target": "state"
+		}
+	})");
+
+	sdk.UpdateStateWithString(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/b", "Gandalf");
+	validateSinglePayload(sdk, R"({
+		"action": "patch", 
+		"data": {
+			"state_id": "channel",
+			"state": [
+				{ "op": "add", "path": "/b", "value": "Gandalf" }
+			]
+		}, 
+		"params": {
+			"request_id": 65535, 
+			"target": "state"
+		}
+	})");
+}

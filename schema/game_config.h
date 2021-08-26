@@ -76,6 +76,7 @@ namespace gamelink
 
 		struct PatchConfigRequest : SendEnvelope<PatchConfigRequestBody>
 		{
+			PatchConfigRequest();
 		};
 
         static const char CONFIG_TARGET_CHANNEL[] = "channel";

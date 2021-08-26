@@ -4,6 +4,12 @@ namespace gamelink
 {
     namespace schema
     {
+		PatchConfigRequest::PatchConfigRequest()
+		{
+			action = string("patch");
+			params.target = string("config");
+		}
+
         GetConfigRequest::GetConfigRequest(const char* target)
         {
             action = string("get");

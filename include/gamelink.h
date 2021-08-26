@@ -763,6 +763,14 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId UpdateChannelConfigWithDouble(const char * operation, const string& path, double d);
 
+		/// Helper function that will call UpdateChannelConfig with the input boolean as the value.
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] b The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateChannelConfigWithBoolean(const char * operation, const string& path, bool b);
+
 		/// Helper function that will call UpdateChannelConfig with the input string as the value.
 		///
 		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
@@ -953,6 +961,15 @@ namespace gamelink
 		/// @param[in] d The value to use in the patch operation
 		/// @return RequestId of the generated request
 		RequestId UpdateStateWithDouble(const char * target, const char * operation, const string& path, double d);
+
+		/// Helper function that will call UpdateState with a boolean value
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] b The value to use in the patch operation
+		/// @return RequestId of the generated request
+		RequestId UpdateStateWithBoolean(const char * target, const char * operation, const string& path, bool b);
 
 		/// Helper function that will call UpdateState with the input string as the value.
 		///

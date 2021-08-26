@@ -24,6 +24,16 @@ namespace gamelink
 			return atom;
 		}
 
+		JsonAtom atomFromBoolean(bool b)
+		{
+			JsonAtom atom;
+
+			atom.type = JSON_ATOM_BOOLEAN;
+			atom.int64Value = b ? 1 : 0;
+
+			return atom;
+		}
+
 		JsonAtom atomFromString(const string& str)
 		{
 			JsonAtom atom;
@@ -67,6 +77,9 @@ namespace gamelink
 			case JSON_ATOM_STRING:
 				out = p.stringValue;
 				break;
+			case JSON_ATOM_BOOLEAN:
+				out = static_cast<bool>(p.int64Value);
+				break;
 			case JSON_ATOM_LITERAL:
 				out = nlohmann::json::parse(p.stringValue.c_str(), nullptr, false);
 				break;
@@ -83,19 +96,21 @@ namespace gamelink
 			if (n.is_null())
 			{
 				p.type = JSON_ATOM_NULL;
-				return;
 			}
 			else if (n.is_string())
 			{
 				p.type = JSON_ATOM_STRING;
 				p.stringValue = n.get<string>();
-				return;
 			}
 			else if (n.is_number_integer())
 			{
 				p.type = JSON_ATOM_INT64;
 				p.int64Value = n.get<int64_t>();
-				return;
+			}
+			else if (n.is_boolean())
+			{
+				p.type = JSON_ATOM_BOOLEAN;
+				p.int64Value = n.get<bool>();
 			}
 			else if (n.is_number())
 			{

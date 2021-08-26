@@ -96,6 +96,16 @@ namespace gamelink
 		return UpdateState(target, &op, &op + 1);
 	}
 
+	RequestId SDK::UpdateStateWithBoolean(const char* target, const char * operation, const string& path, bool b)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromBoolean(b);
+
+		return UpdateState(target, &op, &op + 1);
+	}
+
 	RequestId SDK::UpdateStateWithString(const char* target, const char * operation, const string& path, const string& str)
 	{
 		schema::PatchOperation op;
