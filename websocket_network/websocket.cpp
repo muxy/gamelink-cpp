@@ -401,9 +401,6 @@ void connect(lws_sorted_usec_list_t* queue)
 	info.address = impl->host.c_str();
 	info.path = impl->path.c_str();
 
-	// Likely need to attempt to do this and then fallback to insecure if needed.
-	// info.ssl_connection = LCCSCF_USE_SSL;
-
 	// Setup a user_data that points to the impl instance for access in the protocol callbacks
 	info.opaque_user_data = impl;
 

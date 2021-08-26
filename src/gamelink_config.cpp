@@ -23,7 +23,7 @@ namespace gamelink
     RequestId SDK::GetCombinedConfig(std::function<void (const schema::GetCombinedConfigResponse&)> callback)
     {
         schema::GetConfigRequest req("combined");
-        RequestId id =  queuePayload(req);
+        RequestId id = queuePayload(req);
 
         _onGetCombinedConfig.set(callback, id, detail::CALLBACK_ONESHOT);
         return id;
@@ -32,7 +32,7 @@ namespace gamelink
     RequestId SDK::GetCombinedConfig(void (*callback)(void *, const schema::GetCombinedConfigResponse&), void* user)
     {
         schema::GetConfigRequest req("combined");
-        RequestId id =  queuePayload(req);
+        RequestId id = queuePayload(req);
 
         _onGetCombinedConfig.set(callback, user, id, detail::CALLBACK_ONESHOT);
         return id;
@@ -105,6 +105,16 @@ namespace gamelink
 		op.operation = operation;
 		op.path = path;
 		op.value = schema::atomFromDouble(d);
+
+		return UpdateChannelConfig(&op, &op + 1);
+	}
+
+	RequestId SDK::UpdateChannelConfigWithBoolean(const char * operation, const string& path, bool b)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromBoolean(b);
 
 		return UpdateChannelConfig(&op, &op + 1);
 	}

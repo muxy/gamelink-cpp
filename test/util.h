@@ -4,13 +4,16 @@
 
 #include "catch2/catch.hpp"
 #include "constrained_types.h"
+#include "gamelink.h"
 #include "nlohmann/json.hpp"
 #include <iostream>
 
 template<typename T>
 void SerializeEqual(const T& v, const std::string& in)
 {
-	nlohmann::json expected = nlohmann::json::parse(in);
+	nlohmann::json expected = nlohmann::json::parse(in, nullptr, false);
+	REQUIRE(!expected.is_discarded());
+
 	nlohmann::json input;
 	to_json(input, v);
 
@@ -34,8 +37,11 @@ void Deserialize(const std::string& in, T& out)
 
 inline bool JSONEquals(const std::string& in, const std::string& expect)
 {
-	nlohmann::json input = nlohmann::json::parse(in);
-	nlohmann::json expected = nlohmann::json::parse(expect);
+	nlohmann::json input = nlohmann::json::parse(in, nullptr, false);
+	REQUIRE(!input.is_discarded());
+
+	nlohmann::json expected = nlohmann::json::parse(expect, nullptr, false);
+	REQUIRE(!expected.is_discarded());
 
 	// Ignore request_id parameter
 	if (expected["params"].contains("request_id") && expected["params"]["request_id"] == 0xFFFF)
@@ -59,8 +65,11 @@ inline bool JSONEquals(const std::string& in, const std::string& expect)
 
 inline bool JSONEquals(const ConstrainedString& in, const ConstrainedString& expect)
 {
-	nlohmann::json input = nlohmann::json::parse(in.c_str());
-	nlohmann::json expected = nlohmann::json::parse(expect.c_str());
+	nlohmann::json input = nlohmann::json::parse(in.c_str(), nullptr, false);
+	REQUIRE(!input.is_discarded());
+
+	nlohmann::json expected = nlohmann::json::parse(expect.c_str(), nullptr, false);
+	REQUIRE(!expected.is_discarded());
 
 	// Ignore request_id parameter
 	if (expected["params"].contains("request_id") && expected["params"]["request_id"] == 0xFFFF)
@@ -80,5 +89,16 @@ inline bool JSONEquals(const ConstrainedString& in, const ConstrainedString& exp
 	}
 
 	return true;
+}
+
+inline void validateSinglePayload(gamelink::SDK& sdk, const std::string& p)
+{
+	uint32_t count = 0;
+	sdk.ForeachPayload([p, &count](const gamelink::Payload* payload) {
+		REQUIRE(JSONEquals(payload->data, ConstrainedString(p.c_str())));
+		count++;
+	});
+
+	REQUIRE(count == 1);
 }
 #endif

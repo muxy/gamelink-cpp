@@ -6,7 +6,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Project
 project(Gamelink)
 
-# Settings
+# Global settings. Note we're compiling without exceptions to show that the library
+# works without exception support.
+
 add_compile_definitions("FMT_HEADER_ONLY=1" "JSON_NOEXCEPTION" "_HAS_EXCEPTIONS=0")
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS "/EHs-c- /GR-")
@@ -25,30 +27,60 @@ file(GLOB SDK_TEST_SOURCES "test/*.cpp")
 file(GLOB SDK_SOURCES "src/*.cpp")
 file(GLOB C_SOURCES "c_library/*.cpp")
 
-file(GLOB DEMO_SOURCES "*.cpp")
-list(APPEND DEMO_SOURCES "websocket_network/websocket.cpp")
-
 ## Unit tests
 add_executable(tests ${SCHEMA_SOURCES} ${SDK_TEST_SOURCES} ${SDK_SOURCES} ${C_SOURCES})
 target_include_directories(tests PRIVATE "test" "c_library")
 target_compile_definitions(tests PRIVATE "MUXY_GAMELINK_CUSTOM_STRING_TYPE=ConstrainedString" "MUXY_GAMELINK_CUSTOM_LOCK_TYPE=ConstrainedLock" "MUXY_GAMELINK_CUSTOM_STRING_INCLUDE=\"constrained_types.h\"")
 
-## Demo 
+# Amalgamation
+set(AMALGAM_IN "${CMAKE_CURRENT_SOURCE_DIR}/amalgamate.in")
+set(AMALGAM_OUT "${CMAKE_CURRENT_SOURCE_DIR}/amalgamate.sh")
+
+set(AMALGAM_SOURCES ${SCHEMA_SOURCES} ${SDK_SOURCES})
+
+string(REPLACE ";" " " AMALGAM_PUBLIC_HEADERS "${PUBLIC_HEADERS}")
+string(REPLACE ";" " " AMALGAM_PUBLIC_SOURCES "${AMALGAM_SOURCES}")
+
+configure_file(${AMALGAM_IN} ${AMALGAM_OUT} @ONLY)
+add_custom_target(amalgam ALL 
+    COMMAND 
+    ${AMALGAM_OUT}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMENT "Generating Amalgam file")
+
+# Amalgamation compilation checked
+add_executable(amalgam_compile_check "amalgam_check.cpp")
+add_dependencies(amalgam_compile_check amalgam)
+
+# Shared library 
+add_library(cgamelink SHARED ${SDK_SOURCES} ${SCHEMA_SOURCES} ${C_SOURCES})
+target_compile_definitions(cgamelink PRIVATE "MUXY_CLIB_EXPORT")
+
+add_executable(cgamelink_compile_check "clibrary_check.cpp")
+target_link_libraries(cgamelink_compile_check cgamelink)
+add_dependencies(cgamelink_compile_check cgamelink)
+
+## Examples
 find_package(PkgConfig)
-find_package(Doxygen)
 pkg_check_modules(LIB_WEBSOCKETS libwebsockets>=4.0.0)
-find_package(OpenSSL)
 
 if(LIB_WEBSOCKETS_INCLUDE_DIRS)
-if(OPENSSL_INCLUDE_DIR)
-    add_executable(demo ${DEMO_SOURCES})
-    target_include_directories(demo PRIVATE ${OPENSSL_INCLUDE_DIR} ${LIB_WEBSOCKETS_INCLUDE_DIRS} "websocket_networK")
-    target_link_directories(demo PRIVATE ${LIB_WEBSOCKETS_LIBRARY_DIRS})
-    target_link_libraries(demo ${LIB_WEBSOCKETS_LIBRARIES})
-endif()
+    add_subdirectory("examples/01-authenticate")
+    add_subdirectory("examples/02-voting")
+    add_subdirectory("examples/03-state")
+    add_subdirectory("examples/04-broadcast")
+
+    add_custom_target(examples ALL)
+    add_dependencies(authenticate amalgam)
+    add_dependencies(voting amalgam)
+    add_dependencies(state amalgam)
+    add_dependencies(broadcast amalgam)
+    add_dependencies(examples authenticate voting state broadcast)
 endif()
 
 # Documentation
+find_package(Doxygen)
+
 file(GLOB SCHEMA_PUBLIC_HEADERS "schema/*.h")
 file(GLOB SRC_PUBLIC_HEADERS "include/*.h")
 
@@ -87,48 +119,3 @@ add_custom_target(sphinx
     COMMENT "Generating sphinx documentation")
 
 add_dependencies(sphinx doxygen)
-
-# Amalgamation
-set(AMALGAM_IN "${CMAKE_CURRENT_SOURCE_DIR}/amalgamate.in")
-set(AMALGAM_OUT "${CMAKE_CURRENT_SOURCE_DIR}/amalgamate.sh")
-
-set(AMALGAM_SOURCES ${SCHEMA_SOURCES} ${SDK_SOURCES})
-
-string(REPLACE ";" " " AMALGAM_PUBLIC_HEADERS "${PUBLIC_HEADERS}")
-string(REPLACE ";" " " AMALGAM_PUBLIC_SOURCES "${AMALGAM_SOURCES}")
-
-configure_file(${AMALGAM_IN} ${AMALGAM_OUT} @ONLY)
-add_custom_target(amalgam ALL 
-    COMMAND 
-    ${AMALGAM_OUT}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMENT "Generating Amalgam file")
-
-# Amalgamation compilation checked
-add_executable(amalgam_compile_check "amalgam_check.cpp")
-add_dependencies(amalgam_compile_check amalgam)
-
-## Examples
-if(LIB_WEBSOCKETS_INCLUDE_DIRS)
-if(OPENSSL_INCLUDE_DIR)
-    add_subdirectory("examples/01-authenticate")
-    add_subdirectory("examples/02-voting")
-    add_subdirectory("examples/03-state")
-    add_subdirectory("examples/04-broadcast")
-
-    add_custom_target(examples ALL)
-    add_dependencies(authenticate amalgam)
-    add_dependencies(voting amalgam)
-    add_dependencies(state amalgam)
-    add_dependencies(broadcast amalgam)
-    add_dependencies(examples authenticate voting state broadcast)
-endif()
-endif()
-
-# Shared library 
-add_library(cgamelink SHARED ${SDK_SOURCES} ${SCHEMA_SOURCES} ${C_SOURCES})
-target_compile_definitions(cgamelink PRIVATE "MUXY_CLIB_EXPORT")
-
-add_executable(cgamelink_compile_check "clibrary_check.cpp")
-target_link_libraries(cgamelink_compile_check cgamelink)
-add_dependencies(cgamelink_compile_check cgamelink)

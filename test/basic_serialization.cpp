@@ -1,8 +1,8 @@
 #include "catch2/catch.hpp"
 #include "util.h"
 
-#include "schema/authentication.h"
 #include "gamelink.h"
+#include "schema/authentication.h"
 
 TEST_CASE("Can deserialize with missing properties", "[deserialize]")
 {
