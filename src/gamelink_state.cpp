@@ -30,6 +30,11 @@ namespace gamelink
 		return queuePayload(payload);
 	}
 
+	RequestId SDK::ClearState(const char* target) 
+	{
+		return SetState(target, nlohmann::json::object());
+	}
+
 	RequestId SDK::GetState(const char* target)
 	{
 		schema::GetStateRequest payload(target);

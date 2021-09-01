@@ -246,6 +246,19 @@ TEST_CASE("SDK State Creation", "[sdk][state]")
             }
         })"));
 	});
+
+	sdk.ClearState(gamelink::schema::STATE_TARGET_CHANNEL);
+	validateSinglePayload(sdk, R"({
+		"action": "set", 
+		"data": { 
+			"state_id": "channel", 
+			"state": {}
+		}, 
+		"params": {
+			"request_id": 65535, 
+			"target": "state"
+		}
+	})");
 }
 
 TEST_CASE("SDK State Retreival", "[sdk][state]")
