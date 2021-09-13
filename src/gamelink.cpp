@@ -437,4 +437,10 @@ namespace gamelink
 		schema::BroadcastRequest<nlohmann::json> payload(topic, msg);
 		return queuePayload(payload);
 	}
+
+	RequestId SDK::SendBroadcast(const string& topic)
+	{
+		schema::BroadcastRequest<nlohmann::json> payload(topic, nlohmann::json::object());
+		return queuePayload(payload);
+	}
 }
