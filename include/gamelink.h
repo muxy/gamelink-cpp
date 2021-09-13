@@ -1042,6 +1042,12 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId SendBroadcast(const string& topic, const nlohmann::json& message);
 
+		/// Sends a broadcast to all viewers on the channel using the extension.
+		/// @param[in] topic The topic of the message to send. The frontend uses this value
+		///                  to filter messages.
+		/// @return RequestId of the generated request
+		RequestId SendBroadcast(const string& topic);
+
 		/// Sends a request to subscribe to the datastream.
 		/// @return RequestId of the generated request
 		RequestId SubscribeToDatastream();
