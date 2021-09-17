@@ -236,7 +236,7 @@ TEST_CASE("SDK State Creation", "[sdk][state]")
                 "state_id": "channel",
                 "state": {
                     "children": [], 
-                    "name": "health", 
+                    "name": "health",
                     "value": 42.123
                 }
             }, 
@@ -345,6 +345,48 @@ TEST_CASE("SDK Update State", "[sdk][state]")
             }
         })"));
 	});
+}
+
+TEST_CASE("SDK Update array", "[sdk][state][target]")
+{
+	gamelink::SDK sdk;
+
+	int integerRoll = 1;
+	std::string stringRoll = "world";
+
+	sdk.UpdateStateWithArray(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/rolls", &integerRoll, &integerRoll + 1);
+	validateSinglePayload(sdk, R"({
+		"action": "patch", 
+		"data": { 
+			"state_id": "channel", 
+			"state": [{ 
+				"op": "add", 
+				"path": "/rolls", 
+				"value": [1]
+			}]
+		},
+		"params":{
+			"request_id":65535,
+			"target":"state"
+		}
+	})");
+
+	sdk.UpdateStateWithArray(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/rolls", &stringRoll, &stringRoll + 1);
+	validateSinglePayload(sdk, R"({
+		"action": "patch", 
+		"data": { 
+			"state_id": "channel", 
+			"state": [{ 
+				"op": "add", 
+				"path": "/rolls", 
+				"value": ["world"]
+			}]
+		},
+		"params":{
+			"request_id":65535,
+			"target":"state"
+		}
+	})");
 }
 
 TEST_CASE("SDK Subscription", "[sdk][state][subscription]")

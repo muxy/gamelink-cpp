@@ -27088,13 +27088,13 @@ namespace gamelink
 		struct SubscribeDatastreamRequest : SendEnvelope<SubscribeTopicRequestBody>
 		{
 			/// Creates a SubscribeDatastreamRequest
-			explicit SubscribeDatastreamRequest();
+			SubscribeDatastreamRequest();
 		};
 
 		struct UnsubscribeDatastreamRequest : SendEnvelope<UnsubscribeTopicRequestBody>
 		{
 			/// Creates an UnsubscribeDatastreamRequest
-			explicit UnsubscribeDatastreamRequest();
+			UnsubscribeDatastreamRequest();
 		};
 	}
 }
@@ -27344,11 +27344,13 @@ namespace gamelink
 {
 	namespace schema
 	{
-		template<typename T>
-		struct TwitchPurchaseBitsResponseBody
+		struct Transaction
 		{
-			/// The ID of the purchase, unique for each unique purchase
-            string id;
+			/// The External ID of the purchase, unique for each unique purchase, and service dependent.
+			string id;
+
+			/// The Muxy ID of this transaction. Used to make additional calls regarding this purchase.
+			string muxyId;
 
 			/// SKU of the item
 			string sku;
@@ -27366,14 +27368,16 @@ namespace gamelink
 			int cost;
 
 			/// Millisecond unix timestamp of the purchase.
-            int64_t timestamp;
+			int64_t timestamp;
 
 			/// Arbitrary additional data, added by the extension to this purchase receipt.
-			T additional;
+			nlohmann::json additional;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_8(TwitchPurchaseBitsResponseBody,
-												"id", 
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_9(Transaction,
+												"id",
 												id,
+												"muxy_id",
+												muxyId,
 												"sku",
 												sku,
 												"displayName",
@@ -27382,19 +27386,39 @@ namespace gamelink
 												userId,
 												"username",
 												userName,
-												"cost", 
-												cost, 
-												"timestamp", 
+												"cost",
+												cost,
+												"timestamp",
 												timestamp,
 												"additional",
 												additional);
 		};
 
-		template<typename T>
-		struct TwitchPurchaseBitsResponse : ReceiveEnvelope<TwitchPurchaseBitsResponseBody<T>>
+		struct TransactionResponse : ReceiveEnvelope<Transaction>
 		{
 		};
 
+		struct GetOutsandingTransactionsRequestBody
+		{
+			string sku;
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(GetOutsandingTransactionsRequestBody, "sku", sku);
+		};
+
+		struct GetOutstandingTransactionsRequest : SendEnvelope<GetOutsandingTransactionsRequestBody>
+		{
+			explicit GetOutstandingTransactionsRequest(const string& sku);
+		};
+
+		struct GetOutstandingTransactionsResponseBody
+		{
+			std::vector<Transaction> transactions;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(GetOutstandingTransactionsResponseBody, "transactions", transactions);
+		};
+
+		struct GetOutstandingTransactionsResponse : ReceiveEnvelope<GetOutstandingTransactionsResponseBody>
+		{
+		};
 
 		struct SubscribePurchaseRequestBody
 		{
@@ -27409,7 +27433,7 @@ namespace gamelink
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(UnsubscribePurchaseRequestBody, "sku", sku);
 		};
-		
+
 		struct SubscribeTransactionsRequest : SendEnvelope<SubscribePurchaseRequestBody>
 		{
 			/// Creates a SubscribeTransactionsRequest
@@ -27420,6 +27444,45 @@ namespace gamelink
 		{
 			/// Creates an UnsubscribeTransactionsRequest
 			explicit UnsubscribeTransactionsRequest(const string& SKU);
+		};
+
+		struct RefundTransactionBody
+		{
+			string transactionId;
+			string userId;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(RefundTransactionBody, "transaction_id", transactionId, "user_id", userId);
+		};
+
+		struct RefundTransactionRequest : SendEnvelope<RefundTransactionBody>
+		{
+			RefundTransactionRequest(const string& transactionId, const string& userId);
+		};
+
+		struct RefundTransactionBySKUBody
+		{
+			string SKU;
+			string userId;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(RefundTransactionBySKUBody, "sku", SKU, "user_id", userId);
+		};
+
+		struct RefundTransactionBySKURequest : SendEnvelope<RefundTransactionBySKUBody>
+		{
+			RefundTransactionBySKURequest(const string& sku, const string& userId);
+		};
+
+		struct ValidateTransactionBody
+		{
+			string transactionId;
+			string details;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ValidateTransactionBody, "transaction_id", transactionId, "details", details);
+		};
+
+		struct ValidateTransactionRequest : SendEnvelope<ValidateTransactionBody>
+		{
+			ValidateTransactionRequest(const string& transactionId, const string& details);
 		};
 	}
 }
@@ -27941,7 +28004,7 @@ namespace gamelink
 		};
 
 		/// Returns the URL to connect for the given clientID, stage, projection
-		/// and projection version. This function should be called instead of 
+		/// and projection version. This function should be called instead of
 		/// WebsocketConnectionURL when writing a projection into a different language.
 		///
 		/// @param[in] clientId The extension's client ID.
@@ -27953,11 +28016,12 @@ namespace gamelink
 		/// @param[in] projectionMinor The minor version of this projection.
 		/// @param[in] projectionPatch The patch version of this projection.
 		/// @return Returns the URL to connect to. Returns an empty string on error.
-		string ProjectionWebsocketConnectionURL(
-			const string& clientId,
-			ConnectionStage stage,
-			const string& projection,
-			int projectionMajor, int projectionMinor, int projectionPatch);
+		string ProjectionWebsocketConnectionURL(const string& clientId,
+												ConnectionStage stage,
+												const string& projection,
+												int projectionMajor,
+												int projectionMinor,
+												int projectionPatch);
 
 	}
 
@@ -28200,29 +28264,72 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId UnsubscribeFromAllPurchases();
 
-		/// Sets the OnTwitchPurchaseBits callback. This callback is invoked when twitch purchase
-		/// message is received.
-		/// @remarks The twitch purchase message has been authenticated and deduplicated by the server.
+		/// Sets the OnTransaction callback. This callback is invoked whenever a transaction message
+		/// is received.
+		/// @remarks The purchase message has been authenticated and deduplicated by the server.
 		///          This callback receives all SKUs purchased, so a callback for a specific SKU should
 		///          test the SKU in the callback.
 		///
 		/// @param[in] callback Callback to invoke when a twitch purchase message is received.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnTwitchPurchaseBits.
-		uint32_t OnTwitchPurchaseBits(std::function<void(const schema::TwitchPurchaseBitsResponse<nlohmann::json>&)> callback);
+		/// @return Returns an integer handle to the callback, to be used in DetachOnTransaction.
+		uint32_t OnTransaction(std::function<void(const schema::TransactionResponse&)> callback);
 
-		/// Sets the OnTwitchPurchaseBits callback. This callback is invoked when twitch purchase
+		/// Sets the OnTransaction callback. This callback is invoked when twitch purchase
 		/// message is received.
 		/// See the std::function overload for remarks.
 		///
 		/// @param[in] callback Callback to invoke when a twitch purchase message is received.
 		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnTwitchPurchaseBits.
-		uint32_t OnTwitchPurchaseBits(void (*Callback)(void*, const schema::TwitchPurchaseBitsResponse<nlohmann::json>&), void* ptr);
+		/// @return Returns an integer handle to the callback, to be used in DetachOnTransaction.
+		uint32_t OnTransaction(void (*callback)(void*, const schema::TransactionResponse&), void* ptr);
 
-		/// Detaches an OnTwitchPurchaseBits callback.
+		/// Detaches an OnTransaction callback.
 		///
-		/// @param[in] id A handle obtained from calling OnTwitchPurchaseBits. Invalid handles are ignored.
-		void DetachOnTwitchPurchaseBits(uint32_t id);
+		/// @deprecated
+		/// @param[in] id A handle obtained from calling OnTransaction. Invalid handles are ignored.
+		void DetachOnTransaction(uint32_t id);
+
+		/// Gets a list of unvalidated transactions.
+		///
+		/// @remarks These unvalidated transactions are ordered by purchase time, from the least recent
+		///          to most recent. Returns up to 10 entries at a time.
+		/// @param[in] sku SKU of the transactions to get. Can use '*' to get all SKUs.
+		/// @param[in] callback Callback to invoke after getting the outstanding transactions from the server.
+		/// @return RequestId of the generated request
+		RequestId GetOutstandingTransactions(const string& sku,
+											 std::function<void(const schema::GetOutstandingTransactionsResponse&)> callback);
+
+		/// Gets a list of unvalidated transactions.
+		///
+		/// @remarks These unvalidated transactions are ordered by purchase time, from the least recent
+		///          to most recent. Returns up to 10 entries at a time.
+		/// @param[in] sku SKU of the transactions to get. Can use '*' to get all SKUs.
+		/// @param[in] callback Callback to invoke after getting the outstanding transactions from the server.
+		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
+		/// @return RequestId of the generated request
+		RequestId
+		GetOutstandingTransactions(const string& sku, void (*callback)(void*, const schema::GetOutstandingTransactionsResponse&), void* ptr);
+
+		/// Refunds a transaction by SKU and UserID
+		///
+		/// @param[in] sku The SKU of the transaction to refund.
+		/// @param[in] userId The UserID of the user the transaction is to be refunded to.
+		/// @return RequestId of the generated request
+		RequestId RefundTransactionBySKU(const string& sku, const string& userid);
+
+		/// Refunds a transaction by transaction id and UserID
+		///
+		/// @param[in] txid The Muxy transaction id of the transaction to refund.
+		/// @param[in] userId The UserID of the user the transaction is to be refunded to.
+		/// @return RequestId of the generated request
+		RequestId RefundTransactionByID(const string& txid, const string& userid);
+
+		/// Validates a specific transaction
+		///
+		/// @param[in] txid The Muxy transaction id of the transaction to validate.
+		/// @param[in] details Optional details about this validation.
+		/// @return RequestId of the generated request
+		RequestId ValidateTransaction(const string& txid, const string& details);
 
 		/// Deauths the user from the server. Additional requests will not succeed until another
 		/// successful authentication request is sent.
@@ -28383,7 +28490,7 @@ namespace gamelink
 		/// @param[in] target   Either CONFIG_TARGET_CHANNEL or CONFIG_TARGET_EXTENSION
 		/// @param[in] callback Callback invoked when this get request is responded to.
 		/// @return RequestId of the generated request
-		RequestId GetConfig(const char* target, void (*callback)(void *, const schema::GetConfigResponse&), void*);
+		RequestId GetConfig(const char* target, void (*callback)(void*, const schema::GetConfigResponse&), void*);
 
 		/// Queues a request to get combined cofiguration. This overload attaches a one-shot callback to be
 		/// called when config is received.
@@ -28398,7 +28505,7 @@ namespace gamelink
 		/// @param[in] callback Callback invoked when this get request is responded to.
 		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
 		/// @return RequestId of the generated request
-		RequestId GetCombinedConfig(void (*callback)(void *, const schema::GetCombinedConfigResponse&), void*);
+		RequestId GetCombinedConfig(void (*callback)(void*, const schema::GetCombinedConfigResponse&), void*);
 
 		/// Queues a request to do many JSON Patch operations on the channel config object.
 		/// This will generate a ConfigUpdate event.
@@ -28414,7 +28521,7 @@ namespace gamelink
 		/// @param[in] obj The value to use in the patch operation
 		/// @return RequestId of the generated request
 		template<typename T>
-		RequestId UpdateChannelConfigWithObject(const char * operation, const string& path, const T& obj)
+		RequestId UpdateChannelConfigWithObject(const char* operation, const string& path, const T& obj)
 		{
 			nlohmann::json js = nlohmann::json(obj);
 			return UpdateChannelConfigWithJson(operation, path, js);
@@ -28427,7 +28534,7 @@ namespace gamelink
 		/// @param[in] end Pointer to one past the last element in an array of serializable objects.
 		/// @return RequestId of the generated request
 		template<typename T>
-		RequestId UpdateChannelConfigWithArray(const char * operation, const string& path, const T * begin, const T * end)
+		RequestId UpdateChannelConfigWithArray(const char* operation, const string& path, const T* begin, const T* end)
 		{
 			nlohmann::json js = nlohmann::json::array();
 
@@ -28447,7 +28554,7 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] i The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateChannelConfigWithInteger(const char * operation, const string& path, int64_t i);
+		RequestId UpdateChannelConfigWithInteger(const char* operation, const string& path, int64_t i);
 
 		/// Helper function that will call UpdateChannelConfig with the input double as the value.
 		///
@@ -28455,7 +28562,7 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] d The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateChannelConfigWithDouble(const char * operation, const string& path, double d);
+		RequestId UpdateChannelConfigWithDouble(const char* operation, const string& path, double d);
 
 		/// Helper function that will call UpdateChannelConfig with the input boolean as the value.
 		///
@@ -28463,7 +28570,7 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] b The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateChannelConfigWithBoolean(const char * operation, const string& path, bool b);
+		RequestId UpdateChannelConfigWithBoolean(const char* operation, const string& path, bool b);
 
 		/// Helper function that will call UpdateChannelConfig with the input string as the value.
 		///
@@ -28471,7 +28578,7 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] s The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateChannelConfigWithString(const char * operation, const string& path, const string& s);
+		RequestId UpdateChannelConfigWithString(const char* operation, const string& path, const string& s);
 
 		/// Helper function that will call UpdateChannelConfig with the input json object literal as the value.
 		///
@@ -28479,14 +28586,14 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] js The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateChannelConfigWithLiteral(const char * operation, const string& path, const string& js);
+		RequestId UpdateChannelConfigWithLiteral(const char* operation, const string& path, const string& js);
 
 		/// Helper function that will call UpdateChannelConfig with null as the value.
 		///
 		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
 		/// @param[in] path A JSON Patch path.
 		/// @return RequestId of the generated request
-		RequestId UpdateChannelConfigWithNull(const char * operation, const string& path);
+		RequestId UpdateChannelConfigWithNull(const char* operation, const string& path);
 
 		/// Helper function that will call UpdateChannelConfig the input json object as the value.
 		///
@@ -28494,7 +28601,7 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] js The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateChannelConfigWithJson(const char * operation, const string& path, const nlohmann::json& js);
+		RequestId UpdateChannelConfigWithJson(const char* operation, const string& path, const nlohmann::json& js);
 
 		/// Starts subscribing to configuration updates for a given target.
 		///
@@ -28531,7 +28638,7 @@ namespace gamelink
 		///
 		/// @param[in] callback Callback to invoke when a config update message is received.
 		/// @return Returns an integer handle to the callback, to be used in DetachOnConfigUpdate.
-		uint32_t OnConfigUpdate(std::function<void (const schema::ConfigUpdateResponse&)> callback);
+		uint32_t OnConfigUpdate(std::function<void(const schema::ConfigUpdateResponse&)> callback);
 
 		/// Sets an OnConfigUpdate callback. This callback is invoked when a config update
 		/// message is received.
@@ -28539,8 +28646,8 @@ namespace gamelink
 		/// @param[in] callback Callback to invoke when a config update message is received.
 		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
 		/// @return Returns an integer handle to the callback, to be used in DetachOnConfigUpdate.
-		uint32_t OnConfigUpdate(void (*callback)(void*, const schema::ConfigUpdateResponse&), void * user);
-		
+		uint32_t OnConfigUpdate(void (*callback)(void*, const schema::ConfigUpdateResponse&), void* user);
+
 		/// Detaches an OnConfigUpdate callback.
 		///
 		/// @param[in] id A handle obtained from calling OnConfigUpdate. Invalid handles are ignored.
@@ -28617,7 +28724,7 @@ namespace gamelink
 		/// @param[in] obj The value to use in the patch operation
 		/// @return RequestId of the generated request
 		template<typename T>
-		RequestId UpdateStateWithObject(const char * target, const char * operation, const string& path, const T& obj)
+		RequestId UpdateStateWithObject(const char* target, const char* operation, const string& path, const T& obj)
 		{
 			nlohmann::json js = nlohmann::json(obj);
 			return UpdateStateWithJson(target, operation, path, js);
@@ -28631,7 +28738,7 @@ namespace gamelink
 		/// @param[in] end Pointer to one past the last element in an array of serializable objects.
 		/// @return RequestId of the generated request
 		template<typename T>
-		RequestId UpdateStateWithArray(const char * target, const char * operation, const string& path, const T * begin, const T * end)
+		RequestId UpdateStateWithArray(const char* target, const char* operation, const string& path, const T* begin, const T* end)
 		{
 			nlohmann::json js = nlohmann::json::array();
 
@@ -28652,7 +28759,7 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] i The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateStateWithInteger(const char * target, const char * operation, const string& path, int64_t i);
+		RequestId UpdateStateWithInteger(const char* target, const char* operation, const string& path, int64_t i);
 
 		/// Helper function that will call UpdateState with the input double as the value.
 		///
@@ -28661,7 +28768,7 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] d The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateStateWithDouble(const char * target, const char * operation, const string& path, double d);
+		RequestId UpdateStateWithDouble(const char* target, const char* operation, const string& path, double d);
 
 		/// Helper function that will call UpdateState with a boolean value
 		///
@@ -28670,7 +28777,7 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] b The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateStateWithBoolean(const char * target, const char * operation, const string& path, bool b);
+		RequestId UpdateStateWithBoolean(const char* target, const char* operation, const string& path, bool b);
 
 		/// Helper function that will call UpdateState with the input string as the value.
 		///
@@ -28679,7 +28786,7 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] s The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateStateWithString(const char * target, const char * operation, const string& path, const string& s);
+		RequestId UpdateStateWithString(const char* target, const char* operation, const string& path, const string& s);
 
 		/// Helper function that will call UpdateState with the input json object literal as the value.
 		///
@@ -28688,7 +28795,7 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] js The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateStateWithLiteral(const char * target, const char * operation, const string& path, const string& js);
+		RequestId UpdateStateWithLiteral(const char* target, const char* operation, const string& path, const string& js);
 
 		/// Helper function that will call UpdateState with null as the value.
 		///
@@ -28696,7 +28803,7 @@ namespace gamelink
 		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
 		/// @param[in] path A JSON Patch path.
 		/// @return RequestId of the generated request
-		RequestId UpdateStateWithNull(const char * target, const char * operation, const string& path);
+		RequestId UpdateStateWithNull(const char* target, const char* operation, const string& path);
 
 		/// Helper function that will call UpdateState the input json object as the value.
 		///
@@ -28705,7 +28812,7 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] js The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateStateWithJson(const char * target, const char * operation, const string& path, const nlohmann::json& js);
+		RequestId UpdateStateWithJson(const char* target, const char* operation, const string& path, const nlohmann::json& js);
 
 		/// Starts subscribing to state updates for the given target.
 		/// Updates come through the OnStateUpdate callback
@@ -28770,6 +28877,7 @@ namespace gamelink
 		///
 		/// @param[in] id A handle obtained from calling OnDatastream. Invalid handles are ignored.
 		void DetachOnDatastream(uint32_t);
+
 	private:
 		void debugLogPayload(const Payload*);
 
@@ -28814,13 +28922,15 @@ namespace gamelink
 		detail::CallbackCollection<schema::AuthenticateResponse, 2> _onAuthenticate;
 		detail::CallbackCollection<schema::SubscribeStateUpdateResponse<nlohmann::json>, 3> _onStateUpdate;
 		detail::CallbackCollection<schema::GetStateResponse<nlohmann::json>, 4> _onGetState;
-		detail::CallbackCollection<schema::TwitchPurchaseBitsResponse<nlohmann::json>, 5> _onTwitchPurchaseBits;
+		detail::CallbackCollection<schema::TransactionResponse, 5> _onTransaction;
 		detail::CallbackCollection<schema::GetPollResponse, 6> _onGetPoll;
 		detail::CallbackCollection<schema::DatastreamUpdate, 7> _onDatastreamUpdate;
 
 		detail::CallbackCollection<schema::GetConfigResponse, 8> _onGetConfig;
 		detail::CallbackCollection<schema::GetCombinedConfigResponse, 9> _onGetCombinedConfig;
 		detail::CallbackCollection<schema::ConfigUpdateResponse, 10> _onConfigUpdate;
+
+		detail::CallbackCollection<schema::GetOutstandingTransactionsResponse, 11> _onGetOutstandingTransactions;
 	};
 }
 
@@ -29137,22 +29247,53 @@ namespace gamelink
 
 namespace gamelink
 {
-    namespace schema
-    {
-        SubscribeTransactionsRequest::SubscribeTransactionsRequest(const string& SKU)
-        {
-            action = string("subscribe");
-            params.target = string("twitchPurchaseBits");
-            data.sku = SKU;
-        }
+	namespace schema
+	{
+		SubscribeTransactionsRequest::SubscribeTransactionsRequest(const string& SKU)
+		{
+			action = string("subscribe");
+			params.target = string("twitchPurchaseBits");
+			data.sku = SKU;
+		}
 
-        UnsubscribeTransactionsRequest::UnsubscribeTransactionsRequest(const string& SKU)
-        {
-            action = string("unsubscribe");
-            params.target = string("twitchPurchaseBits");
-            data.sku = SKU;
-        }
-    }
+		UnsubscribeTransactionsRequest::UnsubscribeTransactionsRequest(const string& SKU)
+		{
+			action = string("unsubscribe");
+			params.target = string("twitchPurchaseBits");
+			data.sku = SKU;
+		}
+
+		GetOutstandingTransactionsRequest::GetOutstandingTransactionsRequest(const string& sku)
+		{
+			action = string("get");
+			params.target = string("transaction");
+			data.sku = sku;
+		}
+
+		RefundTransactionRequest::RefundTransactionRequest(const string& transactionId, const string& userId)
+		{
+			action = string("refund");
+			params.target = string("transaction");
+			data.transactionId = string(transactionId);
+			data.userId = string(userId);
+		}
+
+		RefundTransactionBySKURequest::RefundTransactionBySKURequest(const string& sku, const string& userId)
+		{
+			action = string("refund");
+			params.target = string("transaction");
+			data.SKU = string(sku);
+			data.userId = string(userId);
+		}
+
+		ValidateTransactionRequest::ValidateTransactionRequest(const string& transactionId, const string& details)
+		{
+			action = string("validate");
+			params.target = string("transaction");
+			data.transactionId = string(transactionId);
+			data.details = string(details);
+		}
+	}
 }
 
 
@@ -29505,6 +29646,16 @@ namespace gamelink
 					}
 				}
 			}
+			else if (env.meta.target == "transaction")
+			{
+				schema::GetOutstandingTransactionsResponse resp;
+				success = schema::ParseResponse(bytes, length, resp);
+
+				if (success)
+				{
+					_onGetOutstandingTransactions.invoke(resp);
+				}
+			}
 		}
 		else if (env.meta.action == "update")
 		{
@@ -29528,13 +29679,13 @@ namespace gamelink
 					_onStateUpdate.invoke(resp);
 				}
 			}
-			else if (env.meta.target == "twitchPurchaseBits")
+			else if (env.meta.target == "twitchPurchaseBits" || env.meta.target == "transaction")
 			{
-				schema::TwitchPurchaseBitsResponse<nlohmann::json> resp;
+				schema::TransactionResponse resp;
 				success = schema::ParseResponse(bytes, length, resp);
 				if (success)
 				{
-					_onTwitchPurchaseBits.invoke(resp);
+					_onTransaction.invoke(resp);
 				}
 			}
 			else if (env.meta.target == "datastream")
@@ -30027,26 +30178,62 @@ namespace gamelink
 		return UnsubscribeFromSKU("*");
 	}
 
-	uint32_t SDK::OnTwitchPurchaseBits(std::function<void(const schema::TwitchPurchaseBitsResponse<nlohmann::json>&)> callback)
+	uint32_t SDK::OnTransaction(std::function<void(const schema::TransactionResponse&)> callback)
 	{
-		return _onTwitchPurchaseBits.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		return _onTransaction.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
 	}
 
-	uint32_t SDK::OnTwitchPurchaseBits(void (*callback)(void*, const schema::TwitchPurchaseBitsResponse<nlohmann::json>&), void* ptr)
+	uint32_t SDK::OnTransaction(void (*callback)(void*, const schema::TransactionResponse&), void* ptr)
 	{
-		return _onTwitchPurchaseBits.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		return _onTransaction.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
 	}
 
-	void SDK::DetachOnTwitchPurchaseBits(uint32_t id)
+	void SDK::DetachOnTransaction(uint32_t id)
 	{
-		if (_onTwitchPurchaseBits.validateId(id))
+		if (_onTransaction.validateId(id))
 		{
-			_onTwitchPurchaseBits.remove(id);
+			_onTransaction.remove(id);
 		}
 		else
 		{
-			_onDebugMessage.invoke("Invalid ID passed into DetachOnTwitchPurchaseBits");
+			_onDebugMessage.invoke("Invalid ID passed into DetachOnTransaction");
 		}
+	}
+
+	RequestId SDK::GetOutstandingTransactions(const string& sku, std::function<void (const schema::GetOutstandingTransactionsResponse&)> callback)
+	{
+		schema::GetOutstandingTransactionsRequest payload(sku);
+		RequestId id = queuePayload(payload);
+
+		_onGetOutstandingTransactions.set(callback, id, detail::CALLBACK_ONESHOT);
+		return id;
+	}
+
+	RequestId SDK::GetOutstandingTransactions(const string& sku, void (*callback)(void*, const schema::GetOutstandingTransactionsResponse&), void* ptr)
+	{
+		schema::GetOutstandingTransactionsRequest payload(sku);
+		RequestId id = queuePayload(payload);
+
+		_onGetOutstandingTransactions.set(callback, ptr, id, detail::CALLBACK_ONESHOT);
+		return id;
+	}
+
+	RequestId SDK::RefundTransactionBySKU(const string& sku, const string& userid)
+	{
+		schema::RefundTransactionBySKURequest payload(sku, userid);
+		return queuePayload(payload);
+	}
+
+	RequestId SDK::RefundTransactionByID(const string& txid, const string& userid)
+	{
+		schema::RefundTransactionRequest payload(txid, userid);
+		return queuePayload(payload);
+	}
+
+	RequestId SDK::ValidateTransaction(const string& txid, const string& details)
+	{
+		schema::ValidateTransactionRequest payload(txid, details);
+		return queuePayload(payload);
 	}
 }
 

@@ -89,7 +89,7 @@ extern "C"
 	typedef struct
 	{
 		const void* Obj;
-	} MGL_Schema_TwitchPurchaseBitsResponse;
+	} MGL_Schema_TransactionResponse;
 
 	typedef struct 
 	{
@@ -107,7 +107,7 @@ extern "C"
 	typedef void (*MGL_AuthenticateResponseCallback)(void* UserData, MGL_Schema_AuthenticateResponse AuthResp);
 	typedef void (*MGL_PayloadCallback)(void* UserData, MGL_Payload Payload);
 	typedef void (*MGL_DatastreamUpdateCallback)(void* UserData, MGL_Schema_DatastreamUpdate DatastreamUpdate);
-	typedef void (*MGL_TwitchPurchaseBitsResponseCallback)(void* UserData, MGL_Schema_TwitchPurchaseBitsResponse TPBResp);
+	typedef void (*MGL_TransactionResponseCallback)(void* UserData, MGL_Schema_TransactionResponse TPBResp);
 	typedef void (*MGL_GetPollResponseCallback)(void* UserData, MGL_Schema_GetPollResponse GPResp);
 	typedef void (*MGL_PollUpdateResponseCallback)(void* UserData, MGL_Schema_PollUpdateResponse PUResp);
 	typedef void (*MGL_StateResponseCallback)(void* UserData, MGL_Schema_StateResponse StateResp);
@@ -285,23 +285,23 @@ extern "C"
 	/*
 		Purchase and SKU functions.
 
-		The lifetime of a MGL_Schema_TwitchPurchaseBitsResponse ends when the callback returns.
+		The lifetime of a MGL_Schema_TransactionResponse ends when the callback returns.
 	*/
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_SubscribeToSKU(MuxyGameLink GameLink, const char* SKU);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UnsubscribeFromSKU(MuxyGameLink GameLink, const char* SKU);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_SubscribeToAllPurchases(MuxyGameLink GameLink);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UnsubscribeFromAllPurchases(MuxyGameLink GameLink);
-	MUXY_CLIB_API uint32_t MuxyGameLink_OnTwitchPurchaseBits(MuxyGameLink GameLink, MGL_TwitchPurchaseBitsResponseCallback Callback, void* UserData);
-	MUXY_CLIB_API void MuxyGameLink_DetachOnTwitchPurchaseBits(MuxyGameLink GameLink, uint32_t id);
+	MUXY_CLIB_API uint32_t MuxyGameLink_OnTransaction(MuxyGameLink GameLink, MGL_TransactionResponseCallback Callback, void* UserData);
+	MUXY_CLIB_API void MuxyGameLink_DetachOnTransaction(MuxyGameLink GameLink, uint32_t id);
 
-	MUXY_CLIB_API const char* MuxyGameLink_Schema_TwitchPurchaseBits_GetId(MGL_Schema_TwitchPurchaseBitsResponse TPBResp);
-	MUXY_CLIB_API const char* MuxyGameLink_Schema_TwitchPurchaseBits_GetSKU(MGL_Schema_TwitchPurchaseBitsResponse TPBResp);
-	MUXY_CLIB_API const char* MuxyGameLink_Schema_TwitchPurchaseBits_GetDisplayName(MGL_Schema_TwitchPurchaseBitsResponse TPBResp);
-	MUXY_CLIB_API const char* MuxyGameLink_Schema_TwitchPurchaseBits_GetUserId(MGL_Schema_TwitchPurchaseBitsResponse TPBResp);
-	MUXY_CLIB_API const char* MuxyGameLink_Schema_TwitchPurchaseBits_GetUserName(MGL_Schema_TwitchPurchaseBitsResponse TPBResp);
-	MUXY_CLIB_API int32_t MuxyGameLink_Schema_TwitchPurchaseBits_GetCost(MGL_Schema_TwitchPurchaseBitsResponse TPBResp);
-	MUXY_CLIB_API int64_t MuxyGameLink_Schema_TwitchPurchaseBits_GetTimestamp(MGL_Schema_TwitchPurchaseBitsResponse TPBResp);
-	MUXY_CLIB_API MGL_String MuxyGameLink_Schema_TwitchPurchaseBits_GetJson(MGL_Schema_TwitchPurchaseBitsResponse TPBResp);
+	MUXY_CLIB_API const char* MuxyGameLink_Schema_Transaction_GetId(MGL_Schema_TransactionResponse TPBResp);
+	MUXY_CLIB_API const char* MuxyGameLink_Schema_Transaction_GetSKU(MGL_Schema_TransactionResponse TPBResp);
+	MUXY_CLIB_API const char* MuxyGameLink_Schema_Transaction_GetDisplayName(MGL_Schema_TransactionResponse TPBResp);
+	MUXY_CLIB_API const char* MuxyGameLink_Schema_Transaction_GetUserId(MGL_Schema_TransactionResponse TPBResp);
+	MUXY_CLIB_API const char* MuxyGameLink_Schema_Transaction_GetUserName(MGL_Schema_TransactionResponse TPBResp);
+	MUXY_CLIB_API int32_t MuxyGameLink_Schema_Transaction_GetCost(MGL_Schema_TransactionResponse TPBResp);
+	MUXY_CLIB_API int64_t MuxyGameLink_Schema_Transaction_GetTimestamp(MGL_Schema_TransactionResponse TPBResp);
+	MUXY_CLIB_API MGL_String MuxyGameLink_Schema_Transaction_GetJson(MGL_Schema_TransactionResponse TPBResp);
 
 	/*
 		Polling functions

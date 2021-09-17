@@ -507,29 +507,72 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId UnsubscribeFromAllPurchases();
 
-		/// Sets the OnTwitchPurchaseBits callback. This callback is invoked when twitch purchase
-		/// message is received.
-		/// @remarks The twitch purchase message has been authenticated and deduplicated by the server.
+		/// Sets the OnTransaction callback. This callback is invoked whenever a transaction message
+		/// is received.
+		/// @remarks The purchase message has been authenticated and deduplicated by the server.
 		///          This callback receives all SKUs purchased, so a callback for a specific SKU should
 		///          test the SKU in the callback.
 		///
 		/// @param[in] callback Callback to invoke when a twitch purchase message is received.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnTwitchPurchaseBits.
-		uint32_t OnTwitchPurchaseBits(std::function<void(const schema::TwitchPurchaseBitsResponse<nlohmann::json>&)> callback);
+		/// @return Returns an integer handle to the callback, to be used in DetachOnTransaction.
+		uint32_t OnTransaction(std::function<void(const schema::TransactionResponse&)> callback);
 
-		/// Sets the OnTwitchPurchaseBits callback. This callback is invoked when twitch purchase
+		/// Sets the OnTransaction callback. This callback is invoked when twitch purchase
 		/// message is received.
 		/// See the std::function overload for remarks.
 		///
 		/// @param[in] callback Callback to invoke when a twitch purchase message is received.
 		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnTwitchPurchaseBits.
-		uint32_t OnTwitchPurchaseBits(void (*Callback)(void*, const schema::TwitchPurchaseBitsResponse<nlohmann::json>&), void* ptr);
+		/// @return Returns an integer handle to the callback, to be used in DetachOnTransaction.
+		uint32_t OnTransaction(void (*callback)(void*, const schema::TransactionResponse&), void* ptr);
 
-		/// Detaches an OnTwitchPurchaseBits callback.
+		/// Detaches an OnTransaction callback.
 		///
-		/// @param[in] id A handle obtained from calling OnTwitchPurchaseBits. Invalid handles are ignored.
-		void DetachOnTwitchPurchaseBits(uint32_t id);
+		/// @deprecated
+		/// @param[in] id A handle obtained from calling OnTransaction. Invalid handles are ignored.
+		void DetachOnTransaction(uint32_t id);
+
+		/// Gets a list of unvalidated transactions.
+		///
+		/// @remarks These unvalidated transactions are ordered by purchase time, from the least recent
+		///          to most recent. Returns up to 10 entries at a time.
+		/// @param[in] sku SKU of the transactions to get. Can use '*' to get all SKUs.
+		/// @param[in] callback Callback to invoke after getting the outstanding transactions from the server.
+		/// @return RequestId of the generated request
+		RequestId GetOutstandingTransactions(const string& sku,
+											 std::function<void(const schema::GetOutstandingTransactionsResponse&)> callback);
+
+		/// Gets a list of unvalidated transactions.
+		///
+		/// @remarks These unvalidated transactions are ordered by purchase time, from the least recent
+		///          to most recent. Returns up to 10 entries at a time.
+		/// @param[in] sku SKU of the transactions to get. Can use '*' to get all SKUs.
+		/// @param[in] callback Callback to invoke after getting the outstanding transactions from the server.
+		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
+		/// @return RequestId of the generated request
+		RequestId
+		GetOutstandingTransactions(const string& sku, void (*callback)(void*, const schema::GetOutstandingTransactionsResponse&), void* ptr);
+
+		/// Refunds a transaction by SKU and UserID
+		///
+		/// @param[in] sku The SKU of the transaction to refund.
+		/// @param[in] userId The UserID of the user the transaction is to be refunded to.
+		/// @return RequestId of the generated request
+		RequestId RefundTransactionBySKU(const string& sku, const string& userid);
+
+		/// Refunds a transaction by transaction id and UserID
+		///
+		/// @param[in] txid The Muxy transaction id of the transaction to refund.
+		/// @param[in] userId The UserID of the user the transaction is to be refunded to.
+		/// @return RequestId of the generated request
+		RequestId RefundTransactionByID(const string& txid, const string& userid);
+
+		/// Validates a specific transaction
+		///
+		/// @param[in] txid The Muxy transaction id of the transaction to validate.
+		/// @param[in] details Optional details about this validation.
+		/// @return RequestId of the generated request
+		RequestId ValidateTransaction(const string& txid, const string& details);
 
 		/// Deauths the user from the server. Additional requests will not succeed until another
 		/// successful authentication request is sent.
@@ -1128,13 +1171,15 @@ namespace gamelink
 		detail::CallbackCollection<schema::AuthenticateResponse, 2> _onAuthenticate;
 		detail::CallbackCollection<schema::SubscribeStateUpdateResponse<nlohmann::json>, 3> _onStateUpdate;
 		detail::CallbackCollection<schema::GetStateResponse<nlohmann::json>, 4> _onGetState;
-		detail::CallbackCollection<schema::TwitchPurchaseBitsResponse<nlohmann::json>, 5> _onTwitchPurchaseBits;
+		detail::CallbackCollection<schema::TransactionResponse, 5> _onTransaction;
 		detail::CallbackCollection<schema::GetPollResponse, 6> _onGetPoll;
 		detail::CallbackCollection<schema::DatastreamUpdate, 7> _onDatastreamUpdate;
 
 		detail::CallbackCollection<schema::GetConfigResponse, 8> _onGetConfig;
 		detail::CallbackCollection<schema::GetCombinedConfigResponse, 9> _onGetCombinedConfig;
 		detail::CallbackCollection<schema::ConfigUpdateResponse, 10> _onConfigUpdate;
+
+		detail::CallbackCollection<schema::GetOutstandingTransactionsResponse, 11> _onGetOutstandingTransactions;
 	};
 }
 

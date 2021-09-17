@@ -313,6 +313,16 @@ namespace gamelink
 					}
 				}
 			}
+			else if (env.meta.target == "transaction")
+			{
+				schema::GetOutstandingTransactionsResponse resp;
+				success = schema::ParseResponse(bytes, length, resp);
+
+				if (success)
+				{
+					_onGetOutstandingTransactions.invoke(resp);
+				}
+			}
 		}
 		else if (env.meta.action == "update")
 		{
@@ -336,13 +346,13 @@ namespace gamelink
 					_onStateUpdate.invoke(resp);
 				}
 			}
-			else if (env.meta.target == "twitchPurchaseBits")
+			else if (env.meta.target == "twitchPurchaseBits" || env.meta.target == "transaction")
 			{
-				schema::TwitchPurchaseBitsResponse<nlohmann::json> resp;
+				schema::TransactionResponse resp;
 				success = schema::ParseResponse(bytes, length, resp);
 				if (success)
 				{
-					_onTwitchPurchaseBits.invoke(resp);
+					_onTransaction.invoke(resp);
 				}
 			}
 			else if (env.meta.target == "datastream")

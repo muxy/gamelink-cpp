@@ -8,11 +8,13 @@ namespace gamelink
 {
 	namespace schema
 	{
-		template<typename T>
-		struct TwitchPurchaseBitsResponseBody
+		struct Transaction
 		{
-			/// The ID of the purchase, unique for each unique purchase
-            string id;
+			/// The External ID of the purchase, unique for each unique purchase, and service dependent.
+			string id;
+
+			/// The Muxy ID of this transaction. Used to make additional calls regarding this purchase.
+			string muxyId;
 
 			/// SKU of the item
 			string sku;
@@ -30,14 +32,16 @@ namespace gamelink
 			int cost;
 
 			/// Millisecond unix timestamp of the purchase.
-            int64_t timestamp;
+			int64_t timestamp;
 
 			/// Arbitrary additional data, added by the extension to this purchase receipt.
-			T additional;
+			nlohmann::json additional;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_8(TwitchPurchaseBitsResponseBody,
-												"id", 
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_9(Transaction,
+												"id",
 												id,
+												"muxy_id",
+												muxyId,
 												"sku",
 												sku,
 												"displayName",
@@ -46,19 +50,39 @@ namespace gamelink
 												userId,
 												"username",
 												userName,
-												"cost", 
-												cost, 
-												"timestamp", 
+												"cost",
+												cost,
+												"timestamp",
 												timestamp,
 												"additional",
 												additional);
 		};
 
-		template<typename T>
-		struct TwitchPurchaseBitsResponse : ReceiveEnvelope<TwitchPurchaseBitsResponseBody<T>>
+		struct TransactionResponse : ReceiveEnvelope<Transaction>
 		{
 		};
 
+		struct GetOutsandingTransactionsRequestBody
+		{
+			string sku;
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(GetOutsandingTransactionsRequestBody, "sku", sku);
+		};
+
+		struct GetOutstandingTransactionsRequest : SendEnvelope<GetOutsandingTransactionsRequestBody>
+		{
+			explicit GetOutstandingTransactionsRequest(const string& sku);
+		};
+
+		struct GetOutstandingTransactionsResponseBody
+		{
+			std::vector<Transaction> transactions;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(GetOutstandingTransactionsResponseBody, "transactions", transactions);
+		};
+
+		struct GetOutstandingTransactionsResponse : ReceiveEnvelope<GetOutstandingTransactionsResponseBody>
+		{
+		};
 
 		struct SubscribePurchaseRequestBody
 		{
@@ -73,7 +97,7 @@ namespace gamelink
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(UnsubscribePurchaseRequestBody, "sku", sku);
 		};
-		
+
 		struct SubscribeTransactionsRequest : SendEnvelope<SubscribePurchaseRequestBody>
 		{
 			/// Creates a SubscribeTransactionsRequest
@@ -84,6 +108,45 @@ namespace gamelink
 		{
 			/// Creates an UnsubscribeTransactionsRequest
 			explicit UnsubscribeTransactionsRequest(const string& SKU);
+		};
+
+		struct RefundTransactionBody
+		{
+			string transactionId;
+			string userId;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(RefundTransactionBody, "transaction_id", transactionId, "user_id", userId);
+		};
+
+		struct RefundTransactionRequest : SendEnvelope<RefundTransactionBody>
+		{
+			RefundTransactionRequest(const string& transactionId, const string& userId);
+		};
+
+		struct RefundTransactionBySKUBody
+		{
+			string SKU;
+			string userId;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(RefundTransactionBySKUBody, "sku", SKU, "user_id", userId);
+		};
+
+		struct RefundTransactionBySKURequest : SendEnvelope<RefundTransactionBySKUBody>
+		{
+			RefundTransactionBySKURequest(const string& sku, const string& userId);
+		};
+
+		struct ValidateTransactionBody
+		{
+			string transactionId;
+			string details;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ValidateTransactionBody, "transaction_id", transactionId, "details", details);
+		};
+
+		struct ValidateTransactionRequest : SendEnvelope<ValidateTransactionBody>
+		{
+			ValidateTransactionRequest(const string& transactionId, const string& details);
 		};
 	}
 }
