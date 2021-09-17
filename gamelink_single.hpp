@@ -28571,6 +28571,13 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId SetState(const char* target, const nlohmann::json& value);
 
+		/// Queues a request to replace the entirety of state the empty object {}
+		/// This will generate a StateUpdate subscription event.
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @return RequestId of the generated request
+		RequestId ClearState(const char* target);
+
 		/// Queues a request to get state.
 		///
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
@@ -30072,6 +30079,11 @@ namespace gamelink
 	{
 		schema::SetStateRequest<nlohmann::json> payload(target, value);
 		return queuePayload(payload);
+	}
+
+	RequestId SDK::ClearState(const char* target) 
+	{
+		return SetState(target, nlohmann::json::object());
 	}
 
 	RequestId SDK::GetState(const char* target)
