@@ -30,13 +30,13 @@ namespace gamelink
 		struct SubscribeDatastreamRequest : SendEnvelope<SubscribeTopicRequestBody>
 		{
 			/// Creates a SubscribeDatastreamRequest
-			explicit SubscribeDatastreamRequest();
+			SubscribeDatastreamRequest();
 		};
 
 		struct UnsubscribeDatastreamRequest : SendEnvelope<UnsubscribeTopicRequestBody>
 		{
 			/// Creates an UnsubscribeDatastreamRequest
-			explicit UnsubscribeDatastreamRequest();
+			UnsubscribeDatastreamRequest();
 		};
 	}
 }

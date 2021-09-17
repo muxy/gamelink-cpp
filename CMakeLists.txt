@@ -69,13 +69,15 @@ if(LIB_WEBSOCKETS_INCLUDE_DIRS)
     add_subdirectory("examples/02-voting")
     add_subdirectory("examples/03-state")
     add_subdirectory("examples/04-broadcast")
+	add_subdirectory("examples/05-transaction")
 
     add_custom_target(examples ALL)
     add_dependencies(authenticate amalgam)
     add_dependencies(voting amalgam)
     add_dependencies(state amalgam)
     add_dependencies(broadcast amalgam)
-    add_dependencies(examples authenticate voting state broadcast)
+    add_dependencies(transaction amalgam)
+    add_dependencies(examples authenticate voting state broadcast transaction)
 endif()
 
 # Documentation

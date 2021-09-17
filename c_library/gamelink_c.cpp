@@ -330,12 +330,12 @@ MGL_RequestId MuxyGameLink_UnsubscribeFromAllPurchases(MuxyGameLink GameLink)
     return SDK->UnsubscribeFromAllPurchases();
 }
 
-uint32_t MuxyGameLink_OnTwitchPurchaseBits(MuxyGameLink GameLink, MGL_TwitchPurchaseBitsResponseCallback Callback, void* UserData)
+uint32_t MuxyGameLink_OnTransaction(MuxyGameLink GameLink, MGL_TransactionResponseCallback Callback, void* UserData)
 {
     gamelink::SDK *SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-    uint32_t res = SDK->OnTwitchPurchaseBits([Callback, UserData](const gamelink::schema::TwitchPurchaseBitsResponse<nlohmann::json> &TPBResp)
+    uint32_t res = SDK->OnTransaction([Callback, UserData](const gamelink::schema::TransactionResponse &TPBResp)
     {
-        MGL_Schema_TwitchPurchaseBitsResponse WTPBResp;
+        MGL_Schema_TransactionResponse WTPBResp;
         WTPBResp.Obj = &TPBResp;
 
         Callback(UserData, WTPBResp);
@@ -344,57 +344,57 @@ uint32_t MuxyGameLink_OnTwitchPurchaseBits(MuxyGameLink GameLink, MGL_TwitchPurc
     return res;
 }
 
-void MuxyGameLink_DetachOnTwitchPurchaseBits(MuxyGameLink GameLink, uint32_t id)
+void MuxyGameLink_DetachOnTransaction(MuxyGameLink GameLink, uint32_t id)
 {
     gamelink::SDK *SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-    SDK->DetachOnTwitchPurchaseBits(id);
+    SDK->DetachOnTransaction(id);
 }
 
-const char* MuxyGameLink_Schema_TwitchPurchaseBits_GetId(MGL_Schema_TwitchPurchaseBitsResponse TPBResp)
+const char* MuxyGameLink_Schema_Transaction_GetId(MGL_Schema_TransactionResponse TPBResp)
 {
-    const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB = static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
-    return TPB->id.c_str();
+    const gamelink::schema::TransactionResponse* TPB = static_cast<const gamelink::schema::TransactionResponse*>(TPBResp.Obj);
+    return TPB->data.id.c_str();
 }
 
-const char* MuxyGameLink_Schema_TwitchPurchaseBits_GetSKU(MGL_Schema_TwitchPurchaseBitsResponse TPBResp)
+const char* MuxyGameLink_Schema_Transaction_GetSKU(MGL_Schema_TransactionResponse TPBResp)
 {
-    const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB = static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
-    return TPB->sku.c_str();
+    const gamelink::schema::TransactionResponse* TPB = static_cast<const gamelink::schema::TransactionResponse*>(TPBResp.Obj);
+    return TPB->data.sku.c_str();
 }
 
-const char* MuxyGameLink_Schema_TwitchPurchaseBits_GetDisplayName(MGL_Schema_TwitchPurchaseBitsResponse TPBResp)
+const char* MuxyGameLink_Schema_Transaction_GetDisplayName(MGL_Schema_TransactionResponse TPBResp)
 {
-    const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB = static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
-    return TPB->displayName.c_str();
+    const gamelink::schema::TransactionResponse* TPB = static_cast<const gamelink::schema::TransactionResponse*>(TPBResp.Obj);
+    return TPB->data.displayName.c_str();
 }
 
-const char* MuxyGameLink_Schema_TwitchPurchaseBits_GetUserId(MGL_Schema_TwitchPurchaseBitsResponse TPBResp)
+const char* MuxyGameLink_Schema_Transaction_GetUserId(MGL_Schema_TransactionResponse TPBResp)
 {
-    const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB = static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
-    return TPB->userId.c_str();
+    const gamelink::schema::TransactionResponse* TPB = static_cast<const gamelink::schema::TransactionResponse*>(TPBResp.Obj);
+    return TPB->data.userId.c_str();
 }
 
-const char* MuxyGameLink_Schema_TwitchPurchaseBits_GetUserName(MGL_Schema_TwitchPurchaseBitsResponse TPBResp)
+const char* MuxyGameLink_Schema_Transaction_GetUserName(MGL_Schema_TransactionResponse TPBResp)
 {
-    const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB = static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
-    return TPB->userName.c_str();
+    const gamelink::schema::TransactionResponse* TPB = static_cast<const gamelink::schema::TransactionResponse*>(TPBResp.Obj);
+    return TPB->data.userName.c_str();
 }
 
-int32_t MuxyGameLink_Schema_TwitchPurchaseBits_GetCost(MGL_Schema_TwitchPurchaseBitsResponse TPBResp)
+int32_t MuxyGameLink_Schema_Transaction_GetCost(MGL_Schema_TransactionResponse TPBResp)
 {
-    const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB = static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
-    return TPB->cost;
+    const gamelink::schema::TransactionResponse* TPB = static_cast<const gamelink::schema::TransactionResponse*>(TPBResp.Obj);
+    return TPB->data.cost;
 }
 
-int64_t MuxyGameLink_Schema_TwitchPurchaseBits_GetTimestamp(MGL_Schema_TwitchPurchaseBitsResponse TPBResp)
+int64_t MuxyGameLink_Schema_Transaction_GetTimestamp(MGL_Schema_TransactionResponse TPBResp)
 {
-    const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB = static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
-    return TPB->timestamp;
+    const gamelink::schema::TransactionResponse* TPB = static_cast<const gamelink::schema::TransactionResponse*>(TPBResp.Obj);
+    return TPB->data.timestamp;
 }
 
-MGL_String MuxyGameLink_Schema_TwitchPurchaseBits_GetJson(MGL_Schema_TwitchPurchaseBitsResponse TPBResp)
+MGL_String MuxyGameLink_Schema_Transaction_GetJson(MGL_Schema_TransactionResponse TPBResp)
 {
-    const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>* TPB = static_cast<const gamelink::schema::TwitchPurchaseBitsResponseBody<nlohmann::json>*>(TPBResp.Obj);
-    return MuxyGameLink_StrDup(TPB->additional.dump().c_str());
+    const gamelink::schema::TransactionResponse* TPB = static_cast<const gamelink::schema::TransactionResponse*>(TPBResp.Obj);
+    return MuxyGameLink_StrDup(TPB->data.additional.dump().c_str());
 }
 

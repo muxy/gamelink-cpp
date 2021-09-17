@@ -5,7 +5,7 @@
 
 TEST_CASE("Purchase deserialization", "[purchase][deserialization]")
 {
-	gamelink::schema::TwitchPurchaseBitsResponse<nlohmann::json> resp;
+	gamelink::schema::TransactionResponse resp;
 
 	Deserialize(R"({
 		"meta": {
@@ -15,6 +15,7 @@ TEST_CASE("Purchase deserialization", "[purchase][deserialization]")
 		},
 		"data": {
 			"id": "123-512-abwe",
+			"muxy_id": "abc",
 			"sku": "test-sku",
 			"displayName": "Test User",
 			"userId": "12345",
@@ -31,6 +32,7 @@ TEST_CASE("Purchase deserialization", "[purchase][deserialization]")
 	REQUIRE(resp.meta.target == "twitchBitsPurchase");
 
 	REQUIRE(resp.data.sku == "test-sku");
+	REQUIRE(resp.data.muxyId == "abc");
 	REQUIRE(resp.data.displayName == "Test User");
 	REQUIRE(resp.data.userId == "12345");
 	REQUIRE(resp.data.userName == "test-user");
@@ -51,6 +53,7 @@ TEST_CASE("SDK Twitch Bits Purchase Response", "[sdk][purchase][twitch]")
 		"data": {
 			"id": "123-512-abwe",
 			"sku": "test-sku",
+			"muxy_id": "abc",
 			"displayName": "Test User",
 			"userId": "12345",
 			"cost": 42, 
@@ -60,7 +63,7 @@ TEST_CASE("SDK Twitch Bits Purchase Response", "[sdk][purchase][twitch]")
 		}
 	})";
 
-	sdk.OnTwitchPurchaseBits([&](gamelink::schema::TwitchPurchaseBitsResponse<nlohmann::json> resp) {
+	sdk.OnTransaction([&](gamelink::schema::TransactionResponse resp) {
 		received = true;
 		SerializeEqual(resp, json);
 	});

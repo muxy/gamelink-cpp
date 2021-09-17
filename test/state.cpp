@@ -242,7 +242,7 @@ TEST_CASE("SDK State Creation", "[sdk][state]")
             }, 
             "params":{
                 "request_id":65535,
-                "target":"state"\\
+                "target":"state"
             }
         })"));
 	});
