@@ -91,6 +91,11 @@ extern "C"
 		const void* Obj;
 	} MGL_Schema_TransactionResponse;
 
+	typedef struct
+	{
+		const void* Obj;
+	} MGL_Schema_GetOutstandingTransactionsResponse;
+
 	typedef struct 
 	{
 		const void* Obj;
@@ -109,6 +114,7 @@ extern "C"
 	typedef void (*MGL_DatastreamUpdateCallback)(void* UserData, MGL_Schema_DatastreamUpdate DatastreamUpdate);
 	typedef void (*MGL_TransactionResponseCallback)(void* UserData, MGL_Schema_TransactionResponse TPBResp);
 	typedef void (*MGL_GetPollResponseCallback)(void* UserData, MGL_Schema_GetPollResponse GPResp);
+	typedef void (*MGL_GetOutstandingTransactionsResponseCallback)(void* UserData, MGL_Schema_GetOutstandingTransactionsResponse GOTResp);
 	typedef void (*MGL_PollUpdateResponseCallback)(void* UserData, MGL_Schema_PollUpdateResponse PUResp);
 	typedef void (*MGL_StateResponseCallback)(void* UserData, MGL_Schema_StateResponse StateResp);
 	typedef void (*MGL_StateUpdateResponseCallback)(void* UserData, MGL_Schema_StateUpdateResponse StateResp);
@@ -303,6 +309,12 @@ extern "C"
 	MUXY_CLIB_API int64_t MuxyGameLink_Schema_Transaction_GetTimestamp(MGL_Schema_TransactionResponse TPBResp);
 	MUXY_CLIB_API MGL_String MuxyGameLink_Schema_Transaction_GetJson(MGL_Schema_TransactionResponse TPBResp);
 
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_GetOutstandingTransactions(MuxyGameLink GameLink, const char *SKU, MGL_GetOutstandingTransactionsResponseCallback Callback, void *UserData);
+	MUXY_CLIB_API uint32_t MuxyGameLink_Schema_GetOutstandingTransactions_GetTransactionCount(MGL_Schema_GetOutstandingTransactionsResponse Resp);
+	MUXY_CLIB_API MGL_Schema_TransactionResponse MuxyGameLink_Schema_GetOutstandingTransactions_GetTransactionAt(MGL_Schema_GetOutstandingTransactionsResponse Resp, uint32_t Index);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_RefundTransactionBySKU(MuxyGameLink GameLink, const char *SKU, const char *UserId);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_RefundTransactionByID(MuxyGameLink GameLink, const char *TxId, const char *UserId);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_ValidateTransaction(MuxyGameLink GameLink, const char *TxId, const char *Details);
 	/*
 		Polling functions
 	*/
