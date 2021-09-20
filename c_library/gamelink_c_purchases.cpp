@@ -106,13 +106,13 @@ MGL_RequestId MuxyGameLink_GetOutstandingTransactions(MuxyGameLink GameLink, con
 	});
 }
 
-uint32_t MuxyGameLink_Schema_GetOutstandingTransactions_GetTransactionCount(MGL_Schema_GetOutstandingTransactionsResponse Resp)
+uint32_t MuxyGameLink_Schema_GetOutstandingTransactionsResponse_GetTransactionCount(MGL_Schema_GetOutstandingTransactionsResponse Resp)
 {
     const gamelink::schema::GetOutstandingTransactionsResponseBody *Body = static_cast<const gamelink::schema::GetOutstandingTransactionsResponseBody*>(Resp.Obj);
     return Body->transactions.size();
 }
 
-MGL_Schema_TransactionResponse MuxyGameLink_Schema_GetOutstandingTransactions_GetTransactionAt(MGL_Schema_GetOutstandingTransactionsResponse Resp, uint32_t Index)
+MGL_Schema_TransactionResponse MuxyGameLink_Schema_GetOutstandingTransactionsResponse_GetTransactionAt(MGL_Schema_GetOutstandingTransactionsResponse Resp, uint32_t Index)
 {
     const gamelink::schema::GetOutstandingTransactionsResponseBody *Body = static_cast<const gamelink::schema::GetOutstandingTransactionsResponseBody*>(Resp.Obj);
     MGL_Schema_TransactionResponse Res;
