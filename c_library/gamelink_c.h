@@ -315,6 +315,7 @@ extern "C"
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_RefundTransactionBySKU(MuxyGameLink GameLink, const char *SKU, const char *UserId);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_RefundTransactionByID(MuxyGameLink GameLink, const char *TxId, const char *UserId);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_ValidateTransaction(MuxyGameLink GameLink, const char *TxId, const char *Details);
+	
 	/*
 		Polling functions
 	*/
