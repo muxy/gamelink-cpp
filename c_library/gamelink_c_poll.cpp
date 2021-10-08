@@ -114,54 +114,54 @@ int32_t MuxyGameLink_Schema_GetPollResponse_GetCount(MGL_Schema_GetPollResponse 
 
 const char* MuxyGameLink_Schema_PollUpdateResponse_GetPollId(MGL_Schema_PollUpdateResponse PResp)
 {
-	const schema::PollUpdateBody* Response = static_cast<const schema::PollUpdateBody*>(PResp.Obj);
-	return Response->poll.pollId.c_str();
+	const schema::PollUpdateResponse* Response = static_cast<const schema::PollUpdateResponse*>(PResp.Obj);
+	return Response->data.poll.pollId.c_str();
 }
 
 const char* MuxyGameLink_Schema_PollUpdateResponse_GetPrompt(MGL_Schema_PollUpdateResponse PResp)
 {
-	const schema::PollUpdateBody* Response = static_cast<const schema::PollUpdateBody*>(PResp.Obj);
-	return Response->poll.prompt.c_str();
+	const schema::PollUpdateResponse* Response = static_cast<const schema::PollUpdateResponse*>(PResp.Obj);
+	return Response->data.poll.prompt.c_str();
 }
 
 uint32_t MuxyGameLink_Schema_PollUpdateResponse_GetOptionCount(MGL_Schema_PollUpdateResponse PResp)
 {
-	const schema::PollUpdateBody* Response = static_cast<const schema::PollUpdateBody*>(PResp.Obj);
-	return Response->poll.options.size();
+	const schema::PollUpdateResponse* Response = static_cast<const schema::PollUpdateResponse*>(PResp.Obj);
+	return Response->data.poll.options.size();
 }
 
 const char* MuxyGameLink_Schema_PollUpdateResponse_GetOptionAt(MGL_Schema_PollUpdateResponse PResp, uint32_t Index)
 {
-	const schema::PollUpdateBody* Response = static_cast<const schema::PollUpdateBody*>(PResp.Obj);
-	return Response->poll.options[Index].c_str();
+	const schema::PollUpdateResponse* Response = static_cast<const schema::PollUpdateResponse*>(PResp.Obj);
+	return Response->data.poll.options[Index].c_str();
 }
 
 uint32_t MuxyGameLink_Schema_PollUpdateResponse_GetResultCount(MGL_Schema_PollUpdateResponse PResp)
 {
-	const schema::PollUpdateBody* Response = static_cast<const schema::PollUpdateBody*>(PResp.Obj);
-	return Response->results.size();
+	const schema::PollUpdateResponse* Response = static_cast<const schema::PollUpdateResponse*>(PResp.Obj);
+	return Response->data.results.size();
 }
 
 int32_t MuxyGameLink_Schema_PollUpdateResponse_GetResultAt(MGL_Schema_PollUpdateResponse PResp, uint32_t Index)
 {
-	const schema::PollUpdateBody* Response = static_cast<const schema::PollUpdateBody*>(PResp.Obj);
-	return Response->results[Index];	
+	const schema::PollUpdateResponse* Response = static_cast<const schema::PollUpdateResponse*>(PResp.Obj);
+	return Response->data.results[Index];
 }
 
 double MuxyGameLink_Schema_PollUpdateResponse_GetMean(MGL_Schema_PollUpdateResponse PResp)
 {
-	const schema::PollUpdateBody* Response = static_cast<const schema::PollUpdateBody*>(PResp.Obj);
-	return Response->mean;	
+	const schema::PollUpdateResponse* Response = static_cast<const schema::PollUpdateResponse*>(PResp.Obj);
+	return Response->data.mean;
 }
 
 double MuxyGameLink_Schema_PollUpdateResponse_GetSum(MGL_Schema_PollUpdateResponse PResp)
 {
-	const schema::PollUpdateBody* Response = static_cast<const schema::PollUpdateBody*>(PResp.Obj);
-	return Response->sum;	
+	const schema::PollUpdateResponse* Response = static_cast<const schema::PollUpdateResponse*>(PResp.Obj);
+	return Response->data.sum;
 }
 
 int32_t MuxyGameLink_Schema_PollUpdateResponse_GetCount(MGL_Schema_PollUpdateResponse PResp)
 {
-	const schema::PollUpdateBody* Response = static_cast<const schema::PollUpdateBody*>(PResp.Obj);
-	return Response->count;	
+	const schema::PollUpdateResponse* Response = static_cast<const schema::PollUpdateResponse*>(PResp.Obj);
+	return Response->data.count;
 }
