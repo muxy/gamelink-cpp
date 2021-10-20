@@ -29,7 +29,7 @@ namespace gamelink
             }
         };
 
-        struct BroadcastResponse : ReceiveEnvelope<OKResponseBody>
+        struct MUXY_GAMELINK_API BroadcastResponse : ReceiveEnvelope<OKResponseBody>
         {};
     }
 }

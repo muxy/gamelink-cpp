@@ -8,7 +8,7 @@ namespace gamelink
 {
 	namespace schema
 	{
-		struct GetPollRequestBody
+		struct MUXY_GAMELINK_API GetPollRequestBody
 		{
 			/// The Poll ID to get
 			string pollId;
@@ -16,14 +16,14 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(GetPollRequestBody, "poll_id", pollId);
 		};
 
-		struct DeletePollRequestBody
+		struct MUXY_GAMELINK_API DeletePollRequestBody
 		{
 			string pollId;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(DeletePollRequestBody, "poll_id", pollId);
 		};
 
-		struct CreatePollRequestBody
+		struct MUXY_GAMELINK_API CreatePollRequestBody
 		{
 			/// The Poll ID to create. Poll IDs are scoped to the current channel.
 			string pollId;
@@ -38,7 +38,7 @@ namespace gamelink
 		};
 
 		template<typename T>
-		struct CreatePollWithUserDataRequestBody
+		struct MUXY_GAMELINK_API CreatePollWithUserDataRequestBody
 		{
 			/// The Poll ID to create
 			string pollId;
@@ -63,7 +63,7 @@ namespace gamelink
 												userData);
 		};
 
-		struct PollResponseBody
+		struct MUXY_GAMELINK_API PollResponseBody
 		{
 			/// The Poll ID that the update is for
 			string pollId;
@@ -78,7 +78,7 @@ namespace gamelink
 		};
 
 		template<typename T>
-		struct PollWithUserDataResponseBody
+		struct MUXY_GAMELINK_API PollWithUserDataResponseBody
 		{
 			/// The prompt for the poll.
 			string prompt;
@@ -94,7 +94,7 @@ namespace gamelink
 
 		// Note that this is the same as PollUpdateBody, and is provided for consistency with each 
 		// endpoint having their own envelope with body.
-		struct GetPollResponseBody
+		struct MUXY_GAMELINK_API GetPollResponseBody
 		{
 			/// The poll information
 			PollResponseBody poll;
@@ -115,7 +115,7 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_5(GetPollResponseBody, "poll", poll, "results", results, "mean", mean, "sum", sum, "count", count);
 		};
 
-		struct PollUpdateBody
+		struct MUXY_GAMELINK_API PollUpdateBody
 		{
 			/// The poll information
 			PollResponseBody poll;
@@ -152,14 +152,14 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PollWithUserDataUpdateBody, "topic_id", pollId, "poll", poll, "results", results);
 		};
 
-		struct GetPollRequest : SendEnvelope<GetPollRequestBody>
+		struct MUXY_GAMELINK_API GetPollRequest : SendEnvelope<GetPollRequestBody>
 		{
 			/// Creates a GetPoll request
 			/// @param[in] pollId The ID of the poll to get. Maximum size 64 characters.
 			explicit GetPollRequest(const string& pollId);
 		};
 
-		struct CreatePollRequest : SendEnvelope<CreatePollRequestBody>
+		struct MUXY_GAMELINK_API CreatePollRequest : SendEnvelope<CreatePollRequestBody>
 		{
 			/// Creates a CreatePoll request.
 			/// @param[in] pollId The ID of the poll to create. This can overwrite existing polls if the same
@@ -192,14 +192,14 @@ namespace gamelink
 			}
 		};
 
-		struct SubscribePollRequest : SendEnvelope<SubscribeTopicRequestBody>
+		struct MUXY_GAMELINK_API SubscribePollRequest : SendEnvelope<SubscribeTopicRequestBody>
 		{
 			/// Creates a SubscribePollRequest.
 			/// @param[in] pollId The ID of the poll to subscribe to updates for.
 			explicit SubscribePollRequest(const string& pollId);
 		};
 		
-		struct UnsubscribePollRequest : SendEnvelope<UnsubscribeTopicRequestBody>
+		struct MUXY_GAMELINK_API UnsubscribePollRequest : SendEnvelope<UnsubscribeTopicRequestBody>
 		{
 			/// Creates an UnsubscribePollRequest.
 			/// @param[in] pollId The ID of the poll to subscribe to updates for.
@@ -207,11 +207,11 @@ namespace gamelink
 		};
 
 
-		struct PollUpdateResponse : ReceiveEnvelope<PollUpdateBody>
+		struct MUXY_GAMELINK_API PollUpdateResponse : ReceiveEnvelope<PollUpdateBody>
 		{
 		};
 
-		struct GetPollResponse : ReceiveEnvelope<GetPollResponseBody>
+		struct MUXY_GAMELINK_API GetPollResponse : ReceiveEnvelope<GetPollResponseBody>
 		{
 		};
 
@@ -220,7 +220,7 @@ namespace gamelink
 		{
 		};
 
-		struct DeletePollRequest : SendEnvelope<DeletePollRequestBody>
+		struct MUXY_GAMELINK_API DeletePollRequest : SendEnvelope<DeletePollRequestBody>
 		{
 			/// Creates a DeletePoll request
 			/// @param[in] pollId 	The ID of the poll to be deleted.

@@ -8,7 +8,7 @@ namespace gamelink
 {
 	namespace schema
 	{
-		struct DatastreamEvent
+		struct MUXY_GAMELINK_API DatastreamEvent
 		{
 			nlohmann::json event;
 			int64_t timestamp;
@@ -16,24 +16,24 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(DatastreamEvent, "event", event, "timestamp", timestamp);
 		};
 
-		struct DatastreamUpdateBody
+		struct MUXY_GAMELINK_API DatastreamUpdateBody
 		{
 			std::vector<DatastreamEvent> events;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(DatastreamUpdateBody, "events", events);
 		};
 
-		struct DatastreamUpdate : ReceiveEnvelope<DatastreamUpdateBody>
+		struct MUXY_GAMELINK_API DatastreamUpdate : ReceiveEnvelope<DatastreamUpdateBody>
 		{
 		};
 
-		struct SubscribeDatastreamRequest : SendEnvelope<SubscribeTopicRequestBody>
+		struct MUXY_GAMELINK_API SubscribeDatastreamRequest : SendEnvelope<SubscribeTopicRequestBody>
 		{
 			/// Creates a SubscribeDatastreamRequest
 			SubscribeDatastreamRequest();
 		};
 
-		struct UnsubscribeDatastreamRequest : SendEnvelope<UnsubscribeTopicRequestBody>
+		struct MUXY_GAMELINK_API UnsubscribeDatastreamRequest : SendEnvelope<UnsubscribeTopicRequestBody>
 		{
 			/// Creates an UnsubscribeDatastreamRequest
 			UnsubscribeDatastreamRequest();

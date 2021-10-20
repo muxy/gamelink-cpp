@@ -4,6 +4,14 @@
 #define MUXY_GAMELINK_VERSION_MINOR 0
 #define MUXY_GAMELINK_VERSION_PATCH 1
 
+#if defined MUXY_GAMELINK_EXPORT_SYMBOLS && !defined MUXY_GAMELINK_API
+#	if defined(_WIN32) || defined(_WIN64)
+#		define MUXY_GAMELINK_API __declspec(dllexport)
+#	else
+#		define MUXY_GAMELINK_API
+#	endif
+#endif
+
 // Support custom string types.
 #ifndef MUXY_GAMELINK_CUSTOM_STRING_TYPE
 #	include <string>
