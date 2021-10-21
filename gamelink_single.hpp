@@ -13,6 +13,34 @@
 #define MUXY_GAMELINK_VERSION_MINOR 0
 #define MUXY_GAMELINK_VERSION_PATCH 1
 
+/*
+	Do this:
+	  #define MUXY_GAMELINK_SINGLE_IMPL
+	before you include this file in *one* C++ file to create the implementation
+
+	It should look like
+	#include ...
+	#include ...
+	#define MUXY_GAMELINK_SINGLE_IMPL
+	
+
+	This file also automatically includes nlohmann::json.
+	If you have an existing version of nlohmann::json, #define MUXY_NO_JSON_INCLUDE 
+	to remove the one included in this file.
+*/
+
+#if !defined MUXY_GAMELINK_API
+#	if defined MUXY_GAMELINK_EXPORT_SYMBOLS
+#		if defined _WIN32 || defined _WIN64
+#			define MUXY_GAMELINK_API __declspec(dllexport)
+#		else
+#			define MUXY_GAMELINK_API
+#		endif
+#	else
+#		define MUXY_GAMELINK_API
+#	endif
+#endif
+
 // Support custom string types.
 #ifndef MUXY_GAMELINK_CUSTOM_STRING_TYPE
 #	include <string>
@@ -26654,7 +26682,7 @@ namespace gamelink
 		/// JSONAtom is effectively a tagged union that can contain a signed 64-bit integer,
 		/// a floating point double, a string, a json literal, or null. The type of a JSONAtom is stored in
 		/// the `field` type.
-		struct JsonAtom
+		struct MUXY_GAMELINK_API JsonAtom
 		{
 			/// Type of the contained value
 			JsonAtomType type;
@@ -26672,37 +26700,37 @@ namespace gamelink
 		/// Creates a JsonAtom that represents an integer
 		/// @param[in] v Integer value
 		/// @return JsonAtom that contains the input integer value
-		JsonAtom atomFromInteger(int64_t v);
+		MUXY_GAMELINK_API JsonAtom atomFromInteger(int64_t v);
 
 		/// Creates a JsonAtom that represents a double
 		/// @param[in] d Double value
 		/// @return JsonAtom that contains the input double value
-		JsonAtom atomFromDouble(double d);
+		MUXY_GAMELINK_API JsonAtom atomFromDouble(double d);
 
 		/// Creates a JsonAtom that represents a string
 		/// @param[in] str String value
 		/// @return JsonAtom that contains the input string value
-		JsonAtom atomFromString(const string& str);
+		MUXY_GAMELINK_API JsonAtom atomFromString(const string& str);
 
 		/// Creates a JsonAtom that represents an object
 		/// @param[in] str JSON Literal
 		/// @return JsonAtom that contains the input literal
-		JsonAtom atomFromLiteral(const string& str);
+		MUXY_GAMELINK_API JsonAtom atomFromLiteral(const string& str);
 
 		/// Creates a JsonAtom that represents a boolean
 		/// @param[in] b boolean value
 		/// @return JsonAtom that contains the input literal
-		JsonAtom atomFromBoolean(bool b);
+		MUXY_GAMELINK_API JsonAtom atomFromBoolean(bool b);
 
 		/// Creates a JsonAtom that represents null
 		/// @return A null JsonAtom
-		JsonAtom atomNull();
+		MUXY_GAMELINK_API JsonAtom atomNull();
 
-		void to_json(nlohmann::json& out, const JsonAtom& p);
-		void from_json(const nlohmann::json& in, JsonAtom& p);
+		MUXY_GAMELINK_API void to_json(nlohmann::json& out, const JsonAtom& p);
+		MUXY_GAMELINK_API void from_json(const nlohmann::json& in, JsonAtom& p);
 
 		/// Contains metadata fields about a response
-		struct ReceiveMeta
+		struct MUXY_GAMELINK_API ReceiveMeta
 		{
 			ReceiveMeta();
 
@@ -26722,7 +26750,7 @@ namespace gamelink
 		MUXY_GAMELINK_SERIALIZE_4(ReceiveMeta, "request_id", request_id, "action", action, "target", target, "timestamp", timestamp)
 
 		/// Error type, possibly returned by any API call.
-		struct Error
+		struct MUXY_GAMELINK_API Error
 		{
 			/// Unsigned error code. Correlates to HTTP error codes.
 			uint32_t number;
@@ -26737,7 +26765,7 @@ namespace gamelink
 		MUXY_GAMELINK_SERIALIZE_3(Error, "number", number, "title", title, "detail", detail)
 
 		// Patch operation used to send patches
-		struct PatchOperation
+		struct MUXY_GAMELINK_API PatchOperation
 		{
 			string operation;
 			string path;
@@ -26746,7 +26774,7 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PatchOperation, "op", operation, "path", path, "value", value);
 		};
 
-		struct ReceiveEnvelopeCommon
+		struct MUXY_GAMELINK_API ReceiveEnvelopeCommon
 		{
 			/// Metadata about this response
 			ReceiveMeta meta;
@@ -26785,7 +26813,7 @@ namespace gamelink
 			MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, "errors", p, errors);
 		}
 
-		struct SendParameters
+		struct MUXY_GAMELINK_API SendParameters
 		{
 			SendParameters();
 
@@ -26851,12 +26879,12 @@ namespace gamelink
 		}
 
 		/// The empty body. Has no members.
-		struct EmptyBody
+		struct MUXY_GAMELINK_API EmptyBody
 		{
 		};
 
 		/// OKResponseBody is sent back when a simple operation succeeds.
-		struct OKResponseBody
+		struct MUXY_GAMELINK_API OKResponseBody
 		{
 			/// Will always be 'true'. If an error occurred, then
 			/// the errors array in the response would be set.
@@ -26892,7 +26920,7 @@ namespace gamelink
 		/// @param[in] length Length of the bytes parameter
 		/// @param[out] success Optional boolean to determine parse failure. Will be set to true iff the parse succeeded, false otherwise.
 		/// @return A ReceiveEnvelope with no body, only metadata field and possibly errors.
-		ReceiveEnvelope<EmptyBody> ParseEnvelope(const char* bytes, uint32_t length, bool* success = nullptr);
+		MUXY_GAMELINK_API ReceiveEnvelope<EmptyBody> ParseEnvelope(const char* bytes, uint32_t length, bool* success = nullptr);
 	}
 }
 
@@ -26906,14 +26934,14 @@ namespace gamelink
 {
 	namespace schema
 	{
-		struct SubscribeTopicRequestBody
+		struct MUXY_GAMELINK_API SubscribeTopicRequestBody
 		{
 			string topic_id;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SubscribeTopicRequestBody, "topic_id", topic_id);
 		};
 
-		struct UnsubscribeTopicRequestBody
+		struct MUXY_GAMELINK_API UnsubscribeTopicRequestBody
 		{
 			string topic_id;
 
@@ -26936,7 +26964,7 @@ namespace gamelink
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-		struct AuthenticateWithPINRequestBody
+		struct MUXY_GAMELINK_API AuthenticateWithPINRequestBody
 		{
 			/// PIN string, as obtained from the REST API
 			string pin;
@@ -26946,7 +26974,7 @@ namespace gamelink
 		};
 		MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithPINRequestBody, "pin", pin, "client_id", client_id);
 		
-		struct AuthenticateWithPINRequest : SendEnvelope<AuthenticateWithPINRequestBody>
+		struct MUXY_GAMELINK_API AuthenticateWithPINRequest : SendEnvelope<AuthenticateWithPINRequestBody>
 		{
 			/// Creates an authorization request.
 			/// @param[in] clientId Client ID.
@@ -26956,7 +26984,7 @@ namespace gamelink
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-		struct AuthenticateWithRefreshTokenRequestBody
+		struct MUXY_GAMELINK_API AuthenticateWithRefreshTokenRequestBody
 		{
 			string refresh;
 
@@ -26966,7 +26994,7 @@ namespace gamelink
 		};
 		MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithRefreshTokenRequestBody, "refresh", refresh, "client_id", client_id);
 
-		struct AuthenticateWithRefreshTokenRequest : SendEnvelope<AuthenticateWithRefreshTokenRequestBody>
+		struct MUXY_GAMELINK_API AuthenticateWithRefreshTokenRequest : SendEnvelope<AuthenticateWithRefreshTokenRequestBody>
 		{
 			/// Creates an authorization request
 			/// @param[in] clientId Client Id.
@@ -26976,18 +27004,18 @@ namespace gamelink
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-		struct SubscribeAuthenticationRequest : SendEnvelope<EmptyBody>
+		struct MUXY_GAMELINK_API SubscribeAuthenticationRequest : SendEnvelope<EmptyBody>
 		{
 			SubscribeAuthenticationRequest();
 		};
 
-		struct SubscribeAuthenticationResponse : ReceiveEnvelope<OKResponseBody>
+		struct MUXY_GAMELINK_API SubscribeAuthenticationResponse : ReceiveEnvelope<OKResponseBody>
 		{
 		};
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-		struct AuthenticateResponseBody
+		struct MUXY_GAMELINK_API AuthenticateResponseBody
 		{
 			/// Signed JWT. Will expire.
 			string jwt;
@@ -26996,14 +27024,13 @@ namespace gamelink
 		};
 		MUXY_GAMELINK_SERIALIZE_2(AuthenticateResponseBody, "jwt", jwt, "refresh", refresh);
 
-		struct AuthenticateResponse : ReceiveEnvelope<AuthenticateResponseBody>
+		struct MUXY_GAMELINK_API AuthenticateResponse : ReceiveEnvelope<AuthenticateResponseBody>
 		{
 		};
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-		class User
+		class MUXY_GAMELINK_API User
 		{
 		public:
 			User(string jwt, string refreshToken);
@@ -27050,7 +27077,7 @@ namespace gamelink
             }
         };
 
-        struct BroadcastResponse : ReceiveEnvelope<OKResponseBody>
+        struct MUXY_GAMELINK_API BroadcastResponse : ReceiveEnvelope<OKResponseBody>
         {};
     }
 }
@@ -27066,7 +27093,7 @@ namespace gamelink
 {
 	namespace schema
 	{
-		struct DatastreamEvent
+		struct MUXY_GAMELINK_API DatastreamEvent
 		{
 			nlohmann::json event;
 			int64_t timestamp;
@@ -27074,24 +27101,24 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(DatastreamEvent, "event", event, "timestamp", timestamp);
 		};
 
-		struct DatastreamUpdateBody
+		struct MUXY_GAMELINK_API DatastreamUpdateBody
 		{
 			std::vector<DatastreamEvent> events;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(DatastreamUpdateBody, "events", events);
 		};
 
-		struct DatastreamUpdate : ReceiveEnvelope<DatastreamUpdateBody>
+		struct MUXY_GAMELINK_API DatastreamUpdate : ReceiveEnvelope<DatastreamUpdateBody>
 		{
 		};
 
-		struct SubscribeDatastreamRequest : SendEnvelope<SubscribeTopicRequestBody>
+		struct MUXY_GAMELINK_API SubscribeDatastreamRequest : SendEnvelope<SubscribeTopicRequestBody>
 		{
 			/// Creates a SubscribeDatastreamRequest
 			SubscribeDatastreamRequest();
 		};
 
-		struct UnsubscribeDatastreamRequest : SendEnvelope<UnsubscribeTopicRequestBody>
+		struct MUXY_GAMELINK_API UnsubscribeDatastreamRequest : SendEnvelope<UnsubscribeTopicRequestBody>
 		{
 			/// Creates an UnsubscribeDatastreamRequest
 			UnsubscribeDatastreamRequest();
@@ -27111,7 +27138,7 @@ namespace gamelink
 {
 	namespace schema
 	{
-		struct GetPollRequestBody
+		struct MUXY_GAMELINK_API GetPollRequestBody
 		{
 			/// The Poll ID to get
 			string pollId;
@@ -27119,14 +27146,14 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(GetPollRequestBody, "poll_id", pollId);
 		};
 
-		struct DeletePollRequestBody
+		struct MUXY_GAMELINK_API DeletePollRequestBody
 		{
 			string pollId;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(DeletePollRequestBody, "poll_id", pollId);
 		};
 
-		struct CreatePollRequestBody
+		struct MUXY_GAMELINK_API CreatePollRequestBody
 		{
 			/// The Poll ID to create. Poll IDs are scoped to the current channel.
 			string pollId;
@@ -27141,7 +27168,7 @@ namespace gamelink
 		};
 
 		template<typename T>
-		struct CreatePollWithUserDataRequestBody
+		struct MUXY_GAMELINK_API CreatePollWithUserDataRequestBody
 		{
 			/// The Poll ID to create
 			string pollId;
@@ -27166,7 +27193,7 @@ namespace gamelink
 												userData);
 		};
 
-		struct PollResponseBody
+		struct MUXY_GAMELINK_API PollResponseBody
 		{
 			/// The Poll ID that the update is for
 			string pollId;
@@ -27181,7 +27208,7 @@ namespace gamelink
 		};
 
 		template<typename T>
-		struct PollWithUserDataResponseBody
+		struct MUXY_GAMELINK_API PollWithUserDataResponseBody
 		{
 			/// The prompt for the poll.
 			string prompt;
@@ -27197,7 +27224,7 @@ namespace gamelink
 
 		// Note that this is the same as PollUpdateBody, and is provided for consistency with each 
 		// endpoint having their own envelope with body.
-		struct GetPollResponseBody
+		struct MUXY_GAMELINK_API GetPollResponseBody
 		{
 			/// The poll information
 			PollResponseBody poll;
@@ -27218,7 +27245,7 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_5(GetPollResponseBody, "poll", poll, "results", results, "mean", mean, "sum", sum, "count", count);
 		};
 
-		struct PollUpdateBody
+		struct MUXY_GAMELINK_API PollUpdateBody
 		{
 			/// The poll information
 			PollResponseBody poll;
@@ -27255,14 +27282,14 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PollWithUserDataUpdateBody, "topic_id", pollId, "poll", poll, "results", results);
 		};
 
-		struct GetPollRequest : SendEnvelope<GetPollRequestBody>
+		struct MUXY_GAMELINK_API GetPollRequest : SendEnvelope<GetPollRequestBody>
 		{
 			/// Creates a GetPoll request
 			/// @param[in] pollId The ID of the poll to get. Maximum size 64 characters.
 			explicit GetPollRequest(const string& pollId);
 		};
 
-		struct CreatePollRequest : SendEnvelope<CreatePollRequestBody>
+		struct MUXY_GAMELINK_API CreatePollRequest : SendEnvelope<CreatePollRequestBody>
 		{
 			/// Creates a CreatePoll request.
 			/// @param[in] pollId The ID of the poll to create. This can overwrite existing polls if the same
@@ -27295,14 +27322,14 @@ namespace gamelink
 			}
 		};
 
-		struct SubscribePollRequest : SendEnvelope<SubscribeTopicRequestBody>
+		struct MUXY_GAMELINK_API SubscribePollRequest : SendEnvelope<SubscribeTopicRequestBody>
 		{
 			/// Creates a SubscribePollRequest.
 			/// @param[in] pollId The ID of the poll to subscribe to updates for.
 			explicit SubscribePollRequest(const string& pollId);
 		};
 		
-		struct UnsubscribePollRequest : SendEnvelope<UnsubscribeTopicRequestBody>
+		struct MUXY_GAMELINK_API UnsubscribePollRequest : SendEnvelope<UnsubscribeTopicRequestBody>
 		{
 			/// Creates an UnsubscribePollRequest.
 			/// @param[in] pollId The ID of the poll to subscribe to updates for.
@@ -27310,11 +27337,11 @@ namespace gamelink
 		};
 
 
-		struct PollUpdateResponse : ReceiveEnvelope<PollUpdateBody>
+		struct MUXY_GAMELINK_API PollUpdateResponse : ReceiveEnvelope<PollUpdateBody>
 		{
 		};
 
-		struct GetPollResponse : ReceiveEnvelope<GetPollResponseBody>
+		struct MUXY_GAMELINK_API GetPollResponse : ReceiveEnvelope<GetPollResponseBody>
 		{
 		};
 
@@ -27323,7 +27350,7 @@ namespace gamelink
 		{
 		};
 
-		struct DeletePollRequest : SendEnvelope<DeletePollRequestBody>
+		struct MUXY_GAMELINK_API DeletePollRequest : SendEnvelope<DeletePollRequestBody>
 		{
 			/// Creates a DeletePoll request
 			/// @param[in] pollId 	The ID of the poll to be deleted.
@@ -27344,7 +27371,7 @@ namespace gamelink
 {
 	namespace schema
 	{
-		struct Transaction
+		struct MUXY_GAMELINK_API Transaction
 		{
 			/// The External ID of the purchase, unique for each unique purchase, and service dependent.
 			string id;
@@ -27394,59 +27421,59 @@ namespace gamelink
 												additional);
 		};
 
-		struct TransactionResponse : ReceiveEnvelope<Transaction>
+		struct MUXY_GAMELINK_API TransactionResponse : ReceiveEnvelope<Transaction>
 		{
 		};
 
-		struct GetOutsandingTransactionsRequestBody
+		struct MUXY_GAMELINK_API GetOutsandingTransactionsRequestBody
 		{
 			string sku;
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(GetOutsandingTransactionsRequestBody, "sku", sku);
 		};
 
-		struct GetOutstandingTransactionsRequest : SendEnvelope<GetOutsandingTransactionsRequestBody>
+		struct MUXY_GAMELINK_API GetOutstandingTransactionsRequest : SendEnvelope<GetOutsandingTransactionsRequestBody>
 		{
 			explicit GetOutstandingTransactionsRequest(const string& sku);
 		};
 
-		struct GetOutstandingTransactionsResponseBody
+		struct MUXY_GAMELINK_API GetOutstandingTransactionsResponseBody
 		{
 			std::vector<Transaction> transactions;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(GetOutstandingTransactionsResponseBody, "transactions", transactions);
 		};
 
-		struct GetOutstandingTransactionsResponse : ReceiveEnvelope<GetOutstandingTransactionsResponseBody>
+		struct MUXY_GAMELINK_API GetOutstandingTransactionsResponse : ReceiveEnvelope<GetOutstandingTransactionsResponseBody>
 		{
 		};
 
-		struct SubscribePurchaseRequestBody
+		struct MUXY_GAMELINK_API SubscribePurchaseRequestBody
 		{
 			string sku;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SubscribePurchaseRequestBody, "sku", sku);
 		};
 
-		struct UnsubscribePurchaseRequestBody
+		struct MUXY_GAMELINK_API UnsubscribePurchaseRequestBody
 		{
 			string sku;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(UnsubscribePurchaseRequestBody, "sku", sku);
 		};
 
-		struct SubscribeTransactionsRequest : SendEnvelope<SubscribePurchaseRequestBody>
+		struct MUXY_GAMELINK_API SubscribeTransactionsRequest : SendEnvelope<SubscribePurchaseRequestBody>
 		{
 			/// Creates a SubscribeTransactionsRequest
 			explicit SubscribeTransactionsRequest(const string& SKU);
 		};
 
-		struct UnsubscribeTransactionsRequest : SendEnvelope<UnsubscribePurchaseRequestBody>
+		struct MUXY_GAMELINK_API UnsubscribeTransactionsRequest : SendEnvelope<UnsubscribePurchaseRequestBody>
 		{
 			/// Creates an UnsubscribeTransactionsRequest
 			explicit UnsubscribeTransactionsRequest(const string& SKU);
 		};
 
-		struct RefundTransactionBody
+		struct MUXY_GAMELINK_API RefundTransactionBody
 		{
 			string transactionId;
 			string userId;
@@ -27454,12 +27481,12 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(RefundTransactionBody, "transaction_id", transactionId, "user_id", userId);
 		};
 
-		struct RefundTransactionRequest : SendEnvelope<RefundTransactionBody>
+		struct MUXY_GAMELINK_API RefundTransactionRequest : SendEnvelope<RefundTransactionBody>
 		{
 			RefundTransactionRequest(const string& transactionId, const string& userId);
 		};
 
-		struct RefundTransactionBySKUBody
+		struct MUXY_GAMELINK_API RefundTransactionBySKUBody
 		{
 			string SKU;
 			string userId;
@@ -27467,12 +27494,12 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(RefundTransactionBySKUBody, "sku", SKU, "user_id", userId);
 		};
 
-		struct RefundTransactionBySKURequest : SendEnvelope<RefundTransactionBySKUBody>
+		struct MUXY_GAMELINK_API RefundTransactionBySKURequest : SendEnvelope<RefundTransactionBySKUBody>
 		{
 			RefundTransactionBySKURequest(const string& sku, const string& userId);
 		};
 
-		struct ValidateTransactionBody
+		struct MUXY_GAMELINK_API ValidateTransactionBody
 		{
 			string transactionId;
 			string details;
@@ -27480,7 +27507,7 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ValidateTransactionBody, "transaction_id", transactionId, "details", details);
 		};
 
-		struct ValidateTransactionRequest : SendEnvelope<ValidateTransactionBody>
+		struct MUXY_GAMELINK_API ValidateTransactionRequest : SendEnvelope<ValidateTransactionBody>
 		{
 			ValidateTransactionRequest(const string& transactionId, const string& details);
 		};
@@ -27568,7 +27595,7 @@ namespace gamelink
 		{
 		};
 
-		struct GetStateRequestBody
+		struct MUXY_GAMELINK_API GetStateRequestBody
 		{
 			/// Either 'channel' or 'extension', based on the target.
 			string state_id;
@@ -27576,7 +27603,7 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(GetStateRequestBody, "state_id", state_id);
 		};
 
-		struct GetStateRequest : SendEnvelope<GetStateRequestBody>
+		struct MUXY_GAMELINK_API GetStateRequest : SendEnvelope<GetStateRequestBody>
 		{
 			/// Creates a GetState request
 			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
@@ -27588,7 +27615,7 @@ namespace gamelink
 		{
 		};
 
-		struct PatchStateRequestBody
+		struct MUXY_GAMELINK_API PatchStateRequestBody
 		{
 			/// Either 'channel' or 'extension', based on the target.
 			string state_id;
@@ -27598,7 +27625,7 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(PatchStateRequestBody, "state_id", state_id, "state", state);
 		};
 
-		struct PatchStateRequest : SendEnvelope<PatchStateRequestBody>
+		struct MUXY_GAMELINK_API PatchStateRequest : SendEnvelope<PatchStateRequestBody>
 		{
 			/// Creates an UpdateState request
 			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
@@ -27615,7 +27642,7 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(StateUpdateBody, "topic_id", topic_id, "state", state);
 		};
 
-		struct SubscribeStateRequest : SendEnvelope<SubscribeTopicRequestBody>
+		struct MUXY_GAMELINK_API SubscribeStateRequest : SendEnvelope<SubscribeTopicRequestBody>
 		{
 			/// Creates a SubscribeState request
 			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
@@ -27627,7 +27654,7 @@ namespace gamelink
 		{
 		};
 
-		struct UnsubscribeStateRequest : SendEnvelope<UnsubscribeTopicRequestBody>
+		struct MUXY_GAMELINK_API UnsubscribeStateRequest : SendEnvelope<UnsubscribeTopicRequestBody>
 		{
 			/// Creates a SubscribeState request
 			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
@@ -27647,13 +27674,13 @@ namespace gamelink
 {
     namespace schema
     {
-        struct SetConfigRequestBody
+        struct MUXY_GAMELINK_API SetConfigRequestBody
         {
             nlohmann::json config;
             MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SetConfigRequestBody, "config", config); 
         };
 
-        struct GetConfigRequestBody
+        struct MUXY_GAMELINK_API GetConfigRequestBody
         {
             // Either 'channel', 'extension' or 'combined'
             string configId;
@@ -27661,7 +27688,7 @@ namespace gamelink
             MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(GetConfigRequestBody, "config_id", configId);
         };
 
-        struct ConfigResponseBody
+        struct MUXY_GAMELINK_API ConfigResponseBody
         {
             nlohmann::json config;
             string configId;
@@ -27669,7 +27696,7 @@ namespace gamelink
             MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ConfigResponseBody, "config", config, "config_id", configId);
         };
         
-        struct ConfigUpdateBody
+        struct MUXY_GAMELINK_API ConfigUpdateBody
         {
             nlohmann::json config;
             string topicId;
@@ -27677,7 +27704,7 @@ namespace gamelink
             MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ConfigUpdateBody, "config", config, "topic_id", topicId);
         };
 
-        struct CombinedState
+        struct MUXY_GAMELINK_API CombinedState
         {
             nlohmann::json channel;
             nlohmann::json extension;
@@ -27686,7 +27713,7 @@ namespace gamelink
             MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(CombinedState, "channel", channel, "extension", extension, "config_id", configId);
         };
 
-        struct CombinedStateResponseBody
+        struct MUXY_GAMELINK_API CombinedStateResponseBody
         {
             CombinedState config;
             string configId;
@@ -27694,26 +27721,26 @@ namespace gamelink
             MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(CombinedStateResponseBody, "config", config, "config_id", configId);
         };
 
-        struct SubscribeConfigRequestBody
+        struct MUXY_GAMELINK_API SubscribeConfigRequestBody
         {
             string configId;
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SubscribeConfigRequestBody, "config_id", configId);
         };
 
-        struct UnsubscribeConfigRequestBody
+        struct MUXY_GAMELINK_API UnsubscribeConfigRequestBody
         {
             string configId;
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(UnsubscribeConfigRequestBody, "config_id", configId);
         };
         
-		struct PatchConfigRequestBody
+		struct MUXY_GAMELINK_API PatchConfigRequestBody
 		{
 			std::vector<PatchOperation> config;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(PatchConfigRequestBody, "config", config);
 		};
 
-		struct PatchConfigRequest : SendEnvelope<PatchConfigRequestBody>
+		struct MUXY_GAMELINK_API PatchConfigRequest : SendEnvelope<PatchConfigRequestBody>
 		{
 			PatchConfigRequest();
 		};
@@ -27721,35 +27748,35 @@ namespace gamelink
         static const char CONFIG_TARGET_CHANNEL[] = "channel";
         static const char CONFIG_TARGET_EXTENSION[] = "extension";
 
-        struct GetConfigRequest : SendEnvelope<GetConfigRequestBody>
+        struct MUXY_GAMELINK_API GetConfigRequest : SendEnvelope<GetConfigRequestBody>
         {
             /// Creates a GetConfig request.
             /// @param[in] target one of the CONFIG_TARGET constants 
             explicit GetConfigRequest(const char* target);
         };
 
-        struct SetConfigRequest : SendEnvelope<SetConfigRequestBody>
+        struct MUXY_GAMELINK_API SetConfigRequest : SendEnvelope<SetConfigRequestBody>
         {
             explicit SetConfigRequest(const nlohmann::json& js);
         };
 
-        struct GetConfigResponse : ReceiveEnvelope<ConfigResponseBody>
+        struct MUXY_GAMELINK_API GetConfigResponse : ReceiveEnvelope<ConfigResponseBody>
         {};
 
-        struct GetCombinedConfigResponse : ReceiveEnvelope<CombinedStateResponseBody>
+        struct MUXY_GAMELINK_API GetCombinedConfigResponse : ReceiveEnvelope<CombinedStateResponseBody>
         {};
 
-        struct SubscribeToConfigRequest : SendEnvelope<SubscribeConfigRequestBody>
+        struct MUXY_GAMELINK_API SubscribeToConfigRequest : SendEnvelope<SubscribeConfigRequestBody>
         {
             explicit SubscribeToConfigRequest(const char* target);
         };
 
-        struct UnsubscribeFromConfigRequest : SendEnvelope<SubscribeConfigRequestBody>
+        struct MUXY_GAMELINK_API UnsubscribeFromConfigRequest : SendEnvelope<SubscribeConfigRequestBody>
         {
             explicit UnsubscribeFromConfigRequest(const char* target);
         };
 
-        struct ConfigUpdateResponse : ReceiveEnvelope<ConfigUpdateBody>
+        struct MUXY_GAMELINK_API ConfigUpdateResponse : ReceiveEnvelope<ConfigUpdateBody>
 		{
 		};
     }
@@ -27770,7 +27797,7 @@ namespace gamelink
 	/// @param[in] recv A receive envelope
 	/// @returns Pointer to first error in the errors array of the envelope. If no
 	///          such error exists, returns the null pointer.
-	const schema::Error* FirstError(const schema::ReceiveEnvelopeCommon& recv);
+	MUXY_GAMELINK_API const schema::Error* FirstError(const schema::ReceiveEnvelopeCommon& recv);
 
 	/// RequestId is an 16bit unsigned integer that represents a request.
 	/// Obtained through SDK methods.
@@ -27780,7 +27807,7 @@ namespace gamelink
 	static const RequestId ANY_REQUEST_ID = 0xFFFF;
 
 	/// Payload represents a block of data to be sent through the websocket.
-	class Payload
+	class MUXY_GAMELINK_API Payload
 	{
 		friend class SDK;
 		explicit Payload(string data);
@@ -28016,7 +28043,7 @@ namespace gamelink
 		/// @param[in] projectionMinor The minor version of this projection.
 		/// @param[in] projectionPatch The patch version of this projection.
 		/// @return Returns the URL to connect to. Returns an empty string on error.
-		string ProjectionWebsocketConnectionURL(const string& clientId,
+		MUXY_GAMELINK_API string ProjectionWebsocketConnectionURL(const string& clientId,
 												ConnectionStage stage,
 												const string& projection,
 												int projectionMajor,
@@ -28032,13 +28059,13 @@ namespace gamelink
 	/// @param[in] stage The stage to connect to, either CONNECTION_STAGE_PRODUCTION or
 	///                  CONNECTION_STAGE_SANDBOX.
 	/// @return Returns the URL to connect to. Returns an empty string on error.
-	string WebsocketConnectionURL(const string& clientId, ConnectionStage stage);
+	MUXY_GAMELINK_API string WebsocketConnectionURL(const string& clientId, ConnectionStage stage);
 
 	/// The SDK class exposes functionality to interact with the Gamelink SDK.
 	///
 	/// @remark Most functions are thread safe, and can be called from multiple threads
 	///         concurrently, unless specifically denoted.
-	class SDK
+	class MUXY_GAMELINK_API SDK
 	{
 	public:
 		SDK();

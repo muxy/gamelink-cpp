@@ -4,6 +4,34 @@
 #define MUXY_GAMELINK_VERSION_MINOR 0
 #define MUXY_GAMELINK_VERSION_PATCH 1
 
+/*
+	Do this:
+	  #define MUXY_GAMELINK_SINGLE_IMPL
+	before you include this file in *one* C++ file to create the implementation
+
+	It should look like
+	#include ...
+	#include ...
+	#define MUXY_GAMELINK_SINGLE_IMPL
+	#include "gamelink_single.hpp"
+
+	This file also automatically includes nlohmann::json.
+	If you have an existing version of nlohmann::json, #define MUXY_NO_JSON_INCLUDE 
+	to remove the one included in this file.
+*/
+
+#if !defined MUXY_GAMELINK_API
+#	if defined MUXY_GAMELINK_EXPORT_SYMBOLS
+#		if defined _WIN32 || defined _WIN64
+#			define MUXY_GAMELINK_API __declspec(dllexport)
+#		else
+#			define MUXY_GAMELINK_API
+#		endif
+#	else
+#		define MUXY_GAMELINK_API
+#	endif
+#endif
+
 // Support custom string types.
 #ifndef MUXY_GAMELINK_CUSTOM_STRING_TYPE
 #	include <string>

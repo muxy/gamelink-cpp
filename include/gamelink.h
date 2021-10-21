@@ -13,7 +13,7 @@ namespace gamelink
 	/// @param[in] recv A receive envelope
 	/// @returns Pointer to first error in the errors array of the envelope. If no
 	///          such error exists, returns the null pointer.
-	const schema::Error* FirstError(const schema::ReceiveEnvelopeCommon& recv);
+	MUXY_GAMELINK_API const schema::Error* FirstError(const schema::ReceiveEnvelopeCommon& recv);
 
 	/// RequestId is an 16bit unsigned integer that represents a request.
 	/// Obtained through SDK methods.
@@ -23,7 +23,7 @@ namespace gamelink
 	static const RequestId ANY_REQUEST_ID = 0xFFFF;
 
 	/// Payload represents a block of data to be sent through the websocket.
-	class Payload
+	class MUXY_GAMELINK_API Payload
 	{
 		friend class SDK;
 		explicit Payload(string data);
@@ -259,7 +259,7 @@ namespace gamelink
 		/// @param[in] projectionMinor The minor version of this projection.
 		/// @param[in] projectionPatch The patch version of this projection.
 		/// @return Returns the URL to connect to. Returns an empty string on error.
-		string ProjectionWebsocketConnectionURL(const string& clientId,
+		MUXY_GAMELINK_API string ProjectionWebsocketConnectionURL(const string& clientId,
 												ConnectionStage stage,
 												const string& projection,
 												int projectionMajor,
@@ -275,13 +275,13 @@ namespace gamelink
 	/// @param[in] stage The stage to connect to, either CONNECTION_STAGE_PRODUCTION or
 	///                  CONNECTION_STAGE_SANDBOX.
 	/// @return Returns the URL to connect to. Returns an empty string on error.
-	string WebsocketConnectionURL(const string& clientId, ConnectionStage stage);
+	MUXY_GAMELINK_API string WebsocketConnectionURL(const string& clientId, ConnectionStage stage);
 
 	/// The SDK class exposes functionality to interact with the Gamelink SDK.
 	///
 	/// @remark Most functions are thread safe, and can be called from multiple threads
 	///         concurrently, unless specifically denoted.
-	class SDK
+	class MUXY_GAMELINK_API SDK
 	{
 	public:
 		SDK();

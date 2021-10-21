@@ -25,7 +25,7 @@ namespace gamelink
 		/// JSONAtom is effectively a tagged union that can contain a signed 64-bit integer,
 		/// a floating point double, a string, a json literal, or null. The type of a JSONAtom is stored in
 		/// the `field` type.
-		struct JsonAtom
+		struct MUXY_GAMELINK_API JsonAtom
 		{
 			/// Type of the contained value
 			JsonAtomType type;
@@ -43,37 +43,37 @@ namespace gamelink
 		/// Creates a JsonAtom that represents an integer
 		/// @param[in] v Integer value
 		/// @return JsonAtom that contains the input integer value
-		JsonAtom atomFromInteger(int64_t v);
+		MUXY_GAMELINK_API JsonAtom atomFromInteger(int64_t v);
 
 		/// Creates a JsonAtom that represents a double
 		/// @param[in] d Double value
 		/// @return JsonAtom that contains the input double value
-		JsonAtom atomFromDouble(double d);
+		MUXY_GAMELINK_API JsonAtom atomFromDouble(double d);
 
 		/// Creates a JsonAtom that represents a string
 		/// @param[in] str String value
 		/// @return JsonAtom that contains the input string value
-		JsonAtom atomFromString(const string& str);
+		MUXY_GAMELINK_API JsonAtom atomFromString(const string& str);
 
 		/// Creates a JsonAtom that represents an object
 		/// @param[in] str JSON Literal
 		/// @return JsonAtom that contains the input literal
-		JsonAtom atomFromLiteral(const string& str);
+		MUXY_GAMELINK_API JsonAtom atomFromLiteral(const string& str);
 
 		/// Creates a JsonAtom that represents a boolean
 		/// @param[in] b boolean value
 		/// @return JsonAtom that contains the input literal
-		JsonAtom atomFromBoolean(bool b);
+		MUXY_GAMELINK_API JsonAtom atomFromBoolean(bool b);
 
 		/// Creates a JsonAtom that represents null
 		/// @return A null JsonAtom
-		JsonAtom atomNull();
+		MUXY_GAMELINK_API JsonAtom atomNull();
 
-		void to_json(nlohmann::json& out, const JsonAtom& p);
-		void from_json(const nlohmann::json& in, JsonAtom& p);
+		MUXY_GAMELINK_API void to_json(nlohmann::json& out, const JsonAtom& p);
+		MUXY_GAMELINK_API void from_json(const nlohmann::json& in, JsonAtom& p);
 
 		/// Contains metadata fields about a response
-		struct ReceiveMeta
+		struct MUXY_GAMELINK_API ReceiveMeta
 		{
 			ReceiveMeta();
 
@@ -93,7 +93,7 @@ namespace gamelink
 		MUXY_GAMELINK_SERIALIZE_4(ReceiveMeta, "request_id", request_id, "action", action, "target", target, "timestamp", timestamp)
 
 		/// Error type, possibly returned by any API call.
-		struct Error
+		struct MUXY_GAMELINK_API Error
 		{
 			/// Unsigned error code. Correlates to HTTP error codes.
 			uint32_t number;
@@ -108,7 +108,7 @@ namespace gamelink
 		MUXY_GAMELINK_SERIALIZE_3(Error, "number", number, "title", title, "detail", detail)
 
 		// Patch operation used to send patches
-		struct PatchOperation
+		struct MUXY_GAMELINK_API PatchOperation
 		{
 			string operation;
 			string path;
@@ -117,7 +117,7 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PatchOperation, "op", operation, "path", path, "value", value);
 		};
 
-		struct ReceiveEnvelopeCommon
+		struct MUXY_GAMELINK_API ReceiveEnvelopeCommon
 		{
 			/// Metadata about this response
 			ReceiveMeta meta;
@@ -156,7 +156,7 @@ namespace gamelink
 			MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, "errors", p, errors);
 		}
 
-		struct SendParameters
+		struct MUXY_GAMELINK_API SendParameters
 		{
 			SendParameters();
 
@@ -222,12 +222,12 @@ namespace gamelink
 		}
 
 		/// The empty body. Has no members.
-		struct EmptyBody
+		struct MUXY_GAMELINK_API EmptyBody
 		{
 		};
 
 		/// OKResponseBody is sent back when a simple operation succeeds.
-		struct OKResponseBody
+		struct MUXY_GAMELINK_API OKResponseBody
 		{
 			/// Will always be 'true'. If an error occurred, then
 			/// the errors array in the response would be set.
@@ -263,7 +263,7 @@ namespace gamelink
 		/// @param[in] length Length of the bytes parameter
 		/// @param[out] success Optional boolean to determine parse failure. Will be set to true iff the parse succeeded, false otherwise.
 		/// @return A ReceiveEnvelope with no body, only metadata field and possibly errors.
-		ReceiveEnvelope<EmptyBody> ParseEnvelope(const char* bytes, uint32_t length, bool* success = nullptr);
+		MUXY_GAMELINK_API ReceiveEnvelope<EmptyBody> ParseEnvelope(const char* bytes, uint32_t length, bool* success = nullptr);
 	}
 }
 

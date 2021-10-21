@@ -10,7 +10,7 @@ namespace gamelink
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-		struct AuthenticateWithPINRequestBody
+		struct MUXY_GAMELINK_API AuthenticateWithPINRequestBody
 		{
 			/// PIN string, as obtained from the REST API
 			string pin;
@@ -20,7 +20,7 @@ namespace gamelink
 		};
 		MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithPINRequestBody, "pin", pin, "client_id", client_id);
 		
-		struct AuthenticateWithPINRequest : SendEnvelope<AuthenticateWithPINRequestBody>
+		struct MUXY_GAMELINK_API AuthenticateWithPINRequest : SendEnvelope<AuthenticateWithPINRequestBody>
 		{
 			/// Creates an authorization request.
 			/// @param[in] clientId Client ID.
@@ -30,7 +30,7 @@ namespace gamelink
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-		struct AuthenticateWithRefreshTokenRequestBody
+		struct MUXY_GAMELINK_API AuthenticateWithRefreshTokenRequestBody
 		{
 			string refresh;
 
@@ -40,7 +40,7 @@ namespace gamelink
 		};
 		MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithRefreshTokenRequestBody, "refresh", refresh, "client_id", client_id);
 
-		struct AuthenticateWithRefreshTokenRequest : SendEnvelope<AuthenticateWithRefreshTokenRequestBody>
+		struct MUXY_GAMELINK_API AuthenticateWithRefreshTokenRequest : SendEnvelope<AuthenticateWithRefreshTokenRequestBody>
 		{
 			/// Creates an authorization request
 			/// @param[in] clientId Client Id.
@@ -50,18 +50,18 @@ namespace gamelink
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-		struct SubscribeAuthenticationRequest : SendEnvelope<EmptyBody>
+		struct MUXY_GAMELINK_API SubscribeAuthenticationRequest : SendEnvelope<EmptyBody>
 		{
 			SubscribeAuthenticationRequest();
 		};
 
-		struct SubscribeAuthenticationResponse : ReceiveEnvelope<OKResponseBody>
+		struct MUXY_GAMELINK_API SubscribeAuthenticationResponse : ReceiveEnvelope<OKResponseBody>
 		{
 		};
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-		struct AuthenticateResponseBody
+		struct MUXY_GAMELINK_API AuthenticateResponseBody
 		{
 			/// Signed JWT. Will expire.
 			string jwt;
@@ -70,14 +70,13 @@ namespace gamelink
 		};
 		MUXY_GAMELINK_SERIALIZE_2(AuthenticateResponseBody, "jwt", jwt, "refresh", refresh);
 
-		struct AuthenticateResponse : ReceiveEnvelope<AuthenticateResponseBody>
+		struct MUXY_GAMELINK_API AuthenticateResponse : ReceiveEnvelope<AuthenticateResponseBody>
 		{
 		};
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-		class User
+		class MUXY_GAMELINK_API User
 		{
 		public:
 			User(string jwt, string refreshToken);

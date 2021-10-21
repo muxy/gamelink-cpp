@@ -8,13 +8,13 @@ namespace gamelink
 {
     namespace schema
     {
-        struct SetConfigRequestBody
+        struct MUXY_GAMELINK_API SetConfigRequestBody
         {
             nlohmann::json config;
             MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SetConfigRequestBody, "config", config); 
         };
 
-        struct GetConfigRequestBody
+        struct MUXY_GAMELINK_API GetConfigRequestBody
         {
             // Either 'channel', 'extension' or 'combined'
             string configId;
@@ -22,7 +22,7 @@ namespace gamelink
             MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(GetConfigRequestBody, "config_id", configId);
         };
 
-        struct ConfigResponseBody
+        struct MUXY_GAMELINK_API ConfigResponseBody
         {
             nlohmann::json config;
             string configId;
@@ -30,7 +30,7 @@ namespace gamelink
             MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ConfigResponseBody, "config", config, "config_id", configId);
         };
         
-        struct ConfigUpdateBody
+        struct MUXY_GAMELINK_API ConfigUpdateBody
         {
             nlohmann::json config;
             string topicId;
@@ -38,7 +38,7 @@ namespace gamelink
             MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ConfigUpdateBody, "config", config, "topic_id", topicId);
         };
 
-        struct CombinedState
+        struct MUXY_GAMELINK_API CombinedState
         {
             nlohmann::json channel;
             nlohmann::json extension;
@@ -47,7 +47,7 @@ namespace gamelink
             MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(CombinedState, "channel", channel, "extension", extension, "config_id", configId);
         };
 
-        struct CombinedStateResponseBody
+        struct MUXY_GAMELINK_API CombinedStateResponseBody
         {
             CombinedState config;
             string configId;
@@ -55,26 +55,26 @@ namespace gamelink
             MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(CombinedStateResponseBody, "config", config, "config_id", configId);
         };
 
-        struct SubscribeConfigRequestBody
+        struct MUXY_GAMELINK_API SubscribeConfigRequestBody
         {
             string configId;
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SubscribeConfigRequestBody, "config_id", configId);
         };
 
-        struct UnsubscribeConfigRequestBody
+        struct MUXY_GAMELINK_API UnsubscribeConfigRequestBody
         {
             string configId;
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(UnsubscribeConfigRequestBody, "config_id", configId);
         };
         
-		struct PatchConfigRequestBody
+		struct MUXY_GAMELINK_API PatchConfigRequestBody
 		{
 			std::vector<PatchOperation> config;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(PatchConfigRequestBody, "config", config);
 		};
 
-		struct PatchConfigRequest : SendEnvelope<PatchConfigRequestBody>
+		struct MUXY_GAMELINK_API PatchConfigRequest : SendEnvelope<PatchConfigRequestBody>
 		{
 			PatchConfigRequest();
 		};
@@ -82,35 +82,35 @@ namespace gamelink
         static const char CONFIG_TARGET_CHANNEL[] = "channel";
         static const char CONFIG_TARGET_EXTENSION[] = "extension";
 
-        struct GetConfigRequest : SendEnvelope<GetConfigRequestBody>
+        struct MUXY_GAMELINK_API GetConfigRequest : SendEnvelope<GetConfigRequestBody>
         {
             /// Creates a GetConfig request.
             /// @param[in] target one of the CONFIG_TARGET constants 
             explicit GetConfigRequest(const char* target);
         };
 
-        struct SetConfigRequest : SendEnvelope<SetConfigRequestBody>
+        struct MUXY_GAMELINK_API SetConfigRequest : SendEnvelope<SetConfigRequestBody>
         {
             explicit SetConfigRequest(const nlohmann::json& js);
         };
 
-        struct GetConfigResponse : ReceiveEnvelope<ConfigResponseBody>
+        struct MUXY_GAMELINK_API GetConfigResponse : ReceiveEnvelope<ConfigResponseBody>
         {};
 
-        struct GetCombinedConfigResponse : ReceiveEnvelope<CombinedStateResponseBody>
+        struct MUXY_GAMELINK_API GetCombinedConfigResponse : ReceiveEnvelope<CombinedStateResponseBody>
         {};
 
-        struct SubscribeToConfigRequest : SendEnvelope<SubscribeConfigRequestBody>
+        struct MUXY_GAMELINK_API SubscribeToConfigRequest : SendEnvelope<SubscribeConfigRequestBody>
         {
             explicit SubscribeToConfigRequest(const char* target);
         };
 
-        struct UnsubscribeFromConfigRequest : SendEnvelope<SubscribeConfigRequestBody>
+        struct MUXY_GAMELINK_API UnsubscribeFromConfigRequest : SendEnvelope<SubscribeConfigRequestBody>
         {
             explicit UnsubscribeFromConfigRequest(const char* target);
         };
 
-        struct ConfigUpdateResponse : ReceiveEnvelope<ConfigUpdateBody>
+        struct MUXY_GAMELINK_API ConfigUpdateResponse : ReceiveEnvelope<ConfigUpdateBody>
 		{
 		};
     }
