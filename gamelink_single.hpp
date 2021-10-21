@@ -13,6 +13,34 @@
 #define MUXY_GAMELINK_VERSION_MINOR 0
 #define MUXY_GAMELINK_VERSION_PATCH 1
 
+/*
+	Do this:
+	  #define MUXY_GAMELINK_SINGLE_IMPL
+	before you include this file in *one* C++ file to create the implementation
+
+	It should look like
+	#include ...
+	#include ...
+	#define MUXY_GAMELINK_SINGLE_IMPL
+	
+
+	This file also automatically includes nlohmann::json.
+	If you have an existing version of nlohmann::json, #define MUXY_NO_JSON_INCLUDE 
+	to remove the one included in this file.
+*/
+
+#if !defined MUXY_GAMELINK_API
+#	if defined MUXY_GAMELINK_EXPORT_SYMBOLS
+#		if defined _WIN32 || defined _WIN64
+#			define MUXY_GAMELINK_API __declspec(dllexport)
+#		else
+#			define MUXY_GAMELINK_API
+#		endif
+#	else
+#		define MUXY_GAMELINK_API
+#	endif
+#endif
+
 // Support custom string types.
 #ifndef MUXY_GAMELINK_CUSTOM_STRING_TYPE
 #	include <string>
@@ -26654,7 +26682,7 @@ namespace gamelink
 		/// JSONAtom is effectively a tagged union that can contain a signed 64-bit integer,
 		/// a floating point double, a string, a json literal, or null. The type of a JSONAtom is stored in
 		/// the `field` type.
-		struct JsonAtom
+		struct MUXY_GAMELINK_API JsonAtom
 		{
 			/// Type of the contained value
 			JsonAtomType type;
@@ -26672,37 +26700,37 @@ namespace gamelink
 		/// Creates a JsonAtom that represents an integer
 		/// @param[in] v Integer value
 		/// @return JsonAtom that contains the input integer value
-		JsonAtom atomFromInteger(int64_t v);
+		MUXY_GAMELINK_API JsonAtom atomFromInteger(int64_t v);
 
 		/// Creates a JsonAtom that represents a double
 		/// @param[in] d Double value
 		/// @return JsonAtom that contains the input double value
-		JsonAtom atomFromDouble(double d);
+		MUXY_GAMELINK_API JsonAtom atomFromDouble(double d);
 
 		/// Creates a JsonAtom that represents a string
 		/// @param[in] str String value
 		/// @return JsonAtom that contains the input string value
-		JsonAtom atomFromString(const string& str);
+		MUXY_GAMELINK_API JsonAtom atomFromString(const string& str);
 
 		/// Creates a JsonAtom that represents an object
 		/// @param[in] str JSON Literal
 		/// @return JsonAtom that contains the input literal
-		JsonAtom atomFromLiteral(const string& str);
+		MUXY_GAMELINK_API JsonAtom atomFromLiteral(const string& str);
 
 		/// Creates a JsonAtom that represents a boolean
 		/// @param[in] b boolean value
 		/// @return JsonAtom that contains the input literal
-		JsonAtom atomFromBoolean(bool b);
+		MUXY_GAMELINK_API JsonAtom atomFromBoolean(bool b);
 
 		/// Creates a JsonAtom that represents null
 		/// @return A null JsonAtom
-		JsonAtom atomNull();
+		MUXY_GAMELINK_API JsonAtom atomNull();
 
-		void to_json(nlohmann::json& out, const JsonAtom& p);
-		void from_json(const nlohmann::json& in, JsonAtom& p);
+		MUXY_GAMELINK_API void to_json(nlohmann::json& out, const JsonAtom& p);
+		MUXY_GAMELINK_API void from_json(const nlohmann::json& in, JsonAtom& p);
 
 		/// Contains metadata fields about a response
-		struct ReceiveMeta
+		struct MUXY_GAMELINK_API ReceiveMeta
 		{
 			ReceiveMeta();
 
@@ -26722,7 +26750,7 @@ namespace gamelink
 		MUXY_GAMELINK_SERIALIZE_4(ReceiveMeta, "request_id", request_id, "action", action, "target", target, "timestamp", timestamp)
 
 		/// Error type, possibly returned by any API call.
-		struct Error
+		struct MUXY_GAMELINK_API Error
 		{
 			/// Unsigned error code. Correlates to HTTP error codes.
 			uint32_t number;
@@ -26737,7 +26765,7 @@ namespace gamelink
 		MUXY_GAMELINK_SERIALIZE_3(Error, "number", number, "title", title, "detail", detail)
 
 		// Patch operation used to send patches
-		struct PatchOperation
+		struct MUXY_GAMELINK_API PatchOperation
 		{
 			string operation;
 			string path;
@@ -26746,7 +26774,7 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PatchOperation, "op", operation, "path", path, "value", value);
 		};
 
-		struct ReceiveEnvelopeCommon
+		struct MUXY_GAMELINK_API ReceiveEnvelopeCommon
 		{
 			/// Metadata about this response
 			ReceiveMeta meta;
@@ -26785,7 +26813,7 @@ namespace gamelink
 			MUXY_GAMELINK_DESERIALIZE_PROPERTY(in, "errors", p, errors);
 		}
 
-		struct SendParameters
+		struct MUXY_GAMELINK_API SendParameters
 		{
 			SendParameters();
 
@@ -26851,12 +26879,12 @@ namespace gamelink
 		}
 
 		/// The empty body. Has no members.
-		struct EmptyBody
+		struct MUXY_GAMELINK_API EmptyBody
 		{
 		};
 
 		/// OKResponseBody is sent back when a simple operation succeeds.
-		struct OKResponseBody
+		struct MUXY_GAMELINK_API OKResponseBody
 		{
 			/// Will always be 'true'. If an error occurred, then
 			/// the errors array in the response would be set.
@@ -26892,7 +26920,7 @@ namespace gamelink
 		/// @param[in] length Length of the bytes parameter
 		/// @param[out] success Optional boolean to determine parse failure. Will be set to true iff the parse succeeded, false otherwise.
 		/// @return A ReceiveEnvelope with no body, only metadata field and possibly errors.
-		ReceiveEnvelope<EmptyBody> ParseEnvelope(const char* bytes, uint32_t length, bool* success = nullptr);
+		MUXY_GAMELINK_API ReceiveEnvelope<EmptyBody> ParseEnvelope(const char* bytes, uint32_t length, bool* success = nullptr);
 	}
 }
 
@@ -26906,14 +26934,14 @@ namespace gamelink
 {
 	namespace schema
 	{
-		struct SubscribeTopicRequestBody
+		struct MUXY_GAMELINK_API SubscribeTopicRequestBody
 		{
 			string topic_id;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SubscribeTopicRequestBody, "topic_id", topic_id);
 		};
 
-		struct UnsubscribeTopicRequestBody
+		struct MUXY_GAMELINK_API UnsubscribeTopicRequestBody
 		{
 			string topic_id;
 
@@ -26936,7 +26964,7 @@ namespace gamelink
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-		struct AuthenticateWithPINRequestBody
+		struct MUXY_GAMELINK_API AuthenticateWithPINRequestBody
 		{
 			/// PIN string, as obtained from the REST API
 			string pin;
@@ -26946,7 +26974,7 @@ namespace gamelink
 		};
 		MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithPINRequestBody, "pin", pin, "client_id", client_id);
 		
-		struct AuthenticateWithPINRequest : SendEnvelope<AuthenticateWithPINRequestBody>
+		struct MUXY_GAMELINK_API AuthenticateWithPINRequest : SendEnvelope<AuthenticateWithPINRequestBody>
 		{
 			/// Creates an authorization request.
 			/// @param[in] clientId Client ID.
@@ -26956,7 +26984,7 @@ namespace gamelink
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-		struct AuthenticateWithRefreshTokenRequestBody
+		struct MUXY_GAMELINK_API AuthenticateWithRefreshTokenRequestBody
 		{
 			string refresh;
 
@@ -26966,7 +26994,7 @@ namespace gamelink
 		};
 		MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithRefreshTokenRequestBody, "refresh", refresh, "client_id", client_id);
 
-		struct AuthenticateWithRefreshTokenRequest : SendEnvelope<AuthenticateWithRefreshTokenRequestBody>
+		struct MUXY_GAMELINK_API AuthenticateWithRefreshTokenRequest : SendEnvelope<AuthenticateWithRefreshTokenRequestBody>
 		{
 			/// Creates an authorization request
 			/// @param[in] clientId Client Id.
@@ -26976,18 +27004,18 @@ namespace gamelink
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-		struct SubscribeAuthenticationRequest : SendEnvelope<EmptyBody>
+		struct MUXY_GAMELINK_API SubscribeAuthenticationRequest : SendEnvelope<EmptyBody>
 		{
 			SubscribeAuthenticationRequest();
 		};
 
-		struct SubscribeAuthenticationResponse : ReceiveEnvelope<OKResponseBody>
+		struct MUXY_GAMELINK_API SubscribeAuthenticationResponse : ReceiveEnvelope<OKResponseBody>
 		{
 		};
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-		struct AuthenticateResponseBody
+		struct MUXY_GAMELINK_API AuthenticateResponseBody
 		{
 			/// Signed JWT. Will expire.
 			string jwt;
@@ -26996,14 +27024,13 @@ namespace gamelink
 		};
 		MUXY_GAMELINK_SERIALIZE_2(AuthenticateResponseBody, "jwt", jwt, "refresh", refresh);
 
-		struct AuthenticateResponse : ReceiveEnvelope<AuthenticateResponseBody>
+		struct MUXY_GAMELINK_API AuthenticateResponse : ReceiveEnvelope<AuthenticateResponseBody>
 		{
 		};
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-		class User
+		class MUXY_GAMELINK_API User
 		{
 		public:
 			User(string jwt, string refreshToken);
@@ -27050,7 +27077,7 @@ namespace gamelink
             }
         };
 
-        struct BroadcastResponse : ReceiveEnvelope<OKResponseBody>
+        struct MUXY_GAMELINK_API BroadcastResponse : ReceiveEnvelope<OKResponseBody>
         {};
     }
 }
@@ -27066,7 +27093,7 @@ namespace gamelink
 {
 	namespace schema
 	{
-		struct DatastreamEvent
+		struct MUXY_GAMELINK_API DatastreamEvent
 		{
 			nlohmann::json event;
 			int64_t timestamp;
@@ -27074,24 +27101,24 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(DatastreamEvent, "event", event, "timestamp", timestamp);
 		};
 
-		struct DatastreamUpdateBody
+		struct MUXY_GAMELINK_API DatastreamUpdateBody
 		{
 			std::vector<DatastreamEvent> events;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(DatastreamUpdateBody, "events", events);
 		};
 
-		struct DatastreamUpdate : ReceiveEnvelope<DatastreamUpdateBody>
+		struct MUXY_GAMELINK_API DatastreamUpdate : ReceiveEnvelope<DatastreamUpdateBody>
 		{
 		};
 
-		struct SubscribeDatastreamRequest : SendEnvelope<SubscribeTopicRequestBody>
+		struct MUXY_GAMELINK_API SubscribeDatastreamRequest : SendEnvelope<SubscribeTopicRequestBody>
 		{
 			/// Creates a SubscribeDatastreamRequest
 			SubscribeDatastreamRequest();
 		};
 
-		struct UnsubscribeDatastreamRequest : SendEnvelope<UnsubscribeTopicRequestBody>
+		struct MUXY_GAMELINK_API UnsubscribeDatastreamRequest : SendEnvelope<UnsubscribeTopicRequestBody>
 		{
 			/// Creates an UnsubscribeDatastreamRequest
 			UnsubscribeDatastreamRequest();
@@ -27111,7 +27138,7 @@ namespace gamelink
 {
 	namespace schema
 	{
-		struct GetPollRequestBody
+		struct MUXY_GAMELINK_API GetPollRequestBody
 		{
 			/// The Poll ID to get
 			string pollId;
@@ -27119,14 +27146,14 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(GetPollRequestBody, "poll_id", pollId);
 		};
 
-		struct DeletePollRequestBody
+		struct MUXY_GAMELINK_API DeletePollRequestBody
 		{
 			string pollId;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(DeletePollRequestBody, "poll_id", pollId);
 		};
 
-		struct CreatePollRequestBody
+		struct MUXY_GAMELINK_API CreatePollRequestBody
 		{
 			/// The Poll ID to create. Poll IDs are scoped to the current channel.
 			string pollId;
@@ -27141,7 +27168,7 @@ namespace gamelink
 		};
 
 		template<typename T>
-		struct CreatePollWithUserDataRequestBody
+		struct MUXY_GAMELINK_API CreatePollWithUserDataRequestBody
 		{
 			/// The Poll ID to create
 			string pollId;
@@ -27166,7 +27193,7 @@ namespace gamelink
 												userData);
 		};
 
-		struct PollResponseBody
+		struct MUXY_GAMELINK_API PollResponseBody
 		{
 			/// The Poll ID that the update is for
 			string pollId;
@@ -27181,7 +27208,7 @@ namespace gamelink
 		};
 
 		template<typename T>
-		struct PollWithUserDataResponseBody
+		struct MUXY_GAMELINK_API PollWithUserDataResponseBody
 		{
 			/// The prompt for the poll.
 			string prompt;
@@ -27197,7 +27224,7 @@ namespace gamelink
 
 		// Note that this is the same as PollUpdateBody, and is provided for consistency with each 
 		// endpoint having their own envelope with body.
-		struct GetPollResponseBody
+		struct MUXY_GAMELINK_API GetPollResponseBody
 		{
 			/// The poll information
 			PollResponseBody poll;
@@ -27218,7 +27245,7 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_5(GetPollResponseBody, "poll", poll, "results", results, "mean", mean, "sum", sum, "count", count);
 		};
 
-		struct PollUpdateBody
+		struct MUXY_GAMELINK_API PollUpdateBody
 		{
 			/// The poll information
 			PollResponseBody poll;
@@ -27255,14 +27282,14 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PollWithUserDataUpdateBody, "topic_id", pollId, "poll", poll, "results", results);
 		};
 
-		struct GetPollRequest : SendEnvelope<GetPollRequestBody>
+		struct MUXY_GAMELINK_API GetPollRequest : SendEnvelope<GetPollRequestBody>
 		{
 			/// Creates a GetPoll request
 			/// @param[in] pollId The ID of the poll to get. Maximum size 64 characters.
 			explicit GetPollRequest(const string& pollId);
 		};
 
-		struct CreatePollRequest : SendEnvelope<CreatePollRequestBody>
+		struct MUXY_GAMELINK_API CreatePollRequest : SendEnvelope<CreatePollRequestBody>
 		{
 			/// Creates a CreatePoll request.
 			/// @param[in] pollId The ID of the poll to create. This can overwrite existing polls if the same
@@ -27295,14 +27322,14 @@ namespace gamelink
 			}
 		};
 
-		struct SubscribePollRequest : SendEnvelope<SubscribeTopicRequestBody>
+		struct MUXY_GAMELINK_API SubscribePollRequest : SendEnvelope<SubscribeTopicRequestBody>
 		{
 			/// Creates a SubscribePollRequest.
 			/// @param[in] pollId The ID of the poll to subscribe to updates for.
 			explicit SubscribePollRequest(const string& pollId);
 		};
 		
-		struct UnsubscribePollRequest : SendEnvelope<UnsubscribeTopicRequestBody>
+		struct MUXY_GAMELINK_API UnsubscribePollRequest : SendEnvelope<UnsubscribeTopicRequestBody>
 		{
 			/// Creates an UnsubscribePollRequest.
 			/// @param[in] pollId The ID of the poll to subscribe to updates for.
@@ -27310,11 +27337,11 @@ namespace gamelink
 		};
 
 
-		struct PollUpdateResponse : ReceiveEnvelope<PollUpdateBody>
+		struct MUXY_GAMELINK_API PollUpdateResponse : ReceiveEnvelope<PollUpdateBody>
 		{
 		};
 
-		struct GetPollResponse : ReceiveEnvelope<GetPollResponseBody>
+		struct MUXY_GAMELINK_API GetPollResponse : ReceiveEnvelope<GetPollResponseBody>
 		{
 		};
 
@@ -27323,7 +27350,7 @@ namespace gamelink
 		{
 		};
 
-		struct DeletePollRequest : SendEnvelope<DeletePollRequestBody>
+		struct MUXY_GAMELINK_API DeletePollRequest : SendEnvelope<DeletePollRequestBody>
 		{
 			/// Creates a DeletePoll request
 			/// @param[in] pollId 	The ID of the poll to be deleted.
@@ -27344,7 +27371,7 @@ namespace gamelink
 {
 	namespace schema
 	{
-		struct Transaction
+		struct MUXY_GAMELINK_API Transaction
 		{
 			/// The External ID of the purchase, unique for each unique purchase, and service dependent.
 			string id;
@@ -27394,59 +27421,59 @@ namespace gamelink
 												additional);
 		};
 
-		struct TransactionResponse : ReceiveEnvelope<Transaction>
+		struct MUXY_GAMELINK_API TransactionResponse : ReceiveEnvelope<Transaction>
 		{
 		};
 
-		struct GetOutsandingTransactionsRequestBody
+		struct MUXY_GAMELINK_API GetOutsandingTransactionsRequestBody
 		{
 			string sku;
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(GetOutsandingTransactionsRequestBody, "sku", sku);
 		};
 
-		struct GetOutstandingTransactionsRequest : SendEnvelope<GetOutsandingTransactionsRequestBody>
+		struct MUXY_GAMELINK_API GetOutstandingTransactionsRequest : SendEnvelope<GetOutsandingTransactionsRequestBody>
 		{
 			explicit GetOutstandingTransactionsRequest(const string& sku);
 		};
 
-		struct GetOutstandingTransactionsResponseBody
+		struct MUXY_GAMELINK_API GetOutstandingTransactionsResponseBody
 		{
 			std::vector<Transaction> transactions;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(GetOutstandingTransactionsResponseBody, "transactions", transactions);
 		};
 
-		struct GetOutstandingTransactionsResponse : ReceiveEnvelope<GetOutstandingTransactionsResponseBody>
+		struct MUXY_GAMELINK_API GetOutstandingTransactionsResponse : ReceiveEnvelope<GetOutstandingTransactionsResponseBody>
 		{
 		};
 
-		struct SubscribePurchaseRequestBody
+		struct MUXY_GAMELINK_API SubscribePurchaseRequestBody
 		{
 			string sku;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SubscribePurchaseRequestBody, "sku", sku);
 		};
 
-		struct UnsubscribePurchaseRequestBody
+		struct MUXY_GAMELINK_API UnsubscribePurchaseRequestBody
 		{
 			string sku;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(UnsubscribePurchaseRequestBody, "sku", sku);
 		};
 
-		struct SubscribeTransactionsRequest : SendEnvelope<SubscribePurchaseRequestBody>
+		struct MUXY_GAMELINK_API SubscribeTransactionsRequest : SendEnvelope<SubscribePurchaseRequestBody>
 		{
 			/// Creates a SubscribeTransactionsRequest
 			explicit SubscribeTransactionsRequest(const string& SKU);
 		};
 
-		struct UnsubscribeTransactionsRequest : SendEnvelope<UnsubscribePurchaseRequestBody>
+		struct MUXY_GAMELINK_API UnsubscribeTransactionsRequest : SendEnvelope<UnsubscribePurchaseRequestBody>
 		{
 			/// Creates an UnsubscribeTransactionsRequest
 			explicit UnsubscribeTransactionsRequest(const string& SKU);
 		};
 
-		struct RefundTransactionBody
+		struct MUXY_GAMELINK_API RefundTransactionBody
 		{
 			string transactionId;
 			string userId;
@@ -27454,12 +27481,12 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(RefundTransactionBody, "transaction_id", transactionId, "user_id", userId);
 		};
 
-		struct RefundTransactionRequest : SendEnvelope<RefundTransactionBody>
+		struct MUXY_GAMELINK_API RefundTransactionRequest : SendEnvelope<RefundTransactionBody>
 		{
 			RefundTransactionRequest(const string& transactionId, const string& userId);
 		};
 
-		struct RefundTransactionBySKUBody
+		struct MUXY_GAMELINK_API RefundTransactionBySKUBody
 		{
 			string SKU;
 			string userId;
@@ -27467,12 +27494,12 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(RefundTransactionBySKUBody, "sku", SKU, "user_id", userId);
 		};
 
-		struct RefundTransactionBySKURequest : SendEnvelope<RefundTransactionBySKUBody>
+		struct MUXY_GAMELINK_API RefundTransactionBySKURequest : SendEnvelope<RefundTransactionBySKUBody>
 		{
 			RefundTransactionBySKURequest(const string& sku, const string& userId);
 		};
 
-		struct ValidateTransactionBody
+		struct MUXY_GAMELINK_API ValidateTransactionBody
 		{
 			string transactionId;
 			string details;
@@ -27480,7 +27507,7 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ValidateTransactionBody, "transaction_id", transactionId, "details", details);
 		};
 
-		struct ValidateTransactionRequest : SendEnvelope<ValidateTransactionBody>
+		struct MUXY_GAMELINK_API ValidateTransactionRequest : SendEnvelope<ValidateTransactionBody>
 		{
 			ValidateTransactionRequest(const string& transactionId, const string& details);
 		};
@@ -27568,7 +27595,7 @@ namespace gamelink
 		{
 		};
 
-		struct GetStateRequestBody
+		struct MUXY_GAMELINK_API GetStateRequestBody
 		{
 			/// Either 'channel' or 'extension', based on the target.
 			string state_id;
@@ -27576,7 +27603,7 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(GetStateRequestBody, "state_id", state_id);
 		};
 
-		struct GetStateRequest : SendEnvelope<GetStateRequestBody>
+		struct MUXY_GAMELINK_API GetStateRequest : SendEnvelope<GetStateRequestBody>
 		{
 			/// Creates a GetState request
 			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
@@ -27588,7 +27615,7 @@ namespace gamelink
 		{
 		};
 
-		struct PatchStateRequestBody
+		struct MUXY_GAMELINK_API PatchStateRequestBody
 		{
 			/// Either 'channel' or 'extension', based on the target.
 			string state_id;
@@ -27598,7 +27625,7 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(PatchStateRequestBody, "state_id", state_id, "state", state);
 		};
 
-		struct PatchStateRequest : SendEnvelope<PatchStateRequestBody>
+		struct MUXY_GAMELINK_API PatchStateRequest : SendEnvelope<PatchStateRequestBody>
 		{
 			/// Creates an UpdateState request
 			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
@@ -27615,7 +27642,7 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(StateUpdateBody, "topic_id", topic_id, "state", state);
 		};
 
-		struct SubscribeStateRequest : SendEnvelope<SubscribeTopicRequestBody>
+		struct MUXY_GAMELINK_API SubscribeStateRequest : SendEnvelope<SubscribeTopicRequestBody>
 		{
 			/// Creates a SubscribeState request
 			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
@@ -27627,7 +27654,7 @@ namespace gamelink
 		{
 		};
 
-		struct UnsubscribeStateRequest : SendEnvelope<UnsubscribeTopicRequestBody>
+		struct MUXY_GAMELINK_API UnsubscribeStateRequest : SendEnvelope<UnsubscribeTopicRequestBody>
 		{
 			/// Creates a SubscribeState request
 			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
@@ -27647,13 +27674,13 @@ namespace gamelink
 {
     namespace schema
     {
-        struct SetConfigRequestBody
+        struct MUXY_GAMELINK_API SetConfigRequestBody
         {
             nlohmann::json config;
             MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SetConfigRequestBody, "config", config); 
         };
 
-        struct GetConfigRequestBody
+        struct MUXY_GAMELINK_API GetConfigRequestBody
         {
             // Either 'channel', 'extension' or 'combined'
             string configId;
@@ -27661,7 +27688,7 @@ namespace gamelink
             MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(GetConfigRequestBody, "config_id", configId);
         };
 
-        struct ConfigResponseBody
+        struct MUXY_GAMELINK_API ConfigResponseBody
         {
             nlohmann::json config;
             string configId;
@@ -27669,7 +27696,7 @@ namespace gamelink
             MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ConfigResponseBody, "config", config, "config_id", configId);
         };
         
-        struct ConfigUpdateBody
+        struct MUXY_GAMELINK_API ConfigUpdateBody
         {
             nlohmann::json config;
             string topicId;
@@ -27677,7 +27704,7 @@ namespace gamelink
             MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ConfigUpdateBody, "config", config, "topic_id", topicId);
         };
 
-        struct CombinedState
+        struct MUXY_GAMELINK_API CombinedState
         {
             nlohmann::json channel;
             nlohmann::json extension;
@@ -27686,7 +27713,7 @@ namespace gamelink
             MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(CombinedState, "channel", channel, "extension", extension, "config_id", configId);
         };
 
-        struct CombinedStateResponseBody
+        struct MUXY_GAMELINK_API CombinedStateResponseBody
         {
             CombinedState config;
             string configId;
@@ -27694,26 +27721,26 @@ namespace gamelink
             MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(CombinedStateResponseBody, "config", config, "config_id", configId);
         };
 
-        struct SubscribeConfigRequestBody
+        struct MUXY_GAMELINK_API SubscribeConfigRequestBody
         {
             string configId;
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SubscribeConfigRequestBody, "config_id", configId);
         };
 
-        struct UnsubscribeConfigRequestBody
+        struct MUXY_GAMELINK_API UnsubscribeConfigRequestBody
         {
             string configId;
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(UnsubscribeConfigRequestBody, "config_id", configId);
         };
         
-		struct PatchConfigRequestBody
+		struct MUXY_GAMELINK_API PatchConfigRequestBody
 		{
 			std::vector<PatchOperation> config;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(PatchConfigRequestBody, "config", config);
 		};
 
-		struct PatchConfigRequest : SendEnvelope<PatchConfigRequestBody>
+		struct MUXY_GAMELINK_API PatchConfigRequest : SendEnvelope<PatchConfigRequestBody>
 		{
 			PatchConfigRequest();
 		};
@@ -27721,35 +27748,35 @@ namespace gamelink
         static const char CONFIG_TARGET_CHANNEL[] = "channel";
         static const char CONFIG_TARGET_EXTENSION[] = "extension";
 
-        struct GetConfigRequest : SendEnvelope<GetConfigRequestBody>
+        struct MUXY_GAMELINK_API GetConfigRequest : SendEnvelope<GetConfigRequestBody>
         {
             /// Creates a GetConfig request.
             /// @param[in] target one of the CONFIG_TARGET constants 
             explicit GetConfigRequest(const char* target);
         };
 
-        struct SetConfigRequest : SendEnvelope<SetConfigRequestBody>
+        struct MUXY_GAMELINK_API SetConfigRequest : SendEnvelope<SetConfigRequestBody>
         {
             explicit SetConfigRequest(const nlohmann::json& js);
         };
 
-        struct GetConfigResponse : ReceiveEnvelope<ConfigResponseBody>
+        struct MUXY_GAMELINK_API GetConfigResponse : ReceiveEnvelope<ConfigResponseBody>
         {};
 
-        struct GetCombinedConfigResponse : ReceiveEnvelope<CombinedStateResponseBody>
+        struct MUXY_GAMELINK_API GetCombinedConfigResponse : ReceiveEnvelope<CombinedStateResponseBody>
         {};
 
-        struct SubscribeToConfigRequest : SendEnvelope<SubscribeConfigRequestBody>
+        struct MUXY_GAMELINK_API SubscribeToConfigRequest : SendEnvelope<SubscribeConfigRequestBody>
         {
             explicit SubscribeToConfigRequest(const char* target);
         };
 
-        struct UnsubscribeFromConfigRequest : SendEnvelope<SubscribeConfigRequestBody>
+        struct MUXY_GAMELINK_API UnsubscribeFromConfigRequest : SendEnvelope<SubscribeConfigRequestBody>
         {
             explicit UnsubscribeFromConfigRequest(const char* target);
         };
 
-        struct ConfigUpdateResponse : ReceiveEnvelope<ConfigUpdateBody>
+        struct MUXY_GAMELINK_API ConfigUpdateResponse : ReceiveEnvelope<ConfigUpdateBody>
 		{
 		};
     }
@@ -27770,7 +27797,7 @@ namespace gamelink
 	/// @param[in] recv A receive envelope
 	/// @returns Pointer to first error in the errors array of the envelope. If no
 	///          such error exists, returns the null pointer.
-	const schema::Error* FirstError(const schema::ReceiveEnvelopeCommon& recv);
+	MUXY_GAMELINK_API const schema::Error* FirstError(const schema::ReceiveEnvelopeCommon& recv);
 
 	/// RequestId is an 16bit unsigned integer that represents a request.
 	/// Obtained through SDK methods.
@@ -27780,7 +27807,7 @@ namespace gamelink
 	static const RequestId ANY_REQUEST_ID = 0xFFFF;
 
 	/// Payload represents a block of data to be sent through the websocket.
-	class Payload
+	class MUXY_GAMELINK_API Payload
 	{
 		friend class SDK;
 		explicit Payload(string data);
@@ -28016,7 +28043,7 @@ namespace gamelink
 		/// @param[in] projectionMinor The minor version of this projection.
 		/// @param[in] projectionPatch The patch version of this projection.
 		/// @return Returns the URL to connect to. Returns an empty string on error.
-		string ProjectionWebsocketConnectionURL(const string& clientId,
+		MUXY_GAMELINK_API string ProjectionWebsocketConnectionURL(const string& clientId,
 												ConnectionStage stage,
 												const string& projection,
 												int projectionMajor,
@@ -28032,13 +28059,13 @@ namespace gamelink
 	/// @param[in] stage The stage to connect to, either CONNECTION_STAGE_PRODUCTION or
 	///                  CONNECTION_STAGE_SANDBOX.
 	/// @return Returns the URL to connect to. Returns an empty string on error.
-	string WebsocketConnectionURL(const string& clientId, ConnectionStage stage);
+	MUXY_GAMELINK_API string WebsocketConnectionURL(const string& clientId, ConnectionStage stage);
 
 	/// The SDK class exposes functionality to interact with the Gamelink SDK.
 	///
 	/// @remark Most functions are thread safe, and can be called from multiple threads
 	///         concurrently, unless specifically denoted.
-	class SDK
+	class MUXY_GAMELINK_API SDK
 	{
 	public:
 		SDK();
@@ -28946,30 +28973,1459 @@ namespace gamelink
 #ifdef MUXY_GAMELINK_SINGLE_IMPL
 
 
+namespace gamelink
+{
+	namespace schema
+	{
+		SubscribeAuthenticationRequest::SubscribeAuthenticationRequest()
+		{
+			action = string("subscribe");
+			params.target = string("authentication");
+		}
+
+		AuthenticateWithPINRequest::AuthenticateWithPINRequest(const string& clientId, const string& pin)
+		{
+			action = string("authenticate");
+			params.target = string("");
+			data.pin = pin;
+			data.client_id = clientId;
+		}
+
+		AuthenticateWithRefreshTokenRequest::AuthenticateWithRefreshTokenRequest(const string& clientId, const string& refreshToken)
+		{
+			action = string("authenticate");
+			params.target = string("");
+			data.refresh = refreshToken;
+			data.client_id = clientId;
+		}
+
+		User::User(string jwt, string refreshToken)
+			: jwt(std::move(jwt))
+			, refreshToken(std::move(refreshToken))
+		{
+		}
+		const string& User::GetJWT() const 
+		{ 
+			return jwt; 
+		}
+		
+		const string& User::GetRefreshToken() const 
+		{ 
+			return refreshToken; 
+		}
+	}
+}
 
 
 
 
+namespace gamelink
+{
+	namespace schema
+	{
+		SubscribeDatastreamRequest::SubscribeDatastreamRequest()
+		{
+			action = string("subscribe");
+			params.target = string("datastream");
+		}
+
+		UnsubscribeDatastreamRequest::UnsubscribeDatastreamRequest()
+		{
+			action = string("unsubscribe");
+			params.target = string("datastream");
+		}
+	}
+}
 
 
 
+namespace gamelink
+{
+	namespace schema
+	{
+		JsonAtom atomFromInteger(int64_t v)
+		{
+			JsonAtom atom;
+
+			atom.type = JSON_ATOM_INT64;
+			atom.int64Value = v;
+
+			return atom;
+		}
+
+		JsonAtom atomFromDouble(double v)
+		{
+			JsonAtom atom;
+
+			atom.type = JSON_ATOM_DOUBLE;
+			atom.doubleValue = v;
+
+			return atom;
+		}
+
+		JsonAtom atomFromBoolean(bool b)
+		{
+			JsonAtom atom;
+
+			atom.type = JSON_ATOM_BOOLEAN;
+			atom.int64Value = b ? 1 : 0;
+
+			return atom;
+		}
+
+		JsonAtom atomFromString(const string& str)
+		{
+			JsonAtom atom;
+
+			atom.type = JSON_ATOM_STRING;
+			atom.stringValue = str;
+
+			return atom;
+		}
+
+		JsonAtom atomFromLiteral(const string& str)
+		{
+			JsonAtom atom;
+
+			atom.type = JSON_ATOM_LITERAL;
+			atom.stringValue = str;
+
+			return atom;
+		}
+
+		JsonAtom atomNull()
+		{
+			JsonAtom atom;
+			atom.type = JSON_ATOM_NULL;
+			return atom;
+		}
+
+		void to_json(nlohmann::json& out, const JsonAtom& p)
+		{
+			switch (p.type)
+			{
+			case JSON_ATOM_NULL:
+				out = nlohmann::json();
+				break;
+			case JSON_ATOM_INT64:
+				out = p.int64Value;
+				break;
+			case JSON_ATOM_DOUBLE:
+				out = p.doubleValue;
+				break;
+			case JSON_ATOM_STRING:
+				out = p.stringValue;
+				break;
+			case JSON_ATOM_BOOLEAN:
+				out = static_cast<bool>(p.int64Value);
+				break;
+			case JSON_ATOM_LITERAL:
+				out = nlohmann::json::parse(p.stringValue.c_str(), nullptr, false);
+				break;
+			default:
+				// Bad
+				out = nlohmann::json();
+				break;
+			}
+		}
+
+		void from_json(const nlohmann::json& n, JsonAtom& p)
+		{
+			p.type = JSON_ATOM_NULL;
+			if (n.is_null())
+			{
+				p.type = JSON_ATOM_NULL;
+			}
+			else if (n.is_string())
+			{
+				p.type = JSON_ATOM_STRING;
+				p.stringValue = n.get<string>();
+			}
+			else if (n.is_number_integer())
+			{
+				p.type = JSON_ATOM_INT64;
+				p.int64Value = n.get<int64_t>();
+			}
+			else if (n.is_boolean())
+			{
+				p.type = JSON_ATOM_BOOLEAN;
+				p.int64Value = n.get<bool>();
+			}
+			else if (n.is_number())
+			{
+				p.type = JSON_ATOM_DOUBLE;
+				p.doubleValue = n.get<double>();
+			}
+			else if (n.is_object() || n.is_array())
+			{
+				p.type = JSON_ATOM_LITERAL;
+				p.stringValue = gamelink::string(n.dump().c_str());
+			}
+		}
+
+		ReceiveMeta::ReceiveMeta()
+			: request_id(0)
+			, timestamp(0)
+		{
+		}
+
+		SendParameters::SendParameters()
+			: request_id(0xFFFF)
+		{
+		}
+
+		ReceiveEnvelope<EmptyBody> ParseEnvelope(const char* bytes, uint32_t length, bool* outSuccess)
+		{
+			ReceiveEnvelope<EmptyBody> out;
+			bool result = ParseResponse(bytes, length, out);
+			if (outSuccess)
+			{
+				*outSuccess = result;
+			}
+			return out;
+		}
+	}
+}
 
 
 
+namespace gamelink
+{
+    namespace schema
+    {
+		PatchConfigRequest::PatchConfigRequest()
+		{
+			action = string("patch");
+			params.target = string("config");
+		}
+
+        GetConfigRequest::GetConfigRequest(const char* target)
+        {
+            action = string("get");
+			params.target = string("config");
+            data.configId = target;
+        }
+
+        SetConfigRequest::SetConfigRequest(const nlohmann::json& js)
+        {
+            action = string("set");
+			params.target = string("config");
+            data.config = js;
+        }
+
+        SubscribeToConfigRequest::SubscribeToConfigRequest(const char* target)
+        {
+            action = string("subscribe");
+            params.target = string("config");
+            data.configId = target;
+        }
+
+        UnsubscribeFromConfigRequest::UnsubscribeFromConfigRequest(const char* target)
+        {
+            action = string("unsubscribe");
+            params.target = string("config");
+            data.configId = target;
+        }
+    }
+}
+
+
+namespace gamelink
+{
+	namespace schema
+	{
+		GetPollRequest::GetPollRequest(const string& pollId)
+		{
+			action = string("get");
+			params.target = string("poll");
+
+			data.pollId = pollId;
+		}
+
+		DeletePollRequest::DeletePollRequest(const string& pollId)
+		{
+			action = string("delete");
+			params.target = string("poll");
+
+			data.pollId = pollId;
+		}
+
+		CreatePollRequest::CreatePollRequest(const string& pollId, const string& prompt, const std::vector<string>& options)
+		{
+			action = string("create");
+			params.target = string("poll");
+
+			data.pollId = pollId;
+			data.prompt = prompt;
+			data.options = options;
+		}
+
+		SubscribePollRequest::SubscribePollRequest(const string& pollId)
+		{
+			action = string("subscribe");
+			params.target = string("poll");
+			data.topic_id = string(pollId);
+		}
+
+		UnsubscribePollRequest::UnsubscribePollRequest(const string& pollId)
+		{
+			action = string("unsubscribe");
+			params.target = string("poll");
+			data.topic_id = string(pollId);
+		}
+	}
+}
 
 
 
+namespace gamelink
+{
+	namespace schema
+	{
+		SubscribeTransactionsRequest::SubscribeTransactionsRequest(const string& SKU)
+		{
+			action = string("subscribe");
+			params.target = string("twitchPurchaseBits");
+			data.sku = SKU;
+		}
+
+		UnsubscribeTransactionsRequest::UnsubscribeTransactionsRequest(const string& SKU)
+		{
+			action = string("unsubscribe");
+			params.target = string("twitchPurchaseBits");
+			data.sku = SKU;
+		}
+
+		GetOutstandingTransactionsRequest::GetOutstandingTransactionsRequest(const string& sku)
+		{
+			action = string("get");
+			params.target = string("transaction");
+			data.sku = sku;
+		}
+
+		RefundTransactionRequest::RefundTransactionRequest(const string& transactionId, const string& userId)
+		{
+			action = string("refund");
+			params.target = string("transaction");
+			data.transactionId = string(transactionId);
+			data.userId = string(userId);
+		}
+
+		RefundTransactionBySKURequest::RefundTransactionBySKURequest(const string& sku, const string& userId)
+		{
+			action = string("refund");
+			params.target = string("transaction");
+			data.SKU = string(sku);
+			data.userId = string(userId);
+		}
+
+		ValidateTransactionRequest::ValidateTransactionRequest(const string& transactionId, const string& details)
+		{
+			action = string("validate");
+			params.target = string("transaction");
+			data.transactionId = string(transactionId);
+			data.details = string(details);
+		}
+	}
+}
 
 
 
+namespace gamelink
+{
+	namespace schema
+	{
+		GetStateRequest::GetStateRequest(const char* target)
+		{
+			action = string("get");
+			params.target = string("state");
+			data.state_id = string(target);
+		}
+
+		PatchStateRequest::PatchStateRequest(const char* target)
+		{
+			action = string("patch");
+			params.target = string("state");
+			data.state_id = string(target);
+		}
+
+		SubscribeStateRequest::SubscribeStateRequest(const char* target)
+		{
+			action = string("subscribe");
+			params.target = string("state");
+			data.topic_id = string(target);
+		}
+
+		UnsubscribeStateRequest::UnsubscribeStateRequest(const char* target)
+		{
+			action = string("unsubscribe");
+			params.target = string("state");
+			data.topic_id = string(target);
+		}
+	}
+}
+
+#include <cstdio>
+#include <iostream>
+
+namespace gamelink
+{
+	static const size_t CONNECTION_URL_BUFFER_LENGTH = 256;
+	static const char CONNECTION_URL_SANDBOX[] = "sandbox.gamelink.muxy.io";
+	static const char CONNECTION_URL_PRODUCTION[] = "gamelink.muxy.io";
+
+	namespace detail
+	{
+		string ProjectionWebsocketConnectionURL(
+			const string& clientId, 
+			ConnectionStage stage, 
+			const string& projection, 
+			int projectionMajor, int projectionMinor, int projectionPatch)
+		{
+			char buffer[CONNECTION_URL_BUFFER_LENGTH];
+			// Ignore obviously too-large client IDs
+			if (clientId.size() > 100)
+			{
+				return string("");
+			}
+
+			const char * url = nullptr;
+			if (stage == CONNECTION_STAGE_PRODUCTION)
+			{
+				url = CONNECTION_URL_PRODUCTION;
+			}
+			else if (stage == CONNECTION_STAGE_SANDBOX)
+			{
+				url = CONNECTION_URL_SANDBOX;
+			}
+
+			if (!url)
+			{
+				return string("");
+			}
+
+			if (projectionMajor < 0 || projectionMinor < 0 || projectionPatch < 0)
+			{
+				return string("");
+			}
+
+			int output = snprintf(buffer, CONNECTION_URL_BUFFER_LENGTH, "%s/%d.%d.%d/%s/%d.%d.%d/%s",
+				url,
+				MUXY_GAMELINK_VERSION_MAJOR, MUXY_GAMELINK_VERSION_MINOR, MUXY_GAMELINK_VERSION_PATCH,
+				projection.c_str(),
+				projectionMajor, projectionMinor, projectionPatch,
+				clientId.c_str());
+
+			if (output > 0 && output < CONNECTION_URL_BUFFER_LENGTH)
+			{
+				return string(buffer);
+			}
+
+			return string("");
+		}
+	}
+
+	string WebsocketConnectionURL(const string& clientID, ConnectionStage stage)
+	{
+		char buffer[CONNECTION_URL_BUFFER_LENGTH];
+		// Ignore obviously too-large client IDs
+		if (clientID.size() > 100)
+		{
+			return string("");
+		}
+
+		const char * url = nullptr;
+		if (stage == CONNECTION_STAGE_PRODUCTION)
+		{
+			url = CONNECTION_URL_PRODUCTION;
+		}
+		else if (stage == CONNECTION_STAGE_SANDBOX)
+		{
+			url = CONNECTION_URL_SANDBOX;
+		}
+
+		if (!url)
+		{
+			return string("");
+		}
+
+		int output = snprintf(buffer, CONNECTION_URL_BUFFER_LENGTH, "%s/%d.%d.%d/%s",
+			url,
+			MUXY_GAMELINK_VERSION_MAJOR, MUXY_GAMELINK_VERSION_MINOR, MUXY_GAMELINK_VERSION_PATCH,
+			clientID.c_str());
+
+		if (output > 0 && output < CONNECTION_URL_BUFFER_LENGTH)
+		{
+			return string(buffer);
+		}
+
+		return string("");
+	}
+
+	const schema::Error* FirstError(const schema::ReceiveEnvelopeCommon& recv)
+	{
+		if (recv.errors.empty())
+		{
+			return NULL;
+		}
+
+		return &recv.errors[0];
+	}
+
+	Payload::Payload(string data)
+		: waitingForResponse(ANY_REQUEST_ID)
+		, data(data)
+	{
+	}
+
+	SDK::SDK()
+		: _user(NULL)
+		, _currentRequestId(1)
+		, _onDebugMessage(0, 0, detail::CALLBACK_PERSISTENT){};
+
+	SDK::~SDK()
+	{
+		// Clean up unsent messages
+		for (uint32_t i = 0; i < _queuedPayloads.size(); ++i)
+		{
+			delete _queuedPayloads[i];
+		}
+	}
+
+	RequestId SDK::nextRequestId()
+	{
+		// Wrap around at 32k
+		RequestId id = (_currentRequestId++ & 0x7F);
+		return id;
+	}
+
+	void SDK::debugLogPayload(const Payload* s)
+	{
+		if (_onDebugMessage.valid())
+		{
+			uint32_t bufferLength = s->data.size() + 128;
+			char* buffer = new char[bufferLength];
+
+			int offset = snprintf(buffer, bufferLength, "send len=%d msg=", static_cast<int>(s->data.size()));
+			memcpy(buffer + offset, s->data.c_str(), s->data.size());
+			buffer[s->data.size() + offset] = '\0';
+
+			_onDebugMessage.invoke(string(buffer));
+
+			delete[] buffer;
+		}
+	}
+
+	bool SDK::HasPayloads() const
+	{
+		_lock.lock();
+		bool result = HasPayloadsNoLock();
+		_lock.unlock();
+
+		return result;
+	}
+
+	bool SDK::HasPayloadsNoLock() const
+	{
+		if (_queuedPayloads.size() > 0)
+		{
+			if (_queuedPayloads.front()->waitingForResponse != ANY_REQUEST_ID)
+			{
+				return false;
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+
+	void SDK::ForeachPayload(SDK::NetworkCallback networkCallback, void* user)
+	{
+		while (true)
+		{
+			Payload* payload = NULL;
+			_lock.lock();
+			if (HasPayloadsNoLock())
+			{
+				payload = _queuedPayloads.front();
+				_queuedPayloads.pop_front();
+				_lock.unlock();
+			}
+			else
+			{
+				_lock.unlock();
+				break;
+			}
+
+			if (payload)
+			{
+				if (payload->data.size() > 0)
+				{
+					networkCallback(user, payload);
+				}
+
+				delete payload;
+			}
+		}
+	}
+
+	bool SDK::ReceiveMessage(const char* bytes, uint32_t length)
+	{
+		bool success = false;
+		bool parseEnvelopeSuccess = false;
+		schema::ReceiveEnvelope<schema::EmptyBody> env = schema::ParseEnvelope(bytes, length, &parseEnvelopeSuccess);
+		if (!parseEnvelopeSuccess)
+		{
+			return false;
+		}
+
+		_lock.lock();
+		// Set any waits for the id just received to any_request_id
+		for (uint32_t i = 0; i < _queuedPayloads.size(); ++i)
+		{
+			if (_queuedPayloads[i]->waitingForResponse == env.meta.request_id && env.meta.request_id != ANY_REQUEST_ID)
+			{
+				_queuedPayloads[i]->waitingForResponse = ANY_REQUEST_ID;
+			}
+		}
+
+		// Clear any waits at the front of the queue.
+		while (_queuedPayloads.size() > 0)
+		{
+			Payload* p = _queuedPayloads.front();
+			if (p->waitingForResponse == ANY_REQUEST_ID && p->data.size() == 0)
+			{
+				_queuedPayloads.pop_front();
+				delete p;
+			}
+			else
+			{
+				break;
+			}
+		}
+		_lock.unlock();
+
+		if (_onDebugMessage.valid())
+		{
+			uint32_t bufferLength = length + 128;
+			char* buffer = new char[bufferLength];
+
+			int offset = snprintf(buffer, bufferLength, "recv len=%d msg=", static_cast<int>(length));
+			memcpy(buffer + offset, bytes, length);
+			buffer[length + offset] = '\0';
+
+			_onDebugMessage.invoke(string(buffer));
+
+			delete[] buffer;
+		}
+
+		if (env.meta.action == "authenticate")
+		{
+			// Authentication response
+			schema::AuthenticateResponse authResp;
+			success = schema::ParseResponse(bytes, length, authResp);
+			if (success)
+			{
+				const schema::Error * err = FirstError(authResp);
+				if (!err)
+				{
+					_user = new schema::User(authResp.data.jwt, authResp.data.refresh);
+					_storedJWT = authResp.data.jwt;
+					_storedRefresh = authResp.data.refresh;
+				}
+
+				_onAuthenticate.invoke(authResp);
+			}
+		}
+		else if (env.meta.action == "get")
+		{
+			if (env.meta.target == "state")
+			{
+				schema::GetStateResponse<nlohmann::json> stateResp;
+				success = schema::ParseResponse(bytes, length, stateResp);
+				if (success)
+				{
+					_onGetState.invoke(stateResp);
+				}
+			}
+			else if (env.meta.target == "poll")
+			{
+				schema::GetPollResponse pollResp;
+				success = schema::ParseResponse(bytes, length, pollResp);
+				if (success)
+				{
+					_onGetPoll.invoke(pollResp);
+				}
+			}
+			else if (env.meta.target == "config")
+			{
+				schema::GetConfigResponse configResp;
+				success = schema::ParseResponse(bytes, length, configResp);
+				if (success)
+				{
+					if (configResp.data.configId == "combined")
+					{
+						schema::GetCombinedConfigResponse combinedResp;
+						success = schema::ParseResponse(bytes, length, combinedResp);
+						if (success)
+						{
+							_onGetCombinedConfig.invoke(combinedResp);
+						}
+					}
+					else
+					{
+						_onGetConfig.invoke(configResp);
+					}
+				}
+			}
+			else if (env.meta.target == "transaction")
+			{
+				schema::GetOutstandingTransactionsResponse resp;
+				success = schema::ParseResponse(bytes, length, resp);
+
+				if (success)
+				{
+					_onGetOutstandingTransactions.invoke(resp);
+				}
+			}
+		}
+		else if (env.meta.action == "update")
+		{
+			if (env.meta.target == "poll")
+			{
+				// Poll update response
+				// TODO Handle a UserDataPollUpdateResponse as well
+				schema::PollUpdateResponse pollResp;
+				success = schema::ParseResponse<schema::PollUpdateResponse>(bytes, length, pollResp);
+				if (success)
+				{
+					_onPollUpdate.invoke(pollResp);
+				}
+			}
+			else if (env.meta.target == "channel")
+			{
+				schema::SubscribeStateUpdateResponse<nlohmann::json> resp;
+				success = schema::ParseResponse(bytes, length, resp);
+				if (success)
+				{
+					_onStateUpdate.invoke(resp);
+				}
+			}
+			else if (env.meta.target == "twitchPurchaseBits" || env.meta.target == "transaction")
+			{
+				schema::TransactionResponse resp;
+				success = schema::ParseResponse(bytes, length, resp);
+				if (success)
+				{
+					_onTransaction.invoke(resp);
+				}
+			}
+			else if (env.meta.target == "datastream")
+			{
+				schema::DatastreamUpdate resp;
+				success = schema::ParseResponse(bytes, length, resp);
+				if (success)
+				{
+					_onDatastreamUpdate.invoke(resp);
+				}
+			}
+			else if (env.meta.target == "config")
+			{
+				schema::ConfigUpdateResponse resp;
+				success = schema::ParseResponse(bytes, length, resp);
+				if (success)
+				{
+					_onConfigUpdate.invoke(resp);
+				}
+			}
+		}
+		else
+		{
+			success = true;
+		}
+
+		return success;
+	}
+
+	bool SDK::IsAuthenticated() const
+	{
+		return _user != NULL;
+	}
+
+	const schema::User* SDK::GetUser() const
+	{
+		return _user;
+	}
+
+	const char* SDK::GetClientId() const
+	{
+		return _storedClientId.c_str();
+	}
+
+	void SDK::HandleReconnect()
+	{
+		if (!(_storedRefresh == gamelink::string("")))
+		{
+			schema::AuthenticateWithRefreshTokenRequest p(_storedClientId, _storedRefresh);
+			Payload* payload = new Payload(gamelink::string(to_string(p).c_str()));
+			debugLogPayload(payload);
+
+			_lock.lock();
+			_queuedPayloads.push_front(payload);
+			_lock.unlock();
+		}
+	}
+
+	// Callbacks
+	void SDK::OnDebugMessage(std::function<void(const string&)> callback)
+	{
+		_onDebugMessage.set(callback);
+	}
+
+	void SDK::OnDebugMessage(void (*callback)(void*, const string&), void* ptr)
+	{
+		_onDebugMessage.set(callback, ptr);
+	}
+
+	void SDK::DetachOnDebugMessage()
+	{
+		_onDebugMessage.clear();
+	}
+
+	void SDK::InvokeOnDebugMessage(const string& message)
+	{
+		_onDebugMessage.invoke(message);
+	}
+
+	void SDK::WaitForResponse(RequestId req)
+	{
+		Payload* wait = new Payload("");
+		wait->waitingForResponse = req;
+
+		_lock.lock();
+		_queuedPayloads.push_back(wait);
+		_lock.unlock();
+	}
+
+	RequestId SDK::SendBroadcast(const string& topic, const nlohmann::json& msg)
+	{
+		schema::BroadcastRequest<nlohmann::json> payload(topic, msg);
+		return queuePayload(payload);
+	}
+
+	RequestId SDK::SendBroadcast(const string& topic)
+	{
+		schema::BroadcastRequest<nlohmann::json> payload(topic, nlohmann::json::object());
+		return queuePayload(payload);
+	}
+}
 
 
 
+namespace gamelink
+{
+    uint32_t SDK::OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> callback)
+	{
+		return _onAuthenticate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
+
+	uint32_t SDK::OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr)
+	{
+		return _onAuthenticate.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
+
+	void SDK::DetachOnAuthenticate(uint32_t id)
+	{
+		if (_onAuthenticate.validateId(id))
+		{
+			_onAuthenticate.remove(id);
+		}
+		else
+		{
+			_onDebugMessage.invoke("Invalid ID passed into DetachOnAuthenticate");
+		}
+	}
+
+	RequestId SDK::Deauthenticate()
+	{
+		// TODO: Send a deauth attempt, instead of just nulling out the user object here.
+		delete _user;
+		_user = nullptr;
+
+		return ANY_REQUEST_ID;
+	}
+    
+	RequestId SDK::AuthenticateWithPIN(const string& clientId, const string& pin)
+	{
+		schema::AuthenticateWithPINRequest payload(clientId, pin);
+		_storedClientId = clientId;
+
+		return queuePayload(payload);
+	}
+
+	RequestId SDK::AuthenticateWithPIN(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback)
+	{
+		schema::AuthenticateWithPINRequest payload(clientId, pin);
+		_storedClientId = clientId;
+
+		RequestId id = queuePayload(payload);
+		_onAuthenticate.set(callback, id, detail::CALLBACK_ONESHOT);
+		return id;
+	}
+
+	RequestId SDK::AuthenticateWithPIN(const string& clientId,
+								  const string& pin,
+								  void (*callback)(void*, const schema::AuthenticateResponse&),
+								  void* user)
+	{
+		schema::AuthenticateWithPINRequest payload(clientId, pin);
+		_storedClientId = clientId;
+
+		RequestId id = queuePayload(payload);
+		_onAuthenticate.set(callback, user, id, detail::CALLBACK_ONESHOT);
+		return id;
+	}
+
+	RequestId SDK::AuthenticateWithRefreshToken(const string& clientId, const string& refreshToken)
+	{
+		schema::AuthenticateWithRefreshTokenRequest payload(clientId, refreshToken);
+		_storedClientId = clientId;
+
+		return queuePayload(payload);
+	}
+
+	RequestId SDK::AuthenticateWithRefreshToken(const string& clientId, const string& refreshToken, std::function<void(const schema::AuthenticateResponse&)> callback)
+	{
+		schema::AuthenticateWithRefreshTokenRequest payload(clientId, refreshToken);
+		_storedClientId = clientId;
+
+		RequestId id = queuePayload(payload);
+		_onAuthenticate.set(callback, id, detail::CALLBACK_ONESHOT);
+		return id;
+	}
+
+	RequestId SDK::AuthenticateWithRefreshToken(const string& clientId,
+								  const string& refreshToken,
+								  void (*callback)(void*, const schema::AuthenticateResponse&),
+								  void* user)
+	{
+		schema::AuthenticateWithRefreshTokenRequest payload(clientId, refreshToken);
+		_storedClientId = clientId;
+
+		RequestId id = queuePayload(payload);
+		_onAuthenticate.set(callback, user, id, detail::CALLBACK_ONESHOT);
+		return id;
+	}
+}
 
 
+namespace gamelink
+{
+    RequestId SDK::GetConfig(const char* target, std::function<void(const schema::GetConfigResponse&)> callback)
+    {
+        schema::GetConfigRequest req(target);
+        RequestId id = queuePayload(req);
+
+        _onGetConfig.set(callback, id, detail::CALLBACK_ONESHOT);
+        return id;
+    }
+
+	RequestId SDK::GetConfig(const char* target, void (*callback)(void *, const schema::GetConfigResponse&), void* user)
+    {
+        schema::GetConfigRequest req(target);
+        RequestId id = queuePayload(req);
+
+        _onGetConfig.set(callback, user, id, detail::CALLBACK_ONESHOT);
+        return id;
+    }
+
+    RequestId SDK::GetCombinedConfig(std::function<void (const schema::GetCombinedConfigResponse&)> callback)
+    {
+        schema::GetConfigRequest req("combined");
+        RequestId id = queuePayload(req);
+
+        _onGetCombinedConfig.set(callback, id, detail::CALLBACK_ONESHOT);
+        return id;
+    }
+
+    RequestId SDK::GetCombinedConfig(void (*callback)(void *, const schema::GetCombinedConfigResponse&), void* user)
+    {
+        schema::GetConfigRequest req("combined");
+        RequestId id = queuePayload(req);
+
+        _onGetCombinedConfig.set(callback, user, id, detail::CALLBACK_ONESHOT);
+        return id;
+    }
+
+    RequestId SDK::SubscribeToConfigurationChanges(const char* target)
+    {
+        schema::SubscribeToConfigRequest req(target);
+        return queuePayload(req);
+    }
+
+    RequestId SDK::UnsubscribeFromConfigurationChanges(const char* target)
+    {
+        schema::UnsubscribeFromConfigRequest req(target);
+        return queuePayload(req);
+    }
+
+    RequestId SDK::SetChannelConfig(const nlohmann::json& js)
+    {
+        schema::SetConfigRequest req(js);
+        return queuePayload(req);
+    }
+
+    uint32_t SDK::OnConfigUpdate(std::function<void(const schema::ConfigUpdateResponse&)> callback)
+    {
+        return _onConfigUpdate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+    }
+
+    uint32_t SDK::OnConfigUpdate(void (*callback)(void*, const schema::ConfigUpdateResponse&), void* user)
+    {
+        return _onConfigUpdate.set(callback, user, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+    }
+
+    void SDK::DetachOnConfigUpdate(uint32_t id)
+    {
+        if (_onConfigUpdate.validateId(id))
+        {
+            _onConfigUpdate.remove(id);
+        }
+        else
+        {
+            _onDebugMessage.invoke("Invalid ID passed into DetachOnConfigUpdate");
+        }
+    }
+
+    RequestId SDK::UpdateChannelConfig(const schema::PatchOperation* begin, const schema::PatchOperation* end)
+	{
+		schema::PatchConfigRequest payload;
+		std::vector<schema::PatchOperation> updates;
+		updates.resize(end - begin);
+		std::copy(begin, end, updates.begin());
+
+		payload.data.config = std::move(updates);
+		return queuePayload(payload);
+	}
+
+	RequestId SDK::UpdateChannelConfigWithInteger(const char * operation, const string& path, int64_t i)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromInteger(i);
+
+		return UpdateChannelConfig(&op, &op + 1);
+	}
+
+	RequestId SDK::UpdateChannelConfigWithDouble(const char * operation, const string& path, double d)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromDouble(d);
+
+		return UpdateChannelConfig(&op, &op + 1);
+	}
+
+	RequestId SDK::UpdateChannelConfigWithBoolean(const char * operation, const string& path, bool b)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromBoolean(b);
+
+		return UpdateChannelConfig(&op, &op + 1);
+	}
+
+	RequestId SDK::UpdateChannelConfigWithString(const char * operation, const string& path, const string& str)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromString(str);
+
+		return UpdateChannelConfig(&op, &op + 1);
+	}
+
+	RequestId SDK::UpdateChannelConfigWithLiteral(const char * operation, const string& path, const string& str)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromLiteral(str);
+
+		return UpdateChannelConfig(&op, &op + 1);
+	}
+
+	RequestId SDK::UpdateChannelConfigWithNull(const char * operation, const string& path)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomNull();
+
+		return UpdateChannelConfig(&op, &op + 1);
+	}
+
+	RequestId SDK::UpdateChannelConfigWithJson(const char * operation, const string& path, const nlohmann::json& js)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromLiteral(string(js.dump().c_str()));
+
+		return UpdateChannelConfig(&op, &op + 1);
+	}
+}
 
 
+namespace gamelink
+{
+	RequestId SDK::SubscribeToDatastream()
+	{
+		schema::SubscribeDatastreamRequest payload;
+		return queuePayload(payload);
+	}
+
+	RequestId SDK::UnsubscribeFromDatastream()
+	{
+		schema::UnsubscribeDatastreamRequest payload;
+		return queuePayload(payload);
+	}
+
+	uint32_t SDK::OnDatastream(std::function<void(const schema::DatastreamUpdate&)> callback)
+	{
+		return _onDatastreamUpdate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
+
+	uint32_t SDK::OnDatastream(void (*callback)(void*, const schema::DatastreamUpdate&), void* user)
+	{
+		return _onDatastreamUpdate.set(callback, user, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
+
+	void SDK::DetachOnDatastream(uint32_t id)
+	{
+		if (_onDatastreamUpdate.validateId(id))
+		{
+			_onDatastreamUpdate.remove(id);
+		}
+		else
+		{
+			_onDebugMessage.invoke("Invalid ID passed into DetachOnDatastream");
+		}
+	}
+}
 
 
+namespace gamelink
+{
+    uint32_t SDK::OnPollUpdate(std::function<void(const schema::PollUpdateResponse& pollResponse)> callback)
+	{
+		return _onPollUpdate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
 
+	uint32_t SDK::OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr)
+	{
+		return _onPollUpdate.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
+
+	void SDK::DetachOnPollUpdate(uint32_t id)
+	{
+		if (_onPollUpdate.validateId(id))
+		{
+			_onPollUpdate.remove(id);
+		}
+		else
+		{
+			_onDebugMessage.invoke("Invalid ID passed into DetachOnPollUpdate");
+		}
+	}
+
+	RequestId SDK::GetPoll(const string& pollId)
+	{
+		schema::GetPollRequest packet(pollId);
+		return queuePayload(packet);
+	}
+
+	RequestId SDK::GetPoll(const string& pollId, std::function<void(const schema::GetPollResponse&)> callback)
+	{
+		schema::GetPollRequest payload(pollId);
+		
+		RequestId id = queuePayload(payload);
+		_onGetPoll.set(callback, id, detail::CALLBACK_ONESHOT);
+		return id;
+	}
+
+	RequestId SDK::GetPoll(const string& pollId, void (*callback)(void*, const schema::GetPollResponse&), void* user)
+	{
+		schema::GetPollRequest payload(pollId);
+
+		RequestId id = queuePayload(payload);
+		_onGetPoll.set(callback, user, id, detail::CALLBACK_ONESHOT);
+		return id;
+	}
+
+	RequestId SDK::CreatePoll(const string& pollId, const string& prompt, const std::vector<string>& options)
+	{
+		schema::CreatePollRequest packet(pollId, prompt, options);
+		return queuePayload(packet);
+	}
+
+	RequestId SDK::UnsubscribeFromPoll(const string& pollId)
+	{
+		schema::UnsubscribePollRequest packet(pollId);
+		return queuePayload(packet);
+	}
+
+	RequestId SDK::SubscribeToPoll(const string& pollId)
+	{
+		schema::SubscribePollRequest packet(pollId);
+		return queuePayload(packet);
+	}
+
+	RequestId SDK::DeletePoll(const string& pollId)
+	{
+		schema::DeletePollRequest payload(pollId);
+		return queuePayload(payload);
+	}
+}
+
+
+namespace gamelink
+{
+	RequestId SDK::SubscribeToSKU(const string& sku)
+	{
+		schema::SubscribeTransactionsRequest payload(sku);
+		return queuePayload(payload);
+	}
+
+	RequestId SDK::SubscribeToAllPurchases()
+	{
+		return SubscribeToSKU("*");
+	}
+
+	RequestId SDK::UnsubscribeFromSKU(const string& sku)
+	{
+		schema::UnsubscribeTransactionsRequest payload(sku);
+		return queuePayload(payload);
+	}
+
+	RequestId SDK::UnsubscribeFromAllPurchases()
+	{
+		return UnsubscribeFromSKU("*");
+	}
+
+	uint32_t SDK::OnTransaction(std::function<void(const schema::TransactionResponse&)> callback)
+	{
+		return _onTransaction.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
+
+	uint32_t SDK::OnTransaction(void (*callback)(void*, const schema::TransactionResponse&), void* ptr)
+	{
+		return _onTransaction.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
+
+	void SDK::DetachOnTransaction(uint32_t id)
+	{
+		if (_onTransaction.validateId(id))
+		{
+			_onTransaction.remove(id);
+		}
+		else
+		{
+			_onDebugMessage.invoke("Invalid ID passed into DetachOnTransaction");
+		}
+	}
+
+	RequestId SDK::GetOutstandingTransactions(const string& sku, std::function<void (const schema::GetOutstandingTransactionsResponse&)> callback)
+	{
+		schema::GetOutstandingTransactionsRequest payload(sku);
+		RequestId id = queuePayload(payload);
+
+		_onGetOutstandingTransactions.set(callback, id, detail::CALLBACK_ONESHOT);
+		return id;
+	}
+
+	RequestId SDK::GetOutstandingTransactions(const string& sku, void (*callback)(void*, const schema::GetOutstandingTransactionsResponse&), void* ptr)
+	{
+		schema::GetOutstandingTransactionsRequest payload(sku);
+		RequestId id = queuePayload(payload);
+
+		_onGetOutstandingTransactions.set(callback, ptr, id, detail::CALLBACK_ONESHOT);
+		return id;
+	}
+
+	RequestId SDK::RefundTransactionBySKU(const string& sku, const string& userid)
+	{
+		schema::RefundTransactionBySKURequest payload(sku, userid);
+		return queuePayload(payload);
+	}
+
+	RequestId SDK::RefundTransactionByID(const string& txid, const string& userid)
+	{
+		schema::RefundTransactionRequest payload(txid, userid);
+		return queuePayload(payload);
+	}
+
+	RequestId SDK::ValidateTransaction(const string& txid, const string& details)
+	{
+		schema::ValidateTransactionRequest payload(txid, details);
+		return queuePayload(payload);
+	}
+}
+
+
+namespace gamelink
+{
+	uint32_t SDK::OnStateUpdate(std::function<void(const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback)
+	{
+		return _onStateUpdate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
+
+	uint32_t SDK::OnStateUpdate(void (*callback)(void*, const schema::SubscribeStateUpdateResponse<nlohmann::json>&), void* ptr)
+	{
+		return _onStateUpdate.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
+
+	void SDK::DetachOnStateUpdate(uint32_t id)
+	{
+		if (_onStateUpdate.validateId(id))
+		{
+			_onStateUpdate.remove(id);
+		}
+		else
+		{
+			_onDebugMessage.invoke("Invalid ID passed into OnStateUpdate");
+		}
+	}
+
+	RequestId SDK::SetState(const char* target, const nlohmann::json& value)
+	{
+		schema::SetStateRequest<nlohmann::json> payload(target, value);
+		return queuePayload(payload);
+	}
+
+	RequestId SDK::ClearState(const char* target) 
+	{
+		return SetState(target, nlohmann::json::object());
+	}
+
+	RequestId SDK::GetState(const char* target)
+	{
+		schema::GetStateRequest payload(target);
+		return queuePayload(payload);
+	}
+
+	RequestId SDK::GetState(const char* target, std::function<void(const schema::GetStateResponse<nlohmann::json>&)> callback)
+	{
+		schema::GetStateRequest payload(target);
+		RequestId id = queuePayload(payload);
+		_onGetState.set(callback, id, detail::CALLBACK_ONESHOT);
+		return id;
+	}
+
+	RequestId SDK::GetState(const char* target, void (*callback)(void*, const schema::GetStateResponse<nlohmann::json>&), void* user)
+	{
+		schema::GetStateRequest payload(target);
+
+		RequestId id = queuePayload(payload);
+		_onGetState.set(callback, user, id, detail::CALLBACK_ONESHOT);
+		return id;
+	}
+
+	RequestId SDK::SubscribeToStateUpdates(const char* target)
+	{
+		schema::SubscribeStateRequest payload(target);
+		return queuePayload(payload);
+	}
+
+	RequestId SDK::UnsubscribeFromStateUpdates(const char* target)
+	{
+		schema::UnsubscribeStateRequest payload(target);
+		return queuePayload(payload);
+	}
+
+	RequestId SDK::UpdateState(const char* target, const schema::PatchOperation* begin, const schema::PatchOperation* end)
+	{
+		schema::PatchStateRequest payload(target);
+		std::vector<schema::PatchOperation> updates;
+		updates.resize(end - begin);
+		std::copy(begin, end, updates.begin());
+
+		payload.data.state = std::move(updates);
+		return queuePayload(payload);
+	}
+
+	RequestId SDK::UpdateStateWithInteger(const char* target, const char * operation, const string& path, int64_t i)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromInteger(i);
+
+		return UpdateState(target, &op, &op + 1);
+	}
+
+	RequestId SDK::UpdateStateWithDouble(const char* target, const char * operation, const string& path, double d)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromDouble(d);
+
+		return UpdateState(target, &op, &op + 1);
+	}
+
+	RequestId SDK::UpdateStateWithBoolean(const char* target, const char * operation, const string& path, bool b)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromBoolean(b);
+
+		return UpdateState(target, &op, &op + 1);
+	}
+
+	RequestId SDK::UpdateStateWithString(const char* target, const char * operation, const string& path, const string& str)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromString(str);
+
+		return UpdateState(target, &op, &op + 1);
+	}
+
+	RequestId SDK::UpdateStateWithLiteral(const char* target, const char * operation, const string& path, const string& str)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromLiteral(str);
+
+		return UpdateState(target, &op, &op + 1);
+	}
+
+	RequestId SDK::UpdateStateWithNull(const char* target, const char * operation, const string& path)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomNull();
+
+		return UpdateState(target, &op, &op + 1);
+	}
+
+	RequestId SDK::UpdateStateWithJson(const char* target, const char * operation, const string& path, const nlohmann::json& js)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromLiteral(string(js.dump().c_str()));
+
+		return UpdateState(target, &op, &op + 1);
+	}
+}
 #endif
