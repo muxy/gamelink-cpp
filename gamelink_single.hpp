@@ -27,6 +27,10 @@
 	This file also automatically includes nlohmann::json.
 	If you have an existing version of nlohmann::json, #define MUXY_NO_JSON_INCLUDE 
 	to remove the one included in this file.
+
+	Exportable functions and types are annotated with MUXY_GAMELINK_API.
+	You can define that with your own dllexport macro or #define MUXY_GAMELINK_EXPORT_SYMBOLS
+	to use __declspec(dllexport) on windows builds.
 */
 
 #if !defined MUXY_GAMELINK_API
@@ -76,7 +80,8 @@ namespace gamelink
 	///     * Provide a const .size() that returns an integer of the length of the string, 
 	///       excluding any null terminator. This should return an uint32_t.
 	///     * Provide a const .c_str() that returns a pointer to the first element of a
-	///       null-terminated array of utf8 encoded chars.
+	///       null-terminated array of utf8 encoded chars. These characters should 
+	///       be valid until either the string goes out of scope or is modified.
 	typedef MUXY_GAMELINK_CUSTOM_STRING_TYPE string;
 
 	/// This can be controlled by defining `MUXY_GAMELINK_CUSTOM_LOCK_TYPE`
@@ -27530,6 +27535,7 @@ namespace gamelink
 
 
 
+
 #endif
 
 
@@ -27780,6 +27786,67 @@ namespace gamelink
 		{
 		};
     }
+}
+#endif
+
+#ifndef MUXY_GAMELINK_SCHEMA_DROPS_H
+#define MUXY_GAMELINK_SCHEMA_DROPS_H
+
+
+namespace gamelink
+{
+	namespace schema
+	{
+		struct MUXY_GAMELINK_API Drop
+		{
+			string id;
+			string benefitId;
+			string userId;
+			string status;
+			string updatedAt;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_5(Drop, 
+				"id", id, 
+				"benefit_id", benefitId, 
+				"user_id", userId, 
+				"fulfillment_status", status, 
+				"last_updated", updatedAt);
+		};
+
+		struct MUXY_GAMELINK_API DropsContainer
+		{
+			std::vector<Drop> drops; 
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(DropsContainer, 
+				"drops", drops);
+		};
+
+		struct MUXY_GAMELINK_API GetDropsResponse : ReceiveEnvelope<DropsContainer>
+		{};
+
+		struct MUXY_GAMELINK_API GetDropsRequestBody 
+		{
+			string status;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(GetDropsRequestBody, "status", status);
+		};
+
+		struct MUXY_GAMELINK_API GetDropsRequest : SendEnvelope<GetDropsRequestBody>
+		{
+			explicit GetDropsRequest(const string& status);	
+		};
+
+		struct MUXY_GAMELINK_API ValidateDropsRequestBody
+		{
+			string id;
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(ValidateDropsRequestBody, "id", id);
+		};
+
+		struct MUXY_GAMELINK_API ValidateDropsRequest : SendEnvelope<ValidateDropsRequestBody>
+		{
+			explicit ValidateDropsRequest(const string& id);	
+		};
+	}
 }
 #endif
 
@@ -28357,6 +28424,29 @@ namespace gamelink
 		/// @param[in] details Optional details about this validation.
 		/// @return RequestId of the generated request
 		RequestId ValidateTransaction(const string& txid, const string& details);
+
+		/// Gets drops of a given status. Valid status is FULFILLED and CLAIMED.
+		/// 
+		/// @param[in] status The string status of the set of drops to get. One of FULFILLED, CLAIMED
+		///                   or empty or '*' to get drops of all statuses.
+		/// @param[in] callback Callback to invoke after getting the drops from the server.
+		/// @return RequestId of the generated request
+		RequestId GetDrops(const string& status, std::function<void (const schema::GetDropsResponse&)> callback);
+
+		/// Gets drops of a given status. Valid status is FULFILLED and CLAIMED.
+		/// 
+		/// @param[in] status The string status of the set of drops to get. One of FULFILLED, CLAIMED
+		///                   or empty or '*' to get drops of all statuses.
+		/// @param[in] callback Callback to invoke after getting the drops from the server.
+		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
+		/// @return RequestId of the generated request
+		RequestId GetDrops(const string& status, void (*callback)(void*, const schema::GetDropsResponse&), void* ptr);
+
+		/// Moves a single drop from 'CLAIMED' status to 'FULFILLED' status.
+		/// 
+		/// @param[in] id the ID of the drop to update the status of.
+		/// @return RequestId of the generated request.
+		RequestId ValidateDrop(const string& id);
 
 		/// Deauths the user from the server. Additional requests will not succeed until another
 		/// successful authentication request is sent.
@@ -28964,6 +29054,7 @@ namespace gamelink
 		detail::CallbackCollection<schema::ConfigUpdateResponse, 10> _onConfigUpdate;
 
 		detail::CallbackCollection<schema::GetOutstandingTransactionsResponse, 11> _onGetOutstandingTransactions;
+		detail::CallbackCollection<schema::GetDropsResponse, 12> _onGetDrops;
 	};
 }
 
@@ -29033,6 +29124,29 @@ namespace gamelink
 		{
 			action = string("unsubscribe");
 			params.target = string("datastream");
+		}
+	}
+}
+
+
+
+
+namespace gamelink
+{
+	namespace schema
+	{
+		GetDropsRequest::GetDropsRequest(const string& status)
+		{
+			action = string("get");
+			params.target = string("drops");
+			data.status = status;
+		}
+
+		ValidateDropsRequest::ValidateDropsRequest(const string& id)
+		{
+			action = string("validate");
+			params.target = string("drops");
+			data.id = id;
 		}
 	}
 }
@@ -30115,6 +30229,34 @@ namespace gamelink
 		{
 			_onDebugMessage.invoke("Invalid ID passed into DetachOnDatastream");
 		}
+	}
+}
+
+
+namespace gamelink
+{
+	RequestId SDK::GetDrops(const string& status, std::function<void (const schema::GetDropsResponse&)> callback)
+	{
+		schema::GetDropsRequest payload(status);
+		RequestId id = queuePayload(payload);
+
+		_onGetDrops.set(callback, id, detail::CALLBACK_ONESHOT);
+		return id;
+	}
+
+	RequestId SDK::GetDrops(const string& status, void (*callback)(void*, const schema::GetDropsResponse&), void* ptr)
+	{
+		schema::GetDropsRequest payload(status);
+		RequestId id = queuePayload(payload);
+
+		_onGetDrops.set(callback, ptr, id, detail::CALLBACK_ONESHOT);
+		return id;
+	}
+
+	RequestId SDK::ValidateDrop(const string& id)
+	{
+		schema::ValidateDropsRequest request(id);
+		return queuePayload(request);
 	}
 }
 

@@ -574,6 +574,29 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId ValidateTransaction(const string& txid, const string& details);
 
+		/// Gets drops of a given status. Valid status is FULFILLED and CLAIMED.
+		/// 
+		/// @param[in] status The string status of the set of drops to get. One of FULFILLED, CLAIMED
+		///                   or empty or '*' to get drops of all statuses.
+		/// @param[in] callback Callback to invoke after getting the drops from the server.
+		/// @return RequestId of the generated request
+		RequestId GetDrops(const string& status, std::function<void (const schema::GetDropsResponse&)> callback);
+
+		/// Gets drops of a given status. Valid status is FULFILLED and CLAIMED.
+		/// 
+		/// @param[in] status The string status of the set of drops to get. One of FULFILLED, CLAIMED
+		///                   or empty or '*' to get drops of all statuses.
+		/// @param[in] callback Callback to invoke after getting the drops from the server.
+		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
+		/// @return RequestId of the generated request
+		RequestId GetDrops(const string& status, void (*callback)(void*, const schema::GetDropsResponse&), void* ptr);
+
+		/// Moves a single drop from 'CLAIMED' status to 'FULFILLED' status.
+		/// 
+		/// @param[in] id the ID of the drop to update the status of.
+		/// @return RequestId of the generated request.
+		RequestId ValidateDrop(const string& id);
+
 		/// Deauths the user from the server. Additional requests will not succeed until another
 		/// successful authentication request is sent.
 		///
@@ -1180,6 +1203,7 @@ namespace gamelink
 		detail::CallbackCollection<schema::ConfigUpdateResponse, 10> _onConfigUpdate;
 
 		detail::CallbackCollection<schema::GetOutstandingTransactionsResponse, 11> _onGetOutstandingTransactions;
+		detail::CallbackCollection<schema::GetDropsResponse, 12> _onGetDrops;
 	};
 }
 
