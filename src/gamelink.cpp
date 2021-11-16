@@ -106,6 +106,27 @@ namespace gamelink
 		return &recv.errors[0];
 	}
 
+	bool HasPrefix(const string& s, const string& prefix)
+	{
+		if (s.size() < prefix.size())
+		{
+			return false;
+		}
+
+		const char * sstr = s.c_str();
+		const char * prefixstr = prefix.c_str();
+
+		for (uint32_t i = 0; i < prefix.size(); ++i)
+		{
+			if (prefixstr[i] != sstr[i])
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	Payload::Payload(string data)
 		: waitingForResponse(ANY_REQUEST_ID)
 		, data(data)
