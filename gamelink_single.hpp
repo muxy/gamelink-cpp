@@ -27803,6 +27803,7 @@ namespace gamelink
 			string benefitId;
 			string userId;
 			string status;
+			string service;
 			string updatedAt;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_5(Drop, 
@@ -27810,6 +27811,7 @@ namespace gamelink
 				"benefit_id", benefitId, 
 				"user_id", userId, 
 				"fulfillment_status", status, 
+				"service", service,
 				"last_updated", updatedAt);
 		};
 
@@ -27865,6 +27867,13 @@ namespace gamelink
 	/// @returns Pointer to first error in the errors array of the envelope. If no
 	///          such error exists, returns the null pointer.
 	MUXY_GAMELINK_API const schema::Error* FirstError(const schema::ReceiveEnvelopeCommon& recv);
+
+	/// HasPrefix tests whether the string 's' begins with 'prefix'.
+	///
+	/// @param[in] s The string to test.
+	/// @param[in] prefix The prefix to test for
+	/// @returns True if 's' begins with 'prefix'
+	MUXY_GAMELINK_API bool HasPrefix(const string& source, const string& prefix);
 
 	/// RequestId is an 16bit unsigned integer that represents a request.
 	/// Obtained through SDK methods.
@@ -28338,7 +28347,7 @@ namespace gamelink
 		/// @param[in] id A handle obtained from calling OnStateUpdate. Invalid handles are ignored.
 		void DetachOnStateUpdate(uint32_t id);
 
-		/// Starts subscribing to TwitchPurchaseBits updates for a specific SKU
+		/// Starts subscribing to OnTransaction updates for a specific SKU
 		///
 		/// @param[in] sku SKU of item to subscribe to
 		/// @return RequestId of the generated request
@@ -29584,6 +29593,27 @@ namespace gamelink
 		}
 
 		return &recv.errors[0];
+	}
+
+	bool HasPrefix(const string& s, const string& prefix)
+	{
+		if (s.size() < prefix.size())
+		{
+			return false;
+		}
+
+		const char * sstr = s.c_str();
+		const char * prefixstr = prefix.c_str();
+
+		for (uint32_t i = 0; i < prefix.size(); ++i)
+		{
+			if (prefixstr[i] != sstr[i])
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	Payload::Payload(string data)
