@@ -27806,7 +27806,7 @@ namespace gamelink
 			string service;
 			string updatedAt;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_5(Drop, 
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_6(Drop, 
 				"id", id, 
 				"benefit_id", benefitId, 
 				"user_id", userId, 
@@ -29831,6 +29831,15 @@ namespace gamelink
 				if (success)
 				{
 					_onGetOutstandingTransactions.invoke(resp);
+				}
+			}
+			else if (env.meta.target == "drops") {
+				schema::GetDropsResponse resp;
+				success = schema::ParseResponse(bytes, length, resp);
+				
+				if (success) 
+				{
+					_onGetDrops.invoke(resp);
 				}
 			}
 		}

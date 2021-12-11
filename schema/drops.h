@@ -13,13 +13,15 @@ namespace gamelink
 			string benefitId;
 			string userId;
 			string status;
+			string service;
 			string updatedAt;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_5(Drop, 
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_6(Drop, 
 				"id", id, 
 				"benefit_id", benefitId, 
 				"user_id", userId, 
 				"fulfillment_status", status, 
+				"service", service,
 				"last_updated", updatedAt);
 		};
 

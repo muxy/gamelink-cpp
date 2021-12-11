@@ -344,6 +344,15 @@ namespace gamelink
 					_onGetOutstandingTransactions.invoke(resp);
 				}
 			}
+			else if (env.meta.target == "drops") {
+				schema::GetDropsResponse resp;
+				success = schema::ParseResponse(bytes, length, resp);
+				
+				if (success) 
+				{
+					_onGetDrops.invoke(resp);
+				}
+			}
 		}
 		else if (env.meta.action == "update")
 		{
