@@ -1187,6 +1187,8 @@ namespace gamelink
 		mutable gamelink::lock _lock;
 
 		std::deque<Payload*> _queuedPayloads;
+		std::vector<char> _receiveBuffer;
+
 		schema::User* _user;
 
 		RequestId _currentRequestId;

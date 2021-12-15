@@ -229,13 +229,33 @@ namespace gamelink
 	{
 		bool success = false;
 		bool parseEnvelopeSuccess = false;
+		bool parsedFromBuffer = false;
 		schema::ReceiveEnvelope<schema::EmptyBody> env = schema::ParseEnvelope(bytes, length, &parseEnvelopeSuccess);
+
+		_lock.lock();
 		if (!parseEnvelopeSuccess)
 		{
+			// Attempt to append to the buffer and reparse.
+			size_t oldSize = _receiveBuffer.size();
+			_receiveBuffer.resize(_receiveBuffer.size() + length);
+
+			if (_receiveBuffer.size() > 0) 
+			{
+				memcpy(&_receiveBuffer[oldSize], bytes, length);
+				env = schema::ParseEnvelope(_receiveBuffer.data(), _receiveBuffer.size(), &parseEnvelopeSuccess);
+				if (parseEnvelopeSuccess) 
+				{
+					parsedFromBuffer = true;
+				}
+			}
+		} 
+
+		if (!parseEnvelopeSuccess) 
+		{
+			_lock.unlock();
 			return false;
 		}
 
-		_lock.lock();
 		// Set any waits for the id just received to any_request_id
 		for (uint32_t i = 0; i < _queuedPayloads.size(); ++i)
 		{
@@ -258,6 +278,21 @@ namespace gamelink
 			{
 				break;
 			}
+		}
+
+		
+		// Successful parse of envelope, discard any existing receive buffer data, but
+		// keep it around for debug purposes.
+		std::vector<char> receivedBytes;
+		if (!_receiveBuffer.empty())
+		{
+			_receiveBuffer.swap(receivedBytes);
+		}
+
+		if (parsedFromBuffer) 
+		{
+			bytes = receivedBytes.data();
+			length = receivedBytes.size();
 		}
 		_lock.unlock();
 
