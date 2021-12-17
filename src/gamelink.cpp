@@ -106,6 +106,27 @@ namespace gamelink
 		return &recv.errors[0];
 	}
 
+	bool HasPrefix(const string& s, const string& prefix)
+	{
+		if (s.size() < prefix.size())
+		{
+			return false;
+		}
+
+		const char * sstr = s.c_str();
+		const char * prefixstr = prefix.c_str();
+
+		for (uint32_t i = 0; i < prefix.size(); ++i)
+		{
+			if (prefixstr[i] != sstr[i])
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	Payload::Payload(string data)
 		: waitingForResponse(ANY_REQUEST_ID)
 		, data(data)
@@ -208,13 +229,44 @@ namespace gamelink
 	{
 		bool success = false;
 		bool parseEnvelopeSuccess = false;
+		bool parsedFromBuffer = false;
 		schema::ReceiveEnvelope<schema::EmptyBody> env = schema::ParseEnvelope(bytes, length, &parseEnvelopeSuccess);
+
+		_lock.lock();
 		if (!parseEnvelopeSuccess)
 		{
+			// Attempt to append to the buffer and reparse.
+			size_t oldSize = _receiveBuffer.size();
+
+			// If the resultant size is greater than 4mb, reject.
+			if (_receiveBuffer.size() + length > 1024 * 1024 * 4)
+			{
+				// Clear out the receive buffer, it has been rejected.
+				std::vector<char> empty;
+				_receiveBuffer.swap(empty);
+
+				_lock.unlock();
+				return false;
+			}
+
+			_receiveBuffer.resize(_receiveBuffer.size() + length);
+			if (_receiveBuffer.size() > 0) 
+			{
+				memcpy(&_receiveBuffer[oldSize], bytes, length);
+				env = schema::ParseEnvelope(_receiveBuffer.data(), _receiveBuffer.size(), &parseEnvelopeSuccess);
+				if (parseEnvelopeSuccess) 
+				{
+					parsedFromBuffer = true;
+				}
+			}
+		} 
+
+		if (!parseEnvelopeSuccess) 
+		{
+			_lock.unlock();
 			return false;
 		}
 
-		_lock.lock();
 		// Set any waits for the id just received to any_request_id
 		for (uint32_t i = 0; i < _queuedPayloads.size(); ++i)
 		{
@@ -237,6 +289,20 @@ namespace gamelink
 			{
 				break;
 			}
+		}
+
+		
+		// Successful parse of envelope, swap out the bytes and length values.
+		std::vector<char> receivedBytes;
+		if (!_receiveBuffer.empty())
+		{
+			_receiveBuffer.swap(receivedBytes);
+		}
+
+		if (parsedFromBuffer && !receivedBytes.empty()) 
+		{
+			bytes = receivedBytes.data();
+			length = receivedBytes.size();
 		}
 		_lock.unlock();
 
@@ -321,6 +387,15 @@ namespace gamelink
 				if (success)
 				{
 					_onGetOutstandingTransactions.invoke(resp);
+				}
+			}
+			else if (env.meta.target == "drops") {
+				schema::GetDropsResponse resp;
+				success = schema::ParseResponse(bytes, length, resp);
+				
+				if (success) 
+				{
+					_onGetDrops.invoke(resp);
 				}
 			}
 		}

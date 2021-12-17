@@ -18,6 +18,10 @@
 	This file also automatically includes nlohmann::json.
 	If you have an existing version of nlohmann::json, #define MUXY_NO_JSON_INCLUDE 
 	to remove the one included in this file.
+
+	Exportable functions and types are annotated with MUXY_GAMELINK_API.
+	You can define that with your own dllexport macro or #define MUXY_GAMELINK_EXPORT_SYMBOLS
+	to use __declspec(dllexport) on windows builds.
 */
 
 #if !defined MUXY_GAMELINK_API
@@ -67,7 +71,8 @@ namespace gamelink
 	///     * Provide a const .size() that returns an integer of the length of the string, 
 	///       excluding any null terminator. This should return an uint32_t.
 	///     * Provide a const .c_str() that returns a pointer to the first element of a
-	///       null-terminated array of utf8 encoded chars.
+	///       null-terminated array of utf8 encoded chars. These characters should 
+	///       be valid until either the string goes out of scope or is modified.
 	typedef MUXY_GAMELINK_CUSTOM_STRING_TYPE string;
 
 	/// This can be controlled by defining `MUXY_GAMELINK_CUSTOM_LOCK_TYPE`
