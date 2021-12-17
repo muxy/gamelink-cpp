@@ -127,6 +127,22 @@ namespace gamelink
 		return true;
 	}
 
+	uint32_t GetPollWinnerIndex(std::vector<int>& results)
+	{
+		int winner = 0;
+		int index = 0;
+		for (int i = 0; i < results.size(); i++)
+		{
+			if (results[i] > winner)
+			{
+				winner = results[i];
+				index = i;
+			}
+		}
+
+		return index; 
+	}
+
 	Payload::Payload(string data)
 		: waitingForResponse(ANY_REQUEST_ID)
 		, data(data)

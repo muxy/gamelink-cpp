@@ -22,6 +22,12 @@ namespace gamelink
 	/// @returns True if 's' begins with 'prefix'
 	MUXY_GAMELINK_API bool HasPrefix(const string& source, const string& prefix);
 
+	/// GetPollWinnerIndex grabs the index of the winning result.
+	///
+	/// @param[in] results The results from the poll
+	/// @returns Index of winning result
+	MUXY_GAMELINK_API uint32_t GetPollWinnerIndex(std::vector<int>& results);
+
 	/// RequestId is an 16bit unsigned integer that represents a request.
 	/// Obtained through SDK methods.
 	typedef uint16_t RequestId;
@@ -726,6 +732,24 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId CreatePoll(const string& pollId, const string& prompt, const string* optionsBegin, const string* optionsEnd);
 
+		/// Queues a request to create a timed poll.
+		///
+		/// @param[in] pollId The Poll ID to create
+		/// @param[in] prompt The Prompt to store in the poll.
+		/// @param[in] options An array of options to store in the poll.
+		/// @param[in] duration How long the poll will last for (in your own provided unit of time).
+		/// @param[in] onFinishCallback Callback to be called when poll finishes.
+		/// @return RequestId of the generated request
+		RequestId SDK::CreateTimedPoll(const string& pollId,
+									   const string& prompt,
+									   const std::vector<string>& options,
+									   float duration,
+									   std::function<void(const schema::GetPollResponse&)> onFinishCallback);
+
+		/// Ticks all timed polls and subtracts dt from the polls duration, callbacks are triggered when duration is <= 0
+		/// @param[in] dt Time to subtract from duration (in your own provided unit of time)
+		void TickTimedPolls(float dt);
+
 		/// Subscribes to updates for a given poll.
 		/// Updates come through the OnPollUpdate callback.
 		/// Once a poll stops receiving new votes, the subscription will stop receiving new updates.
@@ -1179,6 +1203,14 @@ namespace gamelink
 			return id;
 		}
 
+		struct TimedPoll
+		{
+			string pollId;
+			float duration;
+			std::function<void(const schema::GetPollResponse&)> onFinishCallback;
+			bool finished;
+		};
+
 		// Fields stored to handle reconnects
 		gamelink::string _storedRefresh;
 		gamelink::string _storedJWT;
@@ -1188,6 +1220,8 @@ namespace gamelink
 
 		std::deque<Payload*> _queuedPayloads;
 		std::vector<char> _receiveBuffer;
+
+		std::vector<TimedPoll> _timedPolls;
 
 		schema::User* _user;
 

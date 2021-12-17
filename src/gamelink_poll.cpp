@@ -71,4 +71,49 @@ namespace gamelink
 		schema::DeletePollRequest payload(pollId);
 		return queuePayload(payload);
 	}
+
+	RequestId SDK::CreateTimedPoll(const string& pollId,
+								   const string& prompt,
+								   const std::vector<string>& options,
+								   float duration,
+								   std::function<void(const schema::GetPollResponse&)> onFinishCallback)
+	{
+		TimedPoll tp;
+		tp.pollId = pollId;
+		tp.duration = duration;
+		tp.onFinishCallback = onFinishCallback;
+		tp.finished = false;
+		_timedPolls.push_back(tp);
+		return SDK::CreatePoll(pollId, prompt, options);
+	}
+
+	void SDK::TickTimedPolls(float dt) 
+	{
+		for (auto &tp: _timedPolls)
+		{
+			tp.duration -= dt;
+			if (tp.duration <= 0 && !tp.finished)
+			{
+				SDK::GetPoll(tp.pollId, [&tp](const schema::GetPollResponse& Resp) 
+				{ 
+					tp.finished = true;
+					tp.onFinishCallback(Resp);
+				});
+			}
+		}
+
+		auto it = _timedPolls.begin();
+		while (it != _timedPolls.end())
+		{
+			if (it->finished)
+			{
+				SDK::DeletePoll(it->pollId);
+				it = _timedPolls.erase(it);
+			}
+			else
+			{
+				++it;
+			}
+		}
+	}
 }
