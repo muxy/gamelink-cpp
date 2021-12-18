@@ -267,11 +267,11 @@ namespace gamelink
 		/// @param[in] projectionPatch The patch version of this projection.
 		/// @return Returns the URL to connect to. Returns an empty string on error.
 		MUXY_GAMELINK_API string ProjectionWebsocketConnectionURL(const string& clientId,
-												ConnectionStage stage,
-												const string& projection,
-												int projectionMajor,
-												int projectionMinor,
-												int projectionPatch);
+																  ConnectionStage stage,
+																  const string& projection,
+																  int projectionMajor,
+																  int projectionMinor,
+																  int projectionPatch);
 
 	}
 
@@ -289,6 +289,7 @@ namespace gamelink
 	class MUXY_GAMELINK_API PatchList
 	{
 		friend class SDK;
+
 	public:
 		PatchList();
 		explicit PatchList(uint32_t preallocate);
@@ -383,6 +384,7 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] js The value to use in the patch operation
 		void UpdateStateWithJson(const char* operation, const string& path, const nlohmann::json& js);
+
 	private:
 		gamelink::lock lock;
 		std::vector<schema::PatchOperation> operations;
@@ -661,8 +663,9 @@ namespace gamelink
 		/// @param[in] callback Callback to invoke after getting the outstanding transactions from the server.
 		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
 		/// @return RequestId of the generated request
-		RequestId
-		GetOutstandingTransactions(const string& sku, void (*callback)(void*, const schema::GetOutstandingTransactionsResponse&), void* ptr);
+		RequestId GetOutstandingTransactions(const string& sku,
+											 void (*callback)(void*, const schema::GetOutstandingTransactionsResponse&),
+											 void* ptr);
 
 		/// Refunds a transaction by SKU and UserID
 		///
@@ -686,15 +689,15 @@ namespace gamelink
 		RequestId ValidateTransaction(const string& txid, const string& details);
 
 		/// Gets drops of a given status. Valid status is FULFILLED and CLAIMED.
-		/// 
+		///
 		/// @param[in] status The string status of the set of drops to get. One of FULFILLED, CLAIMED
 		///                   or empty or '*' to get drops of all statuses.
 		/// @param[in] callback Callback to invoke after getting the drops from the server.
 		/// @return RequestId of the generated request
-		RequestId GetDrops(const string& status, std::function<void (const schema::GetDropsResponse&)> callback);
+		RequestId GetDrops(const string& status, std::function<void(const schema::GetDropsResponse&)> callback);
 
 		/// Gets drops of a given status. Valid status is FULFILLED and CLAIMED.
-		/// 
+		///
 		/// @param[in] status The string status of the set of drops to get. One of FULFILLED, CLAIMED
 		///                   or empty or '*' to get drops of all statuses.
 		/// @param[in] callback Callback to invoke after getting the drops from the server.
@@ -703,7 +706,7 @@ namespace gamelink
 		RequestId GetDrops(const string& status, void (*callback)(void*, const schema::GetDropsResponse&), void* ptr);
 
 		/// Moves a single drop from 'CLAIMED' status to 'FULFILLED' status.
-		/// 
+		///
 		/// @param[in] id the ID of the drop to update the status of.
 		/// @return RequestId of the generated request.
 		RequestId ValidateDrop(const string& id);
@@ -1196,7 +1199,7 @@ namespace gamelink
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		/// @param[in] list A patch list, created and filled elsewhere
 		/// @return RequestId of the generated request
-		RequestId UpdateStateWithPatchList(const char * target, const PatchList& list);
+		RequestId UpdateStateWithPatchList(const char* target, const PatchList& list);
 
 		/// Starts subscribing to state updates for the given target.
 		/// Updates come through the OnStateUpdate callback
