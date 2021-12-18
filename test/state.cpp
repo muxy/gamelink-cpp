@@ -484,10 +484,90 @@ TEST_CASE("SDK Subscription", "[sdk][state][subscription]")
 	REQUIRE(secondCalls == 2);
 }
 
-TEST_CASE("Update state", "[state]")
+TEST_CASE("PatchList equality", "[state]")
 {
 	gamelink::SDK sdk;
 
+	sdk.UpdateStateWithObject(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/character", nlohmann::json::parse(R"({
+		"class": "wizard"
+	})"));
+
+	validateSinglePayload(sdk, R"({
+		"action": "patch", 
+		"data": {
+			"state_id": "channel",
+			"state": [
+				{ "op": "add", "path": "/character", "value": { "class": "wizard" }}
+			]
+		}, 
+		"params": {
+			"request_id": 65535, 
+			"target": "state"
+		}
+	})");
+
+	gamelink::PatchList list;
+	list.UpdateStateWithObject("add", "/character", nlohmann::json::parse(R"({
+		"class": "wizard"
+	})"));
+	sdk.UpdateStateWithPatchList(gamelink::schema::STATE_TARGET_CHANNEL, list);
+
+	validateSinglePayload(sdk, R"({
+		"action": "patch", 
+		"data": {
+			"state_id": "channel",
+			"state": [
+				{ "op": "add", "path": "/character", "value": { "class": "wizard" }}
+			]
+		}, 
+		"params": {
+			"request_id": 65535, 
+			"target": "state"
+		}
+	})");
+}
+
+TEST_CASE("PatchList no elements", "[state]")
+{
+	gamelink::SDK sdk;
+	sdk.UpdateStateWithPatchList(gamelink::schema::STATE_TARGET_CHANNEL, gamelink::PatchList());
+
+	uint32_t count = 0;
+	sdk.ForeachPayload([&](const gamelink::Payload* send) {
+		count++;
+	});
+
+	REQUIRE(count == 0);
+}
+
+TEST_CASE("PatchList many patches", "[state]")
+{
+	gamelink::PatchList list; 
+	for (uint32_t i = 0; i < 100; ++i)
+	{
+		list.UpdateStateWithInteger("add", "/somearr/-1", i);
+	}
+
+	gamelink::SDK sdk;
+	sdk.UpdateStateWithPatchList(gamelink::schema::STATE_TARGET_CHANNEL, list);
+	uint32_t count = 0;
+	sdk.ForeachPayload([&](const gamelink::Payload* send) {
+		count++;
+
+		gamelink::schema::PatchStateRequest request("abc");
+		Deserialize(send->data.c_str(), request);
+
+		REQUIRE(request.data.state_id == gamelink::schema::STATE_TARGET_CHANNEL);
+		REQUIRE(request.data.state.size() == 100);
+	});
+
+	REQUIRE(count == 1);
+}
+
+
+TEST_CASE("Update state", "[state]")
+{
+	gamelink::SDK sdk;
 	sdk.UpdateStateWithObject(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/character", nlohmann::json::parse(R"({
 		"class": "wizard"
 	})"));
@@ -596,4 +676,144 @@ TEST_CASE("Update state", "[state]")
 			"target": "state"
 		}
 	})");
+}
+
+
+TEST_CASE("Update state with patch list", "[state]")
+{
+	gamelink::SDK sdk;
+	{
+		gamelink::PatchList list;
+		list.UpdateStateWithObject("add", "/character", nlohmann::json::parse(R"({
+				"class": "wizard"
+			})"));
+		sdk.UpdateStateWithPatchList(gamelink::schema::STATE_TARGET_CHANNEL, list);
+	
+		validateSinglePayload(sdk, R"({
+			"action": "patch", 
+			"data": {
+				"state_id": "channel",
+				"state": [
+					{ "op": "add", "path": "/character", "value": { "class": "wizard" }}
+				]
+			}, 
+			"params": {
+				"request_id": 65535, 
+				"target": "state"
+			}
+		})");
+	}
+
+	{
+		gamelink::PatchList list;
+		list.UpdateStateWithBoolean("add", "/b", false);
+		sdk.UpdateStateWithPatchList(gamelink::schema::STATE_TARGET_CHANNEL, list);;
+		validateSinglePayload(sdk, R"({
+			"action": "patch", 
+			"data": {
+				"state_id": "channel",
+				"state": [
+					{ "op": "add", "path": "/b", "value": false }
+				]
+			}, 
+			"params": {
+				"request_id": 65535, 
+				"target": "state"
+			}
+		})");
+	}
+	{
+		gamelink::PatchList list;
+		list.UpdateStateWithDouble("add", "/b", 44.15);
+		sdk.UpdateStateWithPatchList(gamelink::schema::STATE_TARGET_CHANNEL, list);;
+		validateSinglePayload(sdk, R"({
+			"action": "patch", 
+			"data": {
+				"state_id": "channel",
+				"state": [
+					{ "op": "add", "path": "/b", "value": 44.15 }
+				]
+			}, 
+			"params": {
+				"request_id": 65535, 
+				"target": "state"
+			}
+		})");
+	}
+	{
+		gamelink::PatchList list;
+		list.UpdateStateWithInteger("add", "/b", -100);
+		sdk.UpdateStateWithPatchList(gamelink::schema::STATE_TARGET_CHANNEL, list);;
+		validateSinglePayload(sdk, R"({
+			"action": "patch", 
+			"data": {
+				"state_id": "channel",
+				"state": [
+					{ "op": "add", "path": "/b", "value": -100 }
+				]
+			}, 
+			"params": {
+				"request_id": 65535, 
+				"target": "state"
+			}
+		})");
+	}
+	{
+		gamelink::PatchList list;
+		list.UpdateStateWithLiteral("add", "/b", R"([{ "literal": "json" }])");
+		sdk.UpdateStateWithPatchList(gamelink::schema::STATE_TARGET_CHANNEL, list);
+
+		validateSinglePayload(sdk, R"({
+			"action": "patch", 
+			"data": {
+				"state_id": "channel",
+				"state": [
+					{ "op": "add", "path": "/b", "value": [
+						{ "literal": "json" }
+					]}
+				]
+			}, 
+			"params": {
+				"request_id": 65535, 
+				"target": "state"
+			}
+		})");
+	}
+	{
+		gamelink::PatchList list;
+		list.UpdateStateWithNull("add", "/b");
+		sdk.UpdateStateWithPatchList(gamelink::schema::STATE_TARGET_CHANNEL, list);
+
+		validateSinglePayload(sdk, R"({
+			"action": "patch", 
+			"data": {
+				"state_id": "channel",
+				"state": [
+					{ "op": "add", "path": "/b", "value": null }
+				]
+			}, 
+			"params": {
+				"request_id": 65535, 
+				"target": "state"
+			}
+		})");
+	}
+	{
+		gamelink::PatchList list;
+		list.UpdateStateWithString("add", "/b", "Gandalf");
+		sdk.UpdateStateWithPatchList(gamelink::schema::STATE_TARGET_CHANNEL, list);;
+		validateSinglePayload(sdk, R"({
+			"action": "patch", 
+			"data": {
+				"state_id": "channel",
+				"state": [
+					{ "op": "add", "path": "/b", "value": "Gandalf" }
+				]
+			}, 
+			"params": {
+				"request_id": 65535, 
+				"target": "state"
+			}
+		})");
+	}
 }
