@@ -263,4 +263,16 @@ namespace gamelink
 		operations.emplace_back(std::move(op));
 		lock.unlock();
 	}
+
+	void PatchList::UpdateStateWithEmptyArray(const char* operation, const string& path) 
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromLiteral("[]");
+
+		lock.lock();
+		operations.emplace_back(std::move(op));
+		lock.unlock();
+	}
 }
