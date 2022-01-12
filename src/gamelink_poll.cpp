@@ -81,14 +81,17 @@ namespace gamelink
 		TimedPoll tp;
 		tp.pollId = pollId;
 		tp.duration = duration;
-		tp.onFinishCallback = onFinishCallback;
+		tp.onFinishCallback.set(onFinishCallback);
 		tp.finished = false;
+		_lock.lock();
 		_timedPolls.push_back(tp);
+		_lock.unlock();
 		return SDK::CreatePoll(pollId, prompt, options);
 	}
 
 	void SDK::TickTimedPolls(float dt) 
 	{
+		_lock.lock();
 		for (auto &tp: _timedPolls)
 		{
 			tp.duration -= dt;
@@ -97,7 +100,7 @@ namespace gamelink
 				SDK::GetPoll(tp.pollId, [&tp](const schema::GetPollResponse& Resp) 
 				{ 
 					tp.finished = true;
-					tp.onFinishCallback(Resp);
+					tp.onFinishCallback.invoke(Resp);
 				});
 			}
 		}
@@ -115,5 +118,6 @@ namespace gamelink
 				++it;
 			}
 		}
+		_lock.unlock();
 	}
 }

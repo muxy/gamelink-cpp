@@ -27875,6 +27875,12 @@ namespace gamelink
 	/// @returns True if 's' begins with 'prefix'
 	MUXY_GAMELINK_API bool HasPrefix(const string& source, const string& prefix);
 
+	/// GetPollWinnerIndex grabs the index of the winning result.
+	///
+	/// @param[in] results The results from the poll
+	/// @returns Index of winning result
+	MUXY_GAMELINK_API uint32_t GetPollWinnerIndex(std::vector<int>& results);
+
 	/// RequestId is an 16bit unsigned integer that represents a request.
 	/// Obtained through SDK methods.
 	typedef uint16_t RequestId;
@@ -27912,6 +27918,14 @@ namespace gamelink
 		public:
 			typedef void (*RawFunctionPointer)(void*, const T&);
 
+			Callback()
+				: _id(UINT32_MAX)
+				, _targetRequestId(ANY_REQUEST_ID)
+				, _status(UINT32_MAX)
+				, _rawCallback(nullptr)
+				, _user(nullptr)
+			{
+			}
 			Callback(uint32_t id, RequestId targetRequestId, uint32_t status)
 				: _id(id)
 				, _targetRequestId(targetRequestId)
@@ -28579,6 +28593,24 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId CreatePoll(const string& pollId, const string& prompt, const string* optionsBegin, const string* optionsEnd);
 
+		/// Queues a request to create a timed poll.
+		///
+		/// @param[in] pollId The Poll ID to create
+		/// @param[in] prompt The Prompt to store in the poll.
+		/// @param[in] options An array of options to store in the poll.
+		/// @param[in] duration How long the poll will last for (in your own provided unit of time).
+		/// @param[in] onFinishCallback Callback to be called when poll finishes.
+		/// @return RequestId of the generated request
+		RequestId SDK::CreateTimedPoll(const string& pollId,
+									   const string& prompt,
+									   const std::vector<string>& options,
+									   float duration,
+									   std::function<void(const schema::GetPollResponse&)> onFinishCallback);
+
+		/// Ticks all timed polls and subtracts dt from the polls duration, callbacks are triggered when duration is <= 0
+		/// @param[in] dt Time to subtract from duration (in your own provided unit of time)
+		void TickTimedPolls(float dt);
+
 		/// Subscribes to updates for a given poll.
 		/// Updates come through the OnPollUpdate callback.
 		/// Once a poll stops receiving new votes, the subscription will stop receiving new updates.
@@ -29049,6 +29081,15 @@ namespace gamelink
 
 		void addToBarrier(uint16_t);
 		void removeFromBarrier(uint16_t);
+
+		struct TimedPoll
+		{
+			string pollId;
+			float duration;
+			detail::Callback<const schema::GetPollResponse&> onFinishCallback;
+			bool finished;
+		};
+		std::vector<TimedPoll> _timedPolls;
 
 		detail::Callback<string> _onDebugMessage;
 
@@ -29616,6 +29657,22 @@ namespace gamelink
 		}
 
 		return true;
+	}
+
+	uint32_t GetPollWinnerIndex(std::vector<int>& results)
+	{
+		int winner = 0;
+		int index = 0;
+		for (int i = 0; i < results.size(); i++)
+		{
+			if (results[i] > winner)
+			{
+				winner = results[i];
+				index = i;
+			}
+		}
+
+		return index; 
 	}
 
 	Payload::Payload(string data)
@@ -30418,7 +30475,55 @@ namespace gamelink
 		schema::DeletePollRequest payload(pollId);
 		return queuePayload(payload);
 	}
+
+	RequestId SDK::CreateTimedPoll(const string& pollId,
+								   const string& prompt,
+								   const std::vector<string>& options,
+								   float duration,
+								   std::function<void(const schema::GetPollResponse&)> onFinishCallback)
+	{
+		TimedPoll tp;
+		tp.pollId = pollId;
+		tp.duration = duration;
+		tp.onFinishCallback.set(onFinishCallback);
+		tp.finished = false;
+		_timedPolls.push_back(tp);
+		return SDK::CreatePoll(pollId, prompt, options);
+	}
+
+	void SDK::TickTimedPolls(float dt) 
+	{
+		_lock.lock();
+		for (auto &tp: _timedPolls)
+		{
+			tp.duration -= dt;
+			if (tp.duration <= 0 && !tp.finished)
+			{
+				SDK::GetPoll(tp.pollId, [&tp](const schema::GetPollResponse& Resp) 
+				{ 
+					tp.finished = true;
+					tp.onFinishCallback.invoke(Resp);
+				});
+			}
+		}
+
+		auto it = _timedPolls.begin();
+		while (it != _timedPolls.end())
+		{
+			if (it->finished)
+			{
+				SDK::DeletePoll(it->pollId);
+				it = _timedPolls.erase(it);
+			}
+			else
+			{
+				++it;
+			}
+		}
+		_lock.unlock();
+	}
 }
+
 
 
 namespace gamelink

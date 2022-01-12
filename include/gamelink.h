@@ -65,6 +65,14 @@ namespace gamelink
 		public:
 			typedef void (*RawFunctionPointer)(void*, const T&);
 
+			Callback()
+				: _id(UINT32_MAX)
+				, _targetRequestId(ANY_REQUEST_ID)
+				, _status(UINT32_MAX)
+				, _rawCallback(nullptr)
+				, _user(nullptr)
+			{
+			}
 			Callback(uint32_t id, RequestId targetRequestId, uint32_t status)
 				: _id(id)
 				, _targetRequestId(targetRequestId)
@@ -1203,14 +1211,6 @@ namespace gamelink
 			return id;
 		}
 
-		struct TimedPoll
-		{
-			string pollId;
-			float duration;
-			std::function<void(const schema::GetPollResponse&)> onFinishCallback;
-			bool finished;
-		};
-
 		// Fields stored to handle reconnects
 		gamelink::string _storedRefresh;
 		gamelink::string _storedJWT;
@@ -1221,8 +1221,6 @@ namespace gamelink
 		std::deque<Payload*> _queuedPayloads;
 		std::vector<char> _receiveBuffer;
 
-		std::vector<TimedPoll> _timedPolls;
-
 		schema::User* _user;
 
 		RequestId _currentRequestId;
@@ -1230,6 +1228,15 @@ namespace gamelink
 
 		void addToBarrier(uint16_t);
 		void removeFromBarrier(uint16_t);
+
+		struct TimedPoll
+		{
+			string pollId;
+			float duration;
+			detail::Callback<const schema::GetPollResponse&> onFinishCallback;
+			bool finished;
+		};
+		std::vector<TimedPoll> _timedPolls;
 
 		detail::Callback<string> _onDebugMessage;
 
