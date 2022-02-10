@@ -280,16 +280,16 @@ void MuxyGameLink_DetachOnDatastream(MuxyGameLink GameLink, uint32_t OnDatastrea
 
 uint32_t MuxyGameLink_Schema_DatastreamUpdate_GetEventCount(MGL_Schema_DatastreamUpdate DatastreamUpdate)
 {
-	const gamelink::schema::DatastreamUpdateBody* DSU = static_cast<const gamelink::schema::DatastreamUpdateBody*>(DatastreamUpdate.Obj);
-	return DSU->events.size();
+	const gamelink::schema::DatastreamUpdate* DSU = static_cast<const gamelink::schema::DatastreamUpdate*>(DatastreamUpdate.Obj);
+	return DSU->data.events.size();
 }
 
 MGL_Schema_DatastreamEvent MuxyGameLink_Schema_DatastreamUpdate_GetEventAt(MGL_Schema_DatastreamUpdate DatastreamUpdate, uint32_t AtIndex)
 {
-	const gamelink::schema::DatastreamUpdateBody* DSU = static_cast<const gamelink::schema::DatastreamUpdateBody*>(DatastreamUpdate.Obj);
+	const gamelink::schema::DatastreamUpdate* DSU = static_cast<const gamelink::schema::DatastreamUpdate*>(DatastreamUpdate.Obj);
 
 	MGL_Schema_DatastreamEvent WDSEvent;
-	WDSEvent.Obj = &DSU->events[AtIndex];
+	WDSEvent.Obj = &DSU->data.events[AtIndex];
 
 	return WDSEvent;
 }
