@@ -231,13 +231,13 @@ const char* MuxyGameLink_Schema_User_GetRefreshToken(MGL_Schema_User User)
 	return "";
 }
 
-MGL_RequestId MuxyGameLink_SendBroadcast(MuxyGameLink GameLink, const char* Target, const char* JsonString)
+MGL_RequestId MuxyGameLink_SendBroadcast(MuxyGameLink GameLink, const char* Topic, const char* JsonString)
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
 	nlohmann::json Json = nlohmann::json::parse(JsonString, nullptr, false);
 	if (!Json.is_discarded())
 	{
-		return SDK->SendBroadcast(Target, Json);
+		return SDK->SendBroadcast(Topic, Json);
 	}
 	else
 	{
