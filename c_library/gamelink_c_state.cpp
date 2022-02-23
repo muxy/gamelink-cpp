@@ -72,7 +72,7 @@ MGL_RequestId MuxyGameLink_UpdateStateWithNull(MuxyGameLink GameLink, const char
 	return Instance->UpdateStateWithNull(Target, Operation, Path);
 }
 
-MGL_RequestId MuxyGameLink_UpdateStateWithPatchList(MuxyGameLink GameLink, const char* Target, const char* Operation, MGL_PatchList PList)
+MGL_RequestId MuxyGameLink_UpdateStateWithPatchList(MuxyGameLink GameLink, const char* Target, MGL_PatchList PList)
 {
 	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
 	gamelink::PatchList* Patch = static_cast<gamelink::PatchList*>(PList.Obj);
@@ -134,10 +134,9 @@ MGL_String MuxyGameLink_Schema_StateUpdateResponse_GetJson(MGL_Schema_StateUpdat
 }
 
 
-MGL_PatchList MuxyGameLink_PatchList_Make(MuxyGameLink GameLink) 
+MGL_PatchList MuxyGameLink_PatchList_Make(void) 
 {
 	MGL_PatchList PList;
-	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
 	PList.Obj = new gamelink::PatchList();
 	return PList;
 }

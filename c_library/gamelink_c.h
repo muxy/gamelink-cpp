@@ -237,6 +237,7 @@ extern "C"
 													  const char* Path,
 													  const char* Json);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateStateWithNull(MuxyGameLink GameLink, const char* Target, const char* Operation, const char* Path);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateStateWithPatchList(MuxyGameLink GameLink, const char* Target, MGL_PatchList PList);
 
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_SubscribeToStateUpdates(MuxyGameLink GameLink, const char* Target);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UnsubscribeFromStateUpdates(MuxyGameLink GameLink, const char* Target);
@@ -356,7 +357,7 @@ extern "C"
 		PatchList functions
 	*/
 
-	MUXY_CLIB_API MGL_PatchList MuxyGameLink_PatchList_Make(MuxyGameLink GameLink);
+	MUXY_CLIB_API MGL_PatchList MuxyGameLink_PatchList_Make(void);
 	MUXY_CLIB_API void MuxyGameLink_PatchList_Kill(MGL_PatchList PList);
 	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithInteger(MGL_PatchList PList, const char* Operation, const char* Path, int64_t Val);
 	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithDouble(MGL_PatchList PList, const char* Operation, const char* Path, double Val);
