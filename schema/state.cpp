@@ -4,32 +4,32 @@ namespace gamelink
 {
 	namespace schema
 	{
-		GetStateRequest::GetStateRequest(const char* target)
+		GetStateRequest::GetStateRequest(const string& target)
 		{
 			action = string("get");
 			params.target = string("state");
-			data.state_id = string(target);
+			data.state_id = target;
 		}
 
-		PatchStateRequest::PatchStateRequest(const char* target)
+		PatchStateRequest::PatchStateRequest(const string& target)
 		{
 			action = string("patch");
 			params.target = string("state");
-			data.state_id = string(target);
+			data.state_id = target;
 		}
 
-		SubscribeStateRequest::SubscribeStateRequest(const char* target)
+		SubscribeStateRequest::SubscribeStateRequest(const string& target)
 		{
 			action = string("subscribe");
 			params.target = string("state");
-			data.topic_id = string(target);
+			data.topic_id = target;
 		}
 
-		UnsubscribeStateRequest::UnsubscribeStateRequest(const char* target)
+		UnsubscribeStateRequest::UnsubscribeStateRequest(const string& target)
 		{
 			action = string("unsubscribe");
 			params.target = string("state");
-			data.topic_id = string(target);
+			data.topic_id = target;
 		}
 	}
 }

@@ -24,24 +24,24 @@ namespace gamelink
 		}
 	}
 
-	RequestId SDK::SetState(const char* target, const nlohmann::json& value)
+	RequestId SDK::SetState(const string& target, const nlohmann::json& value)
 	{
-		schema::SetStateRequest<nlohmann::json> payload(target, value);
+		schema::SetStateRequest<nlohmann::json> payload(target.c_str(), value);
 		return queuePayload(payload);
 	}
 
-	RequestId SDK::ClearState(const char* target) 
+	RequestId SDK::ClearState(const string& target) 
 	{
 		return SetState(target, nlohmann::json::object());
 	}
 
-	RequestId SDK::GetState(const char* target)
+	RequestId SDK::GetState(const string& target)
 	{
 		schema::GetStateRequest payload(target);
 		return queuePayload(payload);
 	}
 
-	RequestId SDK::GetState(const char* target, std::function<void(const schema::GetStateResponse<nlohmann::json>&)> callback)
+	RequestId SDK::GetState(const string& target, std::function<void(const schema::GetStateResponse<nlohmann::json>&)> callback)
 	{
 		schema::GetStateRequest payload(target);
 		RequestId id = queuePayload(payload);
@@ -49,7 +49,7 @@ namespace gamelink
 		return id;
 	}
 
-	RequestId SDK::GetState(const char* target, void (*callback)(void*, const schema::GetStateResponse<nlohmann::json>&), void* user)
+	RequestId SDK::GetState(const string& target, void (*callback)(void*, const schema::GetStateResponse<nlohmann::json>&), void* user)
 	{
 		schema::GetStateRequest payload(target);
 
@@ -58,19 +58,19 @@ namespace gamelink
 		return id;
 	}
 
-	RequestId SDK::SubscribeToStateUpdates(const char* target)
+	RequestId SDK::SubscribeToStateUpdates(const string& target)
 	{
 		schema::SubscribeStateRequest payload(target);
 		return queuePayload(payload);
 	}
 
-	RequestId SDK::UnsubscribeFromStateUpdates(const char* target)
+	RequestId SDK::UnsubscribeFromStateUpdates(const string& target)
 	{
 		schema::UnsubscribeStateRequest payload(target);
 		return queuePayload(payload);
 	}
 
-	RequestId SDK::UpdateState(const char* target, const schema::PatchOperation* begin, const schema::PatchOperation* end)
+	RequestId SDK::UpdateState(const string& target, const schema::PatchOperation* begin, const schema::PatchOperation* end)
 	{
 		schema::PatchStateRequest payload(target);
 		std::vector<schema::PatchOperation> updates;
@@ -81,7 +81,7 @@ namespace gamelink
 		return queuePayload(payload);
 	}
 
-	RequestId SDK::UpdateStateWithInteger(const char* target, const char * operation, const string& path, int64_t i)
+	RequestId SDK::UpdateStateWithInteger(const string& target, const string& operation, const string& path, int64_t i)
 	{
 		schema::PatchOperation op;
 		op.operation = operation;
@@ -91,7 +91,7 @@ namespace gamelink
 		return UpdateState(target, &op, &op + 1);
 	}
 
-	RequestId SDK::UpdateStateWithDouble(const char* target, const char * operation, const string& path, double d)
+	RequestId SDK::UpdateStateWithDouble(const string& target, const string& operation, const string& path, double d)
 	{
 		schema::PatchOperation op;
 		op.operation = operation;
@@ -101,7 +101,7 @@ namespace gamelink
 		return UpdateState(target, &op, &op + 1);
 	}
 
-	RequestId SDK::UpdateStateWithBoolean(const char* target, const char * operation, const string& path, bool b)
+	RequestId SDK::UpdateStateWithBoolean(const string& target, const string& operation, const string& path, bool b)
 	{
 		schema::PatchOperation op;
 		op.operation = operation;
@@ -111,7 +111,7 @@ namespace gamelink
 		return UpdateState(target, &op, &op + 1);
 	}
 
-	RequestId SDK::UpdateStateWithString(const char* target, const char * operation, const string& path, const string& str)
+	RequestId SDK::UpdateStateWithString(const string& target, const string& operation, const string& path, const string& str)
 	{
 		schema::PatchOperation op;
 		op.operation = operation;
@@ -121,7 +121,7 @@ namespace gamelink
 		return UpdateState(target, &op, &op + 1);
 	}
 
-	RequestId SDK::UpdateStateWithLiteral(const char* target, const char * operation, const string& path, const string& str)
+	RequestId SDK::UpdateStateWithLiteral(const string& target, const string& operation, const string& path, const string& str)
 	{
 		schema::PatchOperation op;
 		op.operation = operation;
@@ -131,7 +131,7 @@ namespace gamelink
 		return UpdateState(target, &op, &op + 1);
 	}
 
-	RequestId SDK::UpdateStateWithNull(const char* target, const char * operation, const string& path)
+	RequestId SDK::UpdateStateWithNull(const string& target, const string& operation, const string& path)
 	{
 		schema::PatchOperation op;
 		op.operation = operation;
@@ -141,7 +141,7 @@ namespace gamelink
 		return UpdateState(target, &op, &op + 1);
 	}
 
-	RequestId SDK::UpdateStateWithJson(const char* target, const char * operation, const string& path, const nlohmann::json& js)
+	RequestId SDK::UpdateStateWithJson(const string& target, const string& operation, const string& path, const nlohmann::json& js)
 	{
 		schema::PatchOperation op;
 		op.operation = operation;
@@ -151,7 +151,7 @@ namespace gamelink
 		return UpdateState(target, &op, &op + 1);
 	}
 
-	RequestId SDK::UpdateStateWithPatchList(const char *target, const PatchList& list)
+	RequestId SDK::UpdateStateWithPatchList(const string& target, const PatchList& list)
 	{
 		if (list.operations.empty())
 		{
@@ -180,7 +180,7 @@ namespace gamelink
 		lock.unlock();
 	}
 
-	void PatchList::UpdateStateWithInteger(const char* operation, const string& path, int64_t i)
+	void PatchList::UpdateStateWithInteger(const string& operation, const string& path, int64_t i)
 	{
 		schema::PatchOperation op;
 		op.operation = operation;
@@ -192,7 +192,7 @@ namespace gamelink
 		lock.unlock();
 	}
 
-	void PatchList::UpdateStateWithDouble(const char* operation, const string& path, double d)
+	void PatchList::UpdateStateWithDouble(const string& operation, const string& path, double d)
 	{
 		schema::PatchOperation op;
 		op.operation = operation;
@@ -204,7 +204,7 @@ namespace gamelink
 		lock.unlock();
 	}
 
-	void PatchList::UpdateStateWithBoolean(const char* operation, const string& path, bool b)
+	void PatchList::UpdateStateWithBoolean(const string& operation, const string& path, bool b)
 	{
 		schema::PatchOperation op;
 		op.operation = operation;
@@ -216,7 +216,7 @@ namespace gamelink
 		lock.unlock();
 	}
 
-	void PatchList::UpdateStateWithString(const char* operation, const string& path, const string& s)
+	void PatchList::UpdateStateWithString(const string& operation, const string& path, const string& s)
 	{
 		schema::PatchOperation op;
 		op.operation = operation;
@@ -228,7 +228,7 @@ namespace gamelink
 		lock.unlock();
 	}
 
-	void PatchList::UpdateStateWithLiteral(const char* operation, const string& path, const string& js)
+	void PatchList::UpdateStateWithLiteral(const string& operation, const string& path, const string& js)
 	{
 		schema::PatchOperation op;
 		op.operation = operation;
@@ -240,7 +240,7 @@ namespace gamelink
 		lock.unlock();
 	}
 
-	void PatchList::UpdateStateWithNull(const char* operation, const string& path)
+	void PatchList::UpdateStateWithNull(const string& operation, const string& path)
 	{
 		schema::PatchOperation op;
 		op.operation = operation;
@@ -252,7 +252,7 @@ namespace gamelink
 		lock.unlock();
 	}
 
-	void PatchList::UpdateStateWithJson(const char* operation, const string& path, const nlohmann::json& js)
+	void PatchList::UpdateStateWithJson(const string& operation, const string& path, const nlohmann::json& js)
 	{
 		schema::PatchOperation op;
 		op.operation = operation;
@@ -264,7 +264,7 @@ namespace gamelink
 		lock.unlock();
 	}
 
-	void PatchList::UpdateStateWithEmptyArray(const char* operation, const string& path) 
+	void PatchList::UpdateStateWithEmptyArray(const string& operation, const string& path) 
 	{
 		schema::PatchOperation op;
 		op.operation = operation;

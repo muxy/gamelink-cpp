@@ -47,11 +47,11 @@ namespace gamelink
 			/// Creates a SetState request.
 			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 			/// @param[in] value A serializable type.
-			SetStateRequest(const char* target, const T& value)
+			SetStateRequest(const string& target, const T& value)
 			{
 				this->action = string("set");
 				this->params.target = string("state");
-				this->data.state_id = string(target);
+				this->data.state_id = target;
 				this->data.state = value;
 			}
 		};
@@ -73,7 +73,7 @@ namespace gamelink
 		{
 			/// Creates a GetState request
 			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
-			explicit GetStateRequest(const char* target);
+			explicit GetStateRequest(const string& target);
 		};
 
 		template<typename T>
@@ -95,7 +95,7 @@ namespace gamelink
 		{
 			/// Creates an UpdateState request
 			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
-			explicit PatchStateRequest(const char* target);
+			explicit PatchStateRequest(const string& target);
 		};
 
 		// Subscription
@@ -112,7 +112,7 @@ namespace gamelink
 		{
 			/// Creates a SubscribeState request
 			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
-			explicit SubscribeStateRequest(const char* target);
+			explicit SubscribeStateRequest(const string& target);
 		};
 
 		template<typename T>
@@ -124,7 +124,7 @@ namespace gamelink
 		{
 			/// Creates a SubscribeState request
 			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
-			explicit UnsubscribeStateRequest(const char* target);
+			explicit UnsubscribeStateRequest(const string& target);
 		};
 	}
 }
