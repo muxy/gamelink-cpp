@@ -392,7 +392,7 @@ namespace gamelink
 		void UpdateStateWithEmptyArray(const char* operation, const string& path);
 
 		/// Check if the PatchList is empty
-		bool Empty();
+		bool Empty() const;
 
 		/// Clear the PatchList
 		void Clear();

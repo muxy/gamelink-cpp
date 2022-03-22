@@ -276,7 +276,7 @@ namespace gamelink
 		lock.unlock();
 	}
 
-	bool PatchList::Empty()
+	bool PatchList::Empty() const
 	{
 		return this->operations.empty();
 	}
