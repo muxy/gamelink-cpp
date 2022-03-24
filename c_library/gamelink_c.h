@@ -106,6 +106,11 @@ extern "C"
 		const void* Obj;
 	} MGL_Schema_PollUpdateResponse;
 
+	typedef struct
+	{
+		void* Obj;
+	} MGL_PatchList;
+
 	/*
 		SDK Callbacks
 	*/
@@ -124,9 +129,9 @@ extern "C"
 
 	/*
 		Get URL for connection. Exposes the projection version.
-		const string& clientId,
+		const char* clientId,
 			ConnectionStage stage,
-			const string& projection,
+			const char* projection,
 			int projectionMajor, int projectionMinor, int projectionPatch);
 
 	*/
@@ -232,6 +237,7 @@ extern "C"
 													  const char* Path,
 													  const char* Json);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateStateWithNull(MuxyGameLink GameLink, const char* Target, const char* Operation, const char* Path);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateStateWithPatchList(MuxyGameLink GameLink, const char* Target, MGL_PatchList PList);
 
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_SubscribeToStateUpdates(MuxyGameLink GameLink, const char* Target);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UnsubscribeFromStateUpdates(MuxyGameLink GameLink, const char* Target);
@@ -346,6 +352,23 @@ extern "C"
 	MUXY_CLIB_API double MuxyGameLink_Schema_PollUpdateResponse_GetMean(MGL_Schema_PollUpdateResponse PResp);
 	MUXY_CLIB_API double MuxyGameLink_Schema_PollUpdateResponse_GetSum(MGL_Schema_PollUpdateResponse PResp);
 	MUXY_CLIB_API int32_t MuxyGameLink_Schema_PollUpdateResponse_GetCount(MGL_Schema_PollUpdateResponse PResp);
+
+	/*
+		PatchList functions
+	*/
+
+	MUXY_CLIB_API MGL_PatchList MuxyGameLink_PatchList_Make(void);
+	MUXY_CLIB_API void MuxyGameLink_PatchList_Kill(MGL_PatchList PList);
+	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithInteger(MGL_PatchList PList, const char* Operation, const char* Path, int64_t Val);
+	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithDouble(MGL_PatchList PList, const char* Operation, const char* Path, double Val);
+	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithBoolean(MGL_PatchList PList, const char* Operation, const char* Path, bool Val);
+	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithString(MGL_PatchList PList, const char* Operation, const char* Path, const char* Val);
+	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithLiteral(MGL_PatchList PList, const char* Operation, const char* Path, const char* Val);
+	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithNull(MGL_PatchList PList, const char* Operation, const char* Path);
+	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithJson(MGL_PatchList PList, const char* Operation, const char* Path, const char* Val);
+	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithEmptyArray(MGL_PatchList PList, const char* Operation, const char* Path);
+	MUXY_CLIB_API bool MuxyGameLink_PatchList_Empty(MGL_PatchList PList);
+	MUXY_CLIB_API void MuxyGameLink_PatchList_Clear(MGL_PatchList PList);
 
 #ifdef __cplusplus
 }

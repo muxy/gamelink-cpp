@@ -330,7 +330,7 @@ namespace gamelink
 			int index = 0;
 			while (begin != end)
 			{
-				js[index] = nlohmann::json(*begin);
+				js[index++] = nlohmann::json(*begin);
 				++begin;
 			}
 
@@ -384,6 +384,18 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] js The value to use in the patch operation
 		void UpdateStateWithJson(const char* operation, const string& path, const nlohmann::json& js);
+
+		/// Helper function that will update state with an empty array
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		void UpdateStateWithEmptyArray(const char* operation, const string& path);
+
+		/// Check if the PatchList is empty
+		bool Empty() const;
+
+		/// Clear the PatchList
+		void Clear();
 
 	private:
 		gamelink::lock lock;
@@ -1125,7 +1137,7 @@ namespace gamelink
 			int index = 0;
 			while (begin != end)
 			{
-				js[index] = nlohmann::json(*begin);
+				js[index++] = nlohmann::json(*begin);
 				++begin;
 			}
 

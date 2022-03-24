@@ -231,13 +231,13 @@ const char* MuxyGameLink_Schema_User_GetRefreshToken(MGL_Schema_User User)
 	return "";
 }
 
-MGL_RequestId MuxyGameLink_SendBroadcast(MuxyGameLink GameLink, const char* Target, const char* JsonString)
+MGL_RequestId MuxyGameLink_SendBroadcast(MuxyGameLink GameLink, const char* Topic, const char* JsonString)
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
 	nlohmann::json Json = nlohmann::json::parse(JsonString, nullptr, false);
 	if (!Json.is_discarded())
 	{
-		return SDK->SendBroadcast(Target, Json);
+		return SDK->SendBroadcast(Topic, Json);
 	}
 	else
 	{
@@ -280,16 +280,16 @@ void MuxyGameLink_DetachOnDatastream(MuxyGameLink GameLink, uint32_t OnDatastrea
 
 uint32_t MuxyGameLink_Schema_DatastreamUpdate_GetEventCount(MGL_Schema_DatastreamUpdate DatastreamUpdate)
 {
-	const gamelink::schema::DatastreamUpdateBody* DSU = static_cast<const gamelink::schema::DatastreamUpdateBody*>(DatastreamUpdate.Obj);
-	return DSU->events.size();
+	const gamelink::schema::DatastreamUpdate* DSU = static_cast<const gamelink::schema::DatastreamUpdate*>(DatastreamUpdate.Obj);
+	return DSU->data.events.size();
 }
 
 MGL_Schema_DatastreamEvent MuxyGameLink_Schema_DatastreamUpdate_GetEventAt(MGL_Schema_DatastreamUpdate DatastreamUpdate, uint32_t AtIndex)
 {
-	const gamelink::schema::DatastreamUpdateBody* DSU = static_cast<const gamelink::schema::DatastreamUpdateBody*>(DatastreamUpdate.Obj);
+	const gamelink::schema::DatastreamUpdate* DSU = static_cast<const gamelink::schema::DatastreamUpdate*>(DatastreamUpdate.Obj);
 
 	MGL_Schema_DatastreamEvent WDSEvent;
-	WDSEvent.Obj = &DSU->events[AtIndex];
+	WDSEvent.Obj = &DSU->data.events[AtIndex];
 
 	return WDSEvent;
 }

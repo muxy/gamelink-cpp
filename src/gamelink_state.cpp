@@ -151,7 +151,7 @@ namespace gamelink
 		return UpdateState(target, &op, &op + 1);
 	}
 
-	RequestId SDK::UpdateStateWithPatchList(const char * target, const PatchList& list)
+	RequestId SDK::UpdateStateWithPatchList(const char *target, const PatchList& list)
 	{
 		if (list.operations.empty())
 		{
@@ -273,6 +273,18 @@ namespace gamelink
 
 		lock.lock();
 		operations.emplace_back(std::move(op));
+		lock.unlock();
+	}
+
+	bool PatchList::Empty() const
+	{
+		return this->operations.empty();
+	}
+
+	void PatchList::Clear()
+	{
+		lock.lock();
+		this->operations.clear();
 		lock.unlock();
 	}
 }

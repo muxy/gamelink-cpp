@@ -28183,7 +28183,7 @@ namespace gamelink
 			int index = 0;
 			while (begin != end)
 			{
-				js[index] = nlohmann::json(*begin);
+				js[index++] = nlohmann::json(*begin);
 				++begin;
 			}
 
@@ -28237,6 +28237,18 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] js The value to use in the patch operation
 		void UpdateStateWithJson(const char* operation, const string& path, const nlohmann::json& js);
+
+		/// Helper function that will update state with an empty array
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		void UpdateStateWithEmptyArray(const char* operation, const string& path);
+
+		/// Check if the PatchList is empty
+		bool Empty();
+
+		/// Clear the PatchList
+		void Clear();
 
 	private:
 		gamelink::lock lock;
@@ -28978,7 +28990,7 @@ namespace gamelink
 			int index = 0;
 			while (begin != end)
 			{
-				js[index] = nlohmann::json(*begin);
+				js[index++] = nlohmann::json(*begin);
 				++begin;
 			}
 
@@ -30770,7 +30782,7 @@ namespace gamelink
 		return UpdateState(target, &op, &op + 1);
 	}
 
-	RequestId SDK::UpdateStateWithPatchList(const char * target, const PatchList& list)
+	RequestId SDK::UpdateStateWithPatchList(const char *target, const PatchList& list)
 	{
 		if (list.operations.empty())
 		{
@@ -30892,6 +30904,18 @@ namespace gamelink
 
 		lock.lock();
 		operations.emplace_back(std::move(op));
+		lock.unlock();
+	}
+
+	bool PatchList::Empty()
+	{
+		return this->operations.empty();
+	}
+
+	void PatchList::Clear()
+	{
+		lock.lock();
+		this->operations.clear();
 		lock.unlock();
 	}
 }
