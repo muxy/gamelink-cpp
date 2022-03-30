@@ -41,7 +41,7 @@ TEST_CASE("Basic state serialization", "[state][serialization]")
 
 	parent.children.push_back(child);
 
-	gamelink::schema::SetStateRequest<BasicState> req(gamelink::schema::STATE_TARGET_CHANNEL, parent);
+	gamelink::schema::SetStateRequest<BasicState> req(gamelink::StateTarget::Channel, parent);
 
 	SerializeEqual(req, R"({
         "action": "set", 
@@ -112,7 +112,7 @@ TEST_CASE("State response deserialization", "[state][deserialization]")
 
 TEST_CASE("State update serialization", "[state][serialization]")
 {
-	gamelink::schema::PatchStateRequest req(gamelink::schema::STATE_TARGET_EXTENSION);
+	gamelink::schema::PatchStateRequest req(gamelink::StateTarget::Channel);
 
 	gamelink::schema::PatchOperation op;
 	op.operation = "replace";
@@ -137,7 +137,7 @@ TEST_CASE("State update serialization", "[state][serialization]")
 
 TEST_CASE("State get serialization", "[state][serialization]")
 {
-	gamelink::schema::GetStateRequest req(gamelink::schema::STATE_TARGET_CHANNEL);
+	gamelink::schema::GetStateRequest req(gamelink::StateTarget::Channel);
 	SerializeEqual(req, R"({
         "action": "get", 
         "params": {
@@ -152,7 +152,7 @@ TEST_CASE("State get serialization", "[state][serialization]")
 
 TEST_CASE("State subscribe serialization", "[state][serialization]")
 {
-	gamelink::schema::SubscribeStateRequest req(gamelink::schema::STATE_TARGET_EXTENSION);
+	gamelink::schema::SubscribeStateRequest req(gamelink::StateTarget::Channel);
 
 	SerializeEqual(req, R"({
         "action": "subscribe", 
@@ -227,7 +227,7 @@ TEST_CASE("SDK State Creation", "[sdk][state]")
 	st.name = "health";
 	st.value = 42.123;
 
-	sdk.SetState(gamelink::schema::STATE_TARGET_CHANNEL, st);
+	sdk.SetState(gamelink::StateTarget::Channel, st);
 	sdk.ForeachPayload([](const gamelink::Payload* send) {
 		REQUIRE(JSONEquals(send->data,
 						   R"({
@@ -247,7 +247,7 @@ TEST_CASE("SDK State Creation", "[sdk][state]")
         })"));
 	});
 
-	sdk.ClearState(gamelink::schema::STATE_TARGET_CHANNEL);
+	sdk.ClearState(gamelink::StateTarget::Channel);
 	validateSinglePayload(sdk, R"({
 		"action": "set", 
 		"data": { 
@@ -266,7 +266,7 @@ TEST_CASE("SDK State Retreival", "[sdk][state]")
 	gamelink::SDK sdk;
 
 	uint32_t calls = 0;
-	sdk.GetState(gamelink::schema::STATE_TARGET_CHANNEL, [&](const gamelink::schema::GetStateResponse<nlohmann::json>& cb) {
+	sdk.GetState(gamelink::StateTarget::Channel, [&](const gamelink::schema::GetStateResponse<nlohmann::json>& cb) {
 		REQUIRE(cb.data.state["name"] == "health");
 		REQUIRE(cb.data.state["value"] == 200.99);
 		calls++;
@@ -326,7 +326,7 @@ TEST_CASE("SDK Update State", "[sdk][state]")
 {
 	gamelink::SDK sdk;
 
-	sdk.UpdateStateWithString(gamelink::schema::STATE_TARGET_CHANNEL, "replace", "/name", "whatever");
+	sdk.UpdateStateWithString(gamelink::StateTarget::Channel, gamelink::Operation::Replace, "/name", "whatever");
 	sdk.ForeachPayload([](const gamelink::Payload* send) {
 		REQUIRE(JSONEquals(send->data,
 						   R"({
@@ -354,7 +354,7 @@ TEST_CASE("SDK Update array", "[sdk][state][target]")
 	int integerRoll = 1;
 	std::string stringRoll = "world";
 
-	sdk.UpdateStateWithArray(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/rolls", &integerRoll, &integerRoll + 1);
+	sdk.UpdateStateWithArray(gamelink::StateTarget::Channel, gamelink::Operation::Add, "/rolls", &integerRoll, &integerRoll + 1);
 	validateSinglePayload(sdk, R"({
 		"action": "patch", 
 		"data": { 
@@ -371,7 +371,7 @@ TEST_CASE("SDK Update array", "[sdk][state][target]")
 		}
 	})");
 
-	sdk.UpdateStateWithArray(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/rolls", &stringRoll, &stringRoll + 1);
+	sdk.UpdateStateWithArray(gamelink::StateTarget::Channel, gamelink::Operation::Add, "/rolls", &stringRoll, &stringRoll + 1);
 	validateSinglePayload(sdk, R"({
 		"action": "patch", 
 		"data": { 
@@ -408,7 +408,7 @@ TEST_CASE("SDK Subscription", "[sdk][state][subscription]")
 	uint32_t second = sdk.OnStateUpdate([&](const gamelink::schema::SubscribeStateUpdateResponse<nlohmann::json>& resp) { secondCalls++; });
 
 	// Basic usage
-	sdk.SubscribeToStateUpdates(gamelink::schema::STATE_TARGET_CHANNEL);
+	sdk.SubscribeToStateUpdates(gamelink::StateTarget::Channel);
 	REQUIRE(calls == 0);
 	REQUIRE(errors == 0);
 
@@ -488,7 +488,7 @@ TEST_CASE("PatchList equality", "[state]")
 {
 	gamelink::SDK sdk;
 
-	sdk.UpdateStateWithObject(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/character", nlohmann::json::parse(R"({
+	sdk.UpdateStateWithObject(gamelink::StateTarget::Channel, gamelink::Operation::Add, "/character", nlohmann::json::parse(R"({
 		"class": "wizard"
 	})"));
 
@@ -507,10 +507,10 @@ TEST_CASE("PatchList equality", "[state]")
 	})");
 
 	gamelink::PatchList list;
-	list.UpdateStateWithObject("add", "/character", nlohmann::json::parse(R"({
+	list.UpdateStateWithObject(gamelink::Operation::Add, "/character", nlohmann::json::parse(R"({
 		"class": "wizard"
 	})"));
-	sdk.UpdateStateWithPatchList(gamelink::schema::STATE_TARGET_CHANNEL, list);
+	sdk.UpdateStateWithPatchList(gamelink::StateTarget::Channel, list);
 
 	validateSinglePayload(sdk, R"({
 		"action": "patch", 
@@ -530,7 +530,7 @@ TEST_CASE("PatchList equality", "[state]")
 TEST_CASE("PatchList no elements", "[state]")
 {
 	gamelink::SDK sdk;
-	sdk.UpdateStateWithPatchList(gamelink::schema::STATE_TARGET_CHANNEL, gamelink::PatchList());
+	sdk.UpdateStateWithPatchList(gamelink::StateTarget::Channel, gamelink::PatchList());
 
 	uint32_t count = 0;
 	sdk.ForeachPayload([&](const gamelink::Payload* send) { count++; });
@@ -543,19 +543,19 @@ TEST_CASE("PatchList many patches", "[state]")
 	gamelink::PatchList list;
 	for (uint32_t i = 0; i < 100; ++i)
 	{
-		list.UpdateStateWithInteger("add", "/somearr/-1", i);
+		list.UpdateStateWithInteger(gamelink::Operation::Add, "/somearr/-1", i);
 	}
 
 	gamelink::SDK sdk;
-	sdk.UpdateStateWithPatchList(gamelink::schema::STATE_TARGET_CHANNEL, list);
+	sdk.UpdateStateWithPatchList(gamelink::StateTarget::Channel, list);
 	uint32_t count = 0;
 	sdk.ForeachPayload([&](const gamelink::Payload* send) {
 		count++;
 
-		gamelink::schema::PatchStateRequest request("abc");
+		gamelink::schema::PatchStateRequest request(gamelink::StateTarget::Channel);
 		Deserialize(send->data.c_str(), request);
 
-		REQUIRE(request.data.state_id == gamelink::schema::STATE_TARGET_CHANNEL);
+		REQUIRE(request.data.state_id == gamelink::TARGET_STRINGS[static_cast<int>(gamelink::StateTarget::Channel)]);
 		REQUIRE(request.data.state.size() == 100);
 	});
 
@@ -565,7 +565,7 @@ TEST_CASE("PatchList many patches", "[state]")
 TEST_CASE("Update state", "[state]")
 {
 	gamelink::SDK sdk;
-	sdk.UpdateStateWithObject(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/character", nlohmann::json::parse(R"({
+	sdk.UpdateStateWithObject(gamelink::StateTarget::Channel, gamelink::Operation::Add, "/character", nlohmann::json::parse(R"({
 		"class": "wizard"
 	})"));
 	validateSinglePayload(sdk, R"({
@@ -582,7 +582,7 @@ TEST_CASE("Update state", "[state]")
 		}
 	})");
 
-	sdk.UpdateStateWithBoolean(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/b", false);
+	sdk.UpdateStateWithBoolean(gamelink::StateTarget::Channel, gamelink::Operation::Add, "/b", false);
 	validateSinglePayload(sdk, R"({
 		"action": "patch", 
 		"data": {
@@ -597,7 +597,7 @@ TEST_CASE("Update state", "[state]")
 		}
 	})");
 
-	sdk.UpdateStateWithDouble(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/b", 44.15);
+	sdk.UpdateStateWithDouble(gamelink::StateTarget::Channel, gamelink::Operation::Add, "/b", 44.15);
 	validateSinglePayload(sdk, R"({
 		"action": "patch", 
 		"data": {
@@ -612,7 +612,7 @@ TEST_CASE("Update state", "[state]")
 		}
 	})");
 
-	sdk.UpdateStateWithInteger(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/b", -100);
+	sdk.UpdateStateWithInteger(gamelink::StateTarget::Channel, gamelink::Operation::Add, "/b", -100);
 	validateSinglePayload(sdk, R"({
 		"action": "patch", 
 		"data": {
@@ -627,7 +627,7 @@ TEST_CASE("Update state", "[state]")
 		}
 	})");
 
-	sdk.UpdateStateWithLiteral(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/b", R"([{ "literal": "json" }])");
+	sdk.UpdateStateWithLiteral(gamelink::StateTarget::Channel, gamelink::Operation::Add, "/b", R"([{ "literal": "json" }])");
 	validateSinglePayload(sdk, R"({
 		"action": "patch", 
 		"data": {
@@ -644,7 +644,7 @@ TEST_CASE("Update state", "[state]")
 		}
 	})");
 
-	sdk.UpdateStateWithNull(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/b");
+	sdk.UpdateStateWithNull(gamelink::StateTarget::Channel, gamelink::Operation::Add, "/b");
 	validateSinglePayload(sdk, R"({
 		"action": "patch", 
 		"data": {
@@ -659,7 +659,7 @@ TEST_CASE("Update state", "[state]")
 		}
 	})");
 
-	sdk.UpdateStateWithString(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/b", "Gandalf");
+	sdk.UpdateStateWithString(gamelink::StateTarget::Channel, gamelink::Operation::Add, "/b", "Gandalf");
 	validateSinglePayload(sdk, R"({
 		"action": "patch", 
 		"data": {
@@ -680,10 +680,10 @@ TEST_CASE("Update state with patch list", "[state]")
 	gamelink::SDK sdk;
 	{
 		gamelink::PatchList list;
-		list.UpdateStateWithObject("add", "/character", nlohmann::json::parse(R"({
+		list.UpdateStateWithObject(gamelink::Operation::Add, "/character", nlohmann::json::parse(R"({
 				"class": "wizard"
 			})"));
-		sdk.UpdateStateWithPatchList(gamelink::schema::STATE_TARGET_CHANNEL, list);
+		sdk.UpdateStateWithPatchList(gamelink::StateTarget::Channel, list);
 
 		validateSinglePayload(sdk, R"({
 			"action": "patch", 
@@ -702,8 +702,8 @@ TEST_CASE("Update state with patch list", "[state]")
 
 	{
 		gamelink::PatchList list;
-		list.UpdateStateWithBoolean("add", "/b", false);
-		sdk.UpdateStateWithPatchList(gamelink::schema::STATE_TARGET_CHANNEL, list);
+		list.UpdateStateWithBoolean(gamelink::Operation::Add, "/b", false);
+		sdk.UpdateStateWithPatchList(gamelink::StateTarget::Channel, list);
 
 		validateSinglePayload(sdk, R"({
 			"action": "patch", 
@@ -721,8 +721,8 @@ TEST_CASE("Update state with patch list", "[state]")
 	}
 	{
 		gamelink::PatchList list;
-		list.UpdateStateWithDouble("add", "/b", 44.15);
-		sdk.UpdateStateWithPatchList(gamelink::schema::STATE_TARGET_CHANNEL, list);
+		list.UpdateStateWithDouble(gamelink::Operation::Add, "/b", 44.15);
+		sdk.UpdateStateWithPatchList(gamelink::StateTarget::Channel, list);
 
 		validateSinglePayload(sdk, R"({
 			"action": "patch", 
@@ -740,8 +740,8 @@ TEST_CASE("Update state with patch list", "[state]")
 	}
 	{
 		gamelink::PatchList list;
-		list.UpdateStateWithInteger("add", "/b", -100);
-		sdk.UpdateStateWithPatchList(gamelink::schema::STATE_TARGET_CHANNEL, list);
+		list.UpdateStateWithInteger(gamelink::Operation::Add, "/b", -100);
+		sdk.UpdateStateWithPatchList(gamelink::StateTarget::Channel, list);
 
 		validateSinglePayload(sdk, R"({
 			"action": "patch", 
@@ -759,8 +759,8 @@ TEST_CASE("Update state with patch list", "[state]")
 	}
 	{
 		gamelink::PatchList list;
-		list.UpdateStateWithLiteral("add", "/b", R"([{ "literal": "json" }])");
-		sdk.UpdateStateWithPatchList(gamelink::schema::STATE_TARGET_CHANNEL, list);
+		list.UpdateStateWithLiteral(gamelink::Operation::Add, "/b", R"([{ "literal": "json" }])");
+		sdk.UpdateStateWithPatchList(gamelink::StateTarget::Channel, list);
 
 		validateSinglePayload(sdk, R"({
 			"action": "patch", 
@@ -780,8 +780,8 @@ TEST_CASE("Update state with patch list", "[state]")
 	}
 	{
 		gamelink::PatchList list;
-		list.UpdateStateWithNull("add", "/b");
-		sdk.UpdateStateWithPatchList(gamelink::schema::STATE_TARGET_CHANNEL, list);
+		list.UpdateStateWithNull(gamelink::Operation::Add, "/b");
+		sdk.UpdateStateWithPatchList(gamelink::StateTarget::Channel, list);
 
 		validateSinglePayload(sdk, R"({
 			"action": "patch", 
@@ -799,8 +799,8 @@ TEST_CASE("Update state with patch list", "[state]")
 	}
 	{
 		gamelink::PatchList list;
-		list.UpdateStateWithString("add", "/b", "Gandalf");
-		sdk.UpdateStateWithPatchList(gamelink::schema::STATE_TARGET_CHANNEL, list);
+		list.UpdateStateWithString(gamelink::Operation::Add, "/b", "Gandalf");
+		sdk.UpdateStateWithPatchList(gamelink::StateTarget::Channel, list);
 
 		validateSinglePayload(sdk, R"({
 			"action": "patch", 
