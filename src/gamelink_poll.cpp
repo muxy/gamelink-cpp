@@ -78,7 +78,7 @@ namespace gamelink
 								   float duration,
 								   std::function<void(const schema::GetPollResponse&)> onFinishCallback)
 	{
-		TimedPoll tp(pollId, duration);
+		detail::TimedPoll tp(pollId, duration);
 		tp.onFinishCallback.set(onFinishCallback);
 
 		_lock.lock();
@@ -94,7 +94,7 @@ namespace gamelink
 								   void (*onFinishCallback)(void*, const schema::GetPollResponse&),
 								   void* user)
 	{
-		TimedPoll tp(pollId, duration);
+		detail::TimedPoll tp(pollId, duration);
 		tp.onFinishCallback.set(onFinishCallback, user);
 
 		_lock.lock();

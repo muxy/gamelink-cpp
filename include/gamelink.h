@@ -287,6 +287,22 @@ namespace gamelink
 												int projectionMinor,
 												int projectionPatch);
 
+		// TimedPoll is used internally to hold data from CreateTimedPoll
+		struct TimedPoll
+		{
+			string pollId;
+			float duration;
+			detail::Callback<const schema::GetPollResponse&> onFinishCallback;
+			bool finished;
+
+			TimedPoll(string pollId, float duration)
+				: pollId(pollId)
+				, duration(duration)
+				, onFinishCallback(0, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT)
+				, finished(false)
+			{
+			}
+		};
 	}
 
 	/// Returns the URL to connect to for the given clientID and stage.
@@ -1245,21 +1261,6 @@ namespace gamelink
 		void addToBarrier(uint16_t);
 		void removeFromBarrier(uint16_t);
 
-		struct TimedPoll
-		{
-			string pollId;
-			float duration;
-			detail::Callback<const schema::GetPollResponse&> onFinishCallback;
-			bool finished;
-
-			TimedPoll(string pollId, float duration)
-				: pollId(pollId)
-				, duration(duration)
-				, onFinishCallback(ANY_REQUEST_ID, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT)
-				, finished(false)
-			{
-			}
-		};
 		std::vector<TimedPoll> _timedPolls;
 
 		detail::Callback<string> _onDebugMessage;
