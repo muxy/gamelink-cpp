@@ -1261,7 +1261,7 @@ namespace gamelink
 		void addToBarrier(uint16_t);
 		void removeFromBarrier(uint16_t);
 
-		std::vector<TimedPoll> _timedPolls;
+		std::vector<detail::TimedPoll> _timedPolls;
 
 		detail::Callback<string> _onDebugMessage;
 
