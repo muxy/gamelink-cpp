@@ -754,6 +754,22 @@ namespace gamelink
 									   float duration,
 									   std::function<void(const schema::GetPollResponse&)> onFinishCallback);
 
+		/// Queues a request to create a timed poll.
+		///
+		/// @param[in] pollId The Poll ID to create
+		/// @param[in] prompt The Prompt to store in the poll.
+		/// @param[in] options An array of options to store in the poll.
+		/// @param[in] duration How long the poll will last for (in your own provided unit of time).
+		/// @param[in] onFinishCallback Callback to be called when poll finishes.
+		/// @param[in] user User data to pass into the provided callback
+		/// @return RequestId of the generated request
+		RequestId SDK::CreateTimedPoll(const string& pollId,
+									   const string& prompt,
+									   const std::vector<string>& options,
+									   float duration,
+									   void (*onFinishCallback)(void*, const schema::GetPollResponse&),
+									   void* user);
+
 		/// Ticks all timed polls and subtracts dt from the polls duration, callbacks are triggered when duration is <= 0
 		/// @param[in] dt Time to subtract from duration (in your own provided unit of time)
 		void TickTimedPolls(float dt);
@@ -1235,6 +1251,14 @@ namespace gamelink
 			float duration;
 			detail::Callback<const schema::GetPollResponse&> onFinishCallback;
 			bool finished;
+
+			TimedPoll(string pollId, float duration)
+				: pollId(pollId)
+				, duration(duration)
+				, onFinishCallback(ANY_REQUEST_ID, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT)
+				, finished(false)
+			{
+			}
 		};
 		std::vector<TimedPoll> _timedPolls;
 

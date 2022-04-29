@@ -78,11 +78,25 @@ namespace gamelink
 								   float duration,
 								   std::function<void(const schema::GetPollResponse&)> onFinishCallback)
 	{
-		TimedPoll tp;
-		tp.pollId = pollId;
-		tp.duration = duration;
+		TimedPoll tp(pollId, duration);
 		tp.onFinishCallback.set(onFinishCallback);
-		tp.finished = false;
+
+		_lock.lock();
+		_timedPolls.push_back(tp);
+		_lock.unlock();
+		return SDK::CreatePoll(pollId, prompt, options);
+	}
+
+	RequestId SDK::CreateTimedPoll(const string& pollId,
+								   const string& prompt,
+								   const std::vector<string>& options,
+								   float duration,
+								   void (*onFinishCallback)(void*, const schema::GetPollResponse&),
+								   void* user)
+	{
+		TimedPoll tp(pollId, duration);
+		tp.onFinishCallback.set(onFinishCallback, user);
+
 		_lock.lock();
 		_timedPolls.push_back(tp);
 		_lock.unlock();
