@@ -71,4 +71,67 @@ namespace gamelink
 		schema::DeletePollRequest payload(pollId);
 		return queuePayload(payload);
 	}
+
+	RequestId SDK::CreateTimedPoll(const string& pollId,
+								   const string& prompt,
+								   const std::vector<string>& options,
+								   float duration,
+								   std::function<void(const schema::GetPollResponse&)> onFinishCallback)
+	{
+		detail::TimedPoll tp(pollId, duration);
+		tp.onFinishCallback.set(onFinishCallback);
+
+		_lock.lock();
+		_timedPolls.push_back(tp);
+		_lock.unlock();
+		return SDK::CreatePoll(pollId, prompt, options);
+	}
+
+	RequestId SDK::CreateTimedPoll(const string& pollId,
+								   const string& prompt,
+								   const std::vector<string>& options,
+								   float duration,
+								   void (*onFinishCallback)(void*, const schema::GetPollResponse&),
+								   void* user)
+	{
+		detail::TimedPoll tp(pollId, duration);
+		tp.onFinishCallback.set(onFinishCallback, user);
+
+		_lock.lock();
+		_timedPolls.push_back(tp);
+		_lock.unlock();
+		return SDK::CreatePoll(pollId, prompt, options);
+	}
+
+	void SDK::TickTimedPolls(float dt) 
+	{
+		_lock.lock();
+		for (auto &tp: _timedPolls)
+		{
+			tp.duration -= dt;
+			if (tp.duration <= 0 && !tp.finished)
+			{
+				SDK::GetPoll(tp.pollId, [&tp](const schema::GetPollResponse& Resp) 
+				{ 
+					tp.finished = true;
+					tp.onFinishCallback.invoke(Resp);
+				});
+			}
+		}
+
+		auto it = _timedPolls.begin();
+		while (it != _timedPolls.end())
+		{
+			if (it->finished)
+			{
+				SDK::DeletePoll(it->pollId);
+				it = _timedPolls.erase(it);
+			}
+			else
+			{
+				++it;
+			}
+		}
+		_lock.unlock();
+	}
 }
