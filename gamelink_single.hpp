@@ -27875,12 +27875,6 @@ namespace gamelink
 	/// @returns True if 's' begins with 'prefix'
 	MUXY_GAMELINK_API bool HasPrefix(const string& source, const string& prefix);
 
-	/// GetPollWinnerIndex grabs the index of the winning result.
-	///
-	/// @param[in] results The results from the poll
-	/// @returns Index of winning result
-	MUXY_GAMELINK_API uint32_t GetPollWinnerIndex(std::vector<int>& results);
-
 	/// RequestId is an 16bit unsigned integer that represents a request.
 	/// Obtained through SDK methods.
 	typedef uint16_t RequestId;
@@ -27918,14 +27912,6 @@ namespace gamelink
 		public:
 			typedef void (*RawFunctionPointer)(void*, const T&);
 
-			Callback()
-				: _id(UINT32_MAX)
-				, _targetRequestId(ANY_REQUEST_ID)
-				, _status(UINT32_MAX)
-				, _rawCallback(nullptr)
-				, _user(nullptr)
-			{
-			}
 			Callback(uint32_t id, RequestId targetRequestId, uint32_t status)
 				: _id(id)
 				, _targetRequestId(targetRequestId)
@@ -28134,11 +28120,11 @@ namespace gamelink
 		/// @param[in] projectionPatch The patch version of this projection.
 		/// @return Returns the URL to connect to. Returns an empty string on error.
 		MUXY_GAMELINK_API string ProjectionWebsocketConnectionURL(const string& clientId,
-												ConnectionStage stage,
-												const string& projection,
-												int projectionMajor,
-												int projectionMinor,
-												int projectionPatch);
+																  ConnectionStage stage,
+																  const string& projection,
+																  int projectionMajor,
+																  int projectionMinor,
+																  int projectionPatch);
 
 	}
 
@@ -28150,6 +28136,124 @@ namespace gamelink
 	///                  CONNECTION_STAGE_SANDBOX.
 	/// @return Returns the URL to connect to. Returns an empty string on error.
 	MUXY_GAMELINK_API string WebsocketConnectionURL(const string& clientId, ConnectionStage stage);
+
+	// The PatchList set provides an easy api to generate a list of patches and send them
+	// in one request.
+	class MUXY_GAMELINK_API PatchList
+	{
+		friend class SDK;
+
+	public:
+		PatchList();
+		explicit PatchList(uint32_t preallocate);
+
+		PatchList(const PatchList&) = delete;
+		PatchList& operator=(const PatchList&) = delete;
+		PatchList(PatchList&&) = delete;
+		PatchList& operator=(const PatchList&&) = delete;
+
+		/// Queues a request to do many JSON Patch operations on the state object.
+		/// This will generate a StateUpdate event.
+		///
+		/// @param[in] begin Pointer to the first element in an array of UpdateOperations
+		/// @param[in] end Pointer one past the last element in an array of UpdateOperations
+		void UpdateState(const schema::PatchOperation* begin, const schema::PatchOperation* end);
+
+		/// Helper function that will call UpdateState with the input object as the value.
+		///
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] obj The value to use in the patch operation
+		template<typename T>
+		void UpdateStateWithObject(const char* operation, const string& path, const T& obj)
+		{
+			nlohmann::json js = nlohmann::json(obj);
+			return UpdateStateWithJson(operation, path, js);
+		}
+
+		/// Helper function that will call UpdateState with the input array as the value.
+		///
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] begin Pointer to the first element in an array of serializable objects.
+		/// @param[in] end Pointer to one past the last element in an array of serializable objects.
+		template<typename T>
+		void UpdateStateWithArray(const char* operation, const string& path, const T* begin, const T* end)
+		{
+			nlohmann::json js = nlohmann::json::array();
+
+			int index = 0;
+			while (begin != end)
+			{
+				js[index++] = nlohmann::json(*begin);
+				++begin;
+			}
+
+			return UpdateStateWithJson(operation, path, js);
+		}
+
+		/// Helper function that will call UpdateState with the input integer as the value.
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] i The value to use in the patch operation
+		void UpdateStateWithInteger(const char* operation, const string& path, int64_t i);
+
+		/// Helper function that will call UpdateState with the input double as the value.
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] d The value to use in the patch operation
+		void UpdateStateWithDouble(const char* operation, const string& path, double d);
+
+		/// Helper function that will call UpdateState with a boolean value
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] b The value to use in the patch operation
+		void UpdateStateWithBoolean(const char* operation, const string& path, bool b);
+
+		/// Helper function that will call UpdateState with the input string as the value.
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] s The value to use in the patch operation
+		void UpdateStateWithString(const char* operation, const string& path, const string& s);
+
+		/// Helper function that will call UpdateState with the input json object literal as the value.
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] js The value to use in the patch operation
+		void UpdateStateWithLiteral(const char* operation, const string& path, const string& js);
+
+		/// Helper function that will call UpdateState with null as the value.
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		void UpdateStateWithNull(const char* operation, const string& path);
+
+		/// Helper function that will call UpdateState the input json object as the value.
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		/// @param[in] js The value to use in the patch operation
+		void UpdateStateWithJson(const char* operation, const string& path, const nlohmann::json& js);
+
+		/// Helper function that will update state with an empty array
+		///
+		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] path A JSON Patch path.
+		void UpdateStateWithEmptyArray(const char* operation, const string& path);
+
+		/// Check if the PatchList is empty
+		bool Empty();
+
+		/// Clear the PatchList
+		void Clear();
+
+	private:
+		gamelink::lock lock;
+		std::vector<schema::PatchOperation> operations;
+	};
 
 	/// The SDK class exposes functionality to interact with the Gamelink SDK.
 	///
@@ -28424,8 +28528,9 @@ namespace gamelink
 		/// @param[in] callback Callback to invoke after getting the outstanding transactions from the server.
 		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
 		/// @return RequestId of the generated request
-		RequestId
-		GetOutstandingTransactions(const string& sku, void (*callback)(void*, const schema::GetOutstandingTransactionsResponse&), void* ptr);
+		RequestId GetOutstandingTransactions(const string& sku,
+											 void (*callback)(void*, const schema::GetOutstandingTransactionsResponse&),
+											 void* ptr);
 
 		/// Refunds a transaction by SKU and UserID
 		///
@@ -28449,15 +28554,15 @@ namespace gamelink
 		RequestId ValidateTransaction(const string& txid, const string& details);
 
 		/// Gets drops of a given status. Valid status is FULFILLED and CLAIMED.
-		/// 
+		///
 		/// @param[in] status The string status of the set of drops to get. One of FULFILLED, CLAIMED
 		///                   or empty or '*' to get drops of all statuses.
 		/// @param[in] callback Callback to invoke after getting the drops from the server.
 		/// @return RequestId of the generated request
-		RequestId GetDrops(const string& status, std::function<void (const schema::GetDropsResponse&)> callback);
+		RequestId GetDrops(const string& status, std::function<void(const schema::GetDropsResponse&)> callback);
 
 		/// Gets drops of a given status. Valid status is FULFILLED and CLAIMED.
-		/// 
+		///
 		/// @param[in] status The string status of the set of drops to get. One of FULFILLED, CLAIMED
 		///                   or empty or '*' to get drops of all statuses.
 		/// @param[in] callback Callback to invoke after getting the drops from the server.
@@ -28466,7 +28571,7 @@ namespace gamelink
 		RequestId GetDrops(const string& status, void (*callback)(void*, const schema::GetDropsResponse&), void* ptr);
 
 		/// Moves a single drop from 'CLAIMED' status to 'FULFILLED' status.
-		/// 
+		///
 		/// @param[in] id the ID of the drop to update the status of.
 		/// @return RequestId of the generated request.
 		RequestId ValidateDrop(const string& id);
@@ -28592,24 +28697,6 @@ namespace gamelink
 		/// @param[in] optionsEnd Pointer one past the final entry in an array of options to store in the poll.
 		/// @return RequestId of the generated request
 		RequestId CreatePoll(const string& pollId, const string& prompt, const string* optionsBegin, const string* optionsEnd);
-
-		/// Queues a request to create a timed poll.
-		///
-		/// @param[in] pollId The Poll ID to create
-		/// @param[in] prompt The Prompt to store in the poll.
-		/// @param[in] options An array of options to store in the poll.
-		/// @param[in] duration How long the poll will last for (in your own provided unit of time).
-		/// @param[in] onFinishCallback Callback to be called when poll finishes.
-		/// @return RequestId of the generated request
-		RequestId SDK::CreateTimedPoll(const string& pollId,
-									   const string& prompt,
-									   const std::vector<string>& options,
-									   float duration,
-									   std::function<void(const schema::GetPollResponse&)> onFinishCallback);
-
-		/// Ticks all timed polls and subtracts dt from the polls duration, callbacks are triggered when duration is <= 0
-		/// @param[in] dt Time to subtract from duration (in your own provided unit of time)
-		void TickTimedPolls(float dt);
 
 		/// Subscribes to updates for a given poll.
 		/// Updates come through the OnPollUpdate callback.
@@ -28903,7 +28990,7 @@ namespace gamelink
 			int index = 0;
 			while (begin != end)
 			{
-				js[index] = nlohmann::json(*begin);
+				js[index++] = nlohmann::json(*begin);
 				++begin;
 			}
 
@@ -28971,6 +29058,13 @@ namespace gamelink
 		/// @param[in] js The value to use in the patch operation
 		/// @return RequestId of the generated request
 		RequestId UpdateStateWithJson(const char* target, const char* operation, const string& path, const nlohmann::json& js);
+
+		/// Helper function that will call UpdateState with the given patch list
+		///
+		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
+		/// @param[in] list A patch list, created and filled elsewhere
+		/// @return RequestId of the generated request
+		RequestId UpdateStateWithPatchList(const char* target, const PatchList& list);
 
 		/// Starts subscribing to state updates for the given target.
 		/// Updates come through the OnStateUpdate callback
@@ -29081,15 +29175,6 @@ namespace gamelink
 
 		void addToBarrier(uint16_t);
 		void removeFromBarrier(uint16_t);
-
-		struct TimedPoll
-		{
-			string pollId;
-			float duration;
-			detail::Callback<const schema::GetPollResponse&> onFinishCallback;
-			bool finished;
-		};
-		std::vector<TimedPoll> _timedPolls;
 
 		detail::Callback<string> _onDebugMessage;
 
@@ -29657,22 +29742,6 @@ namespace gamelink
 		}
 
 		return true;
-	}
-
-	uint32_t GetPollWinnerIndex(std::vector<int>& results)
-	{
-		int winner = 0;
-		int index = 0;
-		for (int i = 0; i < results.size(); i++)
-		{
-			if (results[i] > winner)
-			{
-				winner = results[i];
-				index = i;
-			}
-		}
-
-		return index; 
 	}
 
 	Payload::Payload(string data)
@@ -30475,55 +30544,7 @@ namespace gamelink
 		schema::DeletePollRequest payload(pollId);
 		return queuePayload(payload);
 	}
-
-	RequestId SDK::CreateTimedPoll(const string& pollId,
-								   const string& prompt,
-								   const std::vector<string>& options,
-								   float duration,
-								   std::function<void(const schema::GetPollResponse&)> onFinishCallback)
-	{
-		TimedPoll tp;
-		tp.pollId = pollId;
-		tp.duration = duration;
-		tp.onFinishCallback.set(onFinishCallback);
-		tp.finished = false;
-		_timedPolls.push_back(tp);
-		return SDK::CreatePoll(pollId, prompt, options);
-	}
-
-	void SDK::TickTimedPolls(float dt) 
-	{
-		_lock.lock();
-		for (auto &tp: _timedPolls)
-		{
-			tp.duration -= dt;
-			if (tp.duration <= 0 && !tp.finished)
-			{
-				SDK::GetPoll(tp.pollId, [&tp](const schema::GetPollResponse& Resp) 
-				{ 
-					tp.finished = true;
-					tp.onFinishCallback.invoke(Resp);
-				});
-			}
-		}
-
-		auto it = _timedPolls.begin();
-		while (it != _timedPolls.end())
-		{
-			if (it->finished)
-			{
-				SDK::DeletePoll(it->pollId);
-				it = _timedPolls.erase(it);
-			}
-			else
-			{
-				++it;
-			}
-		}
-		_lock.unlock();
-	}
 }
-
 
 
 namespace gamelink
@@ -30759,6 +30780,143 @@ namespace gamelink
 		op.value = schema::atomFromLiteral(string(js.dump().c_str()));
 
 		return UpdateState(target, &op, &op + 1);
+	}
+
+	RequestId SDK::UpdateStateWithPatchList(const char *target, const PatchList& list)
+	{
+		if (list.operations.empty())
+		{
+			return ANY_REQUEST_ID;
+		}
+
+		return UpdateState(target, list.operations.data(), list.operations.data() + list.operations.size());
+	}
+
+	// PatchList implementation
+	PatchList::PatchList()
+	{}
+
+	PatchList::PatchList(uint32_t preallocate)
+	{
+		operations.reserve(preallocate);
+	}
+
+	void PatchList::UpdateState(const schema::PatchOperation* begin, const schema::PatchOperation* end)
+	{
+		lock.lock();;
+		for (const schema::PatchOperation* b = begin; b != end; ++b)
+		{
+			operations.push_back(*b);
+		}
+		lock.unlock();
+	}
+
+	void PatchList::UpdateStateWithInteger(const char* operation, const string& path, int64_t i)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromInteger(i);
+
+		lock.lock();
+		operations.emplace_back(std::move(op));
+		lock.unlock();
+	}
+
+	void PatchList::UpdateStateWithDouble(const char* operation, const string& path, double d)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromDouble(d);
+
+		lock.lock();
+		operations.emplace_back(std::move(op));
+		lock.unlock();
+	}
+
+	void PatchList::UpdateStateWithBoolean(const char* operation, const string& path, bool b)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromBoolean(b);
+
+		lock.lock();
+		operations.emplace_back(std::move(op));
+		lock.unlock();
+	}
+
+	void PatchList::UpdateStateWithString(const char* operation, const string& path, const string& s)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromString(s);
+
+		lock.lock();
+		operations.emplace_back(std::move(op));
+		lock.unlock();
+	}
+
+	void PatchList::UpdateStateWithLiteral(const char* operation, const string& path, const string& js)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromLiteral(js);
+
+		lock.lock();
+		operations.emplace_back(std::move(op));
+		lock.unlock();
+	}
+
+	void PatchList::UpdateStateWithNull(const char* operation, const string& path)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomNull();
+
+		lock.lock();
+		operations.emplace_back(std::move(op));
+		lock.unlock();
+	}
+
+	void PatchList::UpdateStateWithJson(const char* operation, const string& path, const nlohmann::json& js)
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromLiteral(string(js.dump().c_str()));
+
+		lock.lock();
+		operations.emplace_back(std::move(op));
+		lock.unlock();
+	}
+
+	void PatchList::UpdateStateWithEmptyArray(const char* operation, const string& path) 
+	{
+		schema::PatchOperation op;
+		op.operation = operation;
+		op.path = path;
+		op.value = schema::atomFromLiteral("[]");
+
+		lock.lock();
+		operations.emplace_back(std::move(op));
+		lock.unlock();
+	}
+
+	bool PatchList::Empty()
+	{
+		return this->operations.empty();
+	}
+
+	void PatchList::Clear()
+	{
+		lock.lock();
+		this->operations.clear();
+		lock.unlock();
 	}
 }
 #endif
