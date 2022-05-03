@@ -26,7 +26,7 @@ namespace gamelink
 	///
 	/// @param[in] results The results from the poll
 	/// @returns Index of winning result
-	MUXY_GAMELINK_API uint32_t GetPollWinnerIndex(std::vector<int>& results);
+	MUXY_GAMELINK_API uint32_t GetPollWinnerIndex(const std::vector<int>& results);
 
 	/// RequestId is an 16bit unsigned integer that represents a request.
 	/// Obtained through SDK methods.
