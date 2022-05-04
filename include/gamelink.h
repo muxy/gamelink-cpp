@@ -26,7 +26,7 @@ namespace gamelink
 	///
 	/// @param[in] results The results from the poll
 	/// @returns Index of winning result
-	MUXY_GAMELINK_API uint32_t GetPollWinnerIndex(std::vector<int>& results);
+	MUXY_GAMELINK_API uint32_t GetPollWinnerIndex(const std::vector<int>& results);
 
 	/// RequestId is an 16bit unsigned integer that represents a request.
 	/// Obtained through SDK methods.
@@ -883,7 +883,7 @@ namespace gamelink
 		/// @param[in] duration How long the poll will last for (in your own provided unit of time).
 		/// @param[in] onFinishCallback Callback to be called when poll finishes.
 		/// @return RequestId of the generated request
-		RequestId SDK::CreateTimedPoll(const string& pollId,
+		RequestId CreateTimedPoll(const string& pollId,
 									   const string& prompt,
 									   const std::vector<string>& options,
 									   float duration,
@@ -898,7 +898,7 @@ namespace gamelink
 		/// @param[in] onFinishCallback Callback to be called when poll finishes.
 		/// @param[in] user User data to pass into the provided callback
 		/// @return RequestId of the generated request
-		RequestId SDK::CreateTimedPoll(const string& pollId,
+		RequestId CreateTimedPoll(const string& pollId,
 									   const string& prompt,
 									   const std::vector<string>& options,
 									   float duration,

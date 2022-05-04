@@ -127,7 +127,7 @@ namespace gamelink
 		return true;
 	}
 
-	uint32_t GetPollWinnerIndex(std::vector<int>& results)
+	uint32_t GetPollWinnerIndex(const std::vector<int>& results)
 	{
 		int winner = 0;
 		int index = 0;
