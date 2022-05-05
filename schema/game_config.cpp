@@ -1,4 +1,5 @@
 #include "schema/game_config.h"
+#include "schema/state.h"
 
 namespace gamelink
 {
@@ -10,11 +11,11 @@ namespace gamelink
 			params.target = string("config");
 		}
 
-        GetConfigRequest::GetConfigRequest(const char* target)
+        GetConfigRequest::GetConfigRequest(ConfigTarget target)
         {
             action = string("get");
 			params.target = string("config");
-            data.configId = target;
+			data.configId = TARGET_STRINGS[static_cast<int>(target)];
         }
 
         SetConfigRequest::SetConfigRequest(const nlohmann::json& js)
@@ -24,18 +25,18 @@ namespace gamelink
             data.config = js;
         }
 
-        SubscribeToConfigRequest::SubscribeToConfigRequest(const char* target)
+        SubscribeToConfigRequest::SubscribeToConfigRequest(ConfigTarget target)
         {
             action = string("subscribe");
             params.target = string("config");
-            data.configId = target;
+			data.configId = TARGET_STRINGS[static_cast<int>(target)];
         }
 
-        UnsubscribeFromConfigRequest::UnsubscribeFromConfigRequest(const char* target)
+        UnsubscribeFromConfigRequest::UnsubscribeFromConfigRequest(ConfigTarget target)
         {
             action = string("unsubscribe");
             params.target = string("config");
-            data.configId = target;
+			data.configId = TARGET_STRINGS[static_cast<int>(target)];
         }
     }
 }

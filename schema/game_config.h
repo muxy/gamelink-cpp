@@ -3,6 +3,7 @@
 #define MUXY_GAMELINK_SCHEMA_GAMECONFIG_H
 #include "schema/envelope.h"
 #include "schema/subscription.h"
+#include "schema/state.h"
 
 namespace gamelink
 {
@@ -79,14 +80,11 @@ namespace gamelink
 			PatchConfigRequest();
 		};
 
-        static const char CONFIG_TARGET_CHANNEL[] = "channel";
-        static const char CONFIG_TARGET_EXTENSION[] = "extension";
-
         struct MUXY_GAMELINK_API GetConfigRequest : SendEnvelope<GetConfigRequestBody>
         {
             /// Creates a GetConfig request.
             /// @param[in] target one of the CONFIG_TARGET constants 
-            explicit GetConfigRequest(const char* target);
+            explicit GetConfigRequest(ConfigTarget target);
         };
 
         struct MUXY_GAMELINK_API SetConfigRequest : SendEnvelope<SetConfigRequestBody>
@@ -102,12 +100,12 @@ namespace gamelink
 
         struct MUXY_GAMELINK_API SubscribeToConfigRequest : SendEnvelope<SubscribeConfigRequestBody>
         {
-            explicit SubscribeToConfigRequest(const char* target);
+			explicit SubscribeToConfigRequest(ConfigTarget target);
         };
 
         struct MUXY_GAMELINK_API UnsubscribeFromConfigRequest : SendEnvelope<SubscribeConfigRequestBody>
         {
-            explicit UnsubscribeFromConfigRequest(const char* target);
+			explicit UnsubscribeFromConfigRequest(ConfigTarget target);
         };
 
         struct MUXY_GAMELINK_API ConfigUpdateResponse : ReceiveEnvelope<ConfigUpdateBody>

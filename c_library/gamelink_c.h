@@ -135,15 +135,15 @@ extern "C"
 			int projectionMajor, int projectionMinor, int projectionPatch);
 
 	*/
-	enum MGL_ConnectionStage
+	typedef enum
 	{
 		MGL_CONNECTION_STAGE_PRODUCTION = 0,
 		MGL_CONNECTION_STAGE_SANDBOX,
 
 		MGL_CONNECTION_STAGE_ENSURE_32 = 0xFFFFFFFFu
-	};
+	} MGL_ConnectionStage;
 
-	MUXY_CLIB_API char * MuxyGameLink_ProjectionWebsocketConnectionURL(const char * clientID, MGL_ConnectionStage stage, const char * projection, int projectionMajor, int projectionMinor, int projectionPatch);
+	MUXY_CLIB_API char * MuxyGameLink_ProjectionWebsocketConnectionURL(const char* clientID, MGL_ConnectionStage stage, const char* projection, int projectionMajor, int projectionMinor, int projectionPatch);
 
 	/*
 		SDK Initialization functions
@@ -213,65 +213,81 @@ extern "C"
 	/*
 		State functions
 	*/
-	extern const char* STATE_TARGET_CHANNEL;
-	extern const char* STATE_TARGET_EXTENSION;
 
-	MUXY_CLIB_API MGL_RequestId MuxyGameLink_SetState(MuxyGameLink GameLink, const char* Target, const char* JsonString);
+	typedef enum
+	{
+		MGL_STATE_TARGET_CHANNEL = 0,
+		MGL_STATE_TARGET_EXTENSION,
+	} MGL_StateTarget;
+
+	typedef enum
+	{
+		MGL_CONFIG_TARGET_CHANNEL = 0,
+		MGL_CONFIG_TARGET_EXTENSION,
+		MGL_CONFIG_TARGET_COMBINED,
+	} MGL_ConfigTarget;
+
+	typedef enum
+	{
+		MGL_OPERATION_ADD = 0,
+		MGL_OPERATION_REMOVE,
+		MGL_OPERATION_REPLACE,
+		MGL_OPERATION_COPY,
+		MGL_OPERATION_MOVE,
+		MGL_OPERATION_TEST
+	} MGL_Operation;
+
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_SetState(MuxyGameLink GameLink, MGL_StateTarget Target, const char* JsonString);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_GetState(MuxyGameLink GameLink,
-										const char* Target,
+										MGL_StateTarget Target,
 										MGL_StateResponseCallback Callback,
 										void* UserData);
 
 	MUXY_CLIB_API MGL_String MuxyGameLink_Schema_StateResponse_GetJson(MGL_Schema_StateResponse);
 
-	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateStateWithInteger(MuxyGameLink GameLink, const char* Target, const char* Operation, const char* Path, int64_t Value);
-	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateStateWithDouble(MuxyGameLink GameLink, const char* Target, const char* Operation, const char* Path, double Value);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateStateWithInteger(MuxyGameLink GameLink, MGL_StateTarget Target, MGL_Operation Operation, const char* Path, int64_t Value);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateStateWithDouble(MuxyGameLink GameLink, MGL_StateTarget Target, MGL_Operation Operation, const char* Path, double Value);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateStateWithString(MuxyGameLink GameLink,
-													 const char* Target,
-													 const char* Operation,
+													 MGL_StateTarget Target,
+													 MGL_Operation Operation,
 													 const char* Path,
 													 const char* Value);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateStateWithLiteral(MuxyGameLink GameLink,
-													  const char* Target,
-													  const char* Operation,
+													  MGL_StateTarget Target,
+													  MGL_Operation Operation,
 													  const char* Path,
 													  const char* Json);
-	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateStateWithNull(MuxyGameLink GameLink, const char* Target, const char* Operation, const char* Path);
-	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateStateWithPatchList(MuxyGameLink GameLink, const char* Target, MGL_PatchList PList);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateStateWithNull(MuxyGameLink GameLink, MGL_StateTarget Target, MGL_Operation Operation, const char* Path);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateStateWithPatchList(MuxyGameLink GameLink, MGL_StateTarget Target, MGL_PatchList PList);
 
-	MUXY_CLIB_API MGL_RequestId MuxyGameLink_SubscribeToStateUpdates(MuxyGameLink GameLink, const char* Target);
-	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UnsubscribeFromStateUpdates(MuxyGameLink GameLink, const char* Target);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_SubscribeToStateUpdates(MuxyGameLink GameLink, MGL_StateTarget Target);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UnsubscribeFromStateUpdates(MuxyGameLink GameLink, MGL_StateTarget Target);
 
 	MUXY_CLIB_API uint32_t MuxyGameLink_OnStateUpdate(MuxyGameLink GameLink, MGL_StateUpdateResponseCallback Callback, void* UserData);
 	MUXY_CLIB_API void MuxyGameLink_DetachOnStateUpdate(MuxyGameLink GameLink, uint32_t Id);
-	MUXY_CLIB_API const char* MuxyGameLink_Schema_StateUpdateResponse_GetTarget(MGL_Schema_StateUpdateResponse Response);
+	MUXY_CLIB_API MGL_StateTarget MuxyGameLink_Schema_StateUpdateResponse_GetTarget(MGL_Schema_StateUpdateResponse Response);
 	MUXY_CLIB_API MGL_String MuxyGameLink_Schema_StateUpdateResponse_GetJson(MGL_Schema_StateUpdateResponse Response);
 
 	/*
 		Config functions
 	*/
-	extern const char* CONFIG_TARGET_CHANNEL;
-	extern const char* CONFIG_TARGET_EXTENSION;
 
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_SetChannelConfig(MuxyGameLink GameLink, const char* JsonString);
-	MUXY_CLIB_API MGL_RequestId MuxyGameLink_GetConfig(MuxyGameLink GameLink, const char* Target, MGL_ConfigResponseCallback Callback, void* UserData);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_GetConfig(MuxyGameLink GameLink, MGL_ConfigTarget Target, MGL_ConfigResponseCallback Callback, void* UserData);
 
-	MUXY_CLIB_API const char* MuxyGameLink_Schema_ConfigResponse_GetConfigID(MGL_Schema_ConfigResponse);
+	MUXY_CLIB_API MGL_ConfigTarget MuxyGameLink_Schema_ConfigResponse_GetConfigID(MGL_Schema_ConfigResponse);
 	MUXY_CLIB_API MGL_String MuxyGameLink_Schema_ConfigResponse_GetJson(MGL_Schema_ConfigResponse);
 
-	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateChannelConfigWithInteger(MuxyGameLink GameLink, const char* Operation, const char* Path, int64_t Value);
-	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateChannelConfigWithDouble(MuxyGameLink GameLink, const char* Operation, const char* Path, double Value);
-	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateChannelConfigWithString(MuxyGameLink GameLink, const char* Operation, const char* Path, const char* Value);
-	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateChannelConfigWithLiteral(MuxyGameLink GameLink, const char* Operation, const char* Path, const char* Json);
-	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateChannelConfigWithNull(MuxyGameLink GameLink, const char* Operation, const char* Path);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateChannelConfigWithInteger(MuxyGameLink GameLink, MGL_Operation Operation, const char* Path, int64_t Value);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateChannelConfigWithDouble(MuxyGameLink GameLink, MGL_Operation Operation, const char* Path, double Value);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateChannelConfigWithString(MuxyGameLink GameLink, MGL_Operation Operation, const char* Path, const char* Value);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateChannelConfigWithLiteral(MuxyGameLink GameLink, MGL_Operation Operation, const char* Path, const char* Json);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UpdateChannelConfigWithNull(MuxyGameLink GameLink, MGL_Operation Operation, const char* Path);
 
-	MUXY_CLIB_API MGL_RequestId MuxyGameLink_SubscribeToConfigurationChanges(MuxyGameLink GameLink, const char* Target);
-	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UnsubscribeToConfigurationChanges(MuxyGameLink GameLink, const char* Target);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_SubscribeToConfigurationChanges(MuxyGameLink GameLink, MGL_ConfigTarget Target);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UnsubscribeToConfigurationChanges(MuxyGameLink GameLink, MGL_ConfigTarget Target);
 	MUXY_CLIB_API uint32_t MuxyGameLink_OnConfigUpdate(MuxyGameLink GameLink, MGL_ConfigUpdateResponseCallback Callback, void* UserData);
 	MUXY_CLIB_API void MuxyGameLink_DetachOnConfigUpdate(MuxyGameLink GameLink, uint32_t Id);
-
-	MUXY_CLIB_API const char* MuxyGameLink_Schema_ConfigUpdateResponse_GetConfigID(MGL_Schema_ConfigUpdateResponse);
-	MUXY_CLIB_API MGL_String MuxyGameLink_Schema_ConfigUpdateResponse_GetJson(MGL_Schema_ConfigUpdateResponse);
 
 	/*
 		Broadcast functions
@@ -359,14 +375,14 @@ extern "C"
 
 	MUXY_CLIB_API MGL_PatchList MuxyGameLink_PatchList_Make(void);
 	MUXY_CLIB_API void MuxyGameLink_PatchList_Kill(MGL_PatchList PList);
-	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithInteger(MGL_PatchList PList, const char* Operation, const char* Path, int64_t Val);
-	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithDouble(MGL_PatchList PList, const char* Operation, const char* Path, double Val);
-	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithBoolean(MGL_PatchList PList, const char* Operation, const char* Path, bool Val);
-	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithString(MGL_PatchList PList, const char* Operation, const char* Path, const char* Val);
-	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithLiteral(MGL_PatchList PList, const char* Operation, const char* Path, const char* Val);
-	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithNull(MGL_PatchList PList, const char* Operation, const char* Path);
-	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithJson(MGL_PatchList PList, const char* Operation, const char* Path, const char* Val);
-	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithEmptyArray(MGL_PatchList PList, const char* Operation, const char* Path);
+	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithInteger(MGL_PatchList PList, MGL_Operation Operation, const char* Path, int64_t Val);
+	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithDouble(MGL_PatchList PList, MGL_Operation Operation, const char* Path, double Val);
+	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithBoolean(MGL_PatchList PList, MGL_Operation Operation, const char* Path, bool Val);
+	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithString(MGL_PatchList PList, MGL_Operation Operation, const char* Path, const char* Val);
+	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithLiteral(MGL_PatchList PList, MGL_Operation Operation, const char* Path, const char* Val);
+	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithNull(MGL_PatchList PList, MGL_Operation Operation, const char* Path);
+	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithJson(MGL_PatchList PList, MGL_Operation Operation, const char* Path, const char* Val);
+	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithEmptyArray(MGL_PatchList PList, MGL_Operation Operation, const char* Path);
 	MUXY_CLIB_API bool MuxyGameLink_PatchList_Empty(MGL_PatchList PList);
 	MUXY_CLIB_API void MuxyGameLink_PatchList_Clear(MGL_PatchList PList);
 

@@ -7,6 +7,7 @@ INPUT_HEADERS=(
     ./schema/serialization.h 
     ./schema/envelope.h 
     ./schema/subscription.h 
+	./schema/consts.h 
 
     ./schema/authentication.h 
     ./schema/broadcast.h

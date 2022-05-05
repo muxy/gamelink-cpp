@@ -7,7 +7,7 @@
 TEST_CASE("Get config", "[config]")
 {
 	gamelink::SDK sdk;
-	sdk.GetConfig(gamelink::schema::CONFIG_TARGET_CHANNEL, [](const gamelink::schema::GetConfigResponse& resp) {});
+	sdk.GetConfig(gamelink::ConfigTarget::Channel, [](const gamelink::schema::GetConfigResponse& resp) {});
 
 	sdk.ForeachPayload([](const gamelink::Payload* payload) {
 		REQUIRE(JSONEquals(payload->data,
@@ -23,7 +23,7 @@ TEST_CASE("Get config", "[config]")
         })"));
 	});
 
-	sdk.GetConfig(gamelink::schema::CONFIG_TARGET_EXTENSION, [](const gamelink::schema::GetConfigResponse& resp) {});
+	sdk.GetConfig(gamelink::ConfigTarget::Channel, [](const gamelink::schema::GetConfigResponse& resp) {});
 
 	sdk.ForeachPayload([](const gamelink::Payload* payload) {
 		REQUIRE(JSONEquals(payload->data,
@@ -85,7 +85,7 @@ TEST_CASE("Get Config", "[config]")
 	gamelink::SDK sdk;
 	uint32_t calls = 0;
 
-	sdk.GetConfig(gamelink::schema::CONFIG_TARGET_CHANNEL, [&](const gamelink::schema::GetConfigResponse& resp) {
+	sdk.GetConfig(gamelink::ConfigTarget::Channel, [&](const gamelink::schema::GetConfigResponse& resp) {
 		REQUIRE(resp.data.config["foo"] == "bar");
 		calls++;
 	});
@@ -208,7 +208,7 @@ TEST_CASE("Subscribe to config", "[config]")
 
 	uint32_t updateHandle = sdk.OnConfigUpdate([&](const gamelink::schema::ConfigUpdateResponse& resp) { calls++; });
 
-	sdk.SubscribeToConfigurationChanges(gamelink::schema::CONFIG_TARGET_CHANNEL);
+	sdk.SubscribeToConfigurationChanges(gamelink::ConfigTarget::Channel);
 	sdk.ForeachPayload([](const gamelink::Payload* payload) {
 		REQUIRE(JSONEquals(payload->data,
 						   R"({
@@ -286,7 +286,7 @@ TEST_CASE("Update configuration", "[config]")
 {
 	gamelink::SDK sdk;
 
-	sdk.UpdateChannelConfigWithObject("add", "/character", nlohmann::json::parse(R"({
+	sdk.UpdateChannelConfigWithObject(gamelink::Operation::Add, "/character", nlohmann::json::parse(R"({
 		"class": "wizard"
 	})"));
 	validateSinglePayload(sdk, R"({
@@ -302,7 +302,7 @@ TEST_CASE("Update configuration", "[config]")
 		}
 	})");
 
-	sdk.UpdateChannelConfigWithBoolean("add", "/b", false);
+	sdk.UpdateChannelConfigWithBoolean(gamelink::Operation::Add, "/b", false);
 	validateSinglePayload(sdk, R"({
 		"action": "patch", 
 		"data": {
@@ -316,7 +316,7 @@ TEST_CASE("Update configuration", "[config]")
 		}
 	})");
 
-	sdk.UpdateChannelConfigWithDouble("add", "/b", 44.15);
+	sdk.UpdateChannelConfigWithDouble(gamelink::Operation::Add, "/b", 44.15);
 	validateSinglePayload(sdk, R"({
 		"action": "patch", 
 		"data": {
@@ -330,7 +330,7 @@ TEST_CASE("Update configuration", "[config]")
 		}
 	})");
 
-	sdk.UpdateChannelConfigWithInteger("add", "/b", -100);
+	sdk.UpdateChannelConfigWithInteger(gamelink::Operation::Add, "/b", -100);
 	validateSinglePayload(sdk, R"({
 		"action": "patch", 
 		"data": {
@@ -344,7 +344,7 @@ TEST_CASE("Update configuration", "[config]")
 		}
 	})");
 
-	sdk.UpdateChannelConfigWithLiteral("add", "/b", R"([{ "literal": "json" }])");
+	sdk.UpdateChannelConfigWithLiteral(gamelink::Operation::Add, "/b", R"([{ "literal": "json" }])");
 	validateSinglePayload(sdk, R"({
 		"action": "patch", 
 		"data": {
@@ -360,7 +360,7 @@ TEST_CASE("Update configuration", "[config]")
 		}
 	})");
 
-	sdk.UpdateChannelConfigWithNull("add", "/b");
+	sdk.UpdateChannelConfigWithNull(gamelink::Operation::Add, "/b");
 	validateSinglePayload(sdk, R"({
 		"action": "patch", 
 		"data": {
@@ -374,7 +374,7 @@ TEST_CASE("Update configuration", "[config]")
 		}
 	})");
 
-	sdk.UpdateChannelConfigWithString("add", "/b", "Gandalf");
+	sdk.UpdateChannelConfigWithString(gamelink::Operation::Add, "/b", "Gandalf");
 	validateSinglePayload(sdk, R"({
 		"action": "patch", 
 		"data": {

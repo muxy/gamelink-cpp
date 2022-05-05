@@ -2,7 +2,7 @@
 
 namespace gamelink
 {
-    RequestId SDK::GetConfig(const char* target, std::function<void(const schema::GetConfigResponse&)> callback)
+    RequestId SDK::GetConfig(ConfigTarget target, std::function<void(const schema::GetConfigResponse&)> callback)
     {
         schema::GetConfigRequest req(target);
         RequestId id = queuePayload(req);
@@ -11,7 +11,7 @@ namespace gamelink
         return id;
     }
 
-	RequestId SDK::GetConfig(const char* target, void (*callback)(void *, const schema::GetConfigResponse&), void* user)
+	RequestId SDK::GetConfig(ConfigTarget target, void (*callback)(void*, const schema::GetConfigResponse&), void* user)
     {
         schema::GetConfigRequest req(target);
         RequestId id = queuePayload(req);
@@ -22,7 +22,7 @@ namespace gamelink
 
     RequestId SDK::GetCombinedConfig(std::function<void (const schema::GetCombinedConfigResponse&)> callback)
     {
-        schema::GetConfigRequest req("combined");
+        schema::GetConfigRequest req(ConfigTarget::Combined);
         RequestId id = queuePayload(req);
 
         _onGetCombinedConfig.set(callback, id, detail::CALLBACK_ONESHOT);
@@ -31,20 +31,20 @@ namespace gamelink
 
     RequestId SDK::GetCombinedConfig(void (*callback)(void *, const schema::GetCombinedConfigResponse&), void* user)
     {
-        schema::GetConfigRequest req("combined");
+		schema::GetConfigRequest req(ConfigTarget::Combined);
         RequestId id = queuePayload(req);
 
         _onGetCombinedConfig.set(callback, user, id, detail::CALLBACK_ONESHOT);
         return id;
     }
 
-    RequestId SDK::SubscribeToConfigurationChanges(const char* target)
+    RequestId SDK::SubscribeToConfigurationChanges(ConfigTarget target)
     {
         schema::SubscribeToConfigRequest req(target);
         return queuePayload(req);
     }
 
-    RequestId SDK::UnsubscribeFromConfigurationChanges(const char* target)
+    RequestId SDK::UnsubscribeFromConfigurationChanges(ConfigTarget target)
     {
         schema::UnsubscribeFromConfigRequest req(target);
         return queuePayload(req);
@@ -89,70 +89,70 @@ namespace gamelink
 		return queuePayload(payload);
 	}
 
-	RequestId SDK::UpdateChannelConfigWithInteger(const char * operation, const string& path, int64_t i)
+	RequestId SDK::UpdateChannelConfigWithInteger(Operation operation, const string& path, int64_t i)
 	{
 		schema::PatchOperation op;
-		op.operation = operation;
+		op.operation = OPERATION_STRINGS[static_cast<int>(operation)];
 		op.path = path;
 		op.value = schema::atomFromInteger(i);
 
 		return UpdateChannelConfig(&op, &op + 1);
 	}
 
-	RequestId SDK::UpdateChannelConfigWithDouble(const char * operation, const string& path, double d)
+	RequestId SDK::UpdateChannelConfigWithDouble(Operation operation, const string& path, double d)
 	{
 		schema::PatchOperation op;
-		op.operation = operation;
+		op.operation = OPERATION_STRINGS[static_cast<int>(operation)];
 		op.path = path;
 		op.value = schema::atomFromDouble(d);
 
 		return UpdateChannelConfig(&op, &op + 1);
 	}
 
-	RequestId SDK::UpdateChannelConfigWithBoolean(const char * operation, const string& path, bool b)
+	RequestId SDK::UpdateChannelConfigWithBoolean(Operation operation, const string& path, bool b)
 	{
 		schema::PatchOperation op;
-		op.operation = operation;
+		op.operation = OPERATION_STRINGS[static_cast<int>(operation)];
 		op.path = path;
 		op.value = schema::atomFromBoolean(b);
 
 		return UpdateChannelConfig(&op, &op + 1);
 	}
 
-	RequestId SDK::UpdateChannelConfigWithString(const char * operation, const string& path, const string& str)
+	RequestId SDK::UpdateChannelConfigWithString(Operation operation, const string& path, const string& str)
 	{
 		schema::PatchOperation op;
-		op.operation = operation;
+		op.operation = OPERATION_STRINGS[static_cast<int>(operation)];
 		op.path = path;
 		op.value = schema::atomFromString(str);
 
 		return UpdateChannelConfig(&op, &op + 1);
 	}
 
-	RequestId SDK::UpdateChannelConfigWithLiteral(const char * operation, const string& path, const string& str)
+	RequestId SDK::UpdateChannelConfigWithLiteral(Operation operation, const string& path, const string& str)
 	{
 		schema::PatchOperation op;
-		op.operation = operation;
+		op.operation = OPERATION_STRINGS[static_cast<int>(operation)];
 		op.path = path;
 		op.value = schema::atomFromLiteral(str);
 
 		return UpdateChannelConfig(&op, &op + 1);
 	}
 
-	RequestId SDK::UpdateChannelConfigWithNull(const char * operation, const string& path)
+	RequestId SDK::UpdateChannelConfigWithNull(Operation operation, const string& path)
 	{
 		schema::PatchOperation op;
-		op.operation = operation;
+		op.operation = OPERATION_STRINGS[static_cast<int>(operation)];
 		op.path = path;
 		op.value = schema::atomNull();
 
 		return UpdateChannelConfig(&op, &op + 1);
 	}
 
-	RequestId SDK::UpdateChannelConfigWithJson(const char * operation, const string& path, const nlohmann::json& js)
+	RequestId SDK::UpdateChannelConfigWithJson(Operation operation, const string& path, const nlohmann::json& js)
 	{
 		schema::PatchOperation op;
-		op.operation = operation;
+		op.operation = OPERATION_STRINGS[static_cast<int>(operation)];
 		op.path = path;
 		op.value = schema::atomFromLiteral(string(js.dump().c_str()));
 

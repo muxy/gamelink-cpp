@@ -92,36 +92,36 @@ TEST_CASE_METHOD(ParityFixture, "Authentication parity", "[sdk][c]")
 TEST_CASE_METHOD(ParityFixture, "State operation parity", "[sdk][c]")
 {
 	const char* state = R"({ "hello": "world" })";
-	cpp.SetState(gamelink::schema::STATE_TARGET_CHANNEL, nlohmann::json::parse(state));
-	MuxyGameLink_SetState(c, STATE_TARGET_CHANNEL, state);
+	cpp.SetState(gamelink::StateTarget::Channel, nlohmann::json::parse(state));
+	MuxyGameLink_SetState(c, MGL_STATE_TARGET_CHANNEL, state);
 
-	cpp.GetState(gamelink::schema::STATE_TARGET_CHANNEL);
-	MuxyGameLink_GetState(c, STATE_TARGET_CHANNEL, C_NOOP(), nullptr);
+	cpp.GetState(gamelink::StateTarget::Channel);
+	MuxyGameLink_GetState(c, MGL_STATE_TARGET_CHANNEL, C_NOOP(), nullptr);
 
-	cpp.GetState(gamelink::schema::STATE_TARGET_EXTENSION);
-	MuxyGameLink_GetState(c, STATE_TARGET_EXTENSION, C_NOOP(), nullptr);
+	cpp.GetState(gamelink::StateTarget::Extension);
+	MuxyGameLink_GetState(c, MGL_STATE_TARGET_EXTENSION, C_NOOP(), nullptr);
 
-	cpp.SubscribeToStateUpdates(gamelink::schema::STATE_TARGET_CHANNEL);
-	cpp.SubscribeToStateUpdates(gamelink::schema::STATE_TARGET_EXTENSION);
-	MuxyGameLink_SubscribeToStateUpdates(c, STATE_TARGET_CHANNEL);
-	MuxyGameLink_SubscribeToStateUpdates(c, STATE_TARGET_EXTENSION);
+	cpp.SubscribeToStateUpdates(gamelink::StateTarget::Channel);
+	cpp.SubscribeToStateUpdates(gamelink::StateTarget::Extension);
+	MuxyGameLink_SubscribeToStateUpdates(c, MGL_STATE_TARGET_CHANNEL);
+	MuxyGameLink_SubscribeToStateUpdates(c, MGL_STATE_TARGET_EXTENSION);
 
-	cpp.UnsubscribeFromStateUpdates(gamelink::schema::STATE_TARGET_EXTENSION);
-	cpp.UnsubscribeFromStateUpdates(gamelink::schema::STATE_TARGET_CHANNEL);
-	MuxyGameLink_UnsubscribeFromStateUpdates(c, STATE_TARGET_EXTENSION);
-	MuxyGameLink_UnsubscribeFromStateUpdates(c, STATE_TARGET_CHANNEL);
+	cpp.UnsubscribeFromStateUpdates(gamelink::StateTarget::Extension);
+	cpp.UnsubscribeFromStateUpdates(gamelink::StateTarget::Channel);
+	MuxyGameLink_UnsubscribeFromStateUpdates(c, MGL_STATE_TARGET_EXTENSION);
+	MuxyGameLink_UnsubscribeFromStateUpdates(c, MGL_STATE_TARGET_CHANNEL);
 
-	cpp.UpdateStateWithInteger(gamelink::schema::STATE_TARGET_CHANNEL, "replace", "/matter", 42);
-	cpp.UpdateStateWithDouble(gamelink::schema::STATE_TARGET_CHANNEL, "replace", "/matter", 12.5);
-	cpp.UpdateStateWithString(gamelink::schema::STATE_TARGET_CHANNEL, "replace", "/matter", "123456");
-	cpp.UpdateStateWithLiteral(gamelink::schema::STATE_TARGET_CHANNEL, "replace", "/matter", "[1, 2, 3]");
-	cpp.UpdateStateWithNull(gamelink::schema::STATE_TARGET_CHANNEL, "replace", "/matter");
+	cpp.UpdateStateWithInteger(gamelink::StateTarget::Channel, gamelink::Operation::Replace, "/matter", 42);
+	cpp.UpdateStateWithDouble(gamelink::StateTarget::Channel, gamelink::Operation::Replace, "/matter", 12.5);
+	cpp.UpdateStateWithString(gamelink::StateTarget::Channel, gamelink::Operation::Replace, "/matter", "123456");
+	cpp.UpdateStateWithLiteral(gamelink::StateTarget::Channel, gamelink::Operation::Replace, "/matter", "[1, 2, 3]");
+	cpp.UpdateStateWithNull(gamelink::StateTarget::Channel, gamelink::Operation::Replace, "/matter");
 
-	MuxyGameLink_UpdateStateWithInteger(c, STATE_TARGET_CHANNEL, "replace", "/matter", 42);
-	MuxyGameLink_UpdateStateWithDouble(c, STATE_TARGET_CHANNEL, "replace", "/matter", 12.5);
-	MuxyGameLink_UpdateStateWithString(c, STATE_TARGET_CHANNEL, "replace", "/matter", "123456");
-	MuxyGameLink_UpdateStateWithLiteral(c, STATE_TARGET_CHANNEL, "replace", "/matter", "[1, 2, 3]");
-	MuxyGameLink_UpdateStateWithNull(c, STATE_TARGET_CHANNEL, "replace", "/matter");
+	MuxyGameLink_UpdateStateWithInteger(c, MGL_STATE_TARGET_CHANNEL, MGL_OPERATION_REPLACE, "/matter", 42);
+	MuxyGameLink_UpdateStateWithDouble(c, MGL_STATE_TARGET_CHANNEL, MGL_OPERATION_REPLACE, "/matter", 12.5);
+	MuxyGameLink_UpdateStateWithString(c, MGL_STATE_TARGET_CHANNEL, MGL_OPERATION_REPLACE, "/matter", "123456");
+	MuxyGameLink_UpdateStateWithLiteral(c, MGL_STATE_TARGET_CHANNEL, MGL_OPERATION_REPLACE, "/matter", "[1, 2, 3]");
+	MuxyGameLink_UpdateStateWithNull(c, MGL_STATE_TARGET_CHANNEL, MGL_OPERATION_REPLACE, "/matter");
 }
 
 TEST_CASE_METHOD(ParityFixture, "Config operation parity", "[sdk][c]")
@@ -130,28 +130,28 @@ TEST_CASE_METHOD(ParityFixture, "Config operation parity", "[sdk][c]")
 	cpp.SetChannelConfig(nlohmann::json::parse(state));
 	MuxyGameLink_SetChannelConfig(c, state);
 
-	cpp.GetConfig(gamelink::schema::CONFIG_TARGET_CHANNEL, CPP_NOOP());
-	MuxyGameLink_GetConfig(c, CONFIG_TARGET_CHANNEL, C_NOOP(), nullptr);
+	cpp.GetConfig(gamelink::ConfigTarget::Channel, CPP_NOOP());
+	MuxyGameLink_GetConfig(c, MGL_CONFIG_TARGET_CHANNEL, C_NOOP(), nullptr);
 
-	cpp.GetConfig(gamelink::schema::CONFIG_TARGET_EXTENSION, CPP_NOOP());
-	MuxyGameLink_GetConfig(c, CONFIG_TARGET_EXTENSION, C_NOOP(), nullptr);
+	cpp.GetConfig(gamelink::ConfigTarget::Extension, CPP_NOOP());
+	MuxyGameLink_GetConfig(c, MGL_CONFIG_TARGET_EXTENSION, C_NOOP(), nullptr);
 
-	cpp.SubscribeToConfigurationChanges(gamelink::schema::CONFIG_TARGET_CHANNEL);
-	cpp.SubscribeToConfigurationChanges(gamelink::schema::CONFIG_TARGET_EXTENSION);
-	MuxyGameLink_SubscribeToConfigurationChanges(c, CONFIG_TARGET_CHANNEL);
-	MuxyGameLink_SubscribeToConfigurationChanges(c, CONFIG_TARGET_EXTENSION);
+	cpp.SubscribeToConfigurationChanges(gamelink::ConfigTarget::Channel);
+	cpp.SubscribeToConfigurationChanges(gamelink::ConfigTarget::Extension);
+	MuxyGameLink_SubscribeToConfigurationChanges(c, MGL_CONFIG_TARGET_CHANNEL);
+	MuxyGameLink_SubscribeToConfigurationChanges(c, MGL_CONFIG_TARGET_EXTENSION);
 
-	cpp.UpdateChannelConfigWithInteger("replace", "/matter", 42);
-	cpp.UpdateChannelConfigWithDouble("replace", "/matter", 12.5);
-	cpp.UpdateChannelConfigWithString("replace", "/matter", "123456");
-	cpp.UpdateChannelConfigWithLiteral("replace", "/matter", "[1, 2, 3]");
-	cpp.UpdateChannelConfigWithNull("replace", "/matter");
+	cpp.UpdateChannelConfigWithInteger(gamelink::Operation::Replace, "/matter", 42);
+	cpp.UpdateChannelConfigWithDouble(gamelink::Operation::Replace, "/matter", 12.5);
+	cpp.UpdateChannelConfigWithString(gamelink::Operation::Replace, "/matter", "123456");
+	cpp.UpdateChannelConfigWithLiteral(gamelink::Operation::Replace, "/matter", "[1, 2, 3]");
+	cpp.UpdateChannelConfigWithNull(gamelink::Operation::Replace, "/matter");
 
-	MuxyGameLink_UpdateChannelConfigWithInteger(c, "replace", "/matter", 42);
-	MuxyGameLink_UpdateChannelConfigWithDouble(c, "replace", "/matter", 12.5);
-	MuxyGameLink_UpdateChannelConfigWithString(c, "replace", "/matter", "123456");
-	MuxyGameLink_UpdateChannelConfigWithLiteral(c, "replace", "/matter", "[1, 2, 3]");
-	MuxyGameLink_UpdateChannelConfigWithNull(c, "replace", "/matter");
+	MuxyGameLink_UpdateChannelConfigWithInteger(c, MGL_OPERATION_REPLACE, "/matter", 42);
+	MuxyGameLink_UpdateChannelConfigWithDouble(c, MGL_OPERATION_REPLACE, "/matter", 12.5);
+	MuxyGameLink_UpdateChannelConfigWithString(c, MGL_OPERATION_REPLACE, "/matter", "123456");
+	MuxyGameLink_UpdateChannelConfigWithLiteral(c, MGL_OPERATION_REPLACE, "/matter", "[1, 2, 3]");
+	MuxyGameLink_UpdateChannelConfigWithNull(c, MGL_OPERATION_REPLACE, "/matter");
 }
 
 TEST_CASE_METHOD(ParityFixture, "Broadcast parity", "[sdk][c]")

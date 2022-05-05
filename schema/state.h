@@ -1,6 +1,7 @@
 #pragma once
 #ifndef MUXY_GAMELINK_SCHEMA_STATE_H
 #define MUXY_GAMELINK_SCHEMA_STATE_H
+#include "schema/consts.h"
 #include "schema/envelope.h"
 #include "schema/subscription.h"
 
@@ -35,23 +36,17 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(StateResponseBody, "ok", ok, "state", state);
 		};
 
-		/// Channel State target
-		static const char STATE_TARGET_CHANNEL[] = "channel";
-
-		/// Extension State target
-		static const char STATE_TARGET_EXTENSION[] = "extension";
-
 		template<typename T>
 		struct SetStateRequest : SendEnvelope<SetStateRequestBody<T>>
 		{
 			/// Creates a SetState request.
 			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 			/// @param[in] value A serializable type.
-			SetStateRequest(const char* target, const T& value)
+			SetStateRequest(StateTarget target, const T& value)
 			{
 				this->action = string("set");
 				this->params.target = string("state");
-				this->data.state_id = string(target);
+				this->data.state_id = string(TARGET_STRINGS[static_cast<int>(target)]);
 				this->data.state = value;
 			}
 		};
@@ -73,7 +68,7 @@ namespace gamelink
 		{
 			/// Creates a GetState request
 			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
-			explicit GetStateRequest(const char* target);
+			explicit GetStateRequest(StateTarget target);
 		};
 
 		template<typename T>
@@ -95,7 +90,7 @@ namespace gamelink
 		{
 			/// Creates an UpdateState request
 			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
-			explicit PatchStateRequest(const char* target);
+			explicit PatchStateRequest(StateTarget target);
 		};
 
 		// Subscription
@@ -112,7 +107,7 @@ namespace gamelink
 		{
 			/// Creates a SubscribeState request
 			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
-			explicit SubscribeStateRequest(const char* target);
+			explicit SubscribeStateRequest(StateTarget target);
 		};
 
 		template<typename T>
@@ -124,7 +119,7 @@ namespace gamelink
 		{
 			/// Creates a SubscribeState request
 			/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
-			explicit UnsubscribeStateRequest(const char* target);
+			explicit UnsubscribeStateRequest(StateTarget target);
 		};
 	}
 }

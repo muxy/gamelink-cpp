@@ -127,7 +127,7 @@ namespace gamelink
 		return true;
 	}
 
-	uint32_t GetPollWinnerIndex(std::vector<int>& results)
+	uint32_t GetPollWinnerIndex(const std::vector<int>& results)
 	{
 		int winner = 0;
 		int index = 0;
@@ -140,7 +140,7 @@ namespace gamelink
 			}
 		}
 
-		return index; 
+		return index;
 	}
 
 	Payload::Payload(string data)
