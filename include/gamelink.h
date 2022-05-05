@@ -26,7 +26,6 @@ namespace gamelink
 	///
 	/// @param[in] results The results from the poll
 	/// @returns Index of winning result
-
 	MUXY_GAMELINK_API uint32_t GetPollWinnerIndex(const std::vector<int>& results);
 
 	/// RequestId is an 16bit unsigned integer that represents a request.
@@ -342,7 +341,7 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] obj The value to use in the patch operation
 		template<typename T>
-		void UpdateStateWithObject(Operation operation, const string& path, const T& obj)
+		void UpdateStateWithObject(const char* operation, const string& path, const T& obj)
 		{
 			nlohmann::json js = nlohmann::json(obj);
 			return UpdateStateWithJson(operation, path, js);
@@ -354,7 +353,7 @@ namespace gamelink
 		/// @param[in] begin Pointer to the first element in an array of serializable objects.
 		/// @param[in] end Pointer to one past the last element in an array of serializable objects.
 		template<typename T>
-		void UpdateStateWithArray(Operation operation, const string& path, const T* begin, const T* end)
+		void UpdateStateWithArray(const char* operation, const string& path, const T* begin, const T* end)
 		{
 			nlohmann::json js = nlohmann::json::array();
 
@@ -373,60 +372,48 @@ namespace gamelink
 		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] i The value to use in the patch operation
-		void UpdateStateWithInteger(Operation operation, const string& path, int64_t i);
+		void UpdateStateWithInteger(const char* operation, const string& path, int64_t i);
 
 		/// Helper function that will call UpdateState with the input double as the value.
 		///
 		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] d The value to use in the patch operation
-		void UpdateStateWithDouble(Operation operation, const string& path, double d);
+		void UpdateStateWithDouble(const char* operation, const string& path, double d);
 
 		/// Helper function that will call UpdateState with a boolean value
 		///
 		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] b The value to use in the patch operation
-		void UpdateStateWithBoolean(Operation operation, const string& path, bool b);
+		void UpdateStateWithBoolean(const char* operation, const string& path, bool b);
 
 		/// Helper function that will call UpdateState with the input string as the value.
 		///
 		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] s The value to use in the patch operation
-		void UpdateStateWithString(Operation operation, const string& path, const string& s);
+		void UpdateStateWithString(const char* operation, const string& path, const string& s);
 
 		/// Helper function that will call UpdateState with the input json object literal as the value.
 		///
 		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] js The value to use in the patch operation
-		void UpdateStateWithLiteral(Operation operation, const string& path, const string& js);
+		void UpdateStateWithLiteral(const char* operation, const string& path, const string& js);
 
 		/// Helper function that will call UpdateState with null as the value.
 		///
 		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
 		/// @param[in] path A JSON Patch path.
-		void UpdateStateWithNull(Operation operation, const string& path);
+		void UpdateStateWithNull(const char* operation, const string& path);
 
 		/// Helper function that will call UpdateState the input json object as the value.
 		///
 		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] js The value to use in the patch operation
-		void UpdateStateWithJson(Operation operation, const string& path, const nlohmann::json& js);
-
-		/// Helper function that will update state with an empty array
-		///
-		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
-		/// @param[in] path A JSON Patch path.
-		void UpdateStateWithEmptyArray(Operation operation, const string& path);
-
-		/// Check if the PatchList is empty
-		bool Empty() const;
-
-		/// Clear the PatchList
-		void Clear();
+		void UpdateStateWithJson(const char* operation, const string& path, const nlohmann::json& js);
 
 		/// Helper function that will update state with an empty array
 		///
@@ -951,7 +938,7 @@ namespace gamelink
 		/// @param[in] callback Callback invoked when this get request is responded to.
 		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
 		/// @return RequestId of the generated request
-		RequestId GetConfig(ConfigTarget target, std::function<void(const schema::GetConfigResponse&)> callback);
+		RequestId GetConfig(const char* target, std::function<void(const schema::GetConfigResponse&)> callback);
 
 		/// Queues a request to get cofiguration. This overload attaches a one-shot callback to be
 		/// called when config is received.
@@ -959,7 +946,7 @@ namespace gamelink
 		/// @param[in] target   Either CONFIG_TARGET_CHANNEL or CONFIG_TARGET_EXTENSION
 		/// @param[in] callback Callback invoked when this get request is responded to.
 		/// @return RequestId of the generated request
-		RequestId GetConfig(ConfigTarget target, void (*callback)(void*, const schema::GetConfigResponse&), void*);
+		RequestId GetConfig(const char* target, void (*callback)(void*, const schema::GetConfigResponse&), void*);
 
 		/// Queues a request to get combined cofiguration. This overload attaches a one-shot callback to be
 		/// called when config is received.
@@ -990,7 +977,7 @@ namespace gamelink
 		/// @param[in] obj The value to use in the patch operation
 		/// @return RequestId of the generated request
 		template<typename T>
-		RequestId UpdateChannelConfigWithObject(Operation operation, const string& path, const T& obj)
+		RequestId UpdateChannelConfigWithObject(const char* operation, const string& path, const T& obj)
 		{
 			nlohmann::json js = nlohmann::json(obj);
 			return UpdateChannelConfigWithJson(operation, path, js);
@@ -1003,7 +990,7 @@ namespace gamelink
 		/// @param[in] end Pointer to one past the last element in an array of serializable objects.
 		/// @return RequestId of the generated request
 		template<typename T>
-		RequestId UpdateChannelConfigWithArray(Operation operation, const string& path, const T* begin, const T* end)
+		RequestId UpdateChannelConfigWithArray(const char* operation, const string& path, const T* begin, const T* end)
 		{
 			nlohmann::json js = nlohmann::json::array();
 
@@ -1023,7 +1010,7 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] i The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateChannelConfigWithInteger(Operation operation, const string& path, int64_t i);
+		RequestId UpdateChannelConfigWithInteger(const char* operation, const string& path, int64_t i);
 
 		/// Helper function that will call UpdateChannelConfig with the input double as the value.
 		///
@@ -1031,7 +1018,7 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] d The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateChannelConfigWithDouble(Operation operation, const string& path, double d);
+		RequestId UpdateChannelConfigWithDouble(const char* operation, const string& path, double d);
 
 		/// Helper function that will call UpdateChannelConfig with the input boolean as the value.
 		///
@@ -1039,7 +1026,7 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] b The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateChannelConfigWithBoolean(Operation operation, const string& path, bool b);
+		RequestId UpdateChannelConfigWithBoolean(const char* operation, const string& path, bool b);
 
 		/// Helper function that will call UpdateChannelConfig with the input string as the value.
 		///
@@ -1047,7 +1034,7 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] s The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateChannelConfigWithString(Operation operation, const string& path, const string& s);
+		RequestId UpdateChannelConfigWithString(const char* operation, const string& path, const string& s);
 
 		/// Helper function that will call UpdateChannelConfig with the input json object literal as the value.
 		///
@@ -1055,14 +1042,14 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] js The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateChannelConfigWithLiteral(Operation operation, const string& path, const string& js);
+		RequestId UpdateChannelConfigWithLiteral(const char* operation, const string& path, const string& js);
 
 		/// Helper function that will call UpdateChannelConfig with null as the value.
 		///
 		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
 		/// @param[in] path A JSON Patch path.
 		/// @return RequestId of the generated request
-		RequestId UpdateChannelConfigWithNull(Operation operation, const string& path);
+		RequestId UpdateChannelConfigWithNull(const char* operation, const string& path);
 
 		/// Helper function that will call UpdateChannelConfig the input json object as the value.
 		///
@@ -1070,19 +1057,19 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] js The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateChannelConfigWithJson(Operation operation, const string& path, const nlohmann::json& js);
+		RequestId UpdateChannelConfigWithJson(const char* operation, const string& path, const nlohmann::json& js);
 
 		/// Starts subscribing to configuration updates for a given target.
 		///
 		/// @param[in] target either CONFIG_TARGET_CHANNEL or CONFIG_TARGET_EXTENSION
 		/// @return RequestId of the generated request
-		RequestId SubscribeToConfigurationChanges(ConfigTarget target);
+		RequestId SubscribeToConfigurationChanges(const char* target);
 
 		/// Stop subscribing to configuration updates for a given target.
 		///
 		/// @param[in] target either CONFIG_TARGET_CHANNEL or CONFIG_TARGET_EXTENSION
 		/// @return RequestId of the generated request
-		RequestId UnsubscribeFromConfigurationChanges(ConfigTarget target);
+		RequestId UnsubscribeFromConfigurationChanges(const char* target);
 
 		/// Sets the current channel configuration. Will trigger OnConfigUpdate.
 		///
@@ -1132,7 +1119,7 @@ namespace gamelink
 		///                  Cannot be an array or primitive type.
 		/// @return RequestId of the generated request
 		template<typename T>
-		RequestId SetState(StateTarget target, const T& value)
+		RequestId SetState(const char* target, const T& value)
 		{
 			nlohmann::json js = nlohmann::json(value);
 			return SetState(target, js);
@@ -1145,20 +1132,20 @@ namespace gamelink
 		/// @param[in] value JSON. Will overwrite any existing state for the given target.
 		///                  Must be an object, not an array or primitive type.
 		/// @return RequestId of the generated request
-		RequestId SetState(StateTarget target, const nlohmann::json& value);
+		RequestId SetState(const char* target, const nlohmann::json& value);
 
 		/// Queues a request to replace the entirety of state the empty object {}
 		/// This will generate a StateUpdate subscription event.
 		///
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		/// @return RequestId of the generated request
-		RequestId ClearState(StateTarget target);
+		RequestId ClearState(const char* target);
 
 		/// Queues a request to get state.
 		///
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		/// @return RequestId of the generated request
-		RequestId GetState(StateTarget target);
+		RequestId GetState(const char* target);
 
 		/// Queues a request to get state. This overload attaches a one-shot callback to be
 		/// called when state is received.
@@ -1166,7 +1153,7 @@ namespace gamelink
 		/// @param[in] target   Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		/// @param[in] callback Callback invoked when this state request is responded to.
 		/// @return RequestId of the generated request
-		RequestId GetState(StateTarget target, std::function<void(const schema::GetStateResponse<nlohmann::json>&)> callback);
+		RequestId GetState(const char* target, std::function<void(const schema::GetStateResponse<nlohmann::json>&)> callback);
 
 		/// Queues a request to get state. This overload attaches a one-shot callback to be
 		/// called when state is received.
@@ -1175,7 +1162,7 @@ namespace gamelink
 		/// @param[in] callback Callback invoked when this state request is responded to.
 		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
 		/// @return RequestId of the generated request
-		RequestId GetState(StateTarget target, void (*callback)(void*, const schema::GetStateResponse<nlohmann::json>&), void* user);
+		RequestId GetState(const char* target, void (*callback)(void*, const schema::GetStateResponse<nlohmann::json>&), void* user);
 
 		/// Queues a request to do many JSON Patch operations on the state object.
 		/// This will generate a StateUpdate event.
@@ -1184,7 +1171,7 @@ namespace gamelink
 		/// @param[in] begin Pointer to the first element in an array of UpdateOperations
 		/// @param[in] end Pointer one past the last element in an array of UpdateOperations
 		/// @return RequestId of the generated request
-		RequestId UpdateState(StateTarget target, const schema::PatchOperation* begin, const schema::PatchOperation* end);
+		RequestId UpdateState(const char* target, const schema::PatchOperation* begin, const schema::PatchOperation* end);
 
 		/// Helper function that will call UpdateState with the input object as the value.
 		///
@@ -1193,7 +1180,7 @@ namespace gamelink
 		/// @param[in] obj The value to use in the patch operation
 		/// @return RequestId of the generated request
 		template<typename T>
-		RequestId UpdateStateWithObject(StateTarget target, Operation operation, const string& path, const T& obj)
+		RequestId UpdateStateWithObject(const char* target, const char* operation, const string& path, const T& obj)
 		{
 			nlohmann::json js = nlohmann::json(obj);
 			return UpdateStateWithJson(target, operation, path, js);
@@ -1207,7 +1194,7 @@ namespace gamelink
 		/// @param[in] end Pointer to one past the last element in an array of serializable objects.
 		/// @return RequestId of the generated request
 		template<typename T>
-		RequestId UpdateStateWithArray(StateTarget target, Operation operation, const string& path, const T* begin, const T* end)
+		RequestId UpdateStateWithArray(const char* target, const char* operation, const string& path, const T* begin, const T* end)
 		{
 			nlohmann::json js = nlohmann::json::array();
 
@@ -1228,7 +1215,7 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] i The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateStateWithInteger(StateTarget target, Operation operation, const string& path, int64_t i);
+		RequestId UpdateStateWithInteger(const char* target, const char* operation, const string& path, int64_t i);
 
 		/// Helper function that will call UpdateState with the input double as the value.
 		///
@@ -1237,7 +1224,7 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] d The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateStateWithDouble(StateTarget target, Operation operation, const string& path, double d);
+		RequestId UpdateStateWithDouble(const char* target, const char* operation, const string& path, double d);
 
 		/// Helper function that will call UpdateState with a boolean value
 		///
@@ -1246,7 +1233,7 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] b The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateStateWithBoolean(StateTarget target, Operation operation, const string& path, bool b);
+		RequestId UpdateStateWithBoolean(const char* target, const char* operation, const string& path, bool b);
 
 		/// Helper function that will call UpdateState with the input string as the value.
 		///
@@ -1255,7 +1242,7 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] s The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateStateWithString(StateTarget target, Operation operation, const string& path, const string& s);
+		RequestId UpdateStateWithString(const char* target, const char* operation, const string& path, const string& s);
 
 		/// Helper function that will call UpdateState with the input json object literal as the value.
 		///
@@ -1264,7 +1251,7 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] js The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateStateWithLiteral(StateTarget target, Operation operation, const string& path, const string& js);
+		RequestId UpdateStateWithLiteral(const char* target, const char* operation, const string& path, const string& js);
 
 		/// Helper function that will call UpdateState with null as the value.
 		///
@@ -1272,7 +1259,7 @@ namespace gamelink
 		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
 		/// @param[in] path A JSON Patch path.
 		/// @return RequestId of the generated request
-		RequestId UpdateStateWithNull(StateTarget target, Operation operation, const string& path);
+		RequestId UpdateStateWithNull(const char* target, const char* operation, const string& path);
 
 		/// Helper function that will call UpdateState the input json object as the value.
 		///
@@ -1281,27 +1268,27 @@ namespace gamelink
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] js The value to use in the patch operation
 		/// @return RequestId of the generated request
-		RequestId UpdateStateWithJson(StateTarget target, Operation operation, const string& path, const nlohmann::json& js);
+		RequestId UpdateStateWithJson(const char* target, const char* operation, const string& path, const nlohmann::json& js);
 
 		/// Helper function that will call UpdateState with the given patch list
 		///
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		/// @param[in] list A patch list, created and filled elsewhere
 		/// @return RequestId of the generated request
-		RequestId UpdateStateWithPatchList(StateTarget target, const PatchList& list);
+		RequestId UpdateStateWithPatchList(const char* target, const PatchList& list);
 
 		/// Starts subscribing to state updates for the given target.
 		/// Updates come through the OnStateUpdate callback
 		///
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		/// @return RequestId of the generated request
-		RequestId SubscribeToStateUpdates(StateTarget target);
+		RequestId SubscribeToStateUpdates(const char* target);
 
 		/// Stops subscribing to state updates for the given target.
 		///
 		/// @param[in] target Either STATE_TARGET_CHANNEL or STATE_TARGET_EXTENSION
 		/// @return RequestId of the generated request
-		RequestId UnsubscribeFromStateUpdates(StateTarget target);
+		RequestId UnsubscribeFromStateUpdates(const char* target);
 
 		/// Sends a broadcast to all viewers on the channel using the extension.
 		/// @remark The serialized size of the value parameter must be under 8 kilobytes.
