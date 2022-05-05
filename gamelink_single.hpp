@@ -27900,6 +27900,12 @@ namespace gamelink
 	/// @returns True if 's' begins with 'prefix'
 	MUXY_GAMELINK_API bool HasPrefix(const string& source, const string& prefix);
 
+	/// GetPollWinnerIndex grabs the index of the winning result.
+	///
+	/// @param[in] results The results from the poll
+	/// @returns Index of winning result
+	MUXY_GAMELINK_API uint32_t GetPollWinnerIndex(const std::vector<int>& results);
+
 	/// RequestId is an 16bit unsigned integer that represents a request.
 	/// Obtained through SDK methods.
 	typedef uint16_t RequestId;
@@ -28151,6 +28157,22 @@ namespace gamelink
 																  int projectionMinor,
 																  int projectionPatch);
 
+		// TimedPoll is used internally to hold data from CreateTimedPoll
+		struct TimedPoll
+		{
+			string pollId;
+			float duration;
+			detail::Callback<const schema::GetPollResponse&> onFinishCallback;
+			bool finished;
+
+			TimedPoll(string pollId, float duration)
+				: pollId(pollId)
+				, duration(duration)
+				, onFinishCallback(0, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT)
+				, finished(false)
+			{
+			}
+		};
 	}
 
 	/// Returns the URL to connect to for the given clientID and stage.
@@ -28723,6 +28745,40 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId CreatePoll(const string& pollId, const string& prompt, const string* optionsBegin, const string* optionsEnd);
 
+		/// Queues a request to create a timed poll.
+		///
+		/// @param[in] pollId The Poll ID to create
+		/// @param[in] prompt The Prompt to store in the poll.
+		/// @param[in] options An array of options to store in the poll.
+		/// @param[in] duration How long the poll will last for (in your own provided unit of time).
+		/// @param[in] onFinishCallback Callback to be called when poll finishes.
+		/// @return RequestId of the generated request
+		RequestId CreateTimedPoll(const string& pollId,
+									   const string& prompt,
+									   const std::vector<string>& options,
+									   float duration,
+									   std::function<void(const schema::GetPollResponse&)> onFinishCallback);
+
+		/// Queues a request to create a timed poll.
+		///
+		/// @param[in] pollId The Poll ID to create
+		/// @param[in] prompt The Prompt to store in the poll.
+		/// @param[in] options An array of options to store in the poll.
+		/// @param[in] duration How long the poll will last for (in your own provided unit of time).
+		/// @param[in] onFinishCallback Callback to be called when poll finishes.
+		/// @param[in] user User data to pass into the provided callback
+		/// @return RequestId of the generated request
+		RequestId CreateTimedPoll(const string& pollId,
+									   const string& prompt,
+									   const std::vector<string>& options,
+									   float duration,
+									   void (*onFinishCallback)(void*, const schema::GetPollResponse&),
+									   void* user);
+
+		/// Ticks all timed polls and subtracts dt from the polls duration, callbacks are triggered when duration is <= 0
+		/// @param[in] dt Time to subtract from duration (in your own provided unit of time)
+		void TickTimedPolls(float dt);
+
 		/// Subscribes to updates for a given poll.
 		/// Updates come through the OnPollUpdate callback.
 		/// Once a poll stops receiving new votes, the subscription will stop receiving new updates.
@@ -29200,6 +29256,8 @@ namespace gamelink
 
 		void addToBarrier(uint16_t);
 		void removeFromBarrier(uint16_t);
+
+		std::vector<detail::TimedPoll> _timedPolls;
 
 		detail::Callback<string> _onDebugMessage;
 
@@ -29769,6 +29827,22 @@ namespace gamelink
 		}
 
 		return true;
+	}
+
+	uint32_t GetPollWinnerIndex(const std::vector<int>& results)
+	{
+		int winner = 0;
+		int index = 0;
+		for (int i = 0; i < results.size(); i++)
+		{
+			if (results[i] > winner)
+			{
+				winner = results[i];
+				index = i;
+			}
+		}
+
+		return index;
 	}
 
 	Payload::Payload(string data)
@@ -30571,7 +30645,71 @@ namespace gamelink
 		schema::DeletePollRequest payload(pollId);
 		return queuePayload(payload);
 	}
+
+	RequestId SDK::CreateTimedPoll(const string& pollId,
+								   const string& prompt,
+								   const std::vector<string>& options,
+								   float duration,
+								   std::function<void(const schema::GetPollResponse&)> onFinishCallback)
+	{
+		detail::TimedPoll tp(pollId, duration);
+		tp.onFinishCallback.set(onFinishCallback);
+
+		_lock.lock();
+		_timedPolls.push_back(tp);
+		_lock.unlock();
+		return SDK::CreatePoll(pollId, prompt, options);
+	}
+
+	RequestId SDK::CreateTimedPoll(const string& pollId,
+								   const string& prompt,
+								   const std::vector<string>& options,
+								   float duration,
+								   void (*onFinishCallback)(void*, const schema::GetPollResponse&),
+								   void* user)
+	{
+		detail::TimedPoll tp(pollId, duration);
+		tp.onFinishCallback.set(onFinishCallback, user);
+
+		_lock.lock();
+		_timedPolls.push_back(tp);
+		_lock.unlock();
+		return SDK::CreatePoll(pollId, prompt, options);
+	}
+
+	void SDK::TickTimedPolls(float dt) 
+	{
+		_lock.lock();
+		for (auto &tp: _timedPolls)
+		{
+			tp.duration -= dt;
+			if (tp.duration <= 0 && !tp.finished)
+			{
+				SDK::GetPoll(tp.pollId, [&tp](const schema::GetPollResponse& Resp) 
+				{ 
+					tp.finished = true;
+					tp.onFinishCallback.invoke(Resp);
+				});
+			}
+		}
+
+		auto it = _timedPolls.begin();
+		while (it != _timedPolls.end())
+		{
+			if (it->finished)
+			{
+				SDK::DeletePoll(it->pollId);
+				it = _timedPolls.erase(it);
+			}
+			else
+			{
+				++it;
+			}
+		}
+		_lock.unlock();
+	}
 }
+
 
 
 namespace gamelink

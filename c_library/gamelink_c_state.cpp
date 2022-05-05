@@ -3,8 +3,6 @@
 
 using namespace gamelink;
 
-const char* StateTargetStr[] = {"channel", "extension"};
-
 MGL_RequestId MuxyGameLink_SetState(MuxyGameLink GameLink, MGL_StateTarget Target, const char* JsonString)
 {
 	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
