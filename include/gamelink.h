@@ -428,18 +428,6 @@ namespace gamelink
 		/// Clear the PatchList
 		void Clear();
 
-		/// Helper function that will update state with an empty array
-		///
-		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
-		/// @param[in] path A JSON Patch path.
-		void UpdateStateWithEmptyArray(const char* operation, const string& path);
-
-		/// Check if the PatchList is empty
-		bool Empty() const;
-
-		/// Clear the PatchList
-		void Clear();
-
 	private:
 		gamelink::lock lock;
 		std::vector<schema::PatchOperation> operations;
