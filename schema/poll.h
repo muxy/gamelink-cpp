@@ -6,6 +6,51 @@
 
 namespace gamelink
 {
+	/// PollConfiguration is used in the ConfigurePoll APIs to control
+	/// details of how a poll is held.
+	struct MUXY_GAMELINK_API PollConfiguration
+	{
+		PollConfiguration();
+
+		/// When userIdVoting is true, only users that have shared their ID will
+		/// be able to vote.
+		bool userIdVoting;
+
+		/// distinctOptionsPerUser controls how many options a user can vote for.
+		/// Must be in the range [1, 258].
+		int distinctOptionsPerUser;
+
+		/// totalVotesPerUser controls how many votes any user can cast.
+		/// Must be in the range [1, 1024]
+		int totalVotesPerUser;
+
+		/// votesPerOption controls how many votes per option a user can cast.
+		/// Must be in the range [1, 1024]
+		int votesPerOption;
+
+		/// When disabled is true, the poll will not accept any votes.
+		bool disabled;
+
+		/// startsAt should be a unix timestamp, in seconds, at which point the poll
+		/// will become enabled and will be able to be voted on.
+		/// If no startAt time is desired, set this to 0.
+		int64_t startsAt;
+
+		/// endsAt shoudl be a unix timestamp, in seconds, at which point the poll
+		/// will become disabled.
+		/// If no endsAt time is desired, set this to 0.
+		int64_t endsAt;
+
+		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_7(PollConfiguration,
+			"userIDVoting", userIdVoting,
+			"distinctOptionsPerUser", distinctOptionsPerUser,
+			"totalVotesPerUser", totalVotesPerUser,
+			"votesPerOption", votesPerOption,
+			"disabled", disabled,
+			"startsAt", startsAt,
+			"endsAt", endsAt);
+	};
+
 	namespace schema
 	{
 		struct MUXY_GAMELINK_API GetPollRequestBody
@@ -35,6 +80,22 @@ namespace gamelink
 			std::vector<string> options;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(CreatePollRequestBody, "poll_id", pollId, "prompt", prompt, "options", options);
+		};
+
+		struct MUXY_GAMELINK_API CreatePollWithConfigurationRequestBody
+		{
+			/// The Poll ID to create. Poll IDs are scoped to the current channel.
+			string pollId;
+
+			/// The poll prompt
+			string prompt;
+
+			/// A list of answers to the prompt. Maximum 64.
+			std::vector<string> options;
+
+			PollConfiguration configuration;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_4(CreatePollWithConfigurationRequestBody, "poll_id", pollId, "prompt", prompt, "options", options, "config", configuration);
 		};
 
 		template<typename T>
@@ -92,7 +153,7 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PollWithUserDataResponseBody, "prompt", prompt, "options", options, "user_data", userData);
 		};
 
-		// Note that this is the same as PollUpdateBody, and is provided for consistency with each 
+		// Note that this is the same as PollUpdateBody, and is provided for consistency with each
 		// endpoint having their own envelope with body.
 		struct MUXY_GAMELINK_API GetPollResponseBody
 		{
@@ -169,6 +230,17 @@ namespace gamelink
 			CreatePollRequest(const string& pollId, const string& prompt, const std::vector<string>& options);
 		};
 
+		struct MUXY_GAMELINK_API CreatePollWithConfigurationRequest : SendEnvelope<CreatePollWithConfigurationRequestBody>
+		{
+			/// Creates a CreatePoll request with configuration
+			/// @param[in] pollId The ID of the poll to create. This can overwrite existing polls if the same
+			///                   id is specified.
+			/// @param[in] prompt The prompt for the poll to create.
+			/// @param[in] config PollConfiguration for the poll.
+			/// @param[in] options vector of options for the poll.
+			CreatePollWithConfigurationRequest(const string& pollId, const string& prompt, const PollConfiguration& config, const std::vector<string>& options);
+		};
+
 		template<typename T>
 		struct CreatePollWithUserDataRequest : SendEnvelope<CreatePollWithUserDataRequestBody<T>>
 		{
@@ -198,7 +270,7 @@ namespace gamelink
 			/// @param[in] pollId The ID of the poll to subscribe to updates for.
 			explicit SubscribePollRequest(const string& pollId);
 		};
-		
+
 		struct MUXY_GAMELINK_API UnsubscribePollRequest : SendEnvelope<UnsubscribeTopicRequestBody>
 		{
 			/// Creates an UnsubscribePollRequest.

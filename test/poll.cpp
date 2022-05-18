@@ -63,8 +63,8 @@ TEST_CASE("Poll Update Response (De)Serialization", "[poll][update]")
 			"target": "poll"
 		},
 		"data": {
-			"count": 3, 
-			"mean": 0.0, 
+			"count": 3,
+			"mean": 0.0,
 			"sum": 0.0,
 
 			"results": [1, 2],
@@ -82,8 +82,8 @@ TEST_CASE("Poll Update Response (De)Serialization", "[poll][update]")
 			"target": "poll"
 		},
 		"data": {
-			"count": 3, 
-			"mean": 0.0, 
+			"count": 3,
+			"mean": 0.0,
 			"sum": 0.0,
 
 			"results": [1, 2],
@@ -126,7 +126,6 @@ TEST_CASE("SDK Poll Creation", "[sdk][poll][creation]")
 	gamelink::SDK sdk;
 
 	sdk.CreatePoll("test-poll", "Me or Them?", {"Me", "Them"});
-
 	REQUIRE(sdk.HasPayloads());
 
 	sdk.ForeachPayload([](const gamelink::Payload* send) {
@@ -137,6 +136,99 @@ TEST_CASE("SDK Poll Creation", "[sdk][poll][creation]")
 					"options":["Me","Them"],
 					"poll_id":"test-poll",
 					"prompt":"Me or Them?"
+				},
+				"params":{
+					"request_id":65535,
+					"target":"poll"
+				}
+			})"));
+	});
+
+
+	std::vector<gamelink::string> options = {"Me", "Them"};
+	sdk.CreatePoll("test-poll", "Me or Them?", options.data(), options.data() + 2);
+	REQUIRE(sdk.HasPayloads());
+
+	sdk.ForeachPayload([](const gamelink::Payload* send) {
+		REQUIRE(JSONEquals(send->data,
+						   R"({
+				"action":"create",
+				"data":{
+					"options":["Me","Them"],
+					"poll_id":"test-poll",
+					"prompt":"Me or Them?"
+				},
+				"params":{
+					"request_id":65535,
+					"target":"poll"
+				}
+			})"));
+	});
+
+	REQUIRE(!sdk.HasPayloads());
+}
+
+
+TEST_CASE("SDK Poll Creation With Options", "[sdk][poll][creation]")
+{
+	gamelink::SDK sdk;
+	gamelink::PollConfiguration config;
+	config.userIdVoting = true;
+	config.startsAt = 10;
+	config.endsAt = 20;
+	config.distinctOptionsPerUser = 2;
+	config.votesPerOption = 1000;
+	config.totalVotesPerUser = 1000;
+	config.disabled = true;
+
+	sdk.CreatePollWithConfiguration("test-poll", "Me or Them?", config, {"Me", "Them"});
+	REQUIRE(sdk.HasPayloads());
+
+	sdk.ForeachPayload([](const gamelink::Payload* send) {
+		REQUIRE(JSONEquals(send->data,
+						   R"({
+				"action":"create",
+				"data":{
+					"options":["Me","Them"],
+					"poll_id":"test-poll",
+					"prompt":"Me or Them?",
+					"config": {
+						"disabled": true,
+						"distinctOptionsPerUser": 2,
+						"votesPerOption": 1000,
+						"totalVotesPerUser": 1000,
+						"userIDVoting": true,
+						"startsAt": 10,
+						"endsAt": 20
+					}
+				},
+				"params":{
+					"request_id":65535,
+					"target":"poll"
+				}
+			})"));
+	});
+
+
+	std::vector<gamelink::string> options = {"Me", "Them"};
+	sdk.CreatePollWithConfiguration("test-poll", "Me or Them?", config, options.data(), options.data() + 2);
+	REQUIRE(sdk.HasPayloads());
+
+	sdk.ForeachPayload([](const gamelink::Payload* send) {
+		REQUIRE(JSONEquals(send->data,
+						   R"({
+				"action":"create",
+				"data":{
+					"options":["Me","Them"],
+					"poll_id":"test-poll",
+					"prompt":"Me or Them?",
+					"config": {
+						"disabled": true,
+						"multipleVotes": true,
+						"userIDVoting": true,
+						"startsAt": 10,
+						"endsAt": 20
+					}
 				},
 				"params":{
 					"request_id":65535,
@@ -171,12 +263,12 @@ TEST_CASE("SDK Poll Get Results", "[sdk][poll][results]")
 		 "data": {
             "poll": {
                 "poll_id": "something-else",
-				"prompt": "Superman or Batman", 
-				"options": ["Superman", "Batman"], 
+				"prompt": "Superman or Batman",
+				"options": ["Superman", "Batman"],
 				"user_data": {}
-            }, 
+            },
 			"results": [
-				100, 
+				100,
 				93
 			]
         },
@@ -193,12 +285,12 @@ TEST_CASE("SDK Poll Get Results", "[sdk][poll][results]")
 		 "data": {
             "poll": {
                 "poll_id": "wrong",
-				"prompt": "no", 
-				"options": ["yes", "no"], 
+				"prompt": "no",
+				"options": ["yes", "no"],
 				"user_data": {}
-            }, 
+            },
 			"results": [
-				0, 
+				0,
 				1
 			]
         },
@@ -240,8 +332,8 @@ TEST_CASE("SDK Poll Update Response", "[sdk][poll][update]")
 			"target": "poll"
 		},
 		"data": {
-			"sum": 2.0, 
-			"count": 5, 
+			"sum": 2.0,
+			"count": 5,
 			"mean": 1.2,
 
 			"poll": {

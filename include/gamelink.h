@@ -320,7 +320,6 @@ namespace gamelink
 	class MUXY_GAMELINK_API PatchList
 	{
 		friend class SDK;
-
 	public:
 		PatchList();
 		explicit PatchList(uint32_t preallocate);
@@ -875,6 +874,26 @@ namespace gamelink
 		/// @param[in] optionsEnd Pointer one past the final entry in an array of options to store in the poll.
 		/// @return RequestId of the generated request
 		RequestId CreatePoll(const string& pollId, const string& prompt, const string* optionsBegin, const string* optionsEnd);
+
+
+		/// Queues a request to create a poll with configuration options.
+		///
+		/// @param[in] pollId The Poll ID to create
+		/// @param[in] prompt The Prompt to store in the poll.
+		/// @param[in] config The PollConfiguration instance to use to configure the poll with.
+		/// @param[in] options An array of options to store in the poll.
+		/// @return RequestId of the generated request
+		RequestId CreatePollWithConfiguration(const string& pollId, const string& prompt, const PollConfiguration& config, const std::vector<string>& options);
+
+		/// Queues a request to create a poll with configuration options.
+		///
+		/// @param[in] pollId The Poll ID to create
+		/// @param[in] prompt The Prompt to store in the poll.
+		/// @param[in] config The PollConfiguration instance to use to configure the poll with.
+		/// @param[in] optionsBegin Pointer to the first element in an array of options to store in the poll.
+		/// @param[in] optionsEnd Pointer one past the final entry in an array of options to store in the poll.
+		/// @return RequestId of the generated request
+		RequestId CreatePollWithConfiguration(const string& pollId, const string& prompt, const PollConfiguration& config, const string* optionsBegin, const string* optionsEnd);
 
 		/// Queues a request to create a timed poll.
 		///

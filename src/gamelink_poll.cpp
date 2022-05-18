@@ -33,7 +33,7 @@ namespace gamelink
 	RequestId SDK::GetPoll(const string& pollId, std::function<void(const schema::GetPollResponse&)> callback)
 	{
 		schema::GetPollRequest payload(pollId);
-		
+
 		RequestId id = queuePayload(payload);
 		_onGetPoll.set(callback, id, detail::CALLBACK_ONESHOT);
 		return id;
@@ -51,6 +51,28 @@ namespace gamelink
 	RequestId SDK::CreatePoll(const string& pollId, const string& prompt, const std::vector<string>& options)
 	{
 		schema::CreatePollRequest packet(pollId, prompt, options);
+		return queuePayload(packet);
+	}
+
+	RequestId SDK::CreatePoll(const string& pollId, const string& prompt, const string* start, const string* end)
+	{
+		std::vector<string> opts(start, end);
+
+		schema::CreatePollRequest packet(pollId, prompt, opts);
+		return queuePayload(packet);
+	}
+
+	RequestId SDK::CreatePollWithConfiguration(const string& pollId, const string& prompt, const PollConfiguration& config, const std::vector<string>& options)
+	{
+		schema::CreatePollWithConfigurationRequest packet(pollId, prompt, config, options);
+		return queuePayload(packet);
+	}
+
+	RequestId SDK::CreatePollWithConfiguration(const string& pollId, const string& prompt, const PollConfiguration& config, const string* start, const string* end)
+	{
+		std::vector<string> opts(start, end);
+
+		schema::CreatePollWithConfigurationRequest packet(pollId, prompt, config, opts);
 		return queuePayload(packet);
 	}
 
@@ -103,7 +125,7 @@ namespace gamelink
 		return SDK::CreatePoll(pollId, prompt, options);
 	}
 
-	void SDK::TickTimedPolls(float dt) 
+	void SDK::TickTimedPolls(float dt)
 	{
 		_lock.lock();
 		for (auto &tp: _timedPolls)
@@ -111,8 +133,8 @@ namespace gamelink
 			tp.duration -= dt;
 			if (tp.duration <= 0 && !tp.finished)
 			{
-				SDK::GetPoll(tp.pollId, [&tp](const schema::GetPollResponse& Resp) 
-				{ 
+				SDK::GetPoll(tp.pollId, [&tp](const schema::GetPollResponse& Resp)
+				{
 					tp.finished = true;
 					tp.onFinishCallback.invoke(Resp);
 				});
