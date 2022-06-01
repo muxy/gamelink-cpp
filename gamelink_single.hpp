@@ -27172,6 +27172,51 @@ namespace gamelink
 
 namespace gamelink
 {
+	/// PollConfiguration is used in the ConfigurePoll APIs to control
+	/// details of how a poll is held.
+	struct MUXY_GAMELINK_API PollConfiguration
+	{
+		PollConfiguration();
+
+		/// When userIdVoting is true, only users that have shared their ID will
+		/// be able to vote.
+		bool userIdVoting;
+
+		/// distinctOptionsPerUser controls how many options a user can vote for.
+		/// Must be in the range [1, 258].
+		int distinctOptionsPerUser;
+
+		/// totalVotesPerUser controls how many votes any user can cast.
+		/// Must be in the range [1, 1024]
+		int totalVotesPerUser;
+
+		/// votesPerOption controls how many votes per option a user can cast.
+		/// Must be in the range [1, 1024]
+		int votesPerOption;
+
+		/// When disabled is true, the poll will not accept any votes.
+		bool disabled;
+
+		/// startsAt should be a unix timestamp, in seconds, at which point the poll
+		/// will become enabled and will be able to be voted on.
+		/// If no startAt time is desired, set this to 0.
+		int64_t startsAt;
+
+		/// endsAt shoudl be a unix timestamp, in seconds, at which point the poll
+		/// will become disabled.
+		/// If no endsAt time is desired, set this to 0.
+		int64_t endsAt;
+
+		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_7(PollConfiguration,
+			"userIDVoting", userIdVoting,
+			"distinctOptionsPerUser", distinctOptionsPerUser,
+			"totalVotesPerUser", totalVotesPerUser,
+			"votesPerOption", votesPerOption,
+			"disabled", disabled,
+			"startsAt", startsAt,
+			"endsAt", endsAt);
+	};
+
 	namespace schema
 	{
 		struct MUXY_GAMELINK_API GetPollRequestBody
@@ -27201,6 +27246,22 @@ namespace gamelink
 			std::vector<string> options;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(CreatePollRequestBody, "poll_id", pollId, "prompt", prompt, "options", options);
+		};
+
+		struct MUXY_GAMELINK_API CreatePollWithConfigurationRequestBody
+		{
+			/// The Poll ID to create. Poll IDs are scoped to the current channel.
+			string pollId;
+
+			/// The poll prompt
+			string prompt;
+
+			/// A list of answers to the prompt. Maximum 64.
+			std::vector<string> options;
+
+			PollConfiguration configuration;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_4(CreatePollWithConfigurationRequestBody, "poll_id", pollId, "prompt", prompt, "options", options, "config", configuration);
 		};
 
 		template<typename T>
@@ -27258,7 +27319,7 @@ namespace gamelink
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PollWithUserDataResponseBody, "prompt", prompt, "options", options, "user_data", userData);
 		};
 
-		// Note that this is the same as PollUpdateBody, and is provided for consistency with each 
+		// Note that this is the same as PollUpdateBody, and is provided for consistency with each
 		// endpoint having their own envelope with body.
 		struct MUXY_GAMELINK_API GetPollResponseBody
 		{
@@ -27335,6 +27396,17 @@ namespace gamelink
 			CreatePollRequest(const string& pollId, const string& prompt, const std::vector<string>& options);
 		};
 
+		struct MUXY_GAMELINK_API CreatePollWithConfigurationRequest : SendEnvelope<CreatePollWithConfigurationRequestBody>
+		{
+			/// Creates a CreatePoll request with configuration
+			/// @param[in] pollId The ID of the poll to create. This can overwrite existing polls if the same
+			///                   id is specified.
+			/// @param[in] prompt The prompt for the poll to create.
+			/// @param[in] config PollConfiguration for the poll.
+			/// @param[in] options vector of options for the poll.
+			CreatePollWithConfigurationRequest(const string& pollId, const string& prompt, const PollConfiguration& config, const std::vector<string>& options);
+		};
+
 		template<typename T>
 		struct CreatePollWithUserDataRequest : SendEnvelope<CreatePollWithUserDataRequestBody<T>>
 		{
@@ -27364,7 +27436,7 @@ namespace gamelink
 			/// @param[in] pollId The ID of the poll to subscribe to updates for.
 			explicit SubscribePollRequest(const string& pollId);
 		};
-		
+
 		struct MUXY_GAMELINK_API UnsubscribePollRequest : SendEnvelope<UnsubscribeTopicRequestBody>
 		{
 			/// Creates an UnsubscribePollRequest.
@@ -28198,7 +28270,6 @@ namespace gamelink
 	class MUXY_GAMELINK_API PatchList
 	{
 		friend class SDK;
-
 	public:
 		PatchList();
 		explicit PatchList(uint32_t preallocate);
@@ -28753,6 +28824,26 @@ namespace gamelink
 		/// @param[in] optionsEnd Pointer one past the final entry in an array of options to store in the poll.
 		/// @return RequestId of the generated request
 		RequestId CreatePoll(const string& pollId, const string& prompt, const string* optionsBegin, const string* optionsEnd);
+
+
+		/// Queues a request to create a poll with configuration options.
+		///
+		/// @param[in] pollId The Poll ID to create
+		/// @param[in] prompt The Prompt to store in the poll.
+		/// @param[in] config The PollConfiguration instance to use to configure the poll with.
+		/// @param[in] options An array of options to store in the poll.
+		/// @return RequestId of the generated request
+		RequestId CreatePollWithConfiguration(const string& pollId, const string& prompt, const PollConfiguration& config, const std::vector<string>& options);
+
+		/// Queues a request to create a poll with configuration options.
+		///
+		/// @param[in] pollId The Poll ID to create
+		/// @param[in] prompt The Prompt to store in the poll.
+		/// @param[in] config The PollConfiguration instance to use to configure the poll with.
+		/// @param[in] optionsBegin Pointer to the first element in an array of options to store in the poll.
+		/// @param[in] optionsEnd Pointer one past the final entry in an array of options to store in the poll.
+		/// @return RequestId of the generated request
+		RequestId CreatePollWithConfiguration(const string& pollId, const string& prompt, const PollConfiguration& config, const string* optionsBegin, const string* optionsEnd);
 
 		/// Queues a request to create a timed poll.
 		///
@@ -29576,6 +29667,16 @@ namespace gamelink
 
 namespace gamelink
 {
+	PollConfiguration::PollConfiguration()
+		:userIdVoting(false)
+		,distinctOptionsPerUser(1)
+		,totalVotesPerUser(1)
+		,votesPerOption(1)
+		,disabled(false)
+		,startsAt(0)
+		,endsAt(0)
+	{}
+
 	namespace schema
 	{
 		GetPollRequest::GetPollRequest(const string& pollId)
@@ -29602,6 +29703,17 @@ namespace gamelink
 			data.pollId = pollId;
 			data.prompt = prompt;
 			data.options = options;
+		}
+
+		CreatePollWithConfigurationRequest::CreatePollWithConfigurationRequest(const string& pollId, const string& prompt, const PollConfiguration& config, const std::vector<string>& options)
+		{
+			action = string("create");
+			params.target = string("poll");
+
+			data.pollId = pollId;
+			data.prompt = prompt;
+			data.options = options;
+			data.configuration = config;
 		}
 
 		SubscribePollRequest::SubscribePollRequest(const string& pollId)
@@ -30616,7 +30728,7 @@ namespace gamelink
 	RequestId SDK::GetPoll(const string& pollId, std::function<void(const schema::GetPollResponse&)> callback)
 	{
 		schema::GetPollRequest payload(pollId);
-		
+
 		RequestId id = queuePayload(payload);
 		_onGetPoll.set(callback, id, detail::CALLBACK_ONESHOT);
 		return id;
@@ -30634,6 +30746,28 @@ namespace gamelink
 	RequestId SDK::CreatePoll(const string& pollId, const string& prompt, const std::vector<string>& options)
 	{
 		schema::CreatePollRequest packet(pollId, prompt, options);
+		return queuePayload(packet);
+	}
+
+	RequestId SDK::CreatePoll(const string& pollId, const string& prompt, const string* start, const string* end)
+	{
+		std::vector<string> opts(start, end);
+
+		schema::CreatePollRequest packet(pollId, prompt, opts);
+		return queuePayload(packet);
+	}
+
+	RequestId SDK::CreatePollWithConfiguration(const string& pollId, const string& prompt, const PollConfiguration& config, const std::vector<string>& options)
+	{
+		schema::CreatePollWithConfigurationRequest packet(pollId, prompt, config, options);
+		return queuePayload(packet);
+	}
+
+	RequestId SDK::CreatePollWithConfiguration(const string& pollId, const string& prompt, const PollConfiguration& config, const string* start, const string* end)
+	{
+		std::vector<string> opts(start, end);
+
+		schema::CreatePollWithConfigurationRequest packet(pollId, prompt, config, opts);
 		return queuePayload(packet);
 	}
 
@@ -30686,7 +30820,7 @@ namespace gamelink
 		return SDK::CreatePoll(pollId, prompt, options);
 	}
 
-	void SDK::TickTimedPolls(float dt) 
+	void SDK::TickTimedPolls(float dt)
 	{
 		_lock.lock();
 		for (auto &tp: _timedPolls)
@@ -30694,8 +30828,8 @@ namespace gamelink
 			tp.duration -= dt;
 			if (tp.duration <= 0 && !tp.finished)
 			{
-				SDK::GetPoll(tp.pollId, [&tp](const schema::GetPollResponse& Resp) 
-				{ 
+				SDK::GetPoll(tp.pollId, [&tp](const schema::GetPollResponse& Resp)
+				{
 					tp.finished = true;
 					tp.onFinishCallback.invoke(Resp);
 				});

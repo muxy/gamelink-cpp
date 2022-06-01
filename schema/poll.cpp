@@ -2,6 +2,16 @@
 
 namespace gamelink
 {
+	PollConfiguration::PollConfiguration()
+		:userIdVoting(false)
+		,distinctOptionsPerUser(1)
+		,totalVotesPerUser(1)
+		,votesPerOption(1)
+		,disabled(false)
+		,startsAt(0)
+		,endsAt(0)
+	{}
+
 	namespace schema
 	{
 		GetPollRequest::GetPollRequest(const string& pollId)
@@ -28,6 +38,17 @@ namespace gamelink
 			data.pollId = pollId;
 			data.prompt = prompt;
 			data.options = options;
+		}
+
+		CreatePollWithConfigurationRequest::CreatePollWithConfigurationRequest(const string& pollId, const string& prompt, const PollConfiguration& config, const std::vector<string>& options)
+		{
+			action = string("create");
+			params.target = string("poll");
+
+			data.pollId = pollId;
+			data.prompt = prompt;
+			data.options = options;
+			data.configuration = config;
 		}
 
 		SubscribePollRequest::SubscribePollRequest(const string& pollId)
