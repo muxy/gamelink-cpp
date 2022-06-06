@@ -11,9 +11,9 @@ namespace gamelink
 	namespace detail
 	{
 		string ProjectionWebsocketConnectionURL(
-			const string& clientId, 
-			ConnectionStage stage, 
-			const string& projection, 
+			const string& clientId,
+			ConnectionStage stage,
+			const string& projection,
 			int projectionMajor, int projectionMinor, int projectionPatch)
 		{
 			char buffer[CONNECTION_URL_BUFFER_LENGTH];
@@ -266,18 +266,18 @@ namespace gamelink
 			}
 
 			_receiveBuffer.resize(_receiveBuffer.size() + length);
-			if (_receiveBuffer.size() > 0) 
+			if (_receiveBuffer.size() > 0)
 			{
 				memcpy(&_receiveBuffer[oldSize], bytes, length);
 				env = schema::ParseEnvelope(_receiveBuffer.data(), _receiveBuffer.size(), &parseEnvelopeSuccess);
-				if (parseEnvelopeSuccess) 
+				if (parseEnvelopeSuccess)
 				{
 					parsedFromBuffer = true;
 				}
 			}
-		} 
+		}
 
-		if (!parseEnvelopeSuccess) 
+		if (!parseEnvelopeSuccess)
 		{
 			_lock.unlock();
 			return false;
@@ -307,7 +307,7 @@ namespace gamelink
 			}
 		}
 
-		
+
 		// Successful parse of envelope, swap out the bytes and length values.
 		std::vector<char> receivedBytes;
 		if (!_receiveBuffer.empty())
@@ -315,7 +315,7 @@ namespace gamelink
 			_receiveBuffer.swap(receivedBytes);
 		}
 
-		if (parsedFromBuffer && !receivedBytes.empty()) 
+		if (parsedFromBuffer && !receivedBytes.empty())
 		{
 			bytes = receivedBytes.data();
 			length = receivedBytes.size();
@@ -408,8 +408,8 @@ namespace gamelink
 			else if (env.meta.target == "drops") {
 				schema::GetDropsResponse resp;
 				success = schema::ParseResponse(bytes, length, resp);
-				
-				if (success) 
+
+				if (success)
 				{
 					_onGetDrops.invoke(resp);
 				}
@@ -462,6 +462,15 @@ namespace gamelink
 				if (success)
 				{
 					_onConfigUpdate.invoke(resp);
+				}
+			}
+			else if (env.meta.target == "matchmaking")
+			{
+				schema::MatchmakingUpdate resp;
+				success = schema::ParseResponse(bytes, length, resp);
+				if (success)
+				{
+					_onMatchmakingUpdate.invoke(resp);
 				}
 			}
 		}

@@ -1367,6 +1367,35 @@ namespace gamelink
 		/// @param[in] id A handle obtained from calling OnDatastream. Invalid handles are ignored.
 		void DetachOnDatastream(uint32_t);
 
+		/// Sends a request to subscribe to matchmaking queue pop messages.
+		/// @return RequestId of the generated request
+		RequestId SubscribeToMatchmakingQueuePop();
+
+		/// Sends a request to unsubscribe from matchmaking queue pop messages.
+		/// @return RequestId of the generated request
+		RequestId UnsubscribeFromMatchmakingQueuePop();
+
+		/// Sets an OnMatchmakingQueuePop callback. This callback is invoked when a matchmaking queue
+		/// pop message is received.
+		/// You must call SubscribeToMatchmakingQueuePop before any callbacks will be invoked.
+		///
+		/// @param[in] callback Callback to invoke when a queue pop message is received.
+		/// @return Returns an integer handle to the callback, to be used in DetachOnMatchmakingQueuePop
+		uint32_t OnMatchmakingQueuePop(std::function<void(const schema::MatchmakingUpdate&)> callback);
+
+		/// Sets an OnMatchmakingQueuePop callback. This callback is invoked when a matchmaking queue
+		/// pop message is received.
+		/// You must call SubscribeToMatchmakingQueuePop before any callbacks will be invoked.
+		///
+		/// @param[in] callback Callback to invoke when a queue pop message is received.
+		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
+		/// @return Returns an integer handle to the callback, to be used in DetachOnMatchmakingQueuePop
+		uint32_t OnMatchmakingQueuePop(void (callback)(void*, const schema::MatchmakingUpdate&), void* user);
+
+		/// Detaches an OnMatchmakingQueuePop callback.
+		///
+		/// @param[in] id A handle obtained from calling OnMatchmakingQueuePop. Invalid handles are ignored.
+		void DetachOnMatchmakingQueuePop(uint32_t id);
 	private:
 		void debugLogPayload(const Payload*);
 
@@ -1425,6 +1454,8 @@ namespace gamelink
 
 		detail::CallbackCollection<schema::GetOutstandingTransactionsResponse, 11> _onGetOutstandingTransactions;
 		detail::CallbackCollection<schema::GetDropsResponse, 12> _onGetDrops;
+
+		detail::CallbackCollection<schema::MatchmakingUpdate, 13> _onMatchmakingUpdate;
 	};
 }
 
