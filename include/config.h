@@ -86,6 +86,10 @@ namespace gamelink
 	typedef MUXY_GAMELINK_CUSTOM_LOCK_TYPE lock;
 }
 
+#ifndef JSON_DIAGNOSTICS
+#	define JSON_DIAGNOSTICS 0
+#endif
+
 // These includes are removed during amalgamation, but are here for non-amalgamated builds.
 #include "third_party/nlohmann/json.hpp"
 #include "config_footer.h"

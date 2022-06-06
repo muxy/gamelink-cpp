@@ -95,6 +95,10 @@ namespace gamelink
 	typedef MUXY_GAMELINK_CUSTOM_LOCK_TYPE lock;
 }
 
+#ifndef JSON_DIAGNOSTICS
+#	define JSON_DIAGNOSTICS 0
+#endif
+
 // These includes are removed during amalgamation, but are here for non-amalgamated builds.
 
 #ifndef MUXY_NO_JSON_INCLUDE
@@ -27009,7 +27013,7 @@ namespace gamelink
 			string client_id;
 		};
 		MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithPINRequestBody, "pin", pin, "client_id", client_id);
-		
+
 		struct MUXY_GAMELINK_API AuthenticateWithPINRequest : SendEnvelope<AuthenticateWithPINRequestBody>
 		{
 			/// Creates an authorization request.
@@ -27024,7 +27028,7 @@ namespace gamelink
 		{
 			string refresh;
 
-			/// Client ID, as obtained from Twitch. 
+			/// Client ID, as obtained from Twitch.
 			// TODO: Needs to be 'clientId' everywhere to match network as much as possible (when that change takes place, remove this when it does). NETWORK == camelCase
 			string client_id;
 		};
@@ -27056,9 +27060,13 @@ namespace gamelink
 			/// Signed JWT. Will expire.
 			string jwt;
 
+			/// Refresh token, used to reauth after the JWT expires.
 			string refresh;
+
+			/// Information about the channel the auth was done with
+			string twitch_name;
 		};
-		MUXY_GAMELINK_SERIALIZE_2(AuthenticateResponseBody, "jwt", jwt, "refresh", refresh);
+		MUXY_GAMELINK_SERIALIZE_3(AuthenticateResponseBody, "jwt", jwt, "refresh", refresh, "twitch_name", twitch_name);
 
 		struct MUXY_GAMELINK_API AuthenticateResponse : ReceiveEnvelope<AuthenticateResponseBody>
 		{
@@ -27069,14 +27077,16 @@ namespace gamelink
 		class MUXY_GAMELINK_API User
 		{
 		public:
-			User(string jwt, string refreshToken);
+			User(string jwt, string refreshToken, string twitchName);
 
 			const string& GetJWT() const;
 			const string& GetRefreshToken() const;
+			const string& GetTwitchName() const;
 			// string GetOpaqueID();
 		private:
 			string jwt;
 			string refreshToken;
+			string twitchName;
 		};
 	}
 }
@@ -27640,6 +27650,7 @@ namespace gamelink
 
 
 
+
 #endif
 
 
@@ -27948,6 +27959,84 @@ namespace gamelink
 	}
 }
 #endif
+
+#ifndef MUXY_GAMELINK_SCHEMA_MATCHMAKING_H
+#define MUXY_GAMELINK_SCHEMA_MATCHMAKING_H
+
+
+
+namespace gamelink
+{
+	namespace schema
+	{
+		struct MUXY_GAMELINK_API MatchmakingOperationBody
+		{
+			string operation;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(MatchmakingOperationBody, "operation", operation);
+		};
+
+		template<typename T>
+		struct MUXY_GAMELINK_API MatchmakingInformation
+		{
+			T data;
+			string twitchUsername;
+			string twitchID;
+
+			int64_t timestamp;
+			bool isFollower;
+			int subscriptionTier;
+			int bitsSpent;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_7(MatchmakingInformation,
+				"data", data,
+				"twitch_username", twitchUsername,
+				"twitch_id", twitchID,
+				"timestamp", timestamp,
+				"is_follower", isFollower,
+				"subscription_tier", subscriptionTier,
+				"bits_spent", bitsSpent
+			);
+		};
+
+		struct MUXY_GAMELINK_API MatchmakingUpdate : ReceiveEnvelope<MatchmakingInformation<nlohmann::json> >
+		{
+			MatchmakingUpdate();
+		};
+
+		struct MUXY_GAMELINK_API SubscribeMatchmakingRequest : SendEnvelope<MatchmakingOperationBody>
+		{
+			/// Creates a SubscribeMatchmakingRequest.
+			SubscribeMatchmakingRequest();
+		};
+
+		struct MUXY_GAMELINK_API UnsubscribeMatchmakingRequest : SendEnvelope<MatchmakingOperationBody>
+		{
+			/// Creates an UnsubscribeMatchmakingRequest.
+			UnsubscribeMatchmakingRequest();
+		};
+
+		struct MUXY_GAMELINK_API ClearMatchmakingRequest : SendEnvelope<EmptyBody>
+		{
+			ClearMatchmakingRequest();
+		};
+
+		struct MUXY_GAMELINK_API MatchmakingIDBody
+		{
+			string id;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(MatchmakingIDBody, "id", id);
+		};
+
+		struct MUXY_GAMELINK_API RemoveMatchmakingEntryRequest : SendEnvelope<MatchmakingIDBody>
+		{
+			explicit RemoveMatchmakingEntryRequest(const string& id);
+		};
+	}
+}
+
+#endif
+
 
 #ifndef INCLUDE_MUXY_GAMELINK_H
 #define INCLUDE_MUXY_GAMELINK_H
@@ -29317,6 +29406,49 @@ namespace gamelink
 		/// @param[in] id A handle obtained from calling OnDatastream. Invalid handles are ignored.
 		void DetachOnDatastream(uint32_t);
 
+		/// Clears the matchmaking queue
+		///
+		/// @return RequestId of the generated request
+		RequestId ClearMatchmakingQueue();
+
+		/// Removes an entry from the matchmaking queue.
+		/// This is usually done after receiving a callback from OnMatchmakingQueueInvite
+		/// to show that the game client has acknowledged and invited the user.
+		///
+		/// @param[in] twitchID The twitchID of of the MatchmakingInformation entry to remove
+		///                     from the queue
+		/// @return RequestId of the generated request
+		RequestId RemoveMatchmakingEntry(const string& twitchID);
+
+		/// Sends a request to subscribe to matchmaking queue invite messages.
+		/// @return RequestId of the generated request
+		RequestId SubscribeToMatchmakingQueueInvite();
+
+		/// Sends a request to unsubscribe from matchmaking queue invite messages.
+		/// @return RequestId of the generated request
+		RequestId UnsubscribeFromMatchmakingQueueInvite();
+
+		/// Sets an OnMatchmakingQueueInvite callback. This callback is invoked when a matchmaking queue
+		/// invite message is received.
+		/// You must call SubscribeToMatchmakingQueueInvite before any callbacks will be invoked.
+		///
+		/// @param[in] callback Callback to invoke when a queue invite message is received.
+		/// @return Returns an integer handle to the callback, to be used in DetachOnMatchmakingQueueInvite
+		uint32_t OnMatchmakingQueueInvite(std::function<void(const schema::MatchmakingUpdate&)> callback);
+
+		/// Sets an OnMatchmakingQueueInvite callback. This callback is invoked when a matchmaking queue
+		/// invite message is received.
+		/// You must call SubscribeToMatchmakingQueueInvite before any callbacks will be invoked.
+		///
+		/// @param[in] callback Callback to invoke when a queue invite message is received.
+		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
+		/// @return Returns an integer handle to the callback, to be used in DetachOnMatchmakingQueueInvite
+		uint32_t OnMatchmakingQueueInvite(void (callback)(void*, const schema::MatchmakingUpdate&), void* user);
+
+		/// Detaches an OnMatchmakingQueueInvite callback.
+		///
+		/// @param[in] id A handle obtained from calling OnMatchmakingQueueInvite. Invalid handles are ignored.
+		void DetachOnMatchmakingQueueInvite(uint32_t id);
 	private:
 		void debugLogPayload(const Payload*);
 
@@ -29375,6 +29507,8 @@ namespace gamelink
 
 		detail::CallbackCollection<schema::GetOutstandingTransactionsResponse, 11> _onGetOutstandingTransactions;
 		detail::CallbackCollection<schema::GetDropsResponse, 12> _onGetDrops;
+
+		detail::CallbackCollection<schema::MatchmakingUpdate, 13> _onMatchmakingUpdate;
 	};
 }
 
@@ -29410,19 +29544,25 @@ namespace gamelink
 			data.client_id = clientId;
 		}
 
-		User::User(string jwt, string refreshToken)
+		User::User(string jwt, string refreshToken, string twitchName)
 			: jwt(std::move(jwt))
 			, refreshToken(std::move(refreshToken))
+			, twitchName(std::move(twitchName))
 		{
 		}
-		const string& User::GetJWT() const 
-		{ 
-			return jwt; 
+		const string& User::GetJWT() const
+		{
+			return jwt;
 		}
-		
-		const string& User::GetRefreshToken() const 
-		{ 
-			return refreshToken; 
+
+		const string& User::GetRefreshToken() const
+		{
+			return refreshToken;
+		}
+
+		const string& User::GetTwitchName() const
+		{
+			return twitchName;
 		}
 	}
 }
@@ -29667,6 +29807,43 @@ namespace gamelink
 
 namespace gamelink
 {
+	namespace schema
+	{
+		MatchmakingUpdate::MatchmakingUpdate()
+		{}
+
+		SubscribeMatchmakingRequest::SubscribeMatchmakingRequest()
+		{
+			action = string("subscribe");
+			params.target = string("matchmaking");
+			data.operation = "invite";
+		}
+
+		UnsubscribeMatchmakingRequest::UnsubscribeMatchmakingRequest()
+		{
+			action = string("unsubscribe");
+			params.target = string("matchmaking");
+			data.operation = "invite";
+		}
+
+		ClearMatchmakingRequest::ClearMatchmakingRequest()
+		{
+			action = string("clear");
+			params.target = string("matchmaking");
+		}
+
+		RemoveMatchmakingEntryRequest::RemoveMatchmakingEntryRequest(const string& id)
+		{
+			action = string("remove");
+			params.target = string("matchmaking");
+			data.id = id;
+		}
+	}
+}
+
+
+namespace gamelink
+{
 	PollConfiguration::PollConfiguration()
 		:userIdVoting(false)
 		,distinctOptionsPerUser(1)
@@ -29834,9 +30011,9 @@ namespace gamelink
 	namespace detail
 	{
 		string ProjectionWebsocketConnectionURL(
-			const string& clientId, 
-			ConnectionStage stage, 
-			const string& projection, 
+			const string& clientId,
+			ConnectionStage stage,
+			const string& projection,
 			int projectionMajor, int projectionMinor, int projectionPatch)
 		{
 			char buffer[CONNECTION_URL_BUFFER_LENGTH];
@@ -29984,6 +30161,11 @@ namespace gamelink
 		{
 			delete _queuedPayloads[i];
 		}
+
+		if (_user)
+		{
+			delete _user;
+		}
 	}
 
 	RequestId SDK::nextRequestId()
@@ -30089,18 +30271,18 @@ namespace gamelink
 			}
 
 			_receiveBuffer.resize(_receiveBuffer.size() + length);
-			if (_receiveBuffer.size() > 0) 
+			if (_receiveBuffer.size() > 0)
 			{
 				memcpy(&_receiveBuffer[oldSize], bytes, length);
 				env = schema::ParseEnvelope(_receiveBuffer.data(), _receiveBuffer.size(), &parseEnvelopeSuccess);
-				if (parseEnvelopeSuccess) 
+				if (parseEnvelopeSuccess)
 				{
 					parsedFromBuffer = true;
 				}
 			}
-		} 
+		}
 
-		if (!parseEnvelopeSuccess) 
+		if (!parseEnvelopeSuccess)
 		{
 			_lock.unlock();
 			return false;
@@ -30130,7 +30312,7 @@ namespace gamelink
 			}
 		}
 
-		
+
 		// Successful parse of envelope, swap out the bytes and length values.
 		std::vector<char> receivedBytes;
 		if (!_receiveBuffer.empty())
@@ -30138,7 +30320,7 @@ namespace gamelink
 			_receiveBuffer.swap(receivedBytes);
 		}
 
-		if (parsedFromBuffer && !receivedBytes.empty()) 
+		if (parsedFromBuffer && !receivedBytes.empty())
 		{
 			bytes = receivedBytes.data();
 			length = receivedBytes.size();
@@ -30169,7 +30351,14 @@ namespace gamelink
 				const schema::Error * err = FirstError(authResp);
 				if (!err)
 				{
-					_user = new schema::User(authResp.data.jwt, authResp.data.refresh);
+					_lock.lock();
+					if (_user)
+					{
+						delete _user;
+					}
+					_user = new schema::User(authResp.data.jwt, authResp.data.refresh, authResp.data.twitch_name);
+					_lock.unlock();
+
 					_storedJWT = authResp.data.jwt;
 					_storedRefresh = authResp.data.refresh;
 				}
@@ -30231,8 +30420,8 @@ namespace gamelink
 			else if (env.meta.target == "drops") {
 				schema::GetDropsResponse resp;
 				success = schema::ParseResponse(bytes, length, resp);
-				
-				if (success) 
+
+				if (success)
 				{
 					_onGetDrops.invoke(resp);
 				}
@@ -30285,6 +30474,15 @@ namespace gamelink
 				if (success)
 				{
 					_onConfigUpdate.invoke(resp);
+				}
+			}
+			else if (env.meta.target == "matchmaking")
+			{
+				schema::MatchmakingUpdate resp;
+				success = schema::ParseResponse(bytes, length, resp);
+				if (success)
+				{
+					_onMatchmakingUpdate.invoke(resp);
 				}
 			}
 		}
@@ -30691,6 +30889,49 @@ namespace gamelink
 	{
 		schema::ValidateDropsRequest request(id);
 		return queuePayload(request);
+	}
+}
+
+
+namespace gamelink
+{
+	RequestId SDK::SubscribeToMatchmakingQueueInvite()
+	{
+		schema::SubscribeMatchmakingRequest payload;
+		return queuePayload(payload);
+	}
+
+	RequestId SDK::UnsubscribeFromMatchmakingQueueInvite()
+	{
+		schema::UnsubscribeMatchmakingRequest payload;
+		return queuePayload(payload);
+	}
+
+	RequestId SDK::ClearMatchmakingQueue()
+	{
+		schema::ClearMatchmakingRequest payload;
+		return queuePayload(payload);
+	}
+
+	RequestId SDK::RemoveMatchmakingEntry(const string& id)
+	{
+		schema::RemoveMatchmakingEntryRequest payload(id);
+		return queuePayload(payload);
+	}
+
+	uint32_t SDK::OnMatchmakingQueueInvite(std::function<void(const schema::MatchmakingUpdate&)> callback)
+	{
+		return _onMatchmakingUpdate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
+
+	uint32_t SDK::OnMatchmakingQueueInvite(void (callback)(void*, const schema::MatchmakingUpdate&), void* user)
+	{
+		return _onMatchmakingUpdate.set(callback, user, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+	}
+
+	void SDK::DetachOnMatchmakingQueueInvite(uint32_t handle)
+	{
+		_onMatchmakingUpdate.remove(handle);
 	}
 }
 

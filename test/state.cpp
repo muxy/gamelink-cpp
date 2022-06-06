@@ -44,21 +44,21 @@ TEST_CASE("Basic state serialization", "[state][serialization]")
 	gamelink::schema::SetStateRequest<BasicState> req(gamelink::StateTarget::Channel, parent);
 
 	SerializeEqual(req, R"({
-        "action": "set", 
+        "action": "set",
         "params": {
             "request_id": 65535,
             "target": "state"
-        }, 
+        },
         "data": {
             "state_id": "channel",
         "state": {
-                "name": "hp", 
-                "value": 100, 
-                "priv": 32, 
+                "name": "hp",
+                "value": 100,
+                "priv": 32,
                 "children": [{
-                        "name": "percentage hp", 
-                        "value": 50, 
-                        "priv": 1, 
+                        "name": "percentage hp",
+                        "value": 50,
+                        "priv": 1,
                         "children": []
                     }
                 ]
@@ -76,17 +76,17 @@ TEST_CASE("State response deserialization", "[state][deserialization]")
             "action": "set",
             "request_id": 4,
             "target": "state"
-        }, 
+        },
         "data": {
             "ok": true,
             "state": {
-                "name": "hp", 
-                "value": 100, 
-                "priv": 32, 
+                "name": "hp",
+                "value": 100,
+                "priv": 32,
                 "children": [{
-                        "name": "percentage hp", 
-                        "value": 50, 
-                        "priv": 1, 
+                        "name": "percentage hp",
+                        "value": 50,
+                        "priv": 1,
                         "children": []
                     }
                 ]
@@ -121,13 +121,13 @@ TEST_CASE("State update serialization", "[state][serialization]")
 	req.data.state.push_back(op);
 
 	SerializeEqual(req, R"({
-        "action": "patch", 
+        "action": "patch",
         "params": {
-            "request_id": 65535, 
+            "request_id": 65535,
             "target": "state"
-        }, 
+        },
         "data": {
-            "state_id": "extension",
+            "state_id": "channel",
             "state": [
                 { "op" : "replace", "path": "/children/0/name", "value": "percentage mana" }
             ]
@@ -139,11 +139,11 @@ TEST_CASE("State get serialization", "[state][serialization]")
 {
 	gamelink::schema::GetStateRequest req(gamelink::StateTarget::Channel);
 	SerializeEqual(req, R"({
-        "action": "get", 
+        "action": "get",
         "params": {
-            "request_id": 65535, 
+            "request_id": 65535,
             "target": "state"
-        }, 
+        },
         "data": {
             "state_id": "channel"
         }
@@ -152,14 +152,14 @@ TEST_CASE("State get serialization", "[state][serialization]")
 
 TEST_CASE("State subscribe serialization", "[state][serialization]")
 {
-	gamelink::schema::SubscribeStateRequest req(gamelink::StateTarget::Channel);
+	gamelink::schema::SubscribeStateRequest req(gamelink::StateTarget::Extension);
 
 	SerializeEqual(req, R"({
-        "action": "subscribe", 
+        "action": "subscribe",
         "params": {
-            "request_id": 65535, 
+            "request_id": 65535,
             "target": "state"
-        }, 
+        },
         "data": {
             "topic_id": "extension"
         }
@@ -175,17 +175,17 @@ TEST_CASE("State update deserialize", "[state][deserialization]")
             "action": "update",
             "request_id": 4,
             "target": "state"
-        }, 
+        },
         "data": {
             "topic_id": "extension",
             "state": {
-                "name": "hp", 
-                "value": 100, 
-                "priv": 32, 
+                "name": "hp",
+                "value": 100,
+                "priv": 32,
                 "children": [{
-                        "name": "percentage hp", 
-                        "value": 50, 
-                        "priv": 1, 
+                        "name": "percentage hp",
+                        "value": 50,
+                        "priv": 1,
                         "children": []
                     }
                 ]
@@ -231,15 +231,15 @@ TEST_CASE("SDK State Creation", "[sdk][state]")
 	sdk.ForeachPayload([](const gamelink::Payload* send) {
 		REQUIRE(JSONEquals(send->data,
 						   R"({
-            "action": "set", 
+            "action": "set",
             "data": {
                 "state_id": "channel",
                 "state": {
-                    "children": [], 
+                    "children": [],
                     "name": "health",
                     "value": 42.123
                 }
-            }, 
+            },
             "params":{
                 "request_id":65535,
                 "target":"state"
@@ -249,13 +249,13 @@ TEST_CASE("SDK State Creation", "[sdk][state]")
 
 	sdk.ClearState(gamelink::StateTarget::Channel);
 	validateSinglePayload(sdk, R"({
-		"action": "set", 
-		"data": { 
-			"state_id": "channel", 
+		"action": "set",
+		"data": {
+			"state_id": "channel",
 			"state": {}
-		}, 
+		},
 		"params": {
-			"request_id": 65535, 
+			"request_id": 65535,
 			"target": "state"
 		}
 	})");
@@ -275,10 +275,10 @@ TEST_CASE("SDK State Retreival", "[sdk][state]")
 	sdk.ForeachPayload([](const gamelink::Payload* send) {
 		REQUIRE(JSONEquals(send->data,
 						   R"({
-            "action": "get", 
+            "action": "get",
             "data": {
                 "state_id": "channel"
-            }, 
+            },
             "params":{
                 "request_id":1,
                 "target":"state"
@@ -289,7 +289,7 @@ TEST_CASE("SDK State Retreival", "[sdk][state]")
 	const char* msg = R"({
             "data": {
                 "state": {
-                    "name": "health", 
+                    "name": "health",
                     "value": 100.99
                 }
             },
@@ -305,7 +305,7 @@ TEST_CASE("SDK State Retreival", "[sdk][state]")
 	msg = R"({
         "data": {
             "state": {
-                "name": "health", 
+                "name": "health",
                 "value": 200.99
             }
         },
@@ -330,15 +330,15 @@ TEST_CASE("SDK Update State", "[sdk][state]")
 	sdk.ForeachPayload([](const gamelink::Payload* send) {
 		REQUIRE(JSONEquals(send->data,
 						   R"({
-            "action": "patch", 
+            "action": "patch",
             "data": {
                 "state_id": "channel",
                 "state": [{
-                    "op": "replace", 
-                    "path": "/name", 
+                    "op": "replace",
+                    "path": "/name",
                     "value": "whatever"
                 }]
-            }, 
+            },
             "params":{
                 "request_id":65535,
                 "target":"state"
@@ -356,12 +356,12 @@ TEST_CASE("SDK Update array", "[sdk][state][target]")
 
 	sdk.UpdateStateWithArray(gamelink::StateTarget::Channel, gamelink::Operation::Add, "/rolls", &integerRoll, &integerRoll + 1);
 	validateSinglePayload(sdk, R"({
-		"action": "patch", 
-		"data": { 
-			"state_id": "channel", 
-			"state": [{ 
-				"op": "add", 
-				"path": "/rolls", 
+		"action": "patch",
+		"data": {
+			"state_id": "channel",
+			"state": [{
+				"op": "add",
+				"path": "/rolls",
 				"value": [1]
 			}]
 		},
@@ -373,12 +373,12 @@ TEST_CASE("SDK Update array", "[sdk][state][target]")
 
 	sdk.UpdateStateWithArray(gamelink::StateTarget::Channel, gamelink::Operation::Add, "/rolls", &stringRoll, &stringRoll + 1);
 	validateSinglePayload(sdk, R"({
-		"action": "patch", 
-		"data": { 
-			"state_id": "channel", 
-			"state": [{ 
-				"op": "add", 
-				"path": "/rolls", 
+		"action": "patch",
+		"data": {
+			"state_id": "channel",
+			"state": [{
+				"op": "add",
+				"path": "/rolls",
 				"value": ["world"]
 			}]
 		},
@@ -414,15 +414,15 @@ TEST_CASE("SDK Subscription", "[sdk][state][subscription]")
 
 	const char* message = R"({
         "meta": {
-            "action": "update", 
+            "action": "update",
             "target": "channel"
-        }, 
+        },
         "data": {
             "state": {
-                "mana": 100, 
-                "dps": 10562121, 
+                "mana": 100,
+                "dps": 10562121,
                 "position": {
-                    "x": 12, 
+                    "x": 12,
                     "y": 34
                 }
             }
@@ -436,12 +436,12 @@ TEST_CASE("SDK Subscription", "[sdk][state][subscription]")
 	// Show errors go through correctly.
 	message = R"({
         "meta": {
-            "action": "update", 
+            "action": "update",
             "target": "channel"
-        }, 
+        },
         "errors": [{
-            "title": "oh no", 
-            "code": 404, 
+            "title": "oh no",
+            "code": 404,
             "detail": "not found"
         }]
     })";
@@ -452,9 +452,9 @@ TEST_CASE("SDK Subscription", "[sdk][state][subscription]")
 	// Show that other updates don't trigger a state update
 	message = R"({
         "meta": {
-            "action": "update", 
+            "action": "update",
             "target": "poll"
-        }, 
+        },
         "data": {}
     })";
 
@@ -468,12 +468,12 @@ TEST_CASE("SDK Subscription", "[sdk][state][subscription]")
 	// Reiterate the error message
 	message = R"({
         "meta": {
-            "action": "update", 
+            "action": "update",
             "target": "channel"
-        }, 
+        },
         "errors": [{
-            "title": "oh no", 
-            "code": 404, 
+            "title": "oh no",
+            "code": 404,
             "detail": "not found"
         }]
     })";
@@ -493,15 +493,15 @@ TEST_CASE("PatchList equality", "[state]")
 	})"));
 
 	validateSinglePayload(sdk, R"({
-		"action": "patch", 
+		"action": "patch",
 		"data": {
 			"state_id": "channel",
 			"state": [
 				{ "op": "add", "path": "/character", "value": { "class": "wizard" }}
 			]
-		}, 
+		},
 		"params": {
-			"request_id": 65535, 
+			"request_id": 65535,
 			"target": "state"
 		}
 	})");
@@ -513,15 +513,15 @@ TEST_CASE("PatchList equality", "[state]")
 	sdk.UpdateStateWithPatchList(gamelink::StateTarget::Channel, list);
 
 	validateSinglePayload(sdk, R"({
-		"action": "patch", 
+		"action": "patch",
 		"data": {
 			"state_id": "channel",
 			"state": [
 				{ "op": "add", "path": "/character", "value": { "class": "wizard" }}
 			]
-		}, 
+		},
 		"params": {
-			"request_id": 65535, 
+			"request_id": 65535,
 			"target": "state"
 		}
 	})");
@@ -569,67 +569,67 @@ TEST_CASE("Update state", "[state]")
 		"class": "wizard"
 	})"));
 	validateSinglePayload(sdk, R"({
-		"action": "patch", 
+		"action": "patch",
 		"data": {
 			"state_id": "channel",
 			"state": [
 				{ "op": "add", "path": "/character", "value": { "class": "wizard" }}
 			]
-		}, 
+		},
 		"params": {
-			"request_id": 65535, 
+			"request_id": 65535,
 			"target": "state"
 		}
 	})");
 
 	sdk.UpdateStateWithBoolean(gamelink::StateTarget::Channel, gamelink::Operation::Add, "/b", false);
 	validateSinglePayload(sdk, R"({
-		"action": "patch", 
+		"action": "patch",
 		"data": {
 			"state_id": "channel",
 			"state": [
 				{ "op": "add", "path": "/b", "value": false }
 			]
-		}, 
+		},
 		"params": {
-			"request_id": 65535, 
+			"request_id": 65535,
 			"target": "state"
 		}
 	})");
 
 	sdk.UpdateStateWithDouble(gamelink::StateTarget::Channel, gamelink::Operation::Add, "/b", 44.15);
 	validateSinglePayload(sdk, R"({
-		"action": "patch", 
+		"action": "patch",
 		"data": {
 			"state_id": "channel",
 			"state": [
 				{ "op": "add", "path": "/b", "value": 44.15 }
 			]
-		}, 
+		},
 		"params": {
-			"request_id": 65535, 
+			"request_id": 65535,
 			"target": "state"
 		}
 	})");
 
 	sdk.UpdateStateWithInteger(gamelink::StateTarget::Channel, gamelink::Operation::Add, "/b", -100);
 	validateSinglePayload(sdk, R"({
-		"action": "patch", 
+		"action": "patch",
 		"data": {
 			"state_id": "channel",
 			"state": [
 				{ "op": "add", "path": "/b", "value": -100 }
 			]
-		}, 
+		},
 		"params": {
-			"request_id": 65535, 
+			"request_id": 65535,
 			"target": "state"
 		}
 	})");
 
 	sdk.UpdateStateWithLiteral(gamelink::StateTarget::Channel, gamelink::Operation::Add, "/b", R"([{ "literal": "json" }])");
 	validateSinglePayload(sdk, R"({
-		"action": "patch", 
+		"action": "patch",
 		"data": {
 			"state_id": "channel",
 			"state": [
@@ -637,39 +637,39 @@ TEST_CASE("Update state", "[state]")
 					{ "literal": "json" }
 				]}
 			]
-		}, 
+		},
 		"params": {
-			"request_id": 65535, 
+			"request_id": 65535,
 			"target": "state"
 		}
 	})");
 
 	sdk.UpdateStateWithNull(gamelink::StateTarget::Channel, gamelink::Operation::Add, "/b");
 	validateSinglePayload(sdk, R"({
-		"action": "patch", 
+		"action": "patch",
 		"data": {
 			"state_id": "channel",
 			"state": [
 				{ "op": "add", "path": "/b", "value": null }
 			]
-		}, 
+		},
 		"params": {
-			"request_id": 65535, 
+			"request_id": 65535,
 			"target": "state"
 		}
 	})");
 
 	sdk.UpdateStateWithString(gamelink::StateTarget::Channel, gamelink::Operation::Add, "/b", "Gandalf");
 	validateSinglePayload(sdk, R"({
-		"action": "patch", 
+		"action": "patch",
 		"data": {
 			"state_id": "channel",
 			"state": [
 				{ "op": "add", "path": "/b", "value": "Gandalf" }
 			]
-		}, 
+		},
 		"params": {
-			"request_id": 65535, 
+			"request_id": 65535,
 			"target": "state"
 		}
 	})");
@@ -686,15 +686,15 @@ TEST_CASE("Update state with patch list", "[state]")
 		sdk.UpdateStateWithPatchList(gamelink::StateTarget::Channel, list);
 
 		validateSinglePayload(sdk, R"({
-			"action": "patch", 
+			"action": "patch",
 			"data": {
 				"state_id": "channel",
 				"state": [
 					{ "op": "add", "path": "/character", "value": { "class": "wizard" }}
 				]
-			}, 
+			},
 			"params": {
-				"request_id": 65535, 
+				"request_id": 65535,
 				"target": "state"
 			}
 		})");
@@ -706,15 +706,15 @@ TEST_CASE("Update state with patch list", "[state]")
 		sdk.UpdateStateWithPatchList(gamelink::StateTarget::Channel, list);
 
 		validateSinglePayload(sdk, R"({
-			"action": "patch", 
+			"action": "patch",
 			"data": {
 				"state_id": "channel",
 				"state": [
 					{ "op": "add", "path": "/b", "value": false }
 				]
-			}, 
+			},
 			"params": {
-				"request_id": 65535, 
+				"request_id": 65535,
 				"target": "state"
 			}
 		})");
@@ -725,15 +725,15 @@ TEST_CASE("Update state with patch list", "[state]")
 		sdk.UpdateStateWithPatchList(gamelink::StateTarget::Channel, list);
 
 		validateSinglePayload(sdk, R"({
-			"action": "patch", 
+			"action": "patch",
 			"data": {
 				"state_id": "channel",
 				"state": [
 					{ "op": "add", "path": "/b", "value": 44.15 }
 				]
-			}, 
+			},
 			"params": {
-				"request_id": 65535, 
+				"request_id": 65535,
 				"target": "state"
 			}
 		})");
@@ -744,15 +744,15 @@ TEST_CASE("Update state with patch list", "[state]")
 		sdk.UpdateStateWithPatchList(gamelink::StateTarget::Channel, list);
 
 		validateSinglePayload(sdk, R"({
-			"action": "patch", 
+			"action": "patch",
 			"data": {
 				"state_id": "channel",
 				"state": [
 					{ "op": "add", "path": "/b", "value": -100 }
 				]
-			}, 
+			},
 			"params": {
-				"request_id": 65535, 
+				"request_id": 65535,
 				"target": "state"
 			}
 		})");
@@ -763,7 +763,7 @@ TEST_CASE("Update state with patch list", "[state]")
 		sdk.UpdateStateWithPatchList(gamelink::StateTarget::Channel, list);
 
 		validateSinglePayload(sdk, R"({
-			"action": "patch", 
+			"action": "patch",
 			"data": {
 				"state_id": "channel",
 				"state": [
@@ -771,9 +771,9 @@ TEST_CASE("Update state with patch list", "[state]")
 						{ "literal": "json" }
 					]}
 				]
-			}, 
+			},
 			"params": {
-				"request_id": 65535, 
+				"request_id": 65535,
 				"target": "state"
 			}
 		})");
@@ -784,15 +784,15 @@ TEST_CASE("Update state with patch list", "[state]")
 		sdk.UpdateStateWithPatchList(gamelink::StateTarget::Channel, list);
 
 		validateSinglePayload(sdk, R"({
-			"action": "patch", 
+			"action": "patch",
 			"data": {
 				"state_id": "channel",
 				"state": [
 					{ "op": "add", "path": "/b", "value": null }
 				]
-			}, 
+			},
 			"params": {
-				"request_id": 65535, 
+				"request_id": 65535,
 				"target": "state"
 			}
 		})");
@@ -803,15 +803,15 @@ TEST_CASE("Update state with patch list", "[state]")
 		sdk.UpdateStateWithPatchList(gamelink::StateTarget::Channel, list);
 
 		validateSinglePayload(sdk, R"({
-			"action": "patch", 
+			"action": "patch",
 			"data": {
 				"state_id": "channel",
 				"state": [
 					{ "op": "add", "path": "/b", "value": "Gandalf" }
 				]
-			}, 
+			},
 			"params": {
-				"request_id": 65535, 
+				"request_id": 65535,
 				"target": "state"
 			}
 		})");

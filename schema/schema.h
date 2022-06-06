@@ -14,4 +14,5 @@
 #include "datastream.h"
 #include "game_config.h"
 #include "drops.h"
+#include "matchmaking.h"
 #endif

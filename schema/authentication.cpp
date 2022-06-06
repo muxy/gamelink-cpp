@@ -26,19 +26,25 @@ namespace gamelink
 			data.client_id = clientId;
 		}
 
-		User::User(string jwt, string refreshToken)
+		User::User(string jwt, string refreshToken, string twitchName)
 			: jwt(std::move(jwt))
 			, refreshToken(std::move(refreshToken))
+			, twitchName(std::move(twitchName))
 		{
 		}
-		const string& User::GetJWT() const 
-		{ 
-			return jwt; 
+		const string& User::GetJWT() const
+		{
+			return jwt;
 		}
-		
-		const string& User::GetRefreshToken() const 
-		{ 
-			return refreshToken; 
+
+		const string& User::GetRefreshToken() const
+		{
+			return refreshToken;
+		}
+
+		const string& User::GetTwitchName() const
+		{
+			return twitchName;
 		}
 	}
 }
