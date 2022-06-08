@@ -54,6 +54,23 @@ namespace gamelink
 			/// Creates an UnsubscribeMatchmakingRequest.
 			UnsubscribeMatchmakingRequest();
 		};
+
+		struct MUXY_GAMELINK_API ClearMatchmakingRequest : SendEnvelope<EmptyBody>
+		{
+			ClearMatchmakingRequest();
+		};
+
+		struct MUXY_GAMELINK_API MatchmakingIDBody
+		{
+			string id;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(MatchmakingIDBody, "id", id);
+		};
+
+		struct MUXY_GAMELINK_API RemoveMatchmakingEntryRequest : SendEnvelope<MatchmakingIDBody>
+		{
+			explicit RemoveMatchmakingEntryRequest(const string& id);
+		};
 	}
 }
 

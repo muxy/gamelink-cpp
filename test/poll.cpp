@@ -184,60 +184,51 @@ TEST_CASE("SDK Poll Creation With Options", "[sdk][poll][creation]")
 	sdk.CreatePollWithConfiguration("test-poll", "Me or Them?", config, {"Me", "Them"});
 	REQUIRE(sdk.HasPayloads());
 
-	sdk.ForeachPayload([](const gamelink::Payload* send) {
-		REQUIRE(JSONEquals(send->data,
-						   R"({
-				"action":"create",
-				"data":{
-					"options":["Me","Them"],
-					"poll_id":"test-poll",
-					"prompt":"Me or Them?",
-					"config": {
-						"disabled": true,
-						"distinctOptionsPerUser": 2,
-						"votesPerOption": 1000,
-						"totalVotesPerUser": 1000,
-						"userIDVoting": true,
-						"startsAt": 10,
-						"endsAt": 20
-					}
-				},
-				"params":{
-					"request_id":65535,
-					"target":"poll"
-				}
-			})"));
-	});
-
+	validateSinglePayload(sdk, R"({
+		"action":"create",
+		"data":{
+			"options":["Me","Them"],
+			"poll_id":"test-poll",
+			"prompt":"Me or Them?",
+			"config": {
+				"disabled": true,
+				"distinctOptionsPerUser": 2,
+				"votesPerOption": 1000,
+				"totalVotesPerUser": 1000,
+				"userIDVoting": true,
+				"startsAt": 10,
+				"endsAt": 20
+			}
+		},
+		"params":{
+			"request_id":65535,
+			"target":"poll"
+		}
+	})");
 
 	std::vector<gamelink::string> options = {"Me", "Them"};
 	sdk.CreatePollWithConfiguration("test-poll", "Me or Them?", config, options.data(), options.data() + 2);
-	REQUIRE(sdk.HasPayloads());
-
-	sdk.ForeachPayload([](const gamelink::Payload* send) {
-		REQUIRE(JSONEquals(send->data,
-						   R"({
-				"action":"create",
-				"data":{
-					"options":["Me","Them"],
-					"poll_id":"test-poll",
-					"prompt":"Me or Them?",
-					"config": {
-						"disabled": true,
-						"multipleVotes": true,
-						"userIDVoting": true,
-						"startsAt": 10,
-						"endsAt": 20
-					}
-				},
-				"params":{
-					"request_id":65535,
-					"target":"poll"
-				}
-			})"));
-	});
-
-	REQUIRE(!sdk.HasPayloads());
+	validateSinglePayload(sdk, R"({
+		"action":"create",
+		"data":{
+			"options":["Me","Them"],
+			"poll_id":"test-poll",
+			"prompt":"Me or Them?",
+			"config": {
+				"disabled": true,
+				"distinctOptionsPerUser": 2,
+				"votesPerOption": 1000,
+				"totalVotesPerUser": 1000,
+				"userIDVoting": true,
+				"startsAt": 10,
+				"endsAt": 20
+			}
+		},
+		"params":{
+			"request_id":65535,
+			"target":"poll"
+		}
+	})");
 }
 
 TEST_CASE("SDK Poll Get Results", "[sdk][poll][results]")

@@ -1367,35 +1367,49 @@ namespace gamelink
 		/// @param[in] id A handle obtained from calling OnDatastream. Invalid handles are ignored.
 		void DetachOnDatastream(uint32_t);
 
-		/// Sends a request to subscribe to matchmaking queue pop messages.
-		/// @return RequestId of the generated request
-		RequestId SubscribeToMatchmakingQueuePop();
-
-		/// Sends a request to unsubscribe from matchmaking queue pop messages.
-		/// @return RequestId of the generated request
-		RequestId UnsubscribeFromMatchmakingQueuePop();
-
-		/// Sets an OnMatchmakingQueuePop callback. This callback is invoked when a matchmaking queue
-		/// pop message is received.
-		/// You must call SubscribeToMatchmakingQueuePop before any callbacks will be invoked.
+		/// Clears the matchmaking queue
 		///
-		/// @param[in] callback Callback to invoke when a queue pop message is received.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnMatchmakingQueuePop
-		uint32_t OnMatchmakingQueuePop(std::function<void(const schema::MatchmakingUpdate&)> callback);
+		/// @return RequestId of the generated request
+		RequestId ClearMatchmakingQueue();
 
-		/// Sets an OnMatchmakingQueuePop callback. This callback is invoked when a matchmaking queue
-		/// pop message is received.
-		/// You must call SubscribeToMatchmakingQueuePop before any callbacks will be invoked.
+		/// Removes an entry from the matchmaking queue.
+		/// This is usually done after receiving a callback from OnMatchmakingQueueInvite
+		/// to show that the game client has acknowledged and invited the user.
 		///
-		/// @param[in] callback Callback to invoke when a queue pop message is received.
+		/// @param[in] twitchID The twitchID of of the MatchmakingInformation entry to remove
+		///                     from the queue
+		/// @return RequestId of the generated request
+		RequestId RemoveMatchmakingEntry(const string& twitchID);
+
+		/// Sends a request to subscribe to matchmaking queue invite messages.
+		/// @return RequestId of the generated request
+		RequestId SubscribeToMatchmakingQueueInvite();
+
+		/// Sends a request to unsubscribe from matchmaking queue invite messages.
+		/// @return RequestId of the generated request
+		RequestId UnsubscribeFromMatchmakingQueueInvite();
+
+		/// Sets an OnMatchmakingQueueInvite callback. This callback is invoked when a matchmaking queue
+		/// invite message is received.
+		/// You must call SubscribeToMatchmakingQueueInvite before any callbacks will be invoked.
+		///
+		/// @param[in] callback Callback to invoke when a queue invite message is received.
+		/// @return Returns an integer handle to the callback, to be used in DetachOnMatchmakingQueueInvite
+		uint32_t OnMatchmakingQueueInvite(std::function<void(const schema::MatchmakingUpdate&)> callback);
+
+		/// Sets an OnMatchmakingQueueInvite callback. This callback is invoked when a matchmaking queue
+		/// invite message is received.
+		/// You must call SubscribeToMatchmakingQueueInvite before any callbacks will be invoked.
+		///
+		/// @param[in] callback Callback to invoke when a queue invite message is received.
 		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnMatchmakingQueuePop
-		uint32_t OnMatchmakingQueuePop(void (callback)(void*, const schema::MatchmakingUpdate&), void* user);
+		/// @return Returns an integer handle to the callback, to be used in DetachOnMatchmakingQueueInvite
+		uint32_t OnMatchmakingQueueInvite(void (callback)(void*, const schema::MatchmakingUpdate&), void* user);
 
-		/// Detaches an OnMatchmakingQueuePop callback.
+		/// Detaches an OnMatchmakingQueueInvite callback.
 		///
-		/// @param[in] id A handle obtained from calling OnMatchmakingQueuePop. Invalid handles are ignored.
-		void DetachOnMatchmakingQueuePop(uint32_t id);
+		/// @param[in] id A handle obtained from calling OnMatchmakingQueueInvite. Invalid handles are ignored.
+		void DetachOnMatchmakingQueueInvite(uint32_t id);
 	private:
 		void debugLogPayload(const Payload*);
 

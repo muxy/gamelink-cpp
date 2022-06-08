@@ -7,11 +7,11 @@ TEST_CASE("Send subscribe and unsubscribe from matchmaking", "[matchmaking]")
 {
 	gamelink::SDK sdk;
 
-	sdk.SubscribeToMatchmakingQueuePop();
+	sdk.SubscribeToMatchmakingQueueInvite();
 	validateSinglePayload(sdk, R"({
 		"action": "subscribe",
 		"data": {
-			"operation": "pop"
+			"operation": "invite"
 		},
 		"params": {
 			"request_id": 65535,
@@ -19,11 +19,32 @@ TEST_CASE("Send subscribe and unsubscribe from matchmaking", "[matchmaking]")
 		}
 	})");
 
-	sdk.UnsubscribeFromMatchmakingQueuePop();
+	sdk.UnsubscribeFromMatchmakingQueueInvite();
 	validateSinglePayload(sdk, R"({
 		"action": "unsubscribe",
 		"data": {
-			"operation": "pop"
+			"operation": "invite"
+		},
+		"params": {
+			"request_id": 65535,
+			"target": "matchmaking"
+		}
+	})");
+
+	sdk.ClearMatchmakingQueue();
+	validateSinglePayload(sdk, R"({
+		"action": "clear",
+		"params": {
+			"request_id": 65535,
+			"target": "matchmaking"
+		}
+	})");
+
+	sdk.RemoveMatchmakingEntry("foobar");
+	validateSinglePayload(sdk, R"({
+		"action": "remove",
+		"data": {
+			"id": "foobar"
 		},
 		"params": {
 			"request_id": 65535,
@@ -37,7 +58,7 @@ TEST_CASE("Matchmaking callback is invoked with queryable data", "[matchmaking]"
 	gamelink::SDK sdk;
 
 	bool called = false;
-	sdk.OnMatchmakingQueuePop([&](const gamelink::schema::MatchmakingUpdate& update)
+	sdk.OnMatchmakingQueueInvite([&](const gamelink::schema::MatchmakingUpdate& update)
 	{
 		REQUIRE(update.data.data["mmid"] == "some-matchmaking-id");
 		REQUIRE(update.data.bitsSpent == 12);
