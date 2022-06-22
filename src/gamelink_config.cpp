@@ -40,13 +40,32 @@ namespace gamelink
 
     RequestId SDK::SubscribeToConfigurationChanges(ConfigTarget target)
     {
-        schema::SubscribeToConfigRequest req(target);
-        return queuePayload(req);
+		if (!IsValidConfigTarget(target))
+		{
+			InvokeOnDebugMessage("SubscribeToConfigurationChanges: target value out of bounds");
+			return ANY_REQUEST_ID;
+		}
+
+		if (_subscriptionSets.canRegisterConfigurationChanges(target))
+		{
+			schema::SubscribeToConfigRequest payload(target);
+			RequestId req = queuePayload(payload);
+
+			_subscriptionSets.registerConfigurationChanges(target);
+			return req;
+		}
+
+		char buffer[128];
+		snprintf(buffer, 128, "SubscribeToConfigurationChanges: duplicated subscription call with target=%s", TARGET_STRINGS[static_cast<int>(target)]);
+		InvokeOnDebugMessage(buffer);
+
+		return ANY_REQUEST_ID;
     }
 
     RequestId SDK::UnsubscribeFromConfigurationChanges(ConfigTarget target)
     {
         schema::UnsubscribeFromConfigRequest req(target);
+		_subscriptionSets.unregisterConfigurationChanges(target);
         return queuePayload(req);
     }
 

@@ -16,7 +16,7 @@
 	#include "gamelink_single.hpp"
 
 	This file also automatically includes nlohmann::json.
-	If you have an existing version of nlohmann::json, #define MUXY_NO_JSON_INCLUDE 
+	If you have an existing version of nlohmann::json, #define MUXY_NO_JSON_INCLUDE
 	to remove the one included in this file.
 
 	Exportable functions and types are annotated with MUXY_GAMELINK_API.
@@ -48,7 +48,7 @@
 #include MUXY_GAMELINK_CUSTOM_STRING_INCLUDE
 #endif
 
-// Support custom lock types. 
+// Support custom lock types.
 #ifndef MUXY_GAMELINK_CUSTOM_LOCK_TYPE
 #include <mutex>
 #define MUXY_GAMELINK_CUSTOM_LOCK_TYPE std::mutex
@@ -67,11 +67,11 @@ namespace gamelink
 	///     * Be Copy constructable and copy assignable.
 	///     * Be Move constructable and move assignable.
 	///     * Provide a constructor from a null-terminated c-string of chars
-	///     * Provide const operator== with another const reference of the string type. 
-	///     * Provide a const .size() that returns an integer of the length of the string, 
+	///     * Provide const operator== with another const reference of the string type.
+	///     * Provide a const .size() that returns an integer of the length of the string,
 	///       excluding any null terminator. This should return an uint32_t.
 	///     * Provide a const .c_str() that returns a pointer to the first element of a
-	///       null-terminated array of utf8 encoded chars. These characters should 
+	///       null-terminated array of utf8 encoded chars. These characters should
 	///       be valid until either the string goes out of scope or is modified.
 	typedef MUXY_GAMELINK_CUSTOM_STRING_TYPE string;
 

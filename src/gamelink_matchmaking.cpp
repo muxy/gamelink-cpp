@@ -4,13 +4,23 @@ namespace gamelink
 {
 	RequestId SDK::SubscribeToMatchmakingQueueInvite()
 	{
-		schema::SubscribeMatchmakingRequest payload;
-		return queuePayload(payload);
+		if (_subscriptionSets.canRegisterMatchmakingQueueInvite())
+		{
+			schema::SubscribeMatchmakingRequest payload;
+			RequestId req = queuePayload(payload);
+
+			_subscriptionSets.registerMatchmakingQueueInvite();
+			return req;
+		}
+
+		InvokeOnDebugMessage("SubscribeToMatchmakingQueueInvite: duplicated subscription call");
+		return ANY_REQUEST_ID;
 	}
 
 	RequestId SDK::UnsubscribeFromMatchmakingQueueInvite()
 	{
 		schema::UnsubscribeMatchmakingRequest payload;
+		_subscriptionSets.unregisterMatchmakingQueueInvite();
 		return queuePayload(payload);
 	}
 

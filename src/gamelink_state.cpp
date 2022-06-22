@@ -30,7 +30,7 @@ namespace gamelink
 		return queuePayload(payload);
 	}
 
-	RequestId SDK::ClearState(StateTarget target) 
+	RequestId SDK::ClearState(StateTarget target)
 	{
 		return SetState(target, nlohmann::json::object());
 	}
@@ -60,13 +60,33 @@ namespace gamelink
 
 	RequestId SDK::SubscribeToStateUpdates(StateTarget target)
 	{
-		schema::SubscribeStateRequest payload(target);
-		return queuePayload(payload);
+		if (!IsValidStateTarget(target))
+		{
+			InvokeOnDebugMessage("SubscribeToStateUpdates: target value out of bounds");
+			return ANY_REQUEST_ID;
+		}
+
+		if (_subscriptionSets.canRegisterStateUpdate(target))
+		{
+			schema::SubscribeStateRequest payload(target);
+			RequestId req = queuePayload(payload);
+
+			_subscriptionSets.registerStateUpdates(target);
+			return req;
+		}
+
+		char buffer[128];
+		snprintf(buffer, 128, "SubscribeToStateUpdates: duplicated subscription call with target=%s", STATETARGET_STRINGS[static_cast<int>(target)]);
+		InvokeOnDebugMessage(buffer);
+
+		return ANY_REQUEST_ID;
 	}
 
 	RequestId SDK::UnsubscribeFromStateUpdates(StateTarget target)
 	{
 		schema::UnsubscribeStateRequest payload(target);
+		_subscriptionSets.unregisterStateUpdates(target);
+
 		return queuePayload(payload);
 	}
 
@@ -264,7 +284,7 @@ namespace gamelink
 		lock.unlock();
 	}
 
-	void PatchList::UpdateStateWithEmptyArray(Operation operation, const string& path) 
+	void PatchList::UpdateStateWithEmptyArray(Operation operation, const string& path)
 	{
 		schema::PatchOperation op;
 		op.operation = OPERATION_STRINGS[static_cast<int>(operation)];
