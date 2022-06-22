@@ -4,8 +4,20 @@ namespace gamelink
 {
 	RequestId SDK::SubscribeToSKU(const string& sku)
 	{
-		schema::SubscribeTransactionsRequest payload(sku);
-		return queuePayload(payload);
+		if (_subscriptionSets.canRegisterSKU(sku))
+		{
+			schema::SubscribeTransactionsRequest payload(sku);
+			RequestId req = queuePayload(payload);
+
+			_subscriptionSets.registerSKU(sku);
+			return req;
+		}
+
+		char buffer[128];
+		snprintf(buffer, 128, "SubscribeToSKU: duplicated subscription call with target=%s", sku.c_str());
+		InvokeOnDebugMessage(buffer);
+
+		return ANY_REQUEST_ID;
 	}
 
 	RequestId SDK::SubscribeToAllPurchases()
@@ -16,6 +28,7 @@ namespace gamelink
 	RequestId SDK::UnsubscribeFromSKU(const string& sku)
 	{
 		schema::UnsubscribeTransactionsRequest payload(sku);
+		_subscriptionSets.unregisterSKU(sku);
 		return queuePayload(payload);
 	}
 

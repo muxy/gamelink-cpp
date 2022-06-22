@@ -76,15 +76,28 @@ namespace gamelink
 		return queuePayload(packet);
 	}
 
+	RequestId SDK::SubscribeToPoll(const string& pollId)
+	{
+		if (_subscriptionSets.canRegisterPoll(pollId))
+		{
+			schema::SubscribePollRequest packet(pollId);
+			RequestId req = queuePayload(packet);
+
+			_subscriptionSets.registerPoll(pollId);
+			return req;
+		}
+
+		char buffer[128];
+		snprintf(buffer, 128, "SubscribeToPoll: duplicated subscription call with target=%s", pollId.c_str());
+		InvokeOnDebugMessage(buffer);
+
+		return ANY_REQUEST_ID;
+	}
+
 	RequestId SDK::UnsubscribeFromPoll(const string& pollId)
 	{
 		schema::UnsubscribePollRequest packet(pollId);
-		return queuePayload(packet);
-	}
-
-	RequestId SDK::SubscribeToPoll(const string& pollId)
-	{
-		schema::SubscribePollRequest packet(pollId);
+		_subscriptionSets.unregisterPoll(pollId);
 		return queuePayload(packet);
 	}
 

@@ -54,6 +54,8 @@ namespace gamelink
 		CONNECTION_STAGE_SANDBOX,
 	};
 
+	class SDK;
+
 	namespace detail
 	{
 		static const uint32_t CALLBACK_PERSISTENT = 0;
@@ -350,6 +352,66 @@ namespace gamelink
 				, finished(false)
 			{
 			}
+		};
+
+		enum class SubscriptionState
+		{
+			Inactive,
+			Active
+		};
+
+		// SubscriptionSets is used to hold the state of subscriptions
+		class SubscriptionSets
+		{
+			friend class gamelink::SDK;
+		public:
+			// All methods should be called under a lock.
+			void replay(SDK* sdk);
+
+			bool canRegisterSKU(const string& sku);
+			void registerSKU(const string& sku);
+			void unregisterSKU(const string& sku);
+
+			bool canRegisterPoll(const string& pid);
+			void registerPoll(const string& pid);
+			void unregisterPoll(const string& pid);
+
+			bool canRegisterConfigurationChanges(ConfigTarget target);
+			void registerConfigurationChanges(ConfigTarget target);
+			void unregisterConfigurationChanges(ConfigTarget target);
+
+			bool canRegisterStateUpdate(StateTarget target);
+			void registerStateUpdates(StateTarget target);
+			void unregisterStateUpdates(StateTarget target);
+
+			bool canRegisterDatastream();
+			void registerDatastream();
+			void unregisterDatastream();
+
+			bool canRegisterMatchmakingQueueInvite();
+			void registerMatchmakingQueueInvite();
+			void unregisterMatchmakingQueueInvite();
+		private:
+			struct Subscription
+			{
+				SubscriptionState state;
+			};
+
+			struct SubscriptionWithString : Subscription
+			{
+				string target;
+			};
+
+			std::vector<SubscriptionWithString> _polls;
+			std::vector<SubscriptionWithString> _skus;
+
+			Subscription _configurationChanges[static_cast<int>(ConfigTarget::ConfigTargetCount)];
+			Subscription _stateSubscriptions[static_cast<int>(StateTarget::StateCount)];
+
+			Subscription _datastream;
+			Subscription _matchmakingInvite;
+
+			gamelink::lock _lock;
 		};
 	}
 
@@ -1491,8 +1553,6 @@ namespace gamelink
 
 			Payload* payload = new Payload(gamelink::string(to_string(p).c_str()));
 
-			debugLogPayload(payload);
-
 			_lock.lock();
 			_queuedPayloads.push_back(payload);
 			_lock.unlock();
@@ -1519,6 +1579,7 @@ namespace gamelink
 		void removeFromBarrier(uint16_t);
 
 		std::vector<detail::TimedPoll> _timedPolls;
+		detail::SubscriptionSets _subscriptionSets;
 
 		detail::Callback<string> _onDebugMessage;
 
