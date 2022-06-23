@@ -70,14 +70,16 @@ namespace gamelink
 				: _id(UINT32_MAX)
 				, _targetRequestId(ANY_REQUEST_ID)
 				, _status(UINT32_MAX)
+				, _name("")
 				, _rawCallback(nullptr)
 				, _user(nullptr)
 			{
 			}
-			Callback(uint32_t id, RequestId targetRequestId, uint32_t status)
+			Callback(uint32_t id, RequestId targetRequestId, uint32_t status, string name)
 				: _id(id)
 				, _targetRequestId(targetRequestId)
 				, _status(status)
+				, _name(std::move(name))
 				, _rawCallback(nullptr)
 				, _user(nullptr)
 			{
@@ -137,7 +139,7 @@ namespace gamelink
 			uint32_t _id;
 			RequestId _targetRequestId;
 			uint32_t _status;
-
+			string _name;
 		private:
 			RawFunctionPointer _rawCallback;
 			void* _user;
@@ -173,7 +175,9 @@ namespace gamelink
 			uint32_t set(std::function<void(const T&)> fn, uint16_t requestId, uint32_t flags)
 			{
 				uint32_t id = nextID();
-				Callback<T>* cb = new Callback<T>(id, requestId, flags);
+				// Set a name that is fairly unlikely to be used in removeByname
+				// so that removeByName("") doesn't remove all callbacks by mistake.
+				Callback<T>* cb = new Callback<T>(id, requestId, flags, "??#_muxy");
 				cb->set(fn);
 
 				_lock.lock();
@@ -186,8 +190,38 @@ namespace gamelink
 			uint32_t set(RawFunctionPointer fn, void* user, uint16_t requestId, uint32_t flags)
 			{
 				uint32_t id = nextID();
-				Callback<T>* cb = new Callback<T>(id, requestId, flags);
+				Callback<T>* cb = new Callback<T>(id, requestId, flags, "??#_muxy");
 				cb->set(fn, user);
+
+				_lock.lock();
+				_callbacks.push_back(cb);
+				_lock.unlock();
+
+				return id;
+			}
+
+			uint32_t setUnique(string name, std::function<void(const T&)> fn, uint16_t requestId, uint32_t flags)
+			{
+				uint32_t id = nextID();
+				Callback<T>* cb = new Callback<T>(id, requestId, flags, name);
+				cb->set(fn);
+
+				removeByName(name);
+
+				_lock.lock();
+				_callbacks.push_back(cb);
+				_lock.unlock();
+
+				return id;
+			}
+
+			uint32_t setUnique(string name, RawFunctionPointer fn, void* user, uint16_t requestId, uint32_t flags)
+			{
+				uint32_t id = nextID();
+				Callback<T>* cb = new Callback<T>(id, requestId, flags, name);
+				cb->set(fn, user);
+
+				removeByName(name);
 
 				_lock.lock();
 				_callbacks.push_back(cb);
@@ -202,6 +236,19 @@ namespace gamelink
 				for (uint32_t i = 0; i < _callbacks.size(); ++i)
 				{
 					if (_callbacks[i]->_id == id)
+					{
+						_callbacks[i]->_status = CALLBACK_REMOVED;
+					}
+				}
+				_lock.unlock();
+			}
+
+			void removeByName(const string& name)
+			{
+				_lock.lock();
+				for (uint32_t i = 0; i < _callbacks.size(); ++i)
+				{
+					if (_callbacks[i]->_name == name)
 					{
 						_callbacks[i]->_status = CALLBACK_REMOVED;
 					}
@@ -299,7 +346,7 @@ namespace gamelink
 			TimedPoll(string pollId, float duration)
 				: pollId(pollId)
 				, duration(duration)
-				, onFinishCallback(0, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT)
+				, onFinishCallback(0, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT, string(""))
 				, finished(false)
 			{
 			}
@@ -1405,6 +1452,27 @@ namespace gamelink
 		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
 		/// @return Returns an integer handle to the callback, to be used in DetachOnMatchmakingQueueInvite
 		uint32_t OnMatchmakingQueueInvite(void (callback)(void*, const schema::MatchmakingUpdate&), void* user);
+
+		/// Sets an OnMatchmakingQueueInvite callback. This callback is invoked when a matchmaking queue
+		/// invite message is received. Any existing callbacks bound with the same name will
+		/// unbound before the new callback will be attached.
+		/// You must call SubscribeToMatchmakingQueueInvite before any callbacks will be invoked.
+		///
+		/// @param[in] name An arbitary name to associate with this callback.
+		/// @param[in] callback Callback to invoke when a queue invite message is received.
+		/// @return Returns an integer handle to the callback, to be used in DetachOnMatchmakingQueueInvite
+		uint32_t OnMatchmakingQueueInviteUnique(string name, std::function<void(const schema::MatchmakingUpdate&)> callback);
+
+		/// Sets an OnMatchmakingQueueInvite callback. This callback is invoked when a matchmaking queue
+		/// invite message is received. Any existing callbacks bound with the same name will
+		/// unbound before the new callback will be attached.
+		/// You must call SubscribeToMatchmakingQueueInvite before any callbacks will be invoked.
+		///
+		/// @param[in] name An arbitary name to associate with this callback.
+		/// @param[in] callback Callback to invoke when a queue invite message is received.
+		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
+		/// @return Returns an integer handle to the callback, to be used in DetachOnMatchmakingQueueInvite
+		uint32_t OnMatchmakingQueueInviteUnique(string name, void (callback)(void*, const schema::MatchmakingUpdate&), void* user);
 
 		/// Detaches an OnMatchmakingQueueInvite callback.
 		///

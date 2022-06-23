@@ -152,7 +152,8 @@ namespace gamelink
 	SDK::SDK()
 		: _user(NULL)
 		, _currentRequestId(1)
-		, _onDebugMessage(0, 0, detail::CALLBACK_PERSISTENT){};
+		, _onDebugMessage(0, 0, detail::CALLBACK_PERSISTENT, string(""))
+	{}
 
 	SDK::~SDK()
 	{
