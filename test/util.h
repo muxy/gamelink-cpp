@@ -93,6 +93,8 @@ inline bool JSONEquals(const ConstrainedString& in, const ConstrainedString& exp
 
 inline void validateSinglePayload(gamelink::SDK& sdk, const std::string& p)
 {
+	REQUIRE(sdk.HasPayloads());
+
 	uint32_t count = 0;
 	sdk.ForeachPayload([p, &count](const gamelink::Payload* payload) {
 		REQUIRE(JSONEquals(payload->data, ConstrainedString(p.c_str())));
@@ -100,5 +102,6 @@ inline void validateSinglePayload(gamelink::SDK& sdk, const std::string& p)
 	});
 
 	REQUIRE(count == 1);
+	REQUIRE(!sdk.HasPayloads());
 }
 #endif

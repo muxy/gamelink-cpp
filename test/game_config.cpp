@@ -8,52 +8,40 @@ TEST_CASE("Get config", "[config]")
 {
 	gamelink::SDK sdk;
 	sdk.GetConfig(gamelink::ConfigTarget::Channel, [](const gamelink::schema::GetConfigResponse& resp) {});
+	validateSinglePayload(sdk, R"({
+		"action": "get",
+		"data": {
+			"config_id": "channel"
+		},
+		"params": {
+			"request_id": 65535,
+			"target": "config"
+		}
+	})");
 
-	sdk.ForeachPayload([](const gamelink::Payload* payload) {
-		REQUIRE(JSONEquals(payload->data,
-						   R"({
-            "action": "get", 
-            "data": {
-                "config_id": "channel"
-            }, 
-            "params": {
-                "request_id": 65535, 
-                "target": "config"
-            }
-        })"));
-	});
-
-	sdk.GetConfig(gamelink::ConfigTarget::Channel, [](const gamelink::schema::GetConfigResponse& resp) {});
-
-	sdk.ForeachPayload([](const gamelink::Payload* payload) {
-		REQUIRE(JSONEquals(payload->data,
-						   R"({
-            "action": "get", 
-            "data": {
-                "config_id": "extension"
-            }, 
-            "params": {
-                "request_id": 65535, 
-                "target": "config"
-            }
-        })"));
-	});
+	sdk.GetConfig(gamelink::ConfigTarget::Extension, [](const gamelink::schema::GetConfigResponse& resp) {});
+	validateSinglePayload(sdk, R"({
+		"action": "get",
+		"data": {
+			"config_id": "extension"
+		},
+		"params": {
+			"request_id": 65535,
+			"target": "config"
+		}
+	})");
 
 	sdk.GetCombinedConfig([](const gamelink::schema::GetCombinedConfigResponse& resp) {});
-
-	sdk.ForeachPayload([](const gamelink::Payload* payload) {
-		REQUIRE(JSONEquals(payload->data,
-						   R"({
-            "action": "get", 
-            "data": {
-                "config_id": "combined"
-            }, 
-            "params": {
-                "request_id": 65535, 
-                "target": "config"
-            }
-        })"));
-	});
+	validateSinglePayload(sdk, R"({
+		"action": "get",
+		"data": {
+			"config_id": "combined"
+		},
+		"params": {
+			"request_id": 65535,
+			"target": "config"
+		}
+	})");
 }
 
 TEST_CASE("Set Config", "[config]")
@@ -66,14 +54,14 @@ TEST_CASE("Set Config", "[config]")
 	sdk.ForeachPayload([](const gamelink::Payload* payload) {
 		REQUIRE(JSONEquals(payload->data,
 						   R"({
-            "action": "set", 
+            "action": "set",
             "data": {
                 "config": {
                     "hello": "world"
                 }
-            }, 
+            },
             "params": {
-                "request_id": 65535, 
+                "request_id": 65535,
                 "target": "config"
             }
         })"));
@@ -93,12 +81,12 @@ TEST_CASE("Get Config", "[config]")
 	sdk.ForeachPayload([](const gamelink::Payload* payload) {
 		REQUIRE(JSONEquals(payload->data,
 						   R"({
-            "action": "get", 
+            "action": "get",
             "data": {
                 "config_id": "channel"
-            }, 
+            },
             "params": {
-                "request_id": 65535, 
+                "request_id": 65535,
                 "target": "config"
             }
         })"));
@@ -123,7 +111,7 @@ TEST_CASE("Get Config", "[config]")
         "data": {
             "channel": {
                 "who": "down"
-            }, 
+            },
             "extension": {
                 "what": "up"
             },
@@ -153,12 +141,12 @@ TEST_CASE("Get Combined Config", "[config]")
 	sdk.ForeachPayload([](const gamelink::Payload* payload) {
 		REQUIRE(JSONEquals(payload->data,
 						   R"({
-            "action": "get", 
+            "action": "get",
             "data": {
                 "config_id": "combined"
-            }, 
+            },
             "params": {
-                "request_id": 65535, 
+                "request_id": 65535,
                 "target": "config"
             }
         })"));
@@ -184,7 +172,7 @@ TEST_CASE("Get Combined Config", "[config]")
             "config": {
                 "channel": {
                     "who": "down"
-                }, 
+                },
                 "extension": {
                     "what": "up"
                 }
@@ -212,12 +200,12 @@ TEST_CASE("Subscribe to config", "[config]")
 	sdk.ForeachPayload([](const gamelink::Payload* payload) {
 		REQUIRE(JSONEquals(payload->data,
 						   R"({
-            "action": "subscribe", 
+            "action": "subscribe",
             "data": {
                 "config_id": "channel"
-            }, 
+            },
             "params": {
-                "request_id": 65535, 
+                "request_id": 65535,
                 "target": "config"
             }
         })"));
@@ -242,7 +230,7 @@ TEST_CASE("Subscribe to config", "[config]")
         "data": {
             "channel": {
                 "who": "down"
-            }, 
+            },
             "extension": {
                 "what": "up"
             },
@@ -264,8 +252,8 @@ TEST_CASE("Subscribe to config", "[config]")
             "config_id": "channel"
         },
         "meta": {
-            "request_id": 123, 
-            "action": "update", 
+            "request_id": 123,
+            "action": "update",
             "target": "config"
         }
     })";
@@ -290,100 +278,100 @@ TEST_CASE("Update configuration", "[config]")
 		"class": "wizard"
 	})"));
 	validateSinglePayload(sdk, R"({
-		"action": "patch", 
+		"action": "patch",
 		"data": {
 			"config": [
 				{ "op": "add", "path": "/character", "value": { "class": "wizard" }}
 			]
-		}, 
+		},
 		"params": {
-			"request_id": 65535, 
+			"request_id": 65535,
 			"target": "config"
 		}
 	})");
 
 	sdk.UpdateChannelConfigWithBoolean(gamelink::Operation::Add, "/b", false);
 	validateSinglePayload(sdk, R"({
-		"action": "patch", 
+		"action": "patch",
 		"data": {
 			"config": [
 				{ "op": "add", "path": "/b", "value": false }
 			]
-		}, 
+		},
 		"params": {
-			"request_id": 65535, 
+			"request_id": 65535,
 			"target": "config"
 		}
 	})");
 
 	sdk.UpdateChannelConfigWithDouble(gamelink::Operation::Add, "/b", 44.15);
 	validateSinglePayload(sdk, R"({
-		"action": "patch", 
+		"action": "patch",
 		"data": {
 			"config": [
 				{ "op": "add", "path": "/b", "value": 44.15 }
 			]
-		}, 
+		},
 		"params": {
-			"request_id": 65535, 
+			"request_id": 65535,
 			"target": "config"
 		}
 	})");
 
 	sdk.UpdateChannelConfigWithInteger(gamelink::Operation::Add, "/b", -100);
 	validateSinglePayload(sdk, R"({
-		"action": "patch", 
+		"action": "patch",
 		"data": {
 			"config": [
 				{ "op": "add", "path": "/b", "value": -100 }
 			]
-		}, 
+		},
 		"params": {
-			"request_id": 65535, 
+			"request_id": 65535,
 			"target": "config"
 		}
 	})");
 
 	sdk.UpdateChannelConfigWithLiteral(gamelink::Operation::Add, "/b", R"([{ "literal": "json" }])");
 	validateSinglePayload(sdk, R"({
-		"action": "patch", 
+		"action": "patch",
 		"data": {
 			"config": [
 				{ "op": "add", "path": "/b", "value": [
 					{ "literal": "json" }
 				]}
 			]
-		}, 
+		},
 		"params": {
-			"request_id": 65535, 
+			"request_id": 65535,
 			"target": "config"
 		}
 	})");
 
 	sdk.UpdateChannelConfigWithNull(gamelink::Operation::Add, "/b");
 	validateSinglePayload(sdk, R"({
-		"action": "patch", 
+		"action": "patch",
 		"data": {
 			"config": [
 				{ "op": "add", "path": "/b", "value": null }
 			]
-		}, 
+		},
 		"params": {
-			"request_id": 65535, 
+			"request_id": 65535,
 			"target": "config"
 		}
 	})");
 
 	sdk.UpdateChannelConfigWithString(gamelink::Operation::Add, "/b", "Gandalf");
 	validateSinglePayload(sdk, R"({
-		"action": "patch", 
+		"action": "patch",
 		"data": {
 			"config": [
 				{ "op": "add", "path": "/b", "value": "Gandalf" }
 			]
-		}, 
+		},
 		"params": {
-			"request_id": 65535, 
+			"request_id": 65535,
 			"target": "config"
 		}
 	})");

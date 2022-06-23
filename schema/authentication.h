@@ -19,7 +19,7 @@ namespace gamelink
 			string client_id;
 		};
 		MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithPINRequestBody, "pin", pin, "client_id", client_id);
-		
+
 		struct MUXY_GAMELINK_API AuthenticateWithPINRequest : SendEnvelope<AuthenticateWithPINRequestBody>
 		{
 			/// Creates an authorization request.
@@ -34,7 +34,7 @@ namespace gamelink
 		{
 			string refresh;
 
-			/// Client ID, as obtained from Twitch. 
+			/// Client ID, as obtained from Twitch.
 			// TODO: Needs to be 'clientId' everywhere to match network as much as possible (when that change takes place, remove this when it does). NETWORK == camelCase
 			string client_id;
 		};
@@ -66,9 +66,13 @@ namespace gamelink
 			/// Signed JWT. Will expire.
 			string jwt;
 
+			/// Refresh token, used to reauth after the JWT expires.
 			string refresh;
+
+			/// Information about the channel the auth was done with
+			string twitch_name;
 		};
-		MUXY_GAMELINK_SERIALIZE_2(AuthenticateResponseBody, "jwt", jwt, "refresh", refresh);
+		MUXY_GAMELINK_SERIALIZE_3(AuthenticateResponseBody, "jwt", jwt, "refresh", refresh, "twitch_name", twitch_name);
 
 		struct MUXY_GAMELINK_API AuthenticateResponse : ReceiveEnvelope<AuthenticateResponseBody>
 		{
@@ -79,14 +83,16 @@ namespace gamelink
 		class MUXY_GAMELINK_API User
 		{
 		public:
-			User(string jwt, string refreshToken);
+			User(string jwt, string refreshToken, string twitchName);
 
 			const string& GetJWT() const;
 			const string& GetRefreshToken() const;
+			const string& GetTwitchName() const;
 			// string GetOpaqueID();
 		private:
 			string jwt;
 			string refreshToken;
+			string twitchName;
 		};
 	}
 }
