@@ -4,6 +4,22 @@ namespace gamelink
 {
 	namespace detail
 	{
+		SubscriptionSets::SubscriptionSets()
+		{
+			for (int i = 0; i < static_cast<int>(ConfigTarget::ConfigTargetCount); ++i)
+			{
+				_configurationChanges[i].state = SubscriptionState::Inactive;
+			}
+
+			for (int i = 0; i < static_cast<int>(StateTarget::StateCount); ++i)
+			{
+				_stateSubscriptions[i].state = SubscriptionState::Inactive;
+			}
+
+			_datastream.state = SubscriptionState::Inactive;;
+			_matchmakingInvite.state = SubscriptionState::Inactive;;
+		}
+
 		bool SubscriptionSets::canRegisterSKU(const string& sku)
 		{
 			_lock.lock();

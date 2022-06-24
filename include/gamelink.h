@@ -364,6 +364,7 @@ namespace gamelink
 		class SubscriptionSets
 		{
 			friend class gamelink::SDK;
+			SubscriptionSets();
 		public:
 			// All methods should be called under a lock.
 			void replay(SDK* sdk);
