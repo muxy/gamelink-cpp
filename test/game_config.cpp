@@ -51,21 +51,18 @@ TEST_CASE("Set Config", "[config]")
         "hello": "world"
     })"));
 
-	sdk.ForeachPayload([](const gamelink::Payload* payload) {
-		REQUIRE(JSONEquals(payload->data,
-						   R"({
-            "action": "set",
-            "data": {
-                "config": {
-                    "hello": "world"
-                }
-            },
-            "params": {
-                "request_id": 65535,
-                "target": "config"
-            }
-        })"));
-	});
+	validateSinglePayload(sdk, R"({
+		"action": "set",
+		"data": {
+			"config": {
+				"hello": "world"
+			}
+		},
+		"params": {
+			"request_id": 65535,
+			"target": "config"
+		}
+	})");
 }
 
 TEST_CASE("Get Config", "[config]")
@@ -78,19 +75,16 @@ TEST_CASE("Get Config", "[config]")
 		calls++;
 	});
 
-	sdk.ForeachPayload([](const gamelink::Payload* payload) {
-		REQUIRE(JSONEquals(payload->data,
-						   R"({
-            "action": "get",
-            "data": {
-                "config_id": "channel"
-            },
-            "params": {
-                "request_id": 65535,
-                "target": "config"
-            }
-        })"));
-	});
+	validateSinglePayload(sdk, R"({
+		"action": "get",
+		"data": {
+			"config_id": "channel"
+		},
+		"params": {
+			"request_id": 65535,
+			"target": "config"
+		}
+	})");
 
 	const char* msg = R"({
         "data": {
@@ -138,19 +132,16 @@ TEST_CASE("Get Combined Config", "[config]")
 		calls++;
 	});
 
-	sdk.ForeachPayload([](const gamelink::Payload* payload) {
-		REQUIRE(JSONEquals(payload->data,
-						   R"({
-            "action": "get",
-            "data": {
-                "config_id": "combined"
-            },
-            "params": {
-                "request_id": 65535,
-                "target": "config"
-            }
-        })"));
-	});
+	validateSinglePayload(sdk, R"({
+		"action": "get",
+		"data": {
+			"config_id": "combined"
+		},
+		"params": {
+			"request_id": 65535,
+			"target": "config"
+		}
+	})");
 
 	const char* msg = R"({
         "data": {
@@ -194,22 +185,19 @@ TEST_CASE("Subscribe to config", "[config]")
 	gamelink::SDK sdk;
 	uint32_t calls = 0;
 
-	uint32_t updateHandle = sdk.OnConfigUpdate([&](const gamelink::schema::ConfigUpdateResponse& resp) { calls++; });
+	uint32_t updateHandle = sdk.OnConfigUpdate().Add([&](const gamelink::schema::ConfigUpdateResponse& resp) { calls++; });
 
 	sdk.SubscribeToConfigurationChanges(gamelink::ConfigTarget::Channel);
-	sdk.ForeachPayload([](const gamelink::Payload* payload) {
-		REQUIRE(JSONEquals(payload->data,
-						   R"({
-            "action": "subscribe",
-            "data": {
-                "config_id": "channel"
-            },
-            "params": {
-                "request_id": 65535,
-                "target": "config"
-            }
-        })"));
-	});
+	validateSinglePayload(sdk, R"({
+		"action": "subscribe",
+		"data": {
+			"config_id": "channel"
+		},
+		"params": {
+			"request_id": 65535,
+			"target": "config"
+		}
+	})");
 
 	const char* msg = R"({
         "data": {
@@ -263,7 +251,7 @@ TEST_CASE("Subscribe to config", "[config]")
 	sdk.ReceiveMessage(msg3, strlen(msg3));
 	REQUIRE(calls == 3);
 
-	sdk.DetachOnConfigUpdate(updateHandle);
+	sdk.OnConfigUpdate().Remove(updateHandle);
 	sdk.ReceiveMessage(msg3, strlen(msg3));
 	sdk.ReceiveMessage(msg3, strlen(msg3));
 	sdk.ReceiveMessage(msg3, strlen(msg3));
@@ -277,6 +265,7 @@ TEST_CASE("Update configuration", "[config]")
 	sdk.UpdateChannelConfigWithObject(gamelink::Operation::Add, "/character", nlohmann::json::parse(R"({
 		"class": "wizard"
 	})"));
+
 	validateSinglePayload(sdk, R"({
 		"action": "patch",
 		"data": {

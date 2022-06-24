@@ -91,7 +91,7 @@ MGL_RequestId MuxyGameLink_UnsubscribeFromStateUpdates(MuxyGameLink GameLink, MG
 uint32_t MuxyGameLink_OnStateUpdate(MuxyGameLink GameLink, MGL_StateUpdateResponseCallback Callback, void* UserData)
 {
 	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
-	return Instance->OnStateUpdate([Callback, UserData](const schema::SubscribeStateUpdateResponse<nlohmann::json>& UpdateResponse) {
+	return Instance->OnStateUpdate().Add([Callback, UserData](const schema::SubscribeStateUpdateResponse<nlohmann::json>& UpdateResponse) {
 		MGL_Schema_StateUpdateResponse Response;
 		Response.Obj = &UpdateResponse;
 
@@ -102,7 +102,7 @@ uint32_t MuxyGameLink_OnStateUpdate(MuxyGameLink GameLink, MGL_StateUpdateRespon
 void MuxyGameLink_DetachOnStateUpdate(MuxyGameLink GameLink, uint32_t Id)
 {
 	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
-	Instance->DetachOnStateUpdate(Id);
+	Instance->OnStateUpdate().Remove(Id);
 }
 
 MGL_StateTarget MuxyGameLink_Schema_StateUpdateResponse_GetTarget(MGL_Schema_StateUpdateResponse Response)

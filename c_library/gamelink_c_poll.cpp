@@ -43,7 +43,7 @@ uint32_t MuxyGameLink_OnPollUpdate(MuxyGameLink GameLink, MGL_PollUpdateResponse
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
 
-	return SDK->OnPollUpdate([Callback, UserData](const schema::PollUpdateResponse& PollResp)
+	return SDK->OnPollUpdate().Add([Callback, UserData](const schema::PollUpdateResponse& PollResp)
 	{
 		MGL_Schema_PollUpdateResponse WPollResp;
 		WPollResp.Obj = &PollResp;
@@ -52,9 +52,9 @@ uint32_t MuxyGameLink_OnPollUpdate(MuxyGameLink GameLink, MGL_PollUpdateResponse
 }
 
 void MuxyGameLink_DetachOnPollUpdate(MuxyGameLink GameLink, uint32_t Id)
-{	
+{
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	SDK->DetachOnPollUpdate(Id);
+	SDK->OnPollUpdate().Remove(Id);
 }
 
 const char* MuxyGameLink_Schema_GetPollResponse_GetPollId(MGL_Schema_GetPollResponse PResp)
@@ -90,25 +90,25 @@ uint32_t MuxyGameLink_Schema_GetPollResponse_GetResultCount(MGL_Schema_GetPollRe
 int32_t MuxyGameLink_Schema_GetPollResponse_GetResultAt(MGL_Schema_GetPollResponse PResp, uint32_t Index)
 {
 	const schema::GetPollResponse* Response = static_cast<const schema::GetPollResponse*>(PResp.Obj);
-	return Response->data.results[Index];	
+	return Response->data.results[Index];
 }
 
 double MuxyGameLink_Schema_GetPollResponse_GetMean(MGL_Schema_GetPollResponse PResp)
 {
 	const schema::GetPollResponse* Response = static_cast<const schema::GetPollResponse*>(PResp.Obj);
-	return Response->data.mean;	
+	return Response->data.mean;
 }
 
 double MuxyGameLink_Schema_GetPollResponse_GetSum(MGL_Schema_GetPollResponse PResp)
 {
 	const schema::GetPollResponse* Response = static_cast<const schema::GetPollResponse*>(PResp.Obj);
-	return Response->data.sum;	
+	return Response->data.sum;
 }
 
 int32_t MuxyGameLink_Schema_GetPollResponse_GetCount(MGL_Schema_GetPollResponse PResp)
 {
 	const schema::GetPollResponse* Response = static_cast<const schema::GetPollResponse*>(PResp.Obj);
-	return Response->data.count;	
+	return Response->data.count;
 }
 
 

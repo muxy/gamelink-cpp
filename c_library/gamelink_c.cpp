@@ -16,7 +16,7 @@ char* MuxyGameLink_StrDup(const char *Str)
     }
     else
     {
-        Dst = (char*) malloc(1);  
+        Dst = (char*) malloc(1);
 		if (!Dst)
 		{
 			return nullptr;
@@ -30,10 +30,10 @@ char* MuxyGameLink_StrDup(const char *Str)
 
 char* MuxyGameLink_ProjectionWebsocketConnectionURL(const char* clientID, MGL_ConnectionStage stage, const char* projection, int projectionMajor, int projectionMinor, int projectionPatch)
 {
-	gamelink::string URL = gamelink::detail::ProjectionWebsocketConnectionURL(
+	gamelink::string URL = gamelink::ProjectionWebsocketConnectionURL(
 		gamelink::string(clientID),
-		static_cast<gamelink::ConnectionStage>(stage), 
-		gamelink::string(projection), 
+		static_cast<gamelink::ConnectionStage>(stage),
+		gamelink::string(projection),
 		projectionMajor, projectionMinor, projectionPatch);
 
 	return MuxyGameLink_StrDup(URL.c_str());
@@ -99,13 +99,13 @@ void MuxyGameLink_ForeachPayload(MuxyGameLink GameLink, MGL_PayloadCallback Call
 uint32_t MuxyGameLink_Payload_GetSize(MGL_Payload Payload)
 {
 	const gamelink::Payload* MGLPayload = static_cast<const gamelink::Payload*>(Payload.Obj);
-	return MGLPayload->data.size();
+	return MGLPayload->Length();
 }
 
 const char* MuxyGameLink_Payload_GetData(MGL_Payload Payload)
 {
 	const gamelink::Payload* MGLPayload = static_cast<const gamelink::Payload*>(Payload.Obj);
-	return MGLPayload->data.c_str();
+	return MGLPayload->Data();
 }
 // Payload end
 
@@ -114,7 +114,7 @@ MGL_Error MuxyGameLink_Schema_GetFirstError(void* Resp)
 {
 	const gamelink::schema::ReceiveEnvelopeCommon* Common = static_cast<gamelink::schema::ReceiveEnvelopeCommon*>(Resp);
 	const gamelink::schema::Error* MGLErr = gamelink::FirstError(*Common);
-	
+
 	MGL_Error WErr;
 	WErr.Obj = MGLErr;
 
@@ -262,7 +262,7 @@ uint32_t MuxyGameLink_OnDatastream(MuxyGameLink GameLink, MGL_DatastreamUpdateCa
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
 
-	uint32_t res = SDK->OnDatastream([Callback, UserData](const gamelink::schema::DatastreamUpdate& DatastreamUpdate) {
+	uint32_t res = SDK->OnDatastreamUpdate().Add([Callback, UserData](const gamelink::schema::DatastreamUpdate& DatastreamUpdate) {
 		MGL_Schema_DatastreamUpdate WDatastreamUpdate;
 		WDatastreamUpdate.Obj = &DatastreamUpdate;
 
@@ -275,7 +275,7 @@ uint32_t MuxyGameLink_OnDatastream(MuxyGameLink GameLink, MGL_DatastreamUpdateCa
 void MuxyGameLink_DetachOnDatastream(MuxyGameLink GameLink, uint32_t OnDatastreamHandle)
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	SDK->DetachOnDatastream(OnDatastreamHandle);
+	SDK->OnDatastreamUpdate().Remove(OnDatastreamHandle);
 }
 
 uint32_t MuxyGameLink_Schema_DatastreamUpdate_GetEventCount(MGL_Schema_DatastreamUpdate DatastreamUpdate)

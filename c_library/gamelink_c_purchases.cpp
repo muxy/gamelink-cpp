@@ -30,7 +30,7 @@ MGL_RequestId MuxyGameLink_UnsubscribeFromAllPurchases(MuxyGameLink GameLink)
 uint32_t MuxyGameLink_OnTransaction(MuxyGameLink GameLink, MGL_TransactionResponseCallback Callback, void* UserData)
 {
     gamelink::SDK *SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-    uint32_t res = SDK->OnTransaction([Callback, UserData](const gamelink::schema::TransactionResponse &TPBResp)
+    uint32_t res = SDK->OnTransaction().Add([Callback, UserData](const gamelink::schema::TransactionResponse &TPBResp)
     {
         MGL_Schema_TransactionResponse WTPBResp;
         WTPBResp.Obj = &TPBResp;
@@ -44,7 +44,7 @@ uint32_t MuxyGameLink_OnTransaction(MuxyGameLink GameLink, MGL_TransactionRespon
 void MuxyGameLink_DetachOnTransaction(MuxyGameLink GameLink, uint32_t id)
 {
     gamelink::SDK *SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-    SDK->DetachOnTransaction(id);
+    SDK->OnTransaction().Remove(id);
 }
 
 const char* MuxyGameLink_Schema_Transaction_GetId(MGL_Schema_TransactionResponse TPBResp)

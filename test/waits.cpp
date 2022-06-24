@@ -12,11 +12,7 @@ TEST_CASE("Wait usage", "[wait]")
 	gamelink::RequestId id = sdk.GetPoll("test-poll");
 	sdk.WaitForResponse(id);
 
-	REQUIRE(sdk.HasPayloads());
-	sdk.ForeachPayload([](const gamelink::Payload* send) {
-		REQUIRE(JSONEquals(send->data, R"({"action":"get","data":{"poll_id":"test-poll"},"params":{"request_id":1,"target":"poll"}})"));
-	});
-	REQUIRE(!sdk.HasPayloads());
+	validateSinglePayload(sdk, R"({"action":"get","data":{"poll_id":"test-poll"},"params":{"request_id":1,"target":"poll"}})");
 
 	sdk.GetPoll("something-else");
 	// Even though a message was queued, no payloads avaliable due to a wait existing.
@@ -26,12 +22,12 @@ TEST_CASE("Wait usage", "[wait]")
 		 "data": {
             "poll": {
                 "poll_id": "test-poll",
-				"prompt": "Cool or not cool", 
-				"options": ["Cool", "Not cool"], 
+				"prompt": "Cool or not cool",
+				"options": ["Cool", "Not cool"],
 				"user_data": {}
-            }, 
+            },
 			"results": [
-				100, 
+				100,
 				93
 			]
         },
@@ -45,12 +41,7 @@ TEST_CASE("Wait usage", "[wait]")
 	sdk.ReceiveMessage(msg, strlen(msg));
 
 	// Unblocked existing payload, send now.
-	REQUIRE(sdk.HasPayloads());
-	sdk.ForeachPayload([](const gamelink::Payload* send) {
-		REQUIRE(
-			JSONEquals(send->data, R"({"action":"get","data":{"poll_id":"something-else"},"params":{"request_id":2,"target":"poll"}})"));
-	});
-	REQUIRE(!sdk.HasPayloads());
+	validateSinglePayload(sdk, R"({"action":"get","data":{"poll_id":"something-else"},"params":{"request_id":2,"target":"poll"}})");
 }
 
 TEST_CASE("Multiple waits", "[wait]")
@@ -68,22 +59,18 @@ TEST_CASE("Multiple waits", "[wait]")
 	sdk.WaitForResponse(id);
 	sdk.GetPoll("something-else");
 
-	REQUIRE(sdk.HasPayloads());
-	sdk.ForeachPayload([](const gamelink::Payload* send) {
-		REQUIRE(JSONEquals(send->data, R"({"action":"get","data":{"poll_id":"test-poll"},"params":{"request_id":1,"target":"poll"}})"));
-	});
-	REQUIRE(!sdk.HasPayloads());
+	validateSinglePayload(sdk, R"({"action":"get","data":{"poll_id":"test-poll"},"params":{"request_id":1,"target":"poll"}})");
 
 	const char* msg = R"({
 		"data": {
             "poll": {
                 "poll_id": "test-poll",
-				"prompt": "Cool or not cool", 
-				"options": ["Cool", "Not cool"], 
+				"prompt": "Cool or not cool",
+				"options": ["Cool", "Not cool"],
 				"user_data": {}
-            }, 
+            },
 			"results": [
-				100, 
+				100,
 				93
 			]
         },
@@ -97,12 +84,7 @@ TEST_CASE("Multiple waits", "[wait]")
 	sdk.ReceiveMessage(msg, strlen(msg));
 
 	// Unblocked existing payload, send now.
-	REQUIRE(sdk.HasPayloads());
-	sdk.ForeachPayload([](const gamelink::Payload* send) {
-		REQUIRE(
-			JSONEquals(send->data, R"({"action":"get","data":{"poll_id":"something-else"},"params":{"request_id":2,"target":"poll"}})"));
-	});
-	REQUIRE(!sdk.HasPayloads());
+	validateSinglePayload(sdk, R"({"action":"get","data":{"poll_id":"something-else"},"params":{"request_id":2,"target":"poll"}})");
 }
 
 TEST_CASE("Interleaved waits", "[wait]")
@@ -127,12 +109,12 @@ TEST_CASE("Interleaved waits", "[wait]")
 		"data": {
             "poll": {
                 "poll_id": "test-poll",
-				"prompt": "Cool or not cool", 
-				"options": ["Cool", "Not cool"], 
+				"prompt": "Cool or not cool",
+				"options": ["Cool", "Not cool"],
 				"user_data": {}
-            }, 
+            },
 			"results": [
-				100, 
+				100,
 				93
 			]
         },
@@ -150,12 +132,12 @@ TEST_CASE("Interleaved waits", "[wait]")
 		"data": {
             "poll": {
                 "poll_id": "test-poll",
-				"prompt": "Cool or not cool", 
-				"options": ["Cool", "Not cool"], 
+				"prompt": "Cool or not cool",
+				"options": ["Cool", "Not cool"],
 				"user_data": {}
-            }, 
+            },
 			"results": [
-				100, 
+				100,
 				93
 			]
         },

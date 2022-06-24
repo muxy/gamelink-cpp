@@ -228,24 +228,21 @@ TEST_CASE("SDK State Creation", "[sdk][state]")
 	st.value = 42.123;
 
 	sdk.SetState(gamelink::StateTarget::Channel, st);
-	sdk.ForeachPayload([](const gamelink::Payload* send) {
-		REQUIRE(JSONEquals(send->data,
-						   R"({
-            "action": "set",
-            "data": {
-                "state_id": "channel",
-                "state": {
-                    "children": [],
-                    "name": "health",
-                    "value": 42.123
-                }
-            },
-            "params":{
-                "request_id":65535,
-                "target":"state"
-            }
-        })"));
-	});
+	validateSinglePayload(sdk, R"({
+		"action": "set",
+		"data": {
+			"state_id": "channel",
+			"state": {
+				"children": [],
+				"name": "health",
+				"value": 42.123
+			}
+		},
+		"params":{
+			"request_id":65535,
+			"target":"state"
+		}
+	})");
 
 	sdk.ClearState(gamelink::StateTarget::Channel);
 	validateSinglePayload(sdk, R"({
@@ -272,19 +269,16 @@ TEST_CASE("SDK State Retreival", "[sdk][state]")
 		calls++;
 	});
 
-	sdk.ForeachPayload([](const gamelink::Payload* send) {
-		REQUIRE(JSONEquals(send->data,
-						   R"({
-            "action": "get",
-            "data": {
-                "state_id": "channel"
-            },
-            "params":{
-                "request_id":1,
-                "target":"state"
-            }
-        })"));
-	});
+	validateSinglePayload(sdk, R"({
+		"action": "get",
+		"data": {
+			"state_id": "channel"
+		},
+		"params":{
+			"request_id":1,
+			"target":"state"
+		}
+	})");
 
 	const char* msg = R"({
             "data": {
@@ -327,24 +321,21 @@ TEST_CASE("SDK Update State", "[sdk][state]")
 	gamelink::SDK sdk;
 
 	sdk.UpdateStateWithString(gamelink::StateTarget::Channel, gamelink::Operation::Replace, "/name", "whatever");
-	sdk.ForeachPayload([](const gamelink::Payload* send) {
-		REQUIRE(JSONEquals(send->data,
-						   R"({
-            "action": "patch",
-            "data": {
-                "state_id": "channel",
-                "state": [{
-                    "op": "replace",
-                    "path": "/name",
-                    "value": "whatever"
-                }]
-            },
-            "params":{
-                "request_id":65535,
-                "target":"state"
-            }
-        })"));
-	});
+	validateSinglePayload(sdk, R"({
+		"action": "patch",
+		"data": {
+			"state_id": "channel",
+			"state": [{
+				"op": "replace",
+				"path": "/name",
+				"value": "whatever"
+			}]
+		},
+		"params":{
+			"request_id":65535,
+			"target":"state"
+		}
+	})");
 }
 
 TEST_CASE("SDK Update array", "[sdk][state][target]")
@@ -396,7 +387,7 @@ TEST_CASE("SDK Subscription", "[sdk][state][subscription]")
 	uint32_t calls = 0;
 	uint32_t secondCalls = 0;
 	uint32_t errors = 0;
-	sdk.OnStateUpdate([&](const gamelink::schema::SubscribeStateUpdateResponse<nlohmann::json>& resp) {
+	sdk.OnStateUpdate().Add([&](const gamelink::schema::SubscribeStateUpdateResponse<nlohmann::json>& resp) {
 		calls++;
 		if (!resp.errors.empty())
 		{
@@ -405,7 +396,7 @@ TEST_CASE("SDK Subscription", "[sdk][state][subscription]")
 	});
 
 	// Two onStateUpdate functions.
-	uint32_t second = sdk.OnStateUpdate([&](const gamelink::schema::SubscribeStateUpdateResponse<nlohmann::json>& resp) { secondCalls++; });
+	uint32_t second = sdk.OnStateUpdate().Add([&](const gamelink::schema::SubscribeStateUpdateResponse<nlohmann::json>& resp) { secondCalls++; });
 
 	// Basic usage
 	sdk.SubscribeToStateUpdates(gamelink::StateTarget::Channel);
@@ -463,7 +454,7 @@ TEST_CASE("SDK Subscription", "[sdk][state][subscription]")
 	REQUIRE(errors == 1);
 	REQUIRE(secondCalls == calls);
 
-	sdk.DetachOnStateUpdate(second);
+	sdk.OnStateUpdate().Remove(second);
 
 	// Reiterate the error message
 	message = R"({
@@ -553,7 +544,7 @@ TEST_CASE("PatchList many patches", "[state]")
 		count++;
 
 		gamelink::schema::PatchStateRequest request(gamelink::StateTarget::Channel);
-		Deserialize(send->data.c_str(), request);
+		Deserialize(send->Data(), request);
 
 		REQUIRE(request.data.state_id == gamelink::TARGET_STRINGS[static_cast<int>(gamelink::StateTarget::Channel)]);
 		REQUIRE(request.data.state.size() == 100);

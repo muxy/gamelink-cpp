@@ -91,13 +91,21 @@ inline bool JSONEquals(const ConstrainedString& in, const ConstrainedString& exp
 	return true;
 }
 
+inline bool JSONEquals(const gamelink::Payload& in, const ConstrainedString& expect)
+{
+	ConstrainedString str(in.Data());
+
+	return JSONEquals(str, expect);
+}
+
 inline void validateSinglePayload(gamelink::SDK& sdk, const std::string& p)
 {
 	REQUIRE(sdk.HasPayloads());
 
 	uint32_t count = 0;
 	sdk.ForeachPayload([p, &count](const gamelink::Payload* payload) {
-		REQUIRE(JSONEquals(payload->data, ConstrainedString(p.c_str())));
+		ConstrainedString str(reinterpret_cast<const char *>(payload->Data()));
+		REQUIRE(JSONEquals(str, ConstrainedString(p.c_str())));
 		count++;
 	});
 

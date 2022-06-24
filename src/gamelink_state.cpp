@@ -2,26 +2,9 @@
 
 namespace gamelink
 {
-	uint32_t SDK::OnStateUpdate(std::function<void(const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback)
+	Event<schema::SubscribeStateUpdateResponse<nlohmann::json> >& SDK::OnStateUpdate()
 	{
-		return _onStateUpdate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	uint32_t SDK::OnStateUpdate(void (*callback)(void*, const schema::SubscribeStateUpdateResponse<nlohmann::json>&), void* ptr)
-	{
-		return _onStateUpdate.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	void SDK::DetachOnStateUpdate(uint32_t id)
-	{
-		if (_onStateUpdate.validateId(id))
-		{
-			_onStateUpdate.remove(id);
-		}
-		else
-		{
-			_onDebugMessage.invoke("Invalid ID passed into OnStateUpdate");
-		}
+		return _onStateUpdate;
 	}
 
 	RequestId SDK::SetState(StateTarget target, const nlohmann::json& value)

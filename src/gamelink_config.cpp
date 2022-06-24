@@ -75,27 +75,10 @@ namespace gamelink
         return queuePayload(req);
     }
 
-    uint32_t SDK::OnConfigUpdate(std::function<void(const schema::ConfigUpdateResponse&)> callback)
-    {
-        return _onConfigUpdate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-    }
-
-    uint32_t SDK::OnConfigUpdate(void (*callback)(void*, const schema::ConfigUpdateResponse&), void* user)
-    {
-        return _onConfigUpdate.set(callback, user, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-    }
-
-    void SDK::DetachOnConfigUpdate(uint32_t id)
-    {
-        if (_onConfigUpdate.validateId(id))
-        {
-            _onConfigUpdate.remove(id);
-        }
-        else
-        {
-            _onDebugMessage.invoke("Invalid ID passed into DetachOnConfigUpdate");
-        }
-    }
+	Event<schema::ConfigUpdateResponse>& SDK::OnConfigUpdate()
+	{
+		return _onConfigUpdate;
+	}
 
     RequestId SDK::UpdateChannelConfig(const schema::PatchOperation* begin, const schema::PatchOperation* end)
 	{
