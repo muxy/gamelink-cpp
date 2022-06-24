@@ -237,6 +237,7 @@ namespace gamelink
 
 			if (payload)
 			{
+				debugLogPayload(payload);
 				if (payload->data.size() > 0)
 				{
 					networkCallback(user, payload);
@@ -254,6 +255,7 @@ namespace gamelink
 		bool parsedFromBuffer = false;
 		schema::ReceiveEnvelope<schema::EmptyBody> env = schema::ParseEnvelope(bytes, length, &parseEnvelopeSuccess);
 
+		// Take lock
 		_lock.lock();
 		if (!parseEnvelopeSuccess)
 		{
@@ -313,7 +315,6 @@ namespace gamelink
 			}
 		}
 
-
 		// Successful parse of envelope, swap out the bytes and length values.
 		std::vector<char> receivedBytes;
 		if (!_receiveBuffer.empty())
@@ -327,6 +328,7 @@ namespace gamelink
 			length = receivedBytes.size();
 		}
 		_lock.unlock();
+		// Unlock
 
 		if (_onDebugMessage.valid())
 		{
@@ -516,11 +518,57 @@ namespace gamelink
 		{
 			schema::AuthenticateWithRefreshTokenRequest p(_storedClientId, _storedRefresh);
 			Payload* payload = new Payload(gamelink::string(to_string(p).c_str()));
-			debugLogPayload(payload);
 
+			// Push the authentication request to the front of the queue.
 			_lock.lock();
 			_queuedPayloads.push_front(payload);
 			_lock.unlock();
+
+			// Replay subscriptions.
+			for (size_t i = 0; i < _subscriptionSets._skus.size(); ++i)
+			{
+				schema::SubscribeTransactionsRequest payload(_subscriptionSets._skus[i].target);
+				queuePayload(payload);
+			}
+
+			// Replay polls.
+			for (size_t i = 0; i < _subscriptionSets._polls.size(); ++i)
+			{
+				schema::SubscribePollRequest payload(_subscriptionSets._polls[i].target);
+				queuePayload(payload);
+			}
+
+			// Replay config
+			for (int i = 0; i < static_cast<int>(ConfigTarget::ConfigTargetCount); ++i)
+			{
+				if (_subscriptionSets._configurationChanges[i].state == detail::SubscriptionState::Active)
+				{
+					schema::SubscribeToConfigRequest payload(static_cast<ConfigTarget>(i));
+					queuePayload(payload);
+				}
+			}
+
+			// Replay state
+			for (int i = 0; i < static_cast<int>(StateTarget::StateCount); ++i)
+			{
+				if (_subscriptionSets._stateSubscriptions[i].state == detail::SubscriptionState::Active)
+				{
+					schema::SubscribeStateRequest payload(static_cast<StateTarget>(i));
+					queuePayload(payload);
+				}
+			}
+
+			if (_subscriptionSets._datastream.state == detail::SubscriptionState::Active)
+			{
+				schema::SubscribeDatastreamRequest payload;
+				queuePayload(payload);
+			}
+
+			if (_subscriptionSets._matchmakingInvite.state  == detail::SubscriptionState::Active)
+			{
+				schema::SubscribeMatchmakingRequest payload;
+				queuePayload(payload);
+			}
 		}
 	}
 
