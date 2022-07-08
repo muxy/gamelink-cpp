@@ -1,5 +1,6 @@
 #include "gamelink.h"
 #include "gamelink_c.h"
+#include "gamelink_c_interop.h"
 
 using namespace gamelink;
 
@@ -8,6 +9,24 @@ MGL_RequestId MuxyGameLink_CreatePoll(MuxyGameLink GameLink, const char *PollId,
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
 	std::vector<gamelink::string> Opts(Options, Options + OptionsCount);
 	return SDK->CreatePoll(PollId, Prompt, Opts);
+}
+
+MUXY_CLIB_API MGL_RequestId MuxyGameLink_CreatePollWithConfiguration(MuxyGameLink GameLink, const char* PollId, const char* Prompt, MGL_PollConfiguration Config, const char** Options, uint32_t OptionsCount)
+{
+	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
+
+	gamelink::PollConfiguration ConfigCopy;
+	ConfigCopy.userIdVoting = Config.userIdVoting != 0;
+	ConfigCopy.distinctOptionsPerUser = Config.distinctOptionsPerUser;
+	ConfigCopy.totalVotesPerUser = Config.totalVotesPerUser;
+	ConfigCopy.votesPerOption = Config.votesPerOption;
+	ConfigCopy.disabled = Config.disabled != 0;
+
+	ConfigCopy.startsAt = Config.startsAt;
+	ConfigCopy.endsAt = Config.endsAt;
+
+	std::vector<gamelink::string> Opts(Options, Options + OptionsCount);
+	return SDK->CreatePollWithConfiguration(gamelink::string(PollId), gamelink::string(Prompt), ConfigCopy, Opts);
 }
 
 MGL_RequestId MuxyGameLink_SubscribeToPoll(MuxyGameLink GameLink, const char *PollId)
@@ -43,12 +62,14 @@ uint32_t MuxyGameLink_OnPollUpdate(MuxyGameLink GameLink, MGL_PollUpdateResponse
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
 
-	return SDK->OnPollUpdate().Add([Callback, UserData](const schema::PollUpdateResponse& PollResp)
-	{
-		MGL_Schema_PollUpdateResponse WPollResp;
-		WPollResp.Obj = &PollResp;
-		Callback(UserData, WPollResp);
-	});
+	return SDK->OnPollUpdate().Add(C_CALLBACK(Callback, UserData, PollUpdateResponse));
+}
+
+uint32_t MuxyGameLink_OnPollUpdateUnique(MuxyGameLink GameLink, const char* Name, MGL_PollUpdateResponseCallback Callback, void *UserData)
+{
+	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
+
+	return SDK->OnPollUpdate().AddUnique(gamelink::string(Name), C_CALLBACK(Callback, UserData, PollUpdateResponse));
 }
 
 void MuxyGameLink_DetachOnPollUpdate(MuxyGameLink GameLink, uint32_t Id)

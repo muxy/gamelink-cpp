@@ -1,5 +1,6 @@
 #include "gamelink.h"
 #include "gamelink_c.h"
+#include "gamelink_c_interop.h"
 
 using namespace gamelink;
 
@@ -30,15 +31,13 @@ MGL_RequestId MuxyGameLink_UnsubscribeFromAllPurchases(MuxyGameLink GameLink)
 uint32_t MuxyGameLink_OnTransaction(MuxyGameLink GameLink, MGL_TransactionResponseCallback Callback, void* UserData)
 {
     gamelink::SDK *SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-    uint32_t res = SDK->OnTransaction().Add([Callback, UserData](const gamelink::schema::TransactionResponse &TPBResp)
-    {
-        MGL_Schema_TransactionResponse WTPBResp;
-        WTPBResp.Obj = &TPBResp;
+    return SDK->OnTransaction().Add(C_CALLBACK(Callback, UserData, TransactionResponse));
+}
 
-        Callback(UserData, WTPBResp);
-    });
-
-    return res;
+uint32_t MuxyGameLink_OnTransactionUnique(MuxyGameLink GameLink, const char* Name, MGL_TransactionResponseCallback Callback, void* UserData)
+{
+    gamelink::SDK *SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
+    return SDK->OnTransaction().AddUnique(gamelink::string(Name), C_CALLBACK(Callback, UserData, TransactionResponse));
 }
 
 void MuxyGameLink_DetachOnTransaction(MuxyGameLink GameLink, uint32_t id)

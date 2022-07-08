@@ -17,10 +17,10 @@ extern "C"
 #		ifdef _MSC_VER
 #			define MUXY_CLIB_API __declspec(dllexport)
 #		else
-#			define MUXY_CLIB_API 
+#			define MUXY_CLIB_API
 #		endif
 #	else
-#		define MUXY_CLIB_API 
+#		define MUXY_CLIB_API
 #	endif
 
 	typedef char* MGL_String;
@@ -96,15 +96,19 @@ extern "C"
 		const void* Obj;
 	} MGL_Schema_GetOutstandingTransactionsResponse;
 
-	typedef struct 
+	typedef struct
 	{
 		const void* Obj;
 	} MGL_Schema_GetPollResponse;
 
-	typedef struct 
+	typedef struct
 	{
 		const void* Obj;
 	} MGL_Schema_PollUpdateResponse;
+
+	typedef struct {
+		const void* Obj;
+	} MGL_Schema_MatchmakingUpdate;
 
 	typedef struct
 	{
@@ -125,6 +129,7 @@ extern "C"
 	typedef void (*MGL_StateUpdateResponseCallback)(void* UserData, MGL_Schema_StateUpdateResponse StateResp);
 	typedef void (*MGL_ConfigResponseCallback)(void* UserData, MGL_Schema_ConfigResponse ConfigResp);
 	typedef void (*MGL_ConfigUpdateResponseCallback)(void* UserData, MGL_Schema_ConfigUpdateResponse ConfigResp);
+	typedef void (*MGL_MatchmakingUpdateCallback)(void* UserData, MGL_Schema_MatchmakingUpdate Update);
 	typedef void (*MGL_OnDebugMessageCallback)(void* UserData, const char *Message);
 
 	/*
@@ -167,10 +172,12 @@ extern "C"
 	/*
 		SDK network send and receive functions
 	*/
+	MUXY_CLIB_API bool MuxyGameLink_ReceiveMessage(MuxyGameLink GameLink, const char* Bytes, uint32_t Length);
+	MUXY_CLIB_API void MuxyGameLink_HandleReconnect(MuxyGameLink GameLink);
+	MUXY_CLIB_API bool MuxyGameLink_HasPayloads(MuxyGameLink GameLink);
 	MUXY_CLIB_API void MuxyGameLink_ForeachPayload(MuxyGameLink GameLink, MGL_PayloadCallback Callback, void* UserData);
 	MUXY_CLIB_API uint32_t MuxyGameLink_Payload_GetSize(MGL_Payload Payload);
 	MUXY_CLIB_API const char* MuxyGameLink_Payload_GetData(MGL_Payload Payload);
-	MUXY_CLIB_API bool MuxyGameLink_ReceiveMessage(MuxyGameLink GameLink, const char* Bytes, uint32_t Length);
 	MUXY_CLIB_API void MuxyGameLink_WaitForResponse(MuxyGameLink GameLink, MGL_RequestId Request);
 
 	/*
@@ -209,6 +216,7 @@ extern "C"
 	MUXY_CLIB_API MGL_Schema_User MuxyGameLink_GetSchemaUser(MuxyGameLink GameLink);
 	MUXY_CLIB_API const char* MuxyGameLink_Schema_User_GetJWT(MGL_Schema_User User);
 	MUXY_CLIB_API const char* MuxyGameLink_Schema_User_GetRefreshToken(MGL_Schema_User User);
+	MUXY_CLIB_API const char* MuxyGameLink_Schema_User_GetTwitchName(MGL_Schema_User User);
 
 	/*
 		State functions
@@ -264,6 +272,7 @@ extern "C"
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UnsubscribeFromStateUpdates(MuxyGameLink GameLink, MGL_StateTarget Target);
 
 	MUXY_CLIB_API uint32_t MuxyGameLink_OnStateUpdate(MuxyGameLink GameLink, MGL_StateUpdateResponseCallback Callback, void* UserData);
+	MUXY_CLIB_API uint32_t MuxyGameLink_OnStateUpdateUnique(MuxyGameLink GameLink, const char* Name, MGL_StateUpdateResponseCallback Callback, void* UserData);
 	MUXY_CLIB_API void MuxyGameLink_DetachOnStateUpdate(MuxyGameLink GameLink, uint32_t Id);
 	MUXY_CLIB_API MGL_StateTarget MuxyGameLink_Schema_StateUpdateResponse_GetTarget(MGL_Schema_StateUpdateResponse Response);
 	MUXY_CLIB_API MGL_String MuxyGameLink_Schema_StateUpdateResponse_GetJson(MGL_Schema_StateUpdateResponse Response);
@@ -287,6 +296,7 @@ extern "C"
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_SubscribeToConfigurationChanges(MuxyGameLink GameLink, MGL_ConfigTarget Target);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UnsubscribeToConfigurationChanges(MuxyGameLink GameLink, MGL_ConfigTarget Target);
 	MUXY_CLIB_API uint32_t MuxyGameLink_OnConfigUpdate(MuxyGameLink GameLink, MGL_ConfigUpdateResponseCallback Callback, void* UserData);
+	MUXY_CLIB_API uint32_t MuxyGameLink_OnConfigUpdateUnique(MuxyGameLink GameLink, const char* Name, MGL_ConfigUpdateResponseCallback Callback, void* UserData);
 	MUXY_CLIB_API void MuxyGameLink_DetachOnConfigUpdate(MuxyGameLink GameLink, uint32_t Id);
 
 	/*
@@ -302,7 +312,9 @@ extern "C"
 	*/
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_SubscribeToDatastream(MuxyGameLink GameLink);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UnsubscribeFromDatastream(MuxyGameLink GameLink);
+
 	MUXY_CLIB_API uint32_t MuxyGameLink_OnDatastream(MuxyGameLink GameLink, MGL_DatastreamUpdateCallback Callback, void* UserData);
+	MUXY_CLIB_API uint32_t MuxyGameLink_OnDatastreamUnique(MuxyGameLink GameLink, const char* Name, MGL_DatastreamUpdateCallback Callback, void* UserData);
 	MUXY_CLIB_API void MuxyGameLink_DetachOnDatastream(MuxyGameLink GameLink, uint32_t OnDatastreamHandle);
 
 	MUXY_CLIB_API uint32_t MuxyGameLink_Schema_DatastreamUpdate_GetEventCount(MGL_Schema_DatastreamUpdate DatastreamUpdate);
@@ -320,6 +332,7 @@ extern "C"
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_SubscribeToAllPurchases(MuxyGameLink GameLink);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UnsubscribeFromAllPurchases(MuxyGameLink GameLink);
 	MUXY_CLIB_API uint32_t MuxyGameLink_OnTransaction(MuxyGameLink GameLink, MGL_TransactionResponseCallback Callback, void* UserData);
+	MUXY_CLIB_API uint32_t MuxyGameLink_OnTransactionUnique(MuxyGameLink GameLink, const char* Name, MGL_TransactionResponseCallback Callback, void* UserData);
 	MUXY_CLIB_API void MuxyGameLink_DetachOnTransaction(MuxyGameLink GameLink, uint32_t id);
 
 	MUXY_CLIB_API const char* MuxyGameLink_Schema_Transaction_GetId(MGL_Schema_TransactionResponse TPBResp);
@@ -337,16 +350,30 @@ extern "C"
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_RefundTransactionBySKU(MuxyGameLink GameLink, const char *SKU, const char *UserId);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_RefundTransactionByID(MuxyGameLink GameLink, const char *TxId, const char *UserId);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_ValidateTransaction(MuxyGameLink GameLink, const char *TxId, const char *Details);
-	
+
 	/*
 		Polling functions
 	*/
+	typedef struct {
+		int userIdVoting;
+		int distinctOptionsPerUser;
+		int totalVotesPerUser;
+		int votesPerOption;
+		int disabled;
+
+		int64_t startsAt;
+		int64_t endsAt;
+	} MGL_PollConfiguration;
+
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_CreatePoll(MuxyGameLink GameLink, const char *PollId, const char *Prompt, const char **Options, uint32_t OptionsCount);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_CreatePollWithConfiguration(MuxyGameLink GameLink, const char* PollId, const char* Prompt, MGL_PollConfiguration Config, const char** Options, uint32_t OptionsCount);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_SubscribeToPoll(MuxyGameLink GameLink, const char *PollId);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UnsubscribeFromPoll(MuxyGameLink GameLink, const char *PollId);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_DeletePoll(MuxyGameLink GameLink, const char *PollId);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_GetPoll(MuxyGameLink GameLink, const char *PollId, MGL_GetPollResponseCallback Callback, void *UserData);
+
 	MUXY_CLIB_API uint32_t MuxyGameLink_OnPollUpdate(MuxyGameLink GameLink, MGL_PollUpdateResponseCallback Callback, void *UserData);
+	MUXY_CLIB_API uint32_t MuxyGameLink_OnPollUpdateUnique(MuxyGameLink GameLink, const char* Name, MGL_PollUpdateResponseCallback Callback, void *UserData);
 	MUXY_CLIB_API void MuxyGameLink_DetachOnPollUpdate(MuxyGameLink GameLink, uint32_t Id);
 
 	MUXY_CLIB_API const char* MuxyGameLink_Schema_GetPollResponse_GetPollId(MGL_Schema_GetPollResponse PResp);
@@ -370,9 +397,28 @@ extern "C"
 	MUXY_CLIB_API int32_t MuxyGameLink_Schema_PollUpdateResponse_GetCount(MGL_Schema_PollUpdateResponse PResp);
 
 	/*
+		Matchmaking operations
+	*/
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_ClearMatchmakingQueue(MuxyGameLink GameLink);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_RemoveMatchmakingEntry(MuxyGameLink GameLink, const char* id);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_SubscribeToMatchmakingQueueInvite(MuxyGameLink GameLink);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UnsubscribeFromMatchmakingQueueInvite(MuxyGameLink GameLink);
+	MUXY_CLIB_API uint32_t MuxyGameLink_OnMatchmakingQueueInvite(MuxyGameLink GameLink, MGL_MatchmakingUpdateCallback Callback, void* UserData);
+	MUXY_CLIB_API uint32_t MuxyGameLink_OnMatchmakingQueueInviteUnique(MuxyGameLink GameLink, const char* Name, MGL_MatchmakingUpdateCallback Callback, void* UserData);
+	MUXY_CLIB_API void MuxyGameLink_DetachOnMatchmakingQueueInvite(MuxyGameLink GameLink, uint32_t Handle);
+
+
+	MUXY_CLIB_API MGL_String MuxyGameLink_MatchmakingUpdate_GetData(MGL_Schema_MatchmakingUpdate obj);
+	MUXY_CLIB_API const char* MuxyGameLink_MatchmakingUpdate_GetTwitchUsername(MGL_Schema_MatchmakingUpdate obj);
+	MUXY_CLIB_API const char* MuxyGameLink_MatchmakingUpdate_GetTwitchID(MGL_Schema_MatchmakingUpdate obj);
+	MUXY_CLIB_API int64_t MuxyGameLink_MatchmakingUpdate_GetTimestamp(MGL_Schema_MatchmakingUpdate obj);
+	MUXY_CLIB_API int MuxyGameLink_MatchmakingUpdate_GetIsFollower(MGL_Schema_MatchmakingUpdate obj);
+	MUXY_CLIB_API int MuxyGameLink_MatchmakingUpdate_GetSubscriptionTier(MGL_Schema_MatchmakingUpdate obj);
+	MUXY_CLIB_API int MuxyGameLink_MatchmakingUpdate_GetBitsSpent(MGL_Schema_MatchmakingUpdate obj);
+
+	/*
 		PatchList functions
 	*/
-
 	MUXY_CLIB_API MGL_PatchList MuxyGameLink_PatchList_Make(void);
 	MUXY_CLIB_API void MuxyGameLink_PatchList_Kill(MGL_PatchList PList);
 	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithInteger(MGL_PatchList PList, MGL_Operation Operation, const char* Path, int64_t Val);
