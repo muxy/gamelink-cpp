@@ -99,6 +99,18 @@ uint32_t MuxyGameLink_OnStateUpdate(MuxyGameLink GameLink, MGL_StateUpdateRespon
 	});
 }
 
+uint32_t MuxyGameLink_OnStateUpdateUnique(MuxyGameLink GameLink, const char* Name, MGL_StateUpdateResponseCallback Callback, void* UserData)
+{
+	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
+	return Instance->OnStateUpdate().AddUnique(gamelink::string(Name), [Callback, UserData](const schema::SubscribeStateUpdateResponse<nlohmann::json>& UpdateResponse) {
+		MGL_Schema_StateUpdateResponse Response;
+		Response.Obj = &UpdateResponse;
+
+		Callback(UserData, Response);
+	});
+}
+
+
 void MuxyGameLink_DetachOnStateUpdate(MuxyGameLink GameLink, uint32_t Id)
 {
 	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
@@ -128,76 +140,4 @@ MGL_String MuxyGameLink_Schema_StateUpdateResponse_GetJson(MGL_Schema_StateUpdat
 	const schema::SubscribeStateUpdateResponse<nlohmann::json>* UpdateResponse =
 		static_cast<const schema::SubscribeStateUpdateResponse<nlohmann::json>*>(Response.Obj);
 	return MuxyGameLink_StrDup(UpdateResponse->data.state.dump().c_str());
-}
-
-
-MGL_PatchList MuxyGameLink_PatchList_Make(void)
-{
-	MGL_PatchList PList;
-	PList.Obj = new gamelink::PatchList();
-	return PList;
-}
-void MuxyGameLink_PatchList_Kill(MGL_PatchList PList)
-{
-	delete static_cast<gamelink::PatchList *>(PList.Obj);
-}
-
-void MuxyGameLink_PatchList_UpdateStateWithInteger(MGL_PatchList PList, MGL_Operation Operation, const char* Path, int64_t Val)
-{
-	gamelink::PatchList* Patch = static_cast<gamelink::PatchList*>(PList.Obj);
-	Patch->UpdateStateWithInteger(static_cast<gamelink::Operation>(Operation), Path, Val);
-}
-
-void MuxyGameLink_PatchList_UpdateStateWithDouble(MGL_PatchList PList, MGL_Operation Operation, const char* Path, double Val)
-{
-	gamelink::PatchList* Patch = static_cast<gamelink::PatchList*>(PList.Obj);
-	Patch->UpdateStateWithDouble(static_cast<gamelink::Operation>(Operation), Path, Val);
-}
-
-void MuxyGameLink_PatchList_UpdateStateWithBoolean(MGL_PatchList PList, MGL_Operation Operation, const char* Path, bool Val)
-{
-	gamelink::PatchList* Patch = static_cast<gamelink::PatchList*>(PList.Obj);
-	Patch->UpdateStateWithDouble(static_cast<gamelink::Operation>(Operation), Path, Val);
-}
-
-void MuxyGameLink_PatchList_UpdateStateWithString(MGL_PatchList PList, MGL_Operation Operation, const char* Path, const char* Val)
-{
-	gamelink::PatchList* Patch = static_cast<gamelink::PatchList*>(PList.Obj);
-	Patch->UpdateStateWithString(static_cast<gamelink::Operation>(Operation), Path, Val);
-}
-
-void MuxyGameLink_PatchList_UpdateStateWithLiteral(MGL_PatchList PList, MGL_Operation Operation, const char* Path, const char* Val)
-{
-	gamelink::PatchList* Patch = static_cast<gamelink::PatchList*>(PList.Obj);
-	Patch->UpdateStateWithLiteral(static_cast<gamelink::Operation>(Operation), Path, Val);
-}
-
-void MuxyGameLink_PatchList_UpdateStateWithNull(MGL_PatchList PList, MGL_Operation Operation, const char* Path)
-{
-	gamelink::PatchList* Patch = static_cast<gamelink::PatchList*>(PList.Obj);
-	Patch->UpdateStateWithNull(static_cast<gamelink::Operation>(Operation), Path);
-}
-
-void MuxyGameLink_PatchList_UpdateStateWithJson(MGL_PatchList PList, MGL_Operation Operation, const char* Path, const char* Val)
-{
-	gamelink::PatchList* Patch = static_cast<gamelink::PatchList*>(PList.Obj);
-	Patch->UpdateStateWithJson(static_cast<gamelink::Operation>(Operation), Path, Val);
-}
-
-void MuxyGameLink_PatchList_UpdateStateWithEmptyArray(MGL_PatchList PList, MGL_Operation Operation, const char* Path)
-{
-	gamelink::PatchList* Patch = static_cast<gamelink::PatchList*>(PList.Obj);
-	Patch->UpdateStateWithEmptyArray(static_cast<gamelink::Operation>(Operation), Path);
-}
-
-bool MuxyGameLink_PatchList_Empty(MGL_PatchList PList)
-{
-	gamelink::PatchList* Patch = static_cast<gamelink::PatchList*>(PList.Obj);
-	return Patch->Empty();
-}
-
-void MuxyGameLink_PatchList_Clear(MGL_PatchList PList)
-{
-	gamelink::PatchList* Patch = static_cast<gamelink::PatchList*>(PList.Obj);
-	Patch->Clear();
 }

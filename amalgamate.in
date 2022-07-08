@@ -65,3 +65,5 @@ for file in ${INPUT_SOURCES[@]}; do
 done
 
 echo "#endif" >> $OUTPUT_HEADER
+
+sed -i '' '/^$/N;/^\n$/D' $OUTPUT_HEADER

@@ -1,6 +1,8 @@
 #include "gamelink_c.h"
 #include "gamelink.h"
 
+#include "gamelink_c_interop.h"
+
 char* MuxyGameLink_StrDup(const char *Str)
 {
     char *Dst = NULL;
@@ -69,94 +71,6 @@ uint32_t MuxyGameLink_Strlen(MGL_String Str)
 	return static_cast<uint32_t>(strlen(Str));
 }
 
-void MuxyGameLink_OnDebugMessage(MuxyGameLink GameLink, MGL_OnDebugMessageCallback Callback, void* UserData)
-{
-	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	SDK->OnDebugMessage([=](const gamelink::string& DebugMessage)
-	{
-		Callback(UserData, DebugMessage.c_str());
-	});
-}
-
-void MuxyGameLink_DetachOnDebugMessage(MuxyGameLink GameLink)
-{
-	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	SDK->DetachOnDebugMessage();
-}
-
-// Payload begin
-void MuxyGameLink_ForeachPayload(MuxyGameLink GameLink, MGL_PayloadCallback Callback, void* UserData)
-{
-	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	SDK->ForeachPayload([Callback, UserData](const gamelink::Payload* Payload) {
-		MGL_Payload WPayload;
-		WPayload.Obj = Payload;
-
-		Callback(UserData, WPayload);
-	});
-}
-
-uint32_t MuxyGameLink_Payload_GetSize(MGL_Payload Payload)
-{
-	const gamelink::Payload* MGLPayload = static_cast<const gamelink::Payload*>(Payload.Obj);
-	return MGLPayload->Length();
-}
-
-const char* MuxyGameLink_Payload_GetData(MGL_Payload Payload)
-{
-	const gamelink::Payload* MGLPayload = static_cast<const gamelink::Payload*>(Payload.Obj);
-	return MGLPayload->Data();
-}
-// Payload end
-
-// Error begin
-MGL_Error MuxyGameLink_Schema_GetFirstError(void* Resp)
-{
-	const gamelink::schema::ReceiveEnvelopeCommon* Common = static_cast<gamelink::schema::ReceiveEnvelopeCommon*>(Resp);
-	const gamelink::schema::Error* MGLErr = gamelink::FirstError(*Common);
-
-	MGL_Error WErr;
-	WErr.Obj = MGLErr;
-
-	return WErr;
-}
-
-bool MuxyGameLink_Error_IsValid(MGL_Error Error)
-{
-	return Error.Obj != nullptr;
-}
-
-uint32_t MuxyGameLink_Error_GetCode(MGL_Error Error)
-{
-	const gamelink::schema::Error* GLError = static_cast<const gamelink::schema::Error*>(Error.Obj);
-	return GLError->number;
-}
-
-const char* MuxyGameLink_Error_GetTitle(MGL_Error Error)
-{
-	const gamelink::schema::Error* GLError = static_cast<const gamelink::schema::Error*>(Error.Obj);
-	return GLError->title.c_str();
-}
-
-const char* MuxyGameLink_Error_GetDetail(MGL_Error Error)
-{
-	const gamelink::schema::Error* GLError = static_cast<const gamelink::schema::Error*>(Error.Obj);
-	return GLError->detail.c_str();
-}
-
-// Error end
-
-bool MuxyGameLink_ReceiveMessage(MuxyGameLink GameLink, const char* Bytes, uint32_t Length)
-{
-	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	return SDK->ReceiveMessage(Bytes, Length);
-}
-
-void MuxyGameLink_WaitForResponse(MuxyGameLink GameLink, MGL_RequestId Request)
-{
-	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	return SDK->WaitForResponse(Request);
-}
 
 MGL_RequestId MuxyGameLink_AuthenticateWithPIN(MuxyGameLink GameLink,
 											   const char* ClientId,
@@ -165,13 +79,7 @@ MGL_RequestId MuxyGameLink_AuthenticateWithPIN(MuxyGameLink GameLink,
 											   void* UserData)
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	MGL_RequestId res =
-		SDK->AuthenticateWithPIN(ClientId, PIN, [Callback, UserData](const gamelink::schema::AuthenticateResponse& AuthResp) {
-			MGL_Schema_AuthenticateResponse WAuthResp;
-			WAuthResp.Obj = &AuthResp;
-
-			Callback(UserData, WAuthResp);
-		});
+	MGL_RequestId res = SDK->AuthenticateWithPIN(ClientId, PIN, C_CALLBACK(Callback, UserData, AuthenticateResponse));
 
 	return res;
 }
@@ -183,14 +91,7 @@ MGL_RequestId MuxyGameLink_AuthenticateWithRefreshToken(MuxyGameLink GameLink,
 														void* UserData)
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	MGL_RequestId res = SDK->AuthenticateWithRefreshToken(ClientId, RefreshToken,
-														  [Callback, UserData](const gamelink::schema::AuthenticateResponse& AuthResp) {
-															  MGL_Schema_AuthenticateResponse WAuthResp;
-															  WAuthResp.Obj = &AuthResp;
-
-															  Callback(UserData, WAuthResp);
-														  });
-
+	MGL_RequestId res = SDK->AuthenticateWithRefreshToken(ClientId, RefreshToken, C_CALLBACK(Callback, UserData, AuthenticateResponse));
 	return res;
 }
 
@@ -231,6 +132,17 @@ const char* MuxyGameLink_Schema_User_GetRefreshToken(MGL_Schema_User User)
 	return "";
 }
 
+const char* MuxyGameLink_Schema_User_GetTwitchName(MGL_Schema_User User)
+{
+	const gamelink::schema::User* MGLUser = static_cast<const gamelink::schema::User*>(User.Obj);
+	if (MGLUser)
+	{
+		return MGLUser->GetTwitchName().c_str();
+	}
+
+	return "";
+}
+
 MGL_RequestId MuxyGameLink_SendBroadcast(MuxyGameLink GameLink, const char* Topic, const char* JsonString)
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
@@ -244,64 +156,4 @@ MGL_RequestId MuxyGameLink_SendBroadcast(MuxyGameLink GameLink, const char* Topi
 		SDK->InvokeOnDebugMessage(gamelink::string("Couldn't parse broadcast"));
 		return gamelink::ANY_REQUEST_ID;
 	}
-}
-
-MGL_RequestId MuxyGameLink_SubscribeToDatastream(MuxyGameLink GameLink)
-{
-	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	return SDK->SubscribeToDatastream();
-}
-
-MGL_RequestId MuxyGameLink_UnsubscribeFromDatastream(MuxyGameLink GameLink)
-{
-	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	return SDK->UnsubscribeFromDatastream();
-}
-
-uint32_t MuxyGameLink_OnDatastream(MuxyGameLink GameLink, MGL_DatastreamUpdateCallback Callback, void* UserData)
-{
-	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-
-	uint32_t res = SDK->OnDatastreamUpdate().Add([Callback, UserData](const gamelink::schema::DatastreamUpdate& DatastreamUpdate) {
-		MGL_Schema_DatastreamUpdate WDatastreamUpdate;
-		WDatastreamUpdate.Obj = &DatastreamUpdate;
-
-		Callback(UserData, WDatastreamUpdate);
-	});
-
-	return res;
-}
-
-void MuxyGameLink_DetachOnDatastream(MuxyGameLink GameLink, uint32_t OnDatastreamHandle)
-{
-	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	SDK->OnDatastreamUpdate().Remove(OnDatastreamHandle);
-}
-
-uint32_t MuxyGameLink_Schema_DatastreamUpdate_GetEventCount(MGL_Schema_DatastreamUpdate DatastreamUpdate)
-{
-	const gamelink::schema::DatastreamUpdate* DSU = static_cast<const gamelink::schema::DatastreamUpdate*>(DatastreamUpdate.Obj);
-	return DSU->data.events.size();
-}
-
-MGL_Schema_DatastreamEvent MuxyGameLink_Schema_DatastreamUpdate_GetEventAt(MGL_Schema_DatastreamUpdate DatastreamUpdate, uint32_t AtIndex)
-{
-	const gamelink::schema::DatastreamUpdate* DSU = static_cast<const gamelink::schema::DatastreamUpdate*>(DatastreamUpdate.Obj);
-
-	MGL_Schema_DatastreamEvent WDSEvent;
-	WDSEvent.Obj = &DSU->data.events[AtIndex];
-
-	return WDSEvent;
-}
-
-MGL_String MuxyGameLink_Schema_DatastreamEvent_GetJson(MGL_Schema_DatastreamEvent DatastreamEvent)
-{
-    const gamelink::schema::DatastreamEvent *DSE = static_cast<const gamelink::schema::DatastreamEvent*>(DatastreamEvent.Obj);
-    return MuxyGameLink_StrDup(DSE->event.dump().c_str());
-}
-
-int64_t	MuxyGameLink_Schema_DatastreamEvent_GetTimestamp(MGL_Schema_DatastreamEvent DatastreamEvent)
-{
-    const gamelink::schema::DatastreamEvent *DSE = static_cast<const gamelink::schema::DatastreamEvent*>(DatastreamEvent.Obj);
-    return DSE->timestamp;
 }
