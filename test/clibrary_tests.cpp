@@ -21,7 +21,10 @@ struct ParityFixture
 	void EnsureParity()
 	{
 		std::vector<std::string> cppPayloads;
-		cpp.ForeachPayload([&](const gamelink::Payload* payload) { cppPayloads.push_back(payload->data.c_str()); });
+		cpp.ForeachPayload([&](const gamelink::Payload* payload)
+		{
+			cppPayloads.push_back(payload->Data());
+		});
 
 		std::vector<std::string> cPayloads;
 		MuxyGameLink_ForeachPayload(

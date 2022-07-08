@@ -40,18 +40,21 @@ namespace gamelink
 	class MUXY_GAMELINK_API Payload
 	{
 		friend class SDK;
+	private:
 		explicit Payload(string data);
 		RequestId waitingForResponse;
 
-	public:
 		/// Data to be sent.
-		const string data;
+		const string _data;
+	public:
+		const char* Data() const;
+		uint32_t Length() const;
 	};
 
-	enum ConnectionStage
+	enum class ConnectionStage
 	{
-		CONNECTION_STAGE_PRODUCTION = 0,
-		CONNECTION_STAGE_SANDBOX,
+		Production = 0,
+		Sandbox,
 	};
 
 	class SDK;
@@ -149,194 +152,6 @@ namespace gamelink
 			std::function<void(const T&)> _callback;
 		};
 
-		template<typename T, uint8_t IDMask>
-		class CallbackCollection
-		{
-		public:
-			CallbackCollection()
-				: _currentHandle(0)
-			{
-			}
-
-			~CallbackCollection()
-			{
-				for (uint32_t i = 0; i < _callbacks.size(); ++i)
-				{
-					delete _callbacks[i];
-				}
-			}
-
-			typedef void (*RawFunctionPointer)(void*, const T&);
-
-			bool validateId(uint32_t id)
-			{
-				// Check the ID byte for consistency.
-				return ((id >> 24) & 0xFF) == IDMask;
-			}
-
-			uint32_t set(std::function<void(const T&)> fn, uint16_t requestId, uint32_t flags)
-			{
-				uint32_t id = nextID();
-				// Set a name that is fairly unlikely to be used in removeByname
-				// so that removeByName("") doesn't remove all callbacks by mistake.
-				Callback<T>* cb = new Callback<T>(id, requestId, flags, "??#_muxy");
-				cb->set(fn);
-
-				_lock.lock();
-				_callbacks.push_back(cb);
-				_lock.unlock();
-
-				return id;
-			}
-
-			uint32_t set(RawFunctionPointer fn, void* user, uint16_t requestId, uint32_t flags)
-			{
-				uint32_t id = nextID();
-				Callback<T>* cb = new Callback<T>(id, requestId, flags, "??#_muxy");
-				cb->set(fn, user);
-
-				_lock.lock();
-				_callbacks.push_back(cb);
-				_lock.unlock();
-
-				return id;
-			}
-
-			uint32_t setUnique(string name, std::function<void(const T&)> fn, uint16_t requestId, uint32_t flags)
-			{
-				uint32_t id = nextID();
-				Callback<T>* cb = new Callback<T>(id, requestId, flags, name);
-				cb->set(fn);
-
-				removeByName(name);
-
-				_lock.lock();
-				_callbacks.push_back(cb);
-				_lock.unlock();
-
-				return id;
-			}
-
-			uint32_t setUnique(string name, RawFunctionPointer fn, void* user, uint16_t requestId, uint32_t flags)
-			{
-				uint32_t id = nextID();
-				Callback<T>* cb = new Callback<T>(id, requestId, flags, name);
-				cb->set(fn, user);
-
-				removeByName(name);
-
-				_lock.lock();
-				_callbacks.push_back(cb);
-				_lock.unlock();
-
-				return id;
-			}
-
-			void remove(uint32_t id)
-			{
-				_lock.lock();
-				for (uint32_t i = 0; i < _callbacks.size(); ++i)
-				{
-					if (_callbacks[i]->_id == id)
-					{
-						_callbacks[i]->_status = CALLBACK_REMOVED;
-					}
-				}
-				_lock.unlock();
-			}
-
-			void removeByName(const string& name)
-			{
-				_lock.lock();
-				for (uint32_t i = 0; i < _callbacks.size(); ++i)
-				{
-					if (_callbacks[i]->_name == name)
-					{
-						_callbacks[i]->_status = CALLBACK_REMOVED;
-					}
-				}
-				_lock.unlock();
-			}
-
-			// This must not be called recursively.
-			void invoke(const T& v)
-			{
-				std::vector<Callback<T>*> copy;
-				uint16_t requestId = v.meta.request_id;
-
-				_lock.lock();
-				copy = _callbacks;
-				_lock.unlock();
-
-				// Invoke the copied callbacks.
-				for (uint32_t i = 0; i < copy.size(); ++i)
-				{
-					if (copy[i]->_targetRequestId == ANY_REQUEST_ID || copy[i]->_targetRequestId == requestId)
-					{
-						// Invoke if valid to do so.
-						if (copy[i]->_status == CALLBACK_PERSISTENT || copy[i]->_status == CALLBACK_ONESHOT)
-						{
-							copy[i]->invoke(v);
-						}
-
-						if (copy[i]->_status == CALLBACK_ONESHOT)
-						{
-							copy[i]->_status = CALLBACK_REMOVED;
-						}
-					}
-				}
-
-				_lock.lock();
-				auto it = std::remove_if(_callbacks.begin(), _callbacks.end(), [](const Callback<T>* cb) {
-					if (cb->_status == CALLBACK_REMOVED)
-					{
-						delete cb;
-						return true;
-					}
-					return false;
-				});
-
-				_callbacks.erase(it, _callbacks.end());
-				_lock.unlock();
-			}
-
-		private:
-			uint32_t nextID()
-			{
-				// Store a byte to determine if the id returned from a set operation belongs to this
-				// collection of callbacks.
-				static const uint32_t MASK = 0x0FFFFFFFu;
-				uint32_t id = (_currentHandle & (MASK)) | (static_cast<uint32_t>(IDMask) << 24);
-				_currentHandle = (_currentHandle + 1) & 0x0FFFFFFFu;
-				return id;
-			}
-
-			uint32_t _currentHandle;
-			gamelink::lock _lock;
-
-			std::vector<Callback<T>*> _callbacks;
-		};
-
-		/// Returns the URL to connect for the given clientID, stage, projection
-		/// and projection version. This function should be called instead of
-		/// WebsocketConnectionURL when writing a projection into a different language.
-		///
-		/// @param[in] clientId The extension's client ID.
-		/// @param[in] stage The stage to connect to, either CONNECTION_STAGE_PRODUCTION or
-		///                  CONNECTION_STAGE_SANDBOX.
-		/// @param[in] projection The projection name. Must be under 8 characters, and must
-		/// 					  be a URL-safe string. Examples are 'c' or 'csharp'
-		/// @param[in] projectionMajor The major version of this projection.
-		/// @param[in] projectionMinor The minor version of this projection.
-		/// @param[in] projectionPatch The patch version of this projection.
-		/// @return Returns the URL to connect to. Returns an empty string on error.
-		MUXY_GAMELINK_API string ProjectionWebsocketConnectionURL(const string& clientId,
-																  ConnectionStage stage,
-																  const string& projection,
-																  int projectionMajor,
-																  int projectionMinor,
-																  int projectionPatch);
-
 		// TimedPoll is used internally to hold data from CreateTimedPoll
 		struct TimedPoll
 		{
@@ -416,14 +231,223 @@ namespace gamelink
 		};
 	}
 
+	template<typename T>
+	class MUXY_GAMELINK_API Event
+	{
+		friend class SDK;
+	public:
+		Event(SDK* sdk, const char* name, uint32_t mask)
+			: _idMask(mask)
+			, _currentHandle(0)
+			, _sdk(sdk)
+			, _name(name)
+		{
+		}
+
+		~Event()
+		{
+			for (uint32_t i = 0; i < _callbacks.size(); ++i)
+			{
+				delete _callbacks[i];
+			}
+		}
+
+		// Noncopyable
+		Event(const Event&) = delete;
+		Event(Event&&) = delete;
+		Event& operator=(const Event&) = delete;
+		Event&& operator=(Event&&) = delete;
+
+		uint32_t Add(std::function<void(const T&)> callback)
+		{
+			return set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		}
+
+		uint32_t Add(void (*callback)(void*, const schema::TransactionResponse&), void* ptr)
+		{
+			return set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		}
+
+		uint32_t AddUnique(string name, std::function<void(const T&)> callback)
+		{
+			return setUnique(std::move(name), callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		}
+
+		uint32_t AddUnique(string name, void (*callback)(void*, const schema::TransactionResponse&), void* ptr)
+		{
+			return setUnique(std::move(name), callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		}
+
+		void Remove(uint32_t handle);
+
+		void RemoveByName(const string& name)
+		{
+			_lock.lock();
+			for (uint32_t i = 0; i < _callbacks.size(); ++i)
+			{
+				if (_callbacks[i]->_name == name)
+				{
+					_callbacks[i]->_status = detail::CALLBACK_REMOVED;
+				}
+			}
+			_lock.unlock();
+		}
+
+		// This must not be called recursively.
+		void Invoke(const T& v)
+		{
+			std::vector<detail::Callback<T>*> copy;
+			uint16_t requestId = v.meta.request_id;
+
+			_lock.lock();
+			copy = _callbacks;
+			_lock.unlock();
+
+			// Invoke the copied callbacks.
+			for (uint32_t i = 0; i < copy.size(); ++i)
+			{
+				if (copy[i]->_targetRequestId == ANY_REQUEST_ID || copy[i]->_targetRequestId == requestId)
+				{
+					// Invoke if valid to do so.
+					if (copy[i]->_status == detail::CALLBACK_PERSISTENT || copy[i]->_status == detail::CALLBACK_ONESHOT)
+					{
+						copy[i]->invoke(v);
+					}
+
+					if (copy[i]->_status == detail::CALLBACK_ONESHOT)
+					{
+						copy[i]->_status = detail::CALLBACK_REMOVED;
+					}
+				}
+			}
+
+			_lock.lock();
+			auto it = std::remove_if(_callbacks.begin(), _callbacks.end(), [](const detail::Callback<T>* cb) {
+				if (cb->_status == detail::CALLBACK_REMOVED)
+				{
+					delete cb;
+					return true;
+				}
+				return false;
+			});
+
+			_callbacks.erase(it, _callbacks.end());
+			_lock.unlock();
+		}
+	private:
+		typedef void (*RawFunctionPointer)(void*, const T&);
+		bool validateId(uint32_t id)
+		{
+			// Check the ID byte for consistency.
+			return ((id >> 24) & 0xFF) == _idMask;
+		}
+
+		uint32_t set(std::function<void(const T&)> fn, uint16_t requestId, uint32_t flags)
+		{
+			uint32_t id = nextID();
+			// Set a name that is fairly unlikely to be used in RemoveByName
+			// so that RemoveByName("") doesn't remove all callbacks by mistake.
+			detail::Callback<T>* cb = new detail::Callback<T>(id, requestId, flags, "??#_muxy");
+			cb->set(fn);
+
+			_lock.lock();
+			_callbacks.push_back(cb);
+			_lock.unlock();
+
+			return id;
+		}
+
+		uint32_t set(RawFunctionPointer fn, void* user, uint16_t requestId, uint32_t flags)
+		{
+			uint32_t id = nextID();
+			detail::Callback<T>* cb = new detail::Callback<T>(id, requestId, flags, "??#_muxy");
+			cb->set(fn, user);
+
+			_lock.lock();
+			_callbacks.push_back(cb);
+			_lock.unlock();
+
+			return id;
+		}
+
+		uint32_t setUnique(string name, std::function<void(const T&)> fn, uint16_t requestId, uint32_t flags)
+		{
+			uint32_t id = nextID();
+			detail::Callback<T>* cb = new detail::Callback<T>(id, requestId, flags, name);
+			cb->set(fn);
+
+			RemoveByName(name);
+
+			_lock.lock();
+			_callbacks.push_back(cb);
+			_lock.unlock();
+
+			return id;
+		}
+
+		uint32_t setUnique(string name, RawFunctionPointer fn, void* user, uint16_t requestId, uint32_t flags)
+		{
+			uint32_t id = nextID();
+			detail::Callback<T>* cb = new detail::Callback<T>(id, requestId, flags, name);
+			cb->set(fn, user);
+
+			RemoveByName(name);
+
+			_lock.lock();
+			_callbacks.push_back(cb);
+			_lock.unlock();
+
+			return id;
+		}
+
+		uint32_t nextID()
+		{
+			// Store a byte to determine if the id returned from a set operation belongs to this
+			// collection of callbacks.
+			uint32_t id = (_currentHandle & (0x0FFFFFFFu)) | (static_cast<uint32_t>(_idMask) << 24);
+			_currentHandle = (_currentHandle + 1) & 0x0FFFFFFFu;
+			return id;
+		}
+
+		const uint32_t _idMask;
+		uint32_t _currentHandle;
+		gamelink::lock _lock;
+
+		std::vector<detail::Callback<T>*> _callbacks;
+
+		SDK* _sdk;
+		const char* _name;
+	};
+
 	/// Returns the URL to connect to for the given clientID and stage.
 	/// This returned URL doesn't have the protocol ('ws://' or 'wss://') prefix.
 	///
 	/// @param[in] clientId The extension's client ID.
-	/// @param[in] stage The stage to connect to, either CONNECTION_STAGE_PRODUCTION or
-	///                  CONNECTION_STAGE_SANDBOX.
+	/// @param[in] stage The stage to connect to, either ConnectionStage::Production or
+	///                  ConnectionStage::Sandbox.
 	/// @return Returns the URL to connect to. Returns an empty string on error.
 	MUXY_GAMELINK_API string WebsocketConnectionURL(const string& clientId, ConnectionStage stage);
+
+
+	/// Returns the URL to connect for the given clientID, stage, projection
+	/// and projection version. This function should be called instead of
+	/// WebsocketConnectionURL when writing a projection into a different language.
+	///
+	/// @param[in] clientId The extension's client ID.
+	/// @param[in] stage The stage to connect to, either ConnectionStage::Production or
+	///                  ConnectionStage::Sandbox.
+	/// @param[in] projection The projection name. Must be under 8 characters, and must
+	/// 					  be a URL-safe string. Examples are 'c' or 'csharp'
+	/// @param[in] projectionMajor The major version of this projection.
+	/// @param[in] projectionMinor The minor version of this projection.
+	/// @param[in] projectionPatch The patch version of this projection.
+	/// @return Returns the URL to connect to. Returns an empty string on error.
+	MUXY_GAMELINK_API string ProjectionWebsocketConnectionURL(const string& clientId,
+																ConnectionStage stage,
+																const string& projection,
+																int projectionMajor,
+																int projectionMinor,
+																int projectionPatch);
 
 	// The PatchList set provides an easy api to generate a list of patches and send them
 	// in one request.
@@ -553,13 +577,14 @@ namespace gamelink
 		~SDK();
 
 		// Not implemented. SDK is not copyable
-		SDK(const SDK&);
-		SDK& operator=(const SDK&);
+		SDK(const SDK&) = delete;
+		SDK& operator=(const SDK&) = delete;
 
 		// Not implemented. SDK is not movable
-		SDK(SDK&&);
-		SDK& operator=(SDK&&);
+		SDK(SDK&&) = delete;
+		SDK& operator=(SDK&&) = delete;
 
+#pragma region network and debug operations
 		/// Receives a character buffer as a message. This function
 		/// may invoke any callbacks that have been attached.
 		/// @warning This function must only be called from one thread, and must not be
@@ -614,7 +639,7 @@ namespace gamelink
 
 				if (payload)
 				{
-					if (payload->data.size() > 0)
+					if (payload->Length() > 0)
 					{
 						networkCallback(payload);
 					}
@@ -688,187 +713,9 @@ namespace gamelink
 		///
 		/// @param[in] req A request id, as returned from an API call.
 		void WaitForResponse(RequestId req);
+#pragma endregion
 
-		/// Sets the OnPollUpdate callback. This callback is invoked after SubscribeToPoll is called.
-		/// @remark SubscribeToPoll takes in a poll id, but can be called multiple times with different poll ids.
-		///        Callbacks registered through OnPollUpdate receive all update messages, regardless of poll id.
-		///        Callbacks that are designed to only get updates for a specific poll id should test the poll id
-		///        from within the callback itself.
-		///
-		/// @param[in] callback Callback to invoke when a poll update message is received
-		/// @return Returns an integer handle to the callback, to be used in DetachOnPollUpdate.
-		uint32_t OnPollUpdate(std::function<void(const schema::PollUpdateResponse&)> callback);
-
-		/// Sets the OnPollUpdate callback. This callback is invoked after SubscribeToPoll is called.
-		/// See the std::function overload for remarks.
-		///
-		/// @param[in] callback Callback to invoke when a poll update message is received
-		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnPollUpdate.
-		uint32_t OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr);
-
-		/// Detaches an OnPollUpdate callback.
-		///
-		/// @param[in] id A handle obtained from calling OnPollUpdate. Invalid handles are ignored.
-		void DetachOnPollUpdate(uint32_t id);
-
-		/// Sets the OnAuthenticate callback. This callback is invoked when an authentication
-		/// message is received.
-		///
-		/// @param[in] callback Callback to invoke when an authentication message is received.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnAuthenticate.
-		uint32_t OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> callback);
-
-		/// Sets the OnAuthenticate callback. This callback is invoked when an authentication
-		/// message is received.
-		///
-		/// @param[in] callback Callback to invoke when an authentication message is received.
-		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnAuthenticate.
-		uint32_t OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr);
-
-		/// Detaches an OnAuthenticate callback.
-		///
-		/// @param[in] id A handle obtained from calling OnAuthenticate. Invalid handles are ignored.
-		void DetachOnAuthenticate(uint32_t id);
-
-		/// Sets the OnStateUpdate callback. This callback is invoked when a state update
-		/// message is received.
-		///
-		/// @param[in] callback Callback to invoke when a state update message is received.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnStateUpdate.
-		uint32_t OnStateUpdate(std::function<void(const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback);
-
-		/// Sets the OnStateUpdate callback. This callback is invoked when a state update
-		/// message is received.
-		///
-		/// @param[in] callback Callback to invoke when a state update message is received.
-		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnStateUpdate.
-		uint32_t OnStateUpdate(void (*callback)(void*, const schema::SubscribeStateUpdateResponse<nlohmann::json>&), void* ptr);
-
-		/// Detaches an OnStateUpdate callback.
-		///
-		/// @param[in] id A handle obtained from calling OnStateUpdate. Invalid handles are ignored.
-		void DetachOnStateUpdate(uint32_t id);
-
-		/// Starts subscribing to OnTransaction updates for a specific SKU
-		///
-		/// @param[in] sku SKU of item to subscribe to
-		/// @return RequestId of the generated request
-		RequestId SubscribeToSKU(const string& sku);
-
-		/// Unsubscribes from a specific SKU listened to by SubscribeToSKU
-		///
-		/// @param[in] sku SKU of item to unsubscribe to
-		/// @return RequestId of the generated request
-		RequestId UnsubscribeFromSKU(const string& sku);
-
-		/// Subscribes to all SKUs.
-		/// @return RequestId of the generated request
-		RequestId SubscribeToAllPurchases();
-
-		/// Unsubscribes from all SKUs.
-		/// @return RequestId of the generated request
-		RequestId UnsubscribeFromAllPurchases();
-
-		/// Sets the OnTransaction callback. This callback is invoked whenever a transaction message
-		/// is received.
-		/// @remarks The purchase message has been authenticated and deduplicated by the server.
-		///          This callback receives all SKUs purchased, so a callback for a specific SKU should
-		///          test the SKU in the callback.
-		///
-		/// @param[in] callback Callback to invoke when a twitch purchase message is received.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnTransaction.
-		uint32_t OnTransaction(std::function<void(const schema::TransactionResponse&)> callback);
-
-		/// Sets the OnTransaction callback. This callback is invoked when twitch purchase
-		/// message is received.
-		/// See the std::function overload for remarks.
-		///
-		/// @param[in] callback Callback to invoke when a twitch purchase message is received.
-		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnTransaction.
-		uint32_t OnTransaction(void (*callback)(void*, const schema::TransactionResponse&), void* ptr);
-
-		/// Detaches an OnTransaction callback.
-		///
-		/// @deprecated
-		/// @param[in] id A handle obtained from calling OnTransaction. Invalid handles are ignored.
-		void DetachOnTransaction(uint32_t id);
-
-		/// Gets a list of unvalidated transactions.
-		///
-		/// @remarks These unvalidated transactions are ordered by purchase time, from the least recent
-		///          to most recent. Returns up to 10 entries at a time.
-		/// @param[in] sku SKU of the transactions to get. Can use '*' to get all SKUs.
-		/// @param[in] callback Callback to invoke after getting the outstanding transactions from the server.
-		/// @return RequestId of the generated request
-		RequestId GetOutstandingTransactions(const string& sku,
-											 std::function<void(const schema::GetOutstandingTransactionsResponse&)> callback);
-
-		/// Gets a list of unvalidated transactions.
-		///
-		/// @remarks These unvalidated transactions are ordered by purchase time, from the least recent
-		///          to most recent. Returns up to 10 entries at a time.
-		/// @param[in] sku SKU of the transactions to get. Can use '*' to get all SKUs.
-		/// @param[in] callback Callback to invoke after getting the outstanding transactions from the server.
-		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
-		/// @return RequestId of the generated request
-		RequestId GetOutstandingTransactions(const string& sku,
-											 void (*callback)(void*, const schema::GetOutstandingTransactionsResponse&),
-											 void* ptr);
-
-		/// Refunds a transaction by SKU and UserID
-		///
-		/// @param[in] sku The SKU of the transaction to refund.
-		/// @param[in] userId The UserID of the user the transaction is to be refunded to.
-		/// @return RequestId of the generated request
-		RequestId RefundTransactionBySKU(const string& sku, const string& userid);
-
-		/// Refunds a transaction by transaction id and UserID
-		///
-		/// @param[in] txid The Muxy transaction id of the transaction to refund.
-		/// @param[in] userId The UserID of the user the transaction is to be refunded to.
-		/// @return RequestId of the generated request
-		RequestId RefundTransactionByID(const string& txid, const string& userid);
-
-		/// Validates a specific transaction
-		///
-		/// @param[in] txid The Muxy transaction id of the transaction to validate.
-		/// @param[in] details Optional details about this validation.
-		/// @return RequestId of the generated request
-		RequestId ValidateTransaction(const string& txid, const string& details);
-
-		/// Gets drops of a given status. Valid status is FULFILLED and CLAIMED.
-		///
-		/// @param[in] status The string status of the set of drops to get. One of FULFILLED, CLAIMED
-		///                   or empty or '*' to get drops of all statuses.
-		/// @param[in] callback Callback to invoke after getting the drops from the server.
-		/// @return RequestId of the generated request
-		RequestId GetDrops(const string& status, std::function<void(const schema::GetDropsResponse&)> callback);
-
-		/// Gets drops of a given status. Valid status is FULFILLED and CLAIMED.
-		///
-		/// @param[in] status The string status of the set of drops to get. One of FULFILLED, CLAIMED
-		///                   or empty or '*' to get drops of all statuses.
-		/// @param[in] callback Callback to invoke after getting the drops from the server.
-		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
-		/// @return RequestId of the generated request
-		RequestId GetDrops(const string& status, void (*callback)(void*, const schema::GetDropsResponse&), void* ptr);
-
-		/// Moves a single drop from 'CLAIMED' status to 'FULFILLED' status.
-		///
-		/// @param[in] id the ID of the drop to update the status of.
-		/// @return RequestId of the generated request.
-		RequestId ValidateDrop(const string& id);
-
-		/// Deauths the user from the server. Additional requests will not succeed until another
-		/// successful authentication request is sent.
-		///
-		/// @return RequestId of the generated request
-		RequestId Deauthenticate();
-
+#pragma region authentication
 		/// Queues an authentication request using a PIN code, as received by the user from an
 		/// extension's config view.
 		///
@@ -941,6 +788,124 @@ namespace gamelink
 											   void (*callback)(void*, const schema::AuthenticateResponse&),
 											   void* user);
 
+		/// Deauths the user from the server. Additional requests will not succeed until another
+		/// successful authentication request is sent.
+		///
+		/// @return RequestId of the generated request
+		RequestId Deauthenticate();
+
+		/// Gets a reference to the OnAuthenticate event. This event is when an authentication request is
+		/// responded to. Unlike many other events, there are no corresponding SubscribeTo* calls required
+		/// to have this event be invoked.
+		///
+		/// @remark See the documentation for Event<T> for more information
+		///
+		/// @return Returns the OnAuthenticate event.
+		Event<schema::AuthenticateResponse>& OnAuthenticate();
+#pragma endregion
+
+#pragma region transactions
+		/// Starts subscribing to OnTransaction updates for a specific SKU
+		///
+		/// @param[in] sku SKU of item to subscribe to
+		/// @return RequestId of the generated request
+		RequestId SubscribeToSKU(const string& sku);
+
+		/// Unsubscribes from a specific SKU listened to by SubscribeToSKU
+		///
+		/// @param[in] sku SKU of item to unsubscribe to
+		/// @return RequestId of the generated request
+		RequestId UnsubscribeFromSKU(const string& sku);
+
+		/// Subscribes to all SKUs.
+		/// @return RequestId of the generated request
+		RequestId SubscribeToAllPurchases();
+
+		/// Unsubscribes from all SKUs.
+		/// @return RequestId of the generated request
+		RequestId UnsubscribeFromAllPurchases();
+
+		/// Gets a reference to the OnTransaction event. This event is when a purchase event occurs,
+		/// as a result of calling SubscribeToSKU or SubscribeToAllPurchases.
+		///
+		/// @remark SubscribeToSKU takes in an sku, but can be called multiple times with different skus.
+		///        Callbacks registered through OnTransaction receive all transaction messages, regardless of sku.
+		///        Callbacks that are designed to only get updates for an sku should test the sku
+		///        from within the callback itself.
+		///
+		/// @remark See the documentation for Event<T> for more information
+		///
+		/// @return Returns the OnTransaction event.
+		Event<schema::TransactionResponse>& OnTransaction();
+
+		/// Gets a list of unvalidated transactions.
+		///
+		/// @remarks These unvalidated transactions are ordered by purchase time, from the least recent
+		///          to most recent. Returns up to 10 entries at a time.
+		/// @param[in] sku SKU of the transactions to get. Can use '*' to get all SKUs.
+		/// @param[in] callback Callback to invoke after getting the outstanding transactions from the server.
+		/// @return RequestId of the generated request
+		RequestId GetOutstandingTransactions(const string& sku,
+											 std::function<void(const schema::GetOutstandingTransactionsResponse&)> callback);
+
+		/// Gets a list of unvalidated transactions.
+		///
+		/// @remarks These unvalidated transactions are ordered by purchase time, from the least recent
+		///          to most recent. Returns up to 10 entries at a time.
+		/// @param[in] sku SKU of the transactions to get. Can use '*' to get all SKUs.
+		/// @param[in] callback Callback to invoke after getting the outstanding transactions from the server.
+		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
+		/// @return RequestId of the generated request
+		RequestId GetOutstandingTransactions(const string& sku,
+											 void (*callback)(void*, const schema::GetOutstandingTransactionsResponse&),
+											 void* ptr);
+
+		/// Refunds a transaction by SKU and UserID
+		///
+		/// @param[in] sku The SKU of the transaction to refund.
+		/// @param[in] userId The UserID of the user the transaction is to be refunded to.
+		/// @return RequestId of the generated request
+		RequestId RefundTransactionBySKU(const string& sku, const string& userid);
+
+		/// Refunds a transaction by transaction id and UserID
+		///
+		/// @param[in] txid The Muxy transaction id of the transaction to refund.
+		/// @param[in] userId The UserID of the user the transaction is to be refunded to.
+		/// @return RequestId of the generated request
+		RequestId RefundTransactionByID(const string& txid, const string& userid);
+
+		/// Validates a specific transaction
+		///
+		/// @param[in] txid The Muxy transaction id of the transaction to validate.
+		/// @param[in] details Optional details about this validation.
+		/// @return RequestId of the generated request
+		RequestId ValidateTransaction(const string& txid, const string& details);
+
+		/// Gets drops of a given status. Valid status is FULFILLED and CLAIMED.
+		///
+		/// @param[in] status The string status of the set of drops to get. One of FULFILLED, CLAIMED
+		///                   or empty or '*' to get drops of all statuses.
+		/// @param[in] callback Callback to invoke after getting the drops from the server.
+		/// @return RequestId of the generated request
+		RequestId GetDrops(const string& status, std::function<void(const schema::GetDropsResponse&)> callback);
+
+		/// Gets drops of a given status. Valid status is FULFILLED and CLAIMED.
+		///
+		/// @param[in] status The string status of the set of drops to get. One of FULFILLED, CLAIMED
+		///                   or empty or '*' to get drops of all statuses.
+		/// @param[in] callback Callback to invoke after getting the drops from the server.
+		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
+		/// @return RequestId of the generated request
+		RequestId GetDrops(const string& status, void (*callback)(void*, const schema::GetDropsResponse&), void* ptr);
+
+		/// Moves a single drop from 'CLAIMED' status to 'FULFILLED' status.
+		///
+		/// @param[in] id the ID of the drop to update the status of.
+		/// @return RequestId of the generated request.
+		RequestId ValidateDrop(const string& id);
+#pragma endregion
+
+#pragma region polls
 		// Poll stuff, all async.
 
 		/// Queues a request to get poll information, including results, for the poll with the given ID.
@@ -1059,8 +1024,22 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId DeletePoll(const string& pollId);
 
-		// Config operations, all async.
+		/// Gets a reference to the OnPollUpdate event. This event is invoked whenever a message
+		/// resulting from SubscribeToPoll is processed by the SDK.
+		///
+		/// @remark SubscribeToPoll takes in a poll id, but can be called multiple times with different poll ids.
+		///        Callbacks registered through OnPollUpdate receive all update messages, regardless of poll id.
+		///        Callbacks that are designed to only get updates for a specific poll id should test the poll id
+		///        from within the callback itself.
+		///
+		/// @remark See the documentation for Event<T> for more information
+		///
+		/// @return Returns the OnPollUpdate event.
+		Event<schema::PollUpdateResponse>& OnPollUpdate();
+#pragma endregion
 
+#pragma region config
+		// Config operations, all async.
 		/// Queues a request to get cofiguration. This overload attaches a one-shot callback to be
 		/// called when config is received.
 		///
@@ -1219,26 +1198,17 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId SetChannelConfig(const nlohmann::json& js);
 
-		/// Sets an OnConfigUpdate callback. This callback is invoked when a config update
-		/// message is received.
+		/// Returns a reference to the OnConfigUpdate event.
+		/// This event will be invoked when the SDK receives an update to configuration
+		/// Must have called SubscribeToConfigurationChanges to receive any events.
 		///
-		/// @param[in] callback Callback to invoke when a config update message is received.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnConfigUpdate.
-		uint32_t OnConfigUpdate(std::function<void(const schema::ConfigUpdateResponse&)> callback);
-
-		/// Sets an OnConfigUpdate callback. This callback is invoked when a config update
-		/// message is received.
+		/// @remark See the documentation for Event<T> for more information.
 		///
-		/// @param[in] callback Callback to invoke when a config update message is received.
-		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnConfigUpdate.
-		uint32_t OnConfigUpdate(void (*callback)(void*, const schema::ConfigUpdateResponse&), void* user);
+		/// @return The OnConfigUpdate event
+		Event<schema::ConfigUpdateResponse>& OnConfigUpdate();
+#pragma endregion
 
-		/// Detaches an OnConfigUpdate callback.
-		///
-		/// @param[in] id A handle obtained from calling OnConfigUpdate. Invalid handles are ignored.
-		void DetachOnConfigUpdate(uint32_t);
-
+#pragma region state
 		// State operations, all async.
 
 		/// Queues a request to replace the entirety of state with new information.
@@ -1420,6 +1390,17 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId UnsubscribeFromStateUpdates(StateTarget target);
 
+		/// Returns a reference to the OnStateUpdate event.
+		/// This event will be invoked when the SDK receives an update to state
+		/// Must have called SubscribeToStateUpdates to receive any events.
+		///
+		/// @remark See the documentation for Event<T> for more information.
+		///
+		/// @return The OnStateUpdate event
+		Event<schema::SubscribeStateUpdateResponse<nlohmann::json> >& OnStateUpdate();
+#pragma endregion
+
+#pragma region broadcasts
 		/// Sends a broadcast to all viewers on the channel using the extension.
 		/// @remark The serialized size of the value parameter must be under 8 kilobytes.
 		///
@@ -1448,7 +1429,9 @@ namespace gamelink
 		///                  to filter messages.
 		/// @return RequestId of the generated request
 		RequestId SendBroadcast(const string& topic);
+#pragma endregion
 
+#pragma region datastream
 		/// Sends a request to subscribe to the datastream.
 		/// @return RequestId of the generated request
 		RequestId SubscribeToDatastream();
@@ -1457,26 +1440,17 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId UnsubscribeFromDatastream();
 
-		/// Sets an OnDatastream callback. This callback is invoked when a datastream update
-		/// message is received.
+		/// Returns a reference to the OnDatastreamUpdate event.
+		/// This event will be invoked when the SDK receives a datastream event.
+		/// Must have called SubscribeToDatastream to receive any events.
 		///
-		/// @param[in] callback Callback to invoke when a datastream update message is received.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnDatastream.
-		uint32_t OnDatastream(std::function<void(const schema::DatastreamUpdate&)> callback);
-
-		/// Sets an OnDatastream callback. This callback is invoked when a datastream update
-		/// message is received.
+		/// @remark See the documentation for Event<T> for more information.
 		///
-		/// @param[in] callback Callback to invoke when a datastream update message is received.
-		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnDatastream.
-		uint32_t OnDatastream(void (*callback)(void*, const schema::DatastreamUpdate&), void* user);
+		/// @return The OnDatastreamUpdate event
+		Event<schema::DatastreamUpdate>& OnDatastreamUpdate();
+#pragma endregion
 
-		/// Detaches an OnDatastream callback.
-		///
-		/// @param[in] id A handle obtained from calling OnDatastream. Invalid handles are ignored.
-		void DetachOnDatastream(uint32_t);
-
+#pragma region matchmaking
 		/// Clears the matchmaking queue
 		///
 		/// @return RequestId of the generated request
@@ -1499,48 +1473,15 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId UnsubscribeFromMatchmakingQueueInvite();
 
-		/// Sets an OnMatchmakingQueueInvite callback. This callback is invoked when a matchmaking queue
-		/// invite message is received.
-		/// You must call SubscribeToMatchmakingQueueInvite before any callbacks will be invoked.
+		/// Returns a reference to the OnMatchmakingQueueInvite event.
+		/// This event will be invoked when the SDK receives a matchmaking queue invite event.
+		/// Must have called SubscribeToMatchmakingQueueInvite to receive any events.
 		///
-		/// @param[in] callback Callback to invoke when a queue invite message is received.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnMatchmakingQueueInvite
-		uint32_t OnMatchmakingQueueInvite(std::function<void(const schema::MatchmakingUpdate&)> callback);
-
-		/// Sets an OnMatchmakingQueueInvite callback. This callback is invoked when a matchmaking queue
-		/// invite message is received.
-		/// You must call SubscribeToMatchmakingQueueInvite before any callbacks will be invoked.
+		/// @remark See the documentation for Event<T> for more information.
 		///
-		/// @param[in] callback Callback to invoke when a queue invite message is received.
-		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnMatchmakingQueueInvite
-		uint32_t OnMatchmakingQueueInvite(void (callback)(void*, const schema::MatchmakingUpdate&), void* user);
-
-		/// Sets an OnMatchmakingQueueInvite callback. This callback is invoked when a matchmaking queue
-		/// invite message is received. Any existing callbacks bound with the same name will
-		/// unbound before the new callback will be attached.
-		/// You must call SubscribeToMatchmakingQueueInvite before any callbacks will be invoked.
-		///
-		/// @param[in] name An arbitary name to associate with this callback.
-		/// @param[in] callback Callback to invoke when a queue invite message is received.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnMatchmakingQueueInvite
-		uint32_t OnMatchmakingQueueInviteUnique(string name, std::function<void(const schema::MatchmakingUpdate&)> callback);
-
-		/// Sets an OnMatchmakingQueueInvite callback. This callback is invoked when a matchmaking queue
-		/// invite message is received. Any existing callbacks bound with the same name will
-		/// unbound before the new callback will be attached.
-		/// You must call SubscribeToMatchmakingQueueInvite before any callbacks will be invoked.
-		///
-		/// @param[in] name An arbitary name to associate with this callback.
-		/// @param[in] callback Callback to invoke when a queue invite message is received.
-		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnMatchmakingQueueInvite
-		uint32_t OnMatchmakingQueueInviteUnique(string name, void (callback)(void*, const schema::MatchmakingUpdate&), void* user);
-
-		/// Detaches an OnMatchmakingQueueInvite callback.
-		///
-		/// @param[in] id A handle obtained from calling OnMatchmakingQueueInvite. Invalid handles are ignored.
-		void DetachOnMatchmakingQueueInvite(uint32_t id);
+		/// @return The OnMatchmakingQueueInvite event
+		Event<schema::MatchmakingUpdate>& OnMatchmakingQueueInvite();
+#pragma endregion
 	private:
 		void debugLogPayload(const Payload*);
 
@@ -1584,23 +1525,47 @@ namespace gamelink
 
 		detail::Callback<string> _onDebugMessage;
 
-		detail::CallbackCollection<schema::PollUpdateResponse, 1> _onPollUpdate;
-		detail::CallbackCollection<schema::AuthenticateResponse, 2> _onAuthenticate;
-		detail::CallbackCollection<schema::SubscribeStateUpdateResponse<nlohmann::json>, 3> _onStateUpdate;
-		detail::CallbackCollection<schema::GetStateResponse<nlohmann::json>, 4> _onGetState;
-		detail::CallbackCollection<schema::TransactionResponse, 5> _onTransaction;
-		detail::CallbackCollection<schema::GetPollResponse, 6> _onGetPoll;
-		detail::CallbackCollection<schema::DatastreamUpdate, 7> _onDatastreamUpdate;
+		Event<schema::PollUpdateResponse> _onPollUpdate;
+		Event<schema::AuthenticateResponse> _onAuthenticate;
+		Event<schema::SubscribeStateUpdateResponse<nlohmann::json> > _onStateUpdate;
+		Event<schema::GetStateResponse<nlohmann::json> > _onGetState;
+		Event<schema::TransactionResponse> _onTransaction;
+		Event<schema::GetPollResponse> _onGetPoll;
+		Event<schema::DatastreamUpdate> _onDatastreamUpdate;
 
-		detail::CallbackCollection<schema::GetConfigResponse, 8> _onGetConfig;
-		detail::CallbackCollection<schema::GetCombinedConfigResponse, 9> _onGetCombinedConfig;
-		detail::CallbackCollection<schema::ConfigUpdateResponse, 10> _onConfigUpdate;
+		Event<schema::GetConfigResponse> _onGetConfig;
+		Event<schema::GetCombinedConfigResponse> _onGetCombinedConfig;
+		Event<schema::ConfigUpdateResponse> _onConfigUpdate;
 
-		detail::CallbackCollection<schema::GetOutstandingTransactionsResponse, 11> _onGetOutstandingTransactions;
-		detail::CallbackCollection<schema::GetDropsResponse, 12> _onGetDrops;
+		Event<schema::GetOutstandingTransactionsResponse> _onGetOutstandingTransactions;
+		Event<schema::GetDropsResponse> _onGetDrops;
 
-		detail::CallbackCollection<schema::MatchmakingUpdate, 13> _onMatchmakingUpdate;
+		Event<schema::MatchmakingUpdate> _onMatchmakingUpdate;
 	};
+
+	// Implementation of Event::Remove is here because of completeness requirements of SDK.
+	template<typename T>
+	void Event<T>::Remove(uint32_t handle)
+	{
+		if (!validateId(handle))
+		{
+			char messageBuffer[128];
+			snprintf(messageBuffer, 128, "Invalid callback handle passed to %s::Remove", _name);
+			_sdk->InvokeOnDebugMessage(gamelink::string(messageBuffer));
+			return;
+		}
+
+		_lock.lock();
+		for (uint32_t i = 0; i < _callbacks.size(); ++i)
+		{
+			if (_callbacks[i]->_id == handle)
+			{
+				_callbacks[i]->_status = detail::CALLBACK_REMOVED;
+			}
+		}
+		_lock.unlock();
+	}
+
 }
 
 #endif

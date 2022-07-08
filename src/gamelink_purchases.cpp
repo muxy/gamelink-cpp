@@ -37,26 +37,9 @@ namespace gamelink
 		return UnsubscribeFromSKU("*");
 	}
 
-	uint32_t SDK::OnTransaction(std::function<void(const schema::TransactionResponse&)> callback)
+	Event<schema::TransactionResponse>& SDK::OnTransaction()
 	{
-		return _onTransaction.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	uint32_t SDK::OnTransaction(void (*callback)(void*, const schema::TransactionResponse&), void* ptr)
-	{
-		return _onTransaction.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	void SDK::DetachOnTransaction(uint32_t id)
-	{
-		if (_onTransaction.validateId(id))
-		{
-			_onTransaction.remove(id);
-		}
-		else
-		{
-			_onDebugMessage.invoke("Invalid ID passed into DetachOnTransaction");
-		}
+		return _onTransaction;
 	}
 
 	RequestId SDK::GetOutstandingTransactions(const string& sku, std::function<void (const schema::GetOutstandingTransactionsResponse&)> callback)

@@ -83,7 +83,7 @@ MGL_RequestId MuxyGameLink_UnsubscribeToConfigurationChanges(MuxyGameLink GameLi
 uint32_t MuxyGameLink_OnConfigUpdate(MuxyGameLink GameLink, MGL_ConfigUpdateResponseCallback Callback, void* UserData)
 {
 	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
-	return Instance->OnConfigUpdate([Callback, UserData](const schema::ConfigUpdateResponse& UpdateResponse) {
+	return Instance->OnConfigUpdate().Add([Callback, UserData](const schema::ConfigUpdateResponse& UpdateResponse) {
 		MGL_Schema_ConfigUpdateResponse Response;
 		Response.Obj = &UpdateResponse;
 
@@ -94,7 +94,7 @@ uint32_t MuxyGameLink_OnConfigUpdate(MuxyGameLink GameLink, MGL_ConfigUpdateResp
 void MuxyGameLink_DetachOnConfigUpdate(MuxyGameLink GameLink, uint32_t Id)
 {
 	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
-	Instance->DetachOnConfigUpdate(Id);
+	Instance->OnConfigUpdate().Remove(Id);
 }
 
 MGL_ConfigTarget MuxyGameLink_Schema_ConfigUpdateResponse_GetConfigID(MGL_Schema_ConfigUpdateResponse UpdateResponse)

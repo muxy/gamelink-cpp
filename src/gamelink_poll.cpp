@@ -2,26 +2,9 @@
 
 namespace gamelink
 {
-    uint32_t SDK::OnPollUpdate(std::function<void(const schema::PollUpdateResponse& pollResponse)> callback)
+	Event<schema::PollUpdateResponse>& SDK::OnPollUpdate()
 	{
-		return _onPollUpdate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	uint32_t SDK::OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr)
-	{
-		return _onPollUpdate.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	void SDK::DetachOnPollUpdate(uint32_t id)
-	{
-		if (_onPollUpdate.validateId(id))
-		{
-			_onPollUpdate.remove(id);
-		}
-		else
-		{
-			_onDebugMessage.invoke("Invalid ID passed into DetachOnPollUpdate");
-		}
+		return _onPollUpdate;
 	}
 
 	RequestId SDK::GetPoll(const string& pollId)

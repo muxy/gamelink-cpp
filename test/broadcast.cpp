@@ -23,12 +23,12 @@ TEST_CASE("Broadcasting", "[broadcast]")
 	gs::BroadcastRequest<BroadcastMessage> req("rare-drop", msg);
 
 	SerializeEqual(req, R"({
-        "action": "broadcast", 
+        "action": "broadcast",
         "params": {
             "request_id": 65535
-        }, 
+        },
         "data": {
-            "topic": "rare-drop", 
+            "topic": "rare-drop",
             "data": { "item": "Thunderfury, Blessed Blade of the Windseeker","who":12345}
         }
     })");
@@ -48,19 +48,17 @@ TEST_CASE("Broadcast", "[sdk][broadcast]")
 
 	gamelink::SDK sdk;
 	sdk.SendBroadcast("sticker", msg);
-	sdk.ForeachPayload([](const gamelink::Payload* send) {
-		REQUIRE(JSONEquals(send->data,
-						   R"({
+	validateSinglePayload(sdk,
+		R"({
             "action":"broadcast",
             "data":{
-                "topic": "sticker", 
+                "topic": "sticker",
                 "data": { "sticker": "Good Work!" }
             },
             "params":{
                 "request_id":65535
             }
-        })"));
-	});
+        })");
 
 	REQUIRE(!sdk.HasPayloads());
 }

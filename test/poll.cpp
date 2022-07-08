@@ -126,44 +126,35 @@ TEST_CASE("SDK Poll Creation", "[sdk][poll][creation]")
 	gamelink::SDK sdk;
 
 	sdk.CreatePoll("test-poll", "Me or Them?", {"Me", "Them"});
-	REQUIRE(sdk.HasPayloads());
-
-	sdk.ForeachPayload([](const gamelink::Payload* send) {
-		REQUIRE(JSONEquals(send->data,
-						   R"({
-				"action":"create",
-				"data":{
-					"options":["Me","Them"],
-					"poll_id":"test-poll",
-					"prompt":"Me or Them?"
-				},
-				"params":{
-					"request_id":65535,
-					"target":"poll"
-				}
-			})"));
-	});
+	validateSinglePayload(sdk, R"({
+		"action":"create",
+		"data":{
+			"options":["Me","Them"],
+			"poll_id":"test-poll",
+			"prompt":"Me or Them?"
+		},
+		"params":{
+			"request_id":65535,
+			"target":"poll"
+		}
+	})");
 
 
 	std::vector<gamelink::string> options = {"Me", "Them"};
 	sdk.CreatePoll("test-poll", "Me or Them?", options.data(), options.data() + 2);
-	REQUIRE(sdk.HasPayloads());
 
-	sdk.ForeachPayload([](const gamelink::Payload* send) {
-		REQUIRE(JSONEquals(send->data,
-						   R"({
-				"action":"create",
-				"data":{
-					"options":["Me","Them"],
-					"poll_id":"test-poll",
-					"prompt":"Me or Them?"
-				},
-				"params":{
-					"request_id":65535,
-					"target":"poll"
-				}
-			})"));
-	});
+	validateSinglePayload(sdk, R"({
+		"action":"create",
+		"data":{
+			"options":["Me","Them"],
+			"poll_id":"test-poll",
+			"prompt":"Me or Them?"
+		},
+		"params":{
+			"request_id":65535,
+			"target":"poll"
+		}
+	})");
 
 	REQUIRE(!sdk.HasPayloads());
 }
@@ -237,11 +228,7 @@ TEST_CASE("SDK Poll Get Results", "[sdk][poll][results]")
 
 	sdk.GetPoll("test-poll");
 
-	REQUIRE(sdk.HasPayloads());
-	sdk.ForeachPayload([](const gamelink::Payload* send) {
-		REQUIRE(JSONEquals(send->data, R"({"action":"get","data":{"poll_id":"test-poll"},"params":{"request_id":65535,"target":"poll"}})"));
-	});
-	REQUIRE(!sdk.HasPayloads());
+	validateSinglePayload(sdk, R"({"action":"get","data":{"poll_id":"test-poll"},"params":{"request_id":65535,"target":"poll"}})");
 
 	uint32_t calls = 0;
 	sdk.GetPoll("something-else", [&](const gamelink::schema::GetPollResponse& poll) {
@@ -299,17 +286,9 @@ TEST_CASE("SDK Poll Get Results", "[sdk][poll][results]")
 TEST_CASE("SDK Poll Subscription", "[sdk][poll][subscription]")
 {
 	gamelink::SDK sdk;
-
 	sdk.SubscribeToPoll("test-poll");
 
-	REQUIRE(sdk.HasPayloads());
-
-	sdk.ForeachPayload([](const gamelink::Payload* send) {
-		REQUIRE(JSONEquals(send->data,
-						   R"({"action":"subscribe","data":{"topic_id":"test-poll"},"params":{"request_id":65535,"target":"poll"}})"));
-	});
-
-	REQUIRE(!sdk.HasPayloads());
+	validateSinglePayload(sdk, R"({"action":"subscribe","data":{"topic_id":"test-poll"},"params":{"request_id":65535,"target":"poll"}})");
 }
 
 TEST_CASE("SDK Poll Update Response", "[sdk][poll][update]")
@@ -336,7 +315,7 @@ TEST_CASE("SDK Poll Update Response", "[sdk][poll][update]")
 		}
 	})";
 
-	sdk.OnPollUpdate([&](gamelink::schema::PollUpdateResponse pollResp) {
+	sdk.OnPollUpdate().Add([&](gamelink::schema::PollUpdateResponse pollResp) {
 		received = true;
 		SerializeEqual(pollResp, json);
 	});

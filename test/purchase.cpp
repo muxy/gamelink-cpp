@@ -19,8 +19,8 @@ TEST_CASE("Purchase deserialization", "[purchase][deserialization]")
 			"sku": "test-sku",
 			"displayName": "Test User",
 			"userId": "12345",
-			"cost": 42, 
-			"timestamp": 100, 
+			"cost": 42,
+			"timestamp": 100,
 			"username": "test-user",
 			"additional": "extra-data"
 		}
@@ -56,14 +56,14 @@ TEST_CASE("SDK Twitch Bits Purchase Response", "[sdk][purchase][twitch]")
 			"muxy_id": "abc",
 			"displayName": "Test User",
 			"userId": "12345",
-			"cost": 42, 
-			"timestamp": 100, 
+			"cost": 42,
+			"timestamp": 100,
 			"username": "test-user",
 			"additional": "extra-data"
 		}
 	})";
 
-	sdk.OnTransaction([&](gamelink::schema::TransactionResponse resp) {
+	sdk.OnTransaction().Add([&](gamelink::schema::TransactionResponse resp) {
 		received = true;
 		SerializeEqual(resp, json);
 	});
@@ -77,19 +77,16 @@ TEST_CASE("Purchase subsciptions", "[purchase]")
 	gamelink::SDK sdk;
 	sdk.SubscribeToSKU("spicy-ketchup");
 
-	REQUIRE(sdk.HasPayloads());
-	sdk.ForeachPayload([](const gamelink::Payload* payload) {
-		REQUIRE(JSONEquals(payload->data, R"({
-            "action": "subscribe", 
-            "data": {
-                "sku": "spicy-ketchup"
-            }, 
-            "params": {
-                "request_id": 65535, 
-                "target": "twitchPurchaseBits"
-            }
-        })"));
-	});
+	validateSinglePayload(sdk, R"({
+		"action": "subscribe",
+		"data": {
+			"sku": "spicy-ketchup"
+		},
+		"params": {
+			"request_id": 65535,
+			"target": "twitchPurchaseBits"
+		}
+	})");
 
 	REQUIRE(!sdk.HasPayloads());
 }

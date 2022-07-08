@@ -58,7 +58,7 @@ TEST_CASE("Matchmaking callback is invoked with queryable data", "[matchmaking]"
 	gamelink::SDK sdk;
 
 	bool called = false;
-	sdk.OnMatchmakingQueueInvite([&](const gamelink::schema::MatchmakingUpdate& update)
+	sdk.OnMatchmakingQueueInvite().Add([&](const gamelink::schema::MatchmakingUpdate& update)
 	{
 		REQUIRE(update.data.data["mmid"] == "some-matchmaking-id");
 		REQUIRE(update.data.bitsSpent == 12);

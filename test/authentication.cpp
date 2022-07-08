@@ -7,21 +7,21 @@ TEST_CASE("Authentication Serialization", "[auth][serialization]")
 {
 	gamelink::schema::SubscribeAuthenticationRequest req;
 	SerializeEqual(req, R"({
-        "action": "subscribe", 
+        "action": "subscribe",
         "params": {
-            "request_id": 65535, 
+            "request_id": 65535,
             "target": "authentication"
         }
     })");
 
 	gamelink::schema::AuthenticateWithPINRequest auth("not-a-client-id", "1234");
 	SerializeEqual(auth, R"({
-        "action": "authenticate", 
+        "action": "authenticate",
         "params": {
             "request_id": 65535
         },
         "data": {
-            "pin": "1234", 
+            "pin": "1234",
             "client_id": "not-a-client-id"
         }
     })");
@@ -32,11 +32,11 @@ TEST_CASE("Authentication Deserialization", "[auth][deserialization]")
 	gamelink::schema::AuthenticateResponse resp;
 	Deserialize(R"({
         "meta": {
-            "request_id": 152, 
-            "action": "authenticate", 
-            "target": "", 
+            "request_id": 152,
+            "action": "authenticate",
+            "target": "",
             "timestamp": 1583777666077
-        }, 
+        },
         "data": {
             "jwt": "eyJhbG..."
         }
@@ -62,8 +62,8 @@ TEST_CASE("SDK doesn't authenticate on error", "[sdk][authentication]")
 		},
 
 		"errors": [{
-			"number": 403, 
-			"title": "Not authorized", 
+			"number": 403,
+			"title": "Not authorized",
 			"detail": "You're not authorized"
 		}]
 	})";
@@ -92,11 +92,17 @@ TEST_CASE("SDK PIN Authentication", "[sdk][authentication][pin]")
 	});
 
 	REQUIRE(sdk.HasPayloads());
+	validateSinglePayload(sdk, R"({
+		"action":"authenticate",
+		"data": {
+			"client_id":"client_id",
+			"pin":"pin"
+		},
 
-	sdk.ForeachPayload([](const gamelink::Payload* send) {
-		REQUIRE(
-			JSONEquals(send->data, R"({"action":"authenticate","data":{"client_id":"client_id","pin":"pin"},"params":{"request_id":1}})"));
-	});
+		"params":{
+			"request_id": 1
+		}
+	})");
 
 	REQUIRE(!sdk.HasPayloads());
 

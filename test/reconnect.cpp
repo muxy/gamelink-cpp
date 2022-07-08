@@ -83,7 +83,7 @@ TEST_CASE("Reconnect will redo subscriptions", "[sdk][reconnect]")
 	// The matchmaking sub
 	sdk.ForeachPayload([&payloads](const gamelink::Payload* payload)
 	{
-		payloads.push_back(payload->data.c_str());
+		payloads.push_back(payload->Data());
 	});
 
 	std::vector<std::string> expectedPayloads = {
@@ -182,7 +182,7 @@ TEST_CASE("Reconnect will redo subscriptions, but not after unsubscribing", "[sd
 	// The matchmaking sub
 	sdk.ForeachPayload([&payloads](const gamelink::Payload* payload)
 	{
-		payloads.push_back(payload->data.c_str());
+		payloads.push_back(payload->Data());
 	});
 
 	std::vector<std::string> expectedPayloads = {

@@ -5,7 +5,7 @@
 
 TEST_CASE("Can generate connection URL", "[sdk]")
 {
-	gamelink::string str = gamelink::WebsocketConnectionURL("maybe-valid-client-id", gamelink::CONNECTION_STAGE_PRODUCTION);
+	gamelink::string str = gamelink::WebsocketConnectionURL("maybe-valid-client-id", gamelink::ConnectionStage::Production);
 	REQUIRE(str.size() > 0);
 }
 
@@ -22,6 +22,6 @@ TEST_CASE("Generation fails on bad inputs", "[sdk]")
 	}
 	bigString[299] = '\0';
 
-	str = gamelink::WebsocketConnectionURL(gamelink::string(bigString), gamelink::CONNECTION_STAGE_SANDBOX);
+	str = gamelink::WebsocketConnectionURL(gamelink::string(bigString), gamelink::ConnectionStage::Sandbox);
 	REQUIRE(str.size() == 0);
 }

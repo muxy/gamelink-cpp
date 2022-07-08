@@ -2,26 +2,9 @@
 
 namespace gamelink
 {
-    uint32_t SDK::OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> callback)
+	Event<schema::AuthenticateResponse>& SDK::OnAuthenticate()
 	{
-		return _onAuthenticate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	uint32_t SDK::OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr)
-	{
-		return _onAuthenticate.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	void SDK::DetachOnAuthenticate(uint32_t id)
-	{
-		if (_onAuthenticate.validateId(id))
-		{
-			_onAuthenticate.remove(id);
-		}
-		else
-		{
-			_onDebugMessage.invoke("Invalid ID passed into DetachOnAuthenticate");
-		}
+		return _onAuthenticate;
 	}
 
 	RequestId SDK::Deauthenticate()
@@ -32,7 +15,7 @@ namespace gamelink
 
 		return ANY_REQUEST_ID;
 	}
-    
+
 	RequestId SDK::AuthenticateWithPIN(const string& clientId, const string& pin)
 	{
 		schema::AuthenticateWithPINRequest payload(clientId, pin);

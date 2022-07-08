@@ -8,55 +8,52 @@ namespace gamelink
 	static const char CONNECTION_URL_SANDBOX[] = "sandbox.gamelink.muxy.io";
 	static const char CONNECTION_URL_PRODUCTION[] = "gamelink.muxy.io";
 
-	namespace detail
+	string ProjectionWebsocketConnectionURL(
+		const string& clientId,
+		ConnectionStage stage,
+		const string& projection,
+		int projectionMajor, int projectionMinor, int projectionPatch)
 	{
-		string ProjectionWebsocketConnectionURL(
-			const string& clientId,
-			ConnectionStage stage,
-			const string& projection,
-			int projectionMajor, int projectionMinor, int projectionPatch)
+		char buffer[CONNECTION_URL_BUFFER_LENGTH];
+		// Ignore obviously too-large client IDs
+		if (clientId.size() > 100)
 		{
-			char buffer[CONNECTION_URL_BUFFER_LENGTH];
-			// Ignore obviously too-large client IDs
-			if (clientId.size() > 100)
-			{
-				return string("");
-			}
-
-			const char * url = nullptr;
-			if (stage == CONNECTION_STAGE_PRODUCTION)
-			{
-				url = CONNECTION_URL_PRODUCTION;
-			}
-			else if (stage == CONNECTION_STAGE_SANDBOX)
-			{
-				url = CONNECTION_URL_SANDBOX;
-			}
-
-			if (!url)
-			{
-				return string("");
-			}
-
-			if (projectionMajor < 0 || projectionMinor < 0 || projectionPatch < 0)
-			{
-				return string("");
-			}
-
-			int output = snprintf(buffer, CONNECTION_URL_BUFFER_LENGTH, "%s/%d.%d.%d/%s/%d.%d.%d/%s",
-				url,
-				MUXY_GAMELINK_VERSION_MAJOR, MUXY_GAMELINK_VERSION_MINOR, MUXY_GAMELINK_VERSION_PATCH,
-				projection.c_str(),
-				projectionMajor, projectionMinor, projectionPatch,
-				clientId.c_str());
-
-			if (output > 0 && output < CONNECTION_URL_BUFFER_LENGTH)
-			{
-				return string(buffer);
-			}
-
 			return string("");
 		}
+
+		const char * url = nullptr;
+		if (stage == ConnectionStage::Production)
+		{
+			url = CONNECTION_URL_PRODUCTION;
+		}
+		else if (stage == ConnectionStage::Sandbox)
+		{
+			url = CONNECTION_URL_SANDBOX;
+		}
+
+		if (!url)
+		{
+			return string("");
+		}
+
+		if (projectionMajor < 0 || projectionMinor < 0 || projectionPatch < 0)
+		{
+			return string("");
+		}
+
+		int output = snprintf(buffer, CONNECTION_URL_BUFFER_LENGTH, "%s/%d.%d.%d/%s/%d.%d.%d/%s",
+			url,
+			MUXY_GAMELINK_VERSION_MAJOR, MUXY_GAMELINK_VERSION_MINOR, MUXY_GAMELINK_VERSION_PATCH,
+			projection.c_str(),
+			projectionMajor, projectionMinor, projectionPatch,
+			clientId.c_str());
+
+		if (output > 0 && output < CONNECTION_URL_BUFFER_LENGTH)
+		{
+			return string(buffer);
+		}
+
+		return string("");
 	}
 
 	string WebsocketConnectionURL(const string& clientID, ConnectionStage stage)
@@ -69,11 +66,11 @@ namespace gamelink
 		}
 
 		const char * url = nullptr;
-		if (stage == CONNECTION_STAGE_PRODUCTION)
+		if (stage == ConnectionStage::Production)
 		{
 			url = CONNECTION_URL_PRODUCTION;
 		}
-		else if (stage == CONNECTION_STAGE_SANDBOX)
+		else if (stage == ConnectionStage::Sandbox)
 		{
 			url = CONNECTION_URL_SANDBOX;
 		}
@@ -145,14 +142,37 @@ namespace gamelink
 
 	Payload::Payload(string data)
 		: waitingForResponse(ANY_REQUEST_ID)
-		, data(data)
+		, _data(data)
 	{
+	}
+
+	const char* Payload::Data() const
+	{
+		return _data.c_str();
+	}
+
+	uint32_t Payload::Length() const
+	{
+		return static_cast<uint32_t>(_data.size());
 	}
 
 	SDK::SDK()
 		: _user(NULL)
 		, _currentRequestId(1)
-		, _onDebugMessage(0, 0, detail::CALLBACK_PERSISTENT, string(""))
+		, _onDebugMessage(0, 0, detail::CALLBACK_PERSISTENT, string("??#debug"))
+		, _onPollUpdate(this, "OnPollUpdate", 1)
+		, _onAuthenticate(this, "OnAuthenticate", 2)
+		, _onStateUpdate(this, "OnStateUpdate", 3)
+		, _onGetState(this, "OnGetState", 4)
+		, _onTransaction(this, "OnTransaction", 5)
+		, _onGetPoll(this, "OnGetPoll", 6)
+		, _onDatastreamUpdate(this, "OnDatastreamUpdate", 7)
+		, _onGetConfig(this, "OnGetConfig", 8)
+		, _onGetCombinedConfig(this, "OnGetCombinedConfig", 9)
+		, _onConfigUpdate(this, "OnConfigUpdate", 10)
+		, _onGetOutstandingTransactions(this, "OnGetOutstandingTransactions", 11)
+		, _onGetDrops(this, "OnGetDrops", 12)
+		, _onMatchmakingUpdate(this, "OnMatchmakingUpdate", 13)
 	{}
 
 	SDK::~SDK()
@@ -180,12 +200,12 @@ namespace gamelink
 	{
 		if (_onDebugMessage.valid())
 		{
-			uint32_t bufferLength = s->data.size() + 128;
+			uint32_t bufferLength = s->Length() + 128;
 			char* buffer = new char[bufferLength];
 
-			int offset = snprintf(buffer, bufferLength, "send len=%d msg=", static_cast<int>(s->data.size()));
-			memcpy(buffer + offset, s->data.c_str(), s->data.size());
-			buffer[s->data.size() + offset] = '\0';
+			int offset = snprintf(buffer, bufferLength, "send len=%d msg=", static_cast<int>(s->Length()));
+			memcpy(buffer + offset, s->Data(), s->Length());
+			buffer[s->Length() + offset] = '\0';
 
 			_onDebugMessage.invoke(string(buffer));
 
@@ -238,7 +258,7 @@ namespace gamelink
 			if (payload)
 			{
 				debugLogPayload(payload);
-				if (payload->data.size() > 0)
+				if (payload->Length() > 0)
 				{
 					networkCallback(user, payload);
 				}
@@ -304,7 +324,7 @@ namespace gamelink
 		while (_queuedPayloads.size() > 0)
 		{
 			Payload* p = _queuedPayloads.front();
-			if (p->waitingForResponse == ANY_REQUEST_ID && p->data.size() == 0)
+			if (p->waitingForResponse == ANY_REQUEST_ID && p->_data.size() == 0)
 			{
 				_queuedPayloads.pop_front();
 				delete p;
@@ -366,7 +386,7 @@ namespace gamelink
 					_storedRefresh = authResp.data.refresh;
 				}
 
-				_onAuthenticate.invoke(authResp);
+				_onAuthenticate.Invoke(authResp);
 			}
 		}
 		else if (env.meta.action == "get")
@@ -377,7 +397,7 @@ namespace gamelink
 				success = schema::ParseResponse(bytes, length, stateResp);
 				if (success)
 				{
-					_onGetState.invoke(stateResp);
+					_onGetState.Invoke(stateResp);
 				}
 			}
 			else if (env.meta.target == "poll")
@@ -386,7 +406,7 @@ namespace gamelink
 				success = schema::ParseResponse(bytes, length, pollResp);
 				if (success)
 				{
-					_onGetPoll.invoke(pollResp);
+					_onGetPoll.Invoke(pollResp);
 				}
 			}
 			else if (env.meta.target == "config")
@@ -401,12 +421,12 @@ namespace gamelink
 						success = schema::ParseResponse(bytes, length, combinedResp);
 						if (success)
 						{
-							_onGetCombinedConfig.invoke(combinedResp);
+							_onGetCombinedConfig.Invoke(combinedResp);
 						}
 					}
 					else
 					{
-						_onGetConfig.invoke(configResp);
+						_onGetConfig.Invoke(configResp);
 					}
 				}
 			}
@@ -417,7 +437,7 @@ namespace gamelink
 
 				if (success)
 				{
-					_onGetOutstandingTransactions.invoke(resp);
+					_onGetOutstandingTransactions.Invoke(resp);
 				}
 			}
 			else if (env.meta.target == "drops") {
@@ -426,7 +446,7 @@ namespace gamelink
 
 				if (success)
 				{
-					_onGetDrops.invoke(resp);
+					_onGetDrops.Invoke(resp);
 				}
 			}
 		}
@@ -440,7 +460,7 @@ namespace gamelink
 				success = schema::ParseResponse<schema::PollUpdateResponse>(bytes, length, pollResp);
 				if (success)
 				{
-					_onPollUpdate.invoke(pollResp);
+					_onPollUpdate.Invoke(pollResp);
 				}
 			}
 			else if (env.meta.target == "channel")
@@ -449,7 +469,7 @@ namespace gamelink
 				success = schema::ParseResponse(bytes, length, resp);
 				if (success)
 				{
-					_onStateUpdate.invoke(resp);
+					_onStateUpdate.Invoke(resp);
 				}
 			}
 			else if (env.meta.target == "twitchPurchaseBits" || env.meta.target == "transaction")
@@ -458,7 +478,7 @@ namespace gamelink
 				success = schema::ParseResponse(bytes, length, resp);
 				if (success)
 				{
-					_onTransaction.invoke(resp);
+					_onTransaction.Invoke(resp);
 				}
 			}
 			else if (env.meta.target == "datastream")
@@ -467,7 +487,7 @@ namespace gamelink
 				success = schema::ParseResponse(bytes, length, resp);
 				if (success)
 				{
-					_onDatastreamUpdate.invoke(resp);
+					_onDatastreamUpdate.Invoke(resp);
 				}
 			}
 			else if (env.meta.target == "config")
@@ -476,7 +496,7 @@ namespace gamelink
 				success = schema::ParseResponse(bytes, length, resp);
 				if (success)
 				{
-					_onConfigUpdate.invoke(resp);
+					_onConfigUpdate.Invoke(resp);
 				}
 			}
 			else if (env.meta.target == "matchmaking")
@@ -485,7 +505,7 @@ namespace gamelink
 				success = schema::ParseResponse(bytes, length, resp);
 				if (success)
 				{
-					_onMatchmakingUpdate.invoke(resp);
+					_onMatchmakingUpdate.Invoke(resp);
 				}
 			}
 		}
