@@ -74,6 +74,11 @@ extern "C"
 	typedef struct
 	{
 		const void* Obj;
+	} MGL_Schema_MatchmakingUpdateResponse;
+
+	typedef struct
+	{
+		const void* Obj;
 	} MGL_Schema_AuthenticateResponse;
 
 	typedef struct
@@ -111,6 +116,38 @@ extern "C"
 		void* Obj;
 	} MGL_PatchList;
 
+	typedef struct
+	{
+		/// When userIdVoting is true, only users that have shared their ID will
+		/// be able to vote.
+		bool userIdVoting;
+
+		/// distinctOptionsPerUser controls how many options a user can vote for.
+		/// Must be in the range [1, 258].
+		int distinctOptionsPerUser;
+
+		/// totalVotesPerUser controls how many votes any user can cast.
+		/// Must be in the range [1, 1024]
+		int totalVotesPerUser;
+
+		/// votesPerOption controls how many votes per option a user can cast.
+		/// Must be in the range [1, 1024]
+		int votesPerOption;
+
+		/// When disabled is true, the poll will not accept any votes.
+		bool disabled;
+
+		/// startsAt should be a unix timestamp, in seconds, at which point the poll
+		/// will become enabled and will be able to be voted on.
+		/// If no startAt time is desired, set this to 0.
+		int64_t startsAt;
+
+		/// endsAt shoudl be a unix timestamp, in seconds, at which point the poll
+		/// will become disabled.
+		/// If no endsAt time is desired, set this to 0.
+		int64_t endsAt;
+	} MGL_PollConfiguration;
+
 	/*
 		SDK Callbacks
 	*/
@@ -125,6 +162,7 @@ extern "C"
 	typedef void (*MGL_StateUpdateResponseCallback)(void* UserData, MGL_Schema_StateUpdateResponse StateResp);
 	typedef void (*MGL_ConfigResponseCallback)(void* UserData, MGL_Schema_ConfigResponse ConfigResp);
 	typedef void (*MGL_ConfigUpdateResponseCallback)(void* UserData, MGL_Schema_ConfigUpdateResponse ConfigResp);
+	typedef void (*MGL_MatchmakingResponseCallback)(void* UserData, MGL_Schema_MatchmakingUpdateResponse MatchmakingResp);
 	typedef void (*MGL_OnDebugMessageCallback)(void* UserData, const char *Message);
 
 	/*
@@ -209,6 +247,7 @@ extern "C"
 	MUXY_CLIB_API MGL_Schema_User MuxyGameLink_GetSchemaUser(MuxyGameLink GameLink);
 	MUXY_CLIB_API const char* MuxyGameLink_Schema_User_GetJWT(MGL_Schema_User User);
 	MUXY_CLIB_API const char* MuxyGameLink_Schema_User_GetRefreshToken(MGL_Schema_User User);
+	MUXY_CLIB_API const char* MuxyGameLink_Schema_User_GetTwitchName(MGL_Schema_User User);
 
 	/*
 		State functions
@@ -342,6 +381,12 @@ extern "C"
 		Polling functions
 	*/
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_CreatePoll(MuxyGameLink GameLink, const char *PollId, const char *Prompt, const char **Options, uint32_t OptionsCount);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_CreatePollWithConfiguration(MuxyGameLink GameLink,
+																		 const char* PollId,
+																		 const char* Prompt,
+																		 const MGL_PollConfiguration* Config,
+																		 const char** Options,
+																		 uint32_t OptionsCount);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_SubscribeToPoll(MuxyGameLink GameLink, const char *PollId);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UnsubscribeFromPoll(MuxyGameLink GameLink, const char *PollId);
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_DeletePoll(MuxyGameLink GameLink, const char *PollId);
@@ -385,6 +430,18 @@ extern "C"
 	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithEmptyArray(MGL_PatchList PList, MGL_Operation Operation, const char* Path);
 	MUXY_CLIB_API bool MuxyGameLink_PatchList_Empty(MGL_PatchList PList);
 	MUXY_CLIB_API void MuxyGameLink_PatchList_Clear(MGL_PatchList PList);
+
+	/*
+		Matchmaking functions
+	*/
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_SubscribeToMatchmakingQueueInvite(MuxyGameLink GameLink);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_UnsubscribeFromMatchmakingQueueInvite(MuxyGameLink GameLink);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_ClearMatchmakingQueue(MuxyGameLink GameLink);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_RemoveMatchmakingEntry(MuxyGameLink GameLink, const char* Id);
+	MUXY_CLIB_API uint32_t MuxyGameLink_OnMatchmakingQueueInvite(MuxyGameLink GameLink,
+																 MGL_MatchmakingResponseCallback Callback,
+																 void* UserData);
+	MUXY_CLIB_API uint32_t MuxyGameLink_DetachOnMatchmakingQueueInvite(MuxyGameLink GameLink, uint32_t Id);
 
 #ifdef __cplusplus
 }

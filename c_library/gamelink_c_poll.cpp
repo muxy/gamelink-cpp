@@ -10,6 +10,26 @@ MGL_RequestId MuxyGameLink_CreatePoll(MuxyGameLink GameLink, const char *PollId,
 	return SDK->CreatePoll(PollId, Prompt, Opts);
 }
 
+MGL_RequestId MuxyGameLink_CreatePollWithConfiguration(MuxyGameLink GameLink,
+										   const char *PollId,
+										   const char *Prompt,
+										   const MGL_PollConfiguration *Config,
+										   const char** Options,
+										   uint32_t OptionsCount)
+{
+	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
+	std::vector<gamelink::string> Opts(Options, Options + OptionsCount);
+	gamelink::PollConfiguration CPPConfig;
+	CPPConfig.userIdVoting = Config->userIdVoting;
+	CPPConfig.distinctOptionsPerUser = Config->distinctOptionsPerUser;
+	CPPConfig.totalVotesPerUser = Config->totalVotesPerUser;
+	CPPConfig.votesPerOption = Config->votesPerOption;
+	CPPConfig.disabled = Config->disabled;
+	CPPConfig.startsAt = Config->startsAt;
+	CPPConfig.endsAt = Config->endsAt;
+	return SDK->CreatePollWithConfiguration(PollId, Prompt, CPPConfig, Opts);
+}
+
 MGL_RequestId MuxyGameLink_SubscribeToPoll(MuxyGameLink GameLink, const char *PollId)
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
@@ -165,3 +185,4 @@ int32_t MuxyGameLink_Schema_PollUpdateResponse_GetCount(MGL_Schema_PollUpdateRes
 	const schema::PollUpdateResponse* Response = static_cast<const schema::PollUpdateResponse*>(PResp.Obj);
 	return Response->data.count;
 }
+
