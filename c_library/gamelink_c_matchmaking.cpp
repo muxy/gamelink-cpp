@@ -32,7 +32,6 @@ uint32_t MuxyGameLink_OnMatchmakingQueueInvite(MuxyGameLink GameLink, MGL_Matchm
 	return SDK->OnMatchmakingQueueInvite().Add([Callback, UserData](const schema::MatchmakingUpdate& UpdateResponse) {
 		MGL_Schema_MatchmakingUpdateResponse Response;
 		Response.Obj = &UpdateResponse;
-
 		Callback(UserData, Response);
 	});
 }
@@ -41,4 +40,40 @@ void MuxyGameLink_DetachOnMatchmakingQueueInvite(MuxyGameLink GameLink, uint32_t
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
 	return SDK->OnMatchmakingQueueInvite().Remove(Id);
+}
+
+const char* MuxyGameLink_MatchmakingUpdate_GetTwitchUsername(MGL_Schema_MatchmakingUpdateResponse Resp) 
+{
+	const schema::MatchmakingUpdate* Response = static_cast<const schema::MatchmakingUpdate*>(Resp.Obj);
+	return Response->data.twitchUsername.c_str();
+}
+
+const char* MuxyGameLink_MatchmakingUpdate_GetTwitchID(MGL_Schema_MatchmakingUpdateResponse Resp)
+{
+	const schema::MatchmakingUpdate* Response = static_cast<const schema::MatchmakingUpdate*>(Resp.Obj);
+	return Response->data.twitchID.c_str();
+}
+
+int64_t MuxyGameLink_MatchmakingUpdate_GetTimestamp(MGL_Schema_MatchmakingUpdateResponse Resp) 
+{
+	const schema::MatchmakingUpdate* Response = static_cast<const schema::MatchmakingUpdate*>(Resp.Obj);
+	return Response->data.timestamp;
+}
+
+bool MuxyGameLink_MatchmakingUpdate_IsFollower(MGL_Schema_MatchmakingUpdateResponse Resp)
+{
+	const schema::MatchmakingUpdate* Response = static_cast<const schema::MatchmakingUpdate*>(Resp.Obj);
+	return Response->data.isFollower;
+}
+
+int MuxyGameLink_MatchmakingUpdate_GetSubscriptionTier(MGL_Schema_MatchmakingUpdateResponse Resp)
+{
+	const schema::MatchmakingUpdate* Response = static_cast<const schema::MatchmakingUpdate*>(Resp.Obj);
+	return Response->data.subscriptionTier;
+}
+
+int MuxyGameLink_MatchmakingUpdate_GetBitsSpent(MGL_Schema_MatchmakingUpdateResponse Resp)
+{
+	const schema::MatchmakingUpdate* Response = static_cast<const schema::MatchmakingUpdate*>(Resp.Obj);
+	return Response->data.bitsSpent;
 }

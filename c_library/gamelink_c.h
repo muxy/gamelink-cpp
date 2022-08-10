@@ -442,6 +442,13 @@ extern "C"
 																 MGL_MatchmakingResponseCallback Callback,
 																 void* UserData);
 	MUXY_CLIB_API void MuxyGameLink_DetachOnMatchmakingQueueInvite(MuxyGameLink GameLink, uint32_t Id);
+	MUXY_CLIB_API const char* MuxyGameLink_MatchmakingUpdate_GetTwitchUsername(MGL_Schema_MatchmakingUpdateResponse Resp);
+	MUXY_CLIB_API const char* MuxyGameLink_MatchmakingUpdate_GetTwitchID(MGL_Schema_MatchmakingUpdateResponse Resp);
+	MUXY_CLIB_API int64_t MuxyGameLink_MatchmakingUpdate_GetTimestamp(MGL_Schema_MatchmakingUpdateResponse Resp);
+	MUXY_CLIB_API bool MuxyGameLink_MatchmakingUpdate_IsFollower(MGL_Schema_MatchmakingUpdateResponse Resp);
+	MUXY_CLIB_API int MuxyGameLink_MatchmakingUpdate_GetSubscriptionTier(MGL_Schema_MatchmakingUpdateResponse Resp);
+	MUXY_CLIB_API int MuxyGameLink_MatchmakingUpdate_GetBitsSpent(MGL_Schema_MatchmakingUpdateResponse Resp);
+
 
 #ifdef __cplusplus
 }
