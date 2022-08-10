@@ -10,7 +10,7 @@
 
 
 #define MUXY_GAMELINK_VERSION_MAJOR 0
-#define MUXY_GAMELINK_VERSION_MINOR 0
+#define MUXY_GAMELINK_VERSION_MINOR 1
 #define MUXY_GAMELINK_VERSION_PATCH 1
 
 /*
@@ -25,7 +25,7 @@
 	
 
 	This file also automatically includes nlohmann::json.
-	If you have an existing version of nlohmann::json, #define MUXY_NO_JSON_INCLUDE 
+	If you have an existing version of nlohmann::json, #define MUXY_NO_JSON_INCLUDE
 	to remove the one included in this file.
 
 	Exportable functions and types are annotated with MUXY_GAMELINK_API.
@@ -57,7 +57,7 @@
 #include MUXY_GAMELINK_CUSTOM_STRING_INCLUDE
 #endif
 
-// Support custom lock types. 
+// Support custom lock types.
 #ifndef MUXY_GAMELINK_CUSTOM_LOCK_TYPE
 #include <mutex>
 #define MUXY_GAMELINK_CUSTOM_LOCK_TYPE std::mutex
@@ -76,11 +76,11 @@ namespace gamelink
 	///     * Be Copy constructable and copy assignable.
 	///     * Be Move constructable and move assignable.
 	///     * Provide a constructor from a null-terminated c-string of chars
-	///     * Provide const operator== with another const reference of the string type. 
-	///     * Provide a const .size() that returns an integer of the length of the string, 
+	///     * Provide const operator== with another const reference of the string type.
+	///     * Provide a const .size() that returns an integer of the length of the string,
 	///       excluding any null terminator. This should return an uint32_t.
 	///     * Provide a const .c_str() that returns a pointer to the first element of a
-	///       null-terminated array of utf8 encoded chars. These characters should 
+	///       null-terminated array of utf8 encoded chars. These characters should
 	///       be valid until either the string goes out of scope or is modified.
 	typedef MUXY_GAMELINK_CUSTOM_STRING_TYPE string;
 
@@ -26972,23 +26972,48 @@ namespace gamelink
 		Replace,
 		Copy,
 		Move,
-		Test
+		Test,
+
+		OperationCount
 	};
 
+	inline bool IsValidOperation(Operation op)
+	{
+		return static_cast<int>(op) >= 0 && static_cast<int>(op) < static_cast<int>(Operation::OperationCount);
+	}
+
 	static const char* OPERATION_STRINGS[] = {"add", "remove", "replace", "copy", "move", "test"};
+
 
 	enum class StateTarget
 	{
 		Channel = 0,
-		Extension
+		Extension,
+
+		StateCount
 	};
+
+	inline bool IsValidStateTarget(StateTarget st)
+	{
+		return static_cast<int>(st) >= 0 && static_cast<int>(st) < static_cast<int>(StateTarget::StateCount);
+	}
+
+	static const char* STATETARGET_STRINGS[] = {"channel", "extension"};
 
 	enum class ConfigTarget
 	{
 		Channel = 0,
 		Extension,
-		Combined
+		Combined,
+
+		ConfigTargetCount
 	};
+
+	inline bool IsValidConfigTarget(ConfigTarget ct)
+	{
+		return static_cast<int>(ct) >= 0 && static_cast<int>(ct) < static_cast<int>(ConfigTarget::ConfigTargetCount);
+	}
+
 	static const char* TARGET_STRINGS[] = {"channel", "extension", "combined"};
 }
 #endif
@@ -28079,19 +28104,24 @@ namespace gamelink
 	class MUXY_GAMELINK_API Payload
 	{
 		friend class SDK;
+	private:
 		explicit Payload(string data);
 		RequestId waitingForResponse;
 
-	public:
 		/// Data to be sent.
-		const string data;
+		const string _data;
+	public:
+		const char* Data() const;
+		uint32_t Length() const;
 	};
 
-	enum ConnectionStage
+	enum class ConnectionStage
 	{
-		CONNECTION_STAGE_PRODUCTION = 0,
-		CONNECTION_STAGE_SANDBOX,
+		Production = 0,
+		Sandbox,
 	};
+
+	class SDK;
 
 	namespace detail
 	{
@@ -28109,14 +28139,16 @@ namespace gamelink
 				: _id(UINT32_MAX)
 				, _targetRequestId(ANY_REQUEST_ID)
 				, _status(UINT32_MAX)
+				, _name("")
 				, _rawCallback(nullptr)
 				, _user(nullptr)
 			{
 			}
-			Callback(uint32_t id, RequestId targetRequestId, uint32_t status)
+			Callback(uint32_t id, RequestId targetRequestId, uint32_t status, string name)
 				: _id(id)
 				, _targetRequestId(targetRequestId)
 				, _status(status)
+				, _name(std::move(name))
 				, _rawCallback(nullptr)
 				, _user(nullptr)
 			{
@@ -28176,156 +28208,13 @@ namespace gamelink
 			uint32_t _id;
 			RequestId _targetRequestId;
 			uint32_t _status;
-
+			string _name;
 		private:
 			RawFunctionPointer _rawCallback;
 			void* _user;
 
 			std::function<void(const T&)> _callback;
 		};
-
-		template<typename T, uint8_t IDMask>
-		class CallbackCollection
-		{
-		public:
-			CallbackCollection()
-				: _currentHandle(0)
-			{
-			}
-
-			~CallbackCollection()
-			{
-				for (uint32_t i = 0; i < _callbacks.size(); ++i)
-				{
-					delete _callbacks[i];
-				}
-			}
-
-			typedef void (*RawFunctionPointer)(void*, const T&);
-
-			bool validateId(uint32_t id)
-			{
-				// Check the ID byte for consistency.
-				return ((id >> 24) & 0xFF) == IDMask;
-			}
-
-			uint32_t set(std::function<void(const T&)> fn, uint16_t requestId, uint32_t flags)
-			{
-				uint32_t id = nextID();
-				Callback<T>* cb = new Callback<T>(id, requestId, flags);
-				cb->set(fn);
-
-				_lock.lock();
-				_callbacks.push_back(cb);
-				_lock.unlock();
-
-				return id;
-			}
-
-			uint32_t set(RawFunctionPointer fn, void* user, uint16_t requestId, uint32_t flags)
-			{
-				uint32_t id = nextID();
-				Callback<T>* cb = new Callback<T>(id, requestId, flags);
-				cb->set(fn, user);
-
-				_lock.lock();
-				_callbacks.push_back(cb);
-				_lock.unlock();
-
-				return id;
-			}
-
-			void remove(uint32_t id)
-			{
-				_lock.lock();
-				for (uint32_t i = 0; i < _callbacks.size(); ++i)
-				{
-					if (_callbacks[i]->_id == id)
-					{
-						_callbacks[i]->_status = CALLBACK_REMOVED;
-					}
-				}
-				_lock.unlock();
-			}
-
-			// This must not be called recursively.
-			void invoke(const T& v)
-			{
-				std::vector<Callback<T>*> copy;
-				uint16_t requestId = v.meta.request_id;
-
-				_lock.lock();
-				copy = _callbacks;
-				_lock.unlock();
-
-				// Invoke the copied callbacks.
-				for (uint32_t i = 0; i < copy.size(); ++i)
-				{
-					if (copy[i]->_targetRequestId == ANY_REQUEST_ID || copy[i]->_targetRequestId == requestId)
-					{
-						// Invoke if valid to do so.
-						if (copy[i]->_status == CALLBACK_PERSISTENT || copy[i]->_status == CALLBACK_ONESHOT)
-						{
-							copy[i]->invoke(v);
-						}
-
-						if (copy[i]->_status == CALLBACK_ONESHOT)
-						{
-							copy[i]->_status = CALLBACK_REMOVED;
-						}
-					}
-				}
-
-				_lock.lock();
-				auto it = std::remove_if(_callbacks.begin(), _callbacks.end(), [](const Callback<T>* cb) {
-					if (cb->_status == CALLBACK_REMOVED)
-					{
-						delete cb;
-						return true;
-					}
-					return false;
-				});
-
-				_callbacks.erase(it, _callbacks.end());
-				_lock.unlock();
-			}
-
-		private:
-			uint32_t nextID()
-			{
-				// Store a byte to determine if the id returned from a set operation belongs to this
-				// collection of callbacks.
-				static const uint32_t MASK = 0x0FFFFFFFu;
-				uint32_t id = (_currentHandle & (MASK)) | (static_cast<uint32_t>(IDMask) << 24);
-				_currentHandle = (_currentHandle + 1) & 0x0FFFFFFFu;
-				return id;
-			}
-
-			uint32_t _currentHandle;
-			gamelink::lock _lock;
-
-			std::vector<Callback<T>*> _callbacks;
-		};
-
-		/// Returns the URL to connect for the given clientID, stage, projection
-		/// and projection version. This function should be called instead of
-		/// WebsocketConnectionURL when writing a projection into a different language.
-		///
-		/// @param[in] clientId The extension's client ID.
-		/// @param[in] stage The stage to connect to, either CONNECTION_STAGE_PRODUCTION or
-		///                  CONNECTION_STAGE_SANDBOX.
-		/// @param[in] projection The projection name. Must be under 8 characters, and must
-		/// 					  be a URL-safe string. Examples are 'c' or 'csharp'
-		/// @param[in] projectionMajor The major version of this projection.
-		/// @param[in] projectionMinor The minor version of this projection.
-		/// @param[in] projectionPatch The patch version of this projection.
-		/// @return Returns the URL to connect to. Returns an empty string on error.
-		MUXY_GAMELINK_API string ProjectionWebsocketConnectionURL(const string& clientId,
-																  ConnectionStage stage,
-																  const string& projection,
-																  int projectionMajor,
-																  int projectionMinor,
-																  int projectionPatch);
 
 		// TimedPoll is used internally to hold data from CreateTimedPoll
 		struct TimedPoll
@@ -28338,21 +28227,291 @@ namespace gamelink
 			TimedPoll(string pollId, float duration)
 				: pollId(pollId)
 				, duration(duration)
-				, onFinishCallback(0, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT)
+				, onFinishCallback(0, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT, string(""))
 				, finished(false)
 			{
 			}
 		};
+
+		enum class SubscriptionState
+		{
+			Inactive,
+			Active
+		};
+
+		// SubscriptionSets is used to hold the state of subscriptions
+		class SubscriptionSets
+		{
+			friend class gamelink::SDK;
+			SubscriptionSets();
+		public:
+			// All methods should be called under a lock.
+			void replay(SDK* sdk);
+
+			bool canRegisterSKU(const string& sku);
+			void registerSKU(const string& sku);
+			void unregisterSKU(const string& sku);
+
+			bool canRegisterPoll(const string& pid);
+			void registerPoll(const string& pid);
+			void unregisterPoll(const string& pid);
+
+			bool canRegisterConfigurationChanges(ConfigTarget target);
+			void registerConfigurationChanges(ConfigTarget target);
+			void unregisterConfigurationChanges(ConfigTarget target);
+
+			bool canRegisterStateUpdate(StateTarget target);
+			void registerStateUpdates(StateTarget target);
+			void unregisterStateUpdates(StateTarget target);
+
+			bool canRegisterDatastream();
+			void registerDatastream();
+			void unregisterDatastream();
+
+			bool canRegisterMatchmakingQueueInvite();
+			void registerMatchmakingQueueInvite();
+			void unregisterMatchmakingQueueInvite();
+		private:
+			struct Subscription
+			{
+				SubscriptionState state;
+			};
+
+			struct SubscriptionWithString : Subscription
+			{
+				string target;
+			};
+
+			std::vector<SubscriptionWithString> _polls;
+			std::vector<SubscriptionWithString> _skus;
+
+			Subscription _configurationChanges[static_cast<int>(ConfigTarget::ConfigTargetCount)];
+			Subscription _stateSubscriptions[static_cast<int>(StateTarget::StateCount)];
+
+			Subscription _datastream;
+			Subscription _matchmakingInvite;
+
+			gamelink::lock _lock;
+		};
 	}
+
+	template<typename T>
+	class MUXY_GAMELINK_API Event
+	{
+		friend class SDK;
+	public:
+		Event(SDK* sdk, const char* name, uint32_t mask)
+			: _idMask(mask)
+			, _currentHandle(0)
+			, _sdk(sdk)
+			, _name(name)
+		{
+		}
+
+		~Event()
+		{
+			for (uint32_t i = 0; i < _callbacks.size(); ++i)
+			{
+				delete _callbacks[i];
+			}
+		}
+
+		// Noncopyable
+		Event(const Event&) = delete;
+		Event(Event&&) = delete;
+		Event& operator=(const Event&) = delete;
+		Event&& operator=(Event&&) = delete;
+
+		uint32_t Add(std::function<void(const T&)> callback)
+		{
+			return set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		}
+
+		uint32_t Add(void (*callback)(void*, const schema::TransactionResponse&), void* ptr)
+		{
+			return set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		}
+
+		uint32_t AddUnique(string name, std::function<void(const T&)> callback)
+		{
+			return setUnique(std::move(name), callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		}
+
+		uint32_t AddUnique(string name, void (*callback)(void*, const schema::TransactionResponse&), void* ptr)
+		{
+			return setUnique(std::move(name), callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
+		}
+
+		void Remove(uint32_t handle);
+
+		void RemoveByName(const string& name)
+		{
+			_lock.lock();
+			for (uint32_t i = 0; i < _callbacks.size(); ++i)
+			{
+				if (_callbacks[i]->_name == name)
+				{
+					_callbacks[i]->_status = detail::CALLBACK_REMOVED;
+				}
+			}
+			_lock.unlock();
+		}
+
+		// This must not be called recursively.
+		void Invoke(const T& v)
+		{
+			std::vector<detail::Callback<T>*> copy;
+			uint16_t requestId = v.meta.request_id;
+
+			_lock.lock();
+			copy = _callbacks;
+			_lock.unlock();
+
+			// Invoke the copied callbacks.
+			for (uint32_t i = 0; i < copy.size(); ++i)
+			{
+				if (copy[i]->_targetRequestId == ANY_REQUEST_ID || copy[i]->_targetRequestId == requestId)
+				{
+					// Invoke if valid to do so.
+					if (copy[i]->_status == detail::CALLBACK_PERSISTENT || copy[i]->_status == detail::CALLBACK_ONESHOT)
+					{
+						copy[i]->invoke(v);
+					}
+
+					if (copy[i]->_status == detail::CALLBACK_ONESHOT)
+					{
+						copy[i]->_status = detail::CALLBACK_REMOVED;
+					}
+				}
+			}
+
+			_lock.lock();
+			auto it = std::remove_if(_callbacks.begin(), _callbacks.end(), [](const detail::Callback<T>* cb) {
+				if (cb->_status == detail::CALLBACK_REMOVED)
+				{
+					delete cb;
+					return true;
+				}
+				return false;
+			});
+
+			_callbacks.erase(it, _callbacks.end());
+			_lock.unlock();
+		}
+	private:
+		typedef void (*RawFunctionPointer)(void*, const T&);
+		bool validateId(uint32_t id)
+		{
+			// Check the ID byte for consistency.
+			return ((id >> 24) & 0xFF) == _idMask;
+		}
+
+		uint32_t set(std::function<void(const T&)> fn, uint16_t requestId, uint32_t flags)
+		{
+			uint32_t id = nextID();
+			// Set a name that is fairly unlikely to be used in RemoveByName
+			// so that RemoveByName("") doesn't remove all callbacks by mistake.
+			detail::Callback<T>* cb = new detail::Callback<T>(id, requestId, flags, "??#_muxy");
+			cb->set(fn);
+
+			_lock.lock();
+			_callbacks.push_back(cb);
+			_lock.unlock();
+
+			return id;
+		}
+
+		uint32_t set(RawFunctionPointer fn, void* user, uint16_t requestId, uint32_t flags)
+		{
+			uint32_t id = nextID();
+			detail::Callback<T>* cb = new detail::Callback<T>(id, requestId, flags, "??#_muxy");
+			cb->set(fn, user);
+
+			_lock.lock();
+			_callbacks.push_back(cb);
+			_lock.unlock();
+
+			return id;
+		}
+
+		uint32_t setUnique(string name, std::function<void(const T&)> fn, uint16_t requestId, uint32_t flags)
+		{
+			uint32_t id = nextID();
+			detail::Callback<T>* cb = new detail::Callback<T>(id, requestId, flags, name);
+			cb->set(fn);
+
+			RemoveByName(name);
+
+			_lock.lock();
+			_callbacks.push_back(cb);
+			_lock.unlock();
+
+			return id;
+		}
+
+		uint32_t setUnique(string name, RawFunctionPointer fn, void* user, uint16_t requestId, uint32_t flags)
+		{
+			uint32_t id = nextID();
+			detail::Callback<T>* cb = new detail::Callback<T>(id, requestId, flags, name);
+			cb->set(fn, user);
+
+			RemoveByName(name);
+
+			_lock.lock();
+			_callbacks.push_back(cb);
+			_lock.unlock();
+
+			return id;
+		}
+
+		uint32_t nextID()
+		{
+			// Store a byte to determine if the id returned from a set operation belongs to this
+			// collection of callbacks.
+			uint32_t id = (_currentHandle & (0x0FFFFFFFu)) | (static_cast<uint32_t>(_idMask) << 24);
+			_currentHandle = (_currentHandle + 1) & 0x0FFFFFFFu;
+			return id;
+		}
+
+		const uint32_t _idMask;
+		uint32_t _currentHandle;
+		gamelink::lock _lock;
+
+		std::vector<detail::Callback<T>*> _callbacks;
+
+		SDK* _sdk;
+		const char* _name;
+	};
 
 	/// Returns the URL to connect to for the given clientID and stage.
 	/// This returned URL doesn't have the protocol ('ws://' or 'wss://') prefix.
 	///
 	/// @param[in] clientId The extension's client ID.
-	/// @param[in] stage The stage to connect to, either CONNECTION_STAGE_PRODUCTION or
-	///                  CONNECTION_STAGE_SANDBOX.
+	/// @param[in] stage The stage to connect to, either ConnectionStage::Production or
+	///                  ConnectionStage::Sandbox.
 	/// @return Returns the URL to connect to. Returns an empty string on error.
 	MUXY_GAMELINK_API string WebsocketConnectionURL(const string& clientId, ConnectionStage stage);
+
+
+	/// Returns the URL to connect for the given clientID, stage, projection
+	/// and projection version. This function should be called instead of
+	/// WebsocketConnectionURL when writing a projection into a different language.
+	///
+	/// @param[in] clientId The extension's client ID.
+	/// @param[in] stage The stage to connect to, either ConnectionStage::Production or
+	///                  ConnectionStage::Sandbox.
+	/// @param[in] projection The projection name. Must be under 8 characters, and must
+	/// 					  be a URL-safe string. Examples are 'c' or 'csharp'
+	/// @param[in] projectionMajor The major version of this projection.
+	/// @param[in] projectionMinor The minor version of this projection.
+	/// @param[in] projectionPatch The patch version of this projection.
+	/// @return Returns the URL to connect to. Returns an empty string on error.
+	MUXY_GAMELINK_API string ProjectionWebsocketConnectionURL(const string& clientId,
+																ConnectionStage stage,
+																const string& projection,
+																int projectionMajor,
+																int projectionMinor,
+																int projectionPatch);
 
 	// The PatchList set provides an easy api to generate a list of patches and send them
 	// in one request.
@@ -28482,13 +28641,14 @@ namespace gamelink
 		~SDK();
 
 		// Not implemented. SDK is not copyable
-		SDK(const SDK&);
-		SDK& operator=(const SDK&);
+		SDK(const SDK&) = delete;
+		SDK& operator=(const SDK&) = delete;
 
 		// Not implemented. SDK is not movable
-		SDK(SDK&&);
-		SDK& operator=(SDK&&);
+		SDK(SDK&&) = delete;
+		SDK& operator=(SDK&&) = delete;
 
+#pragma region network and debug operations
 		/// Receives a character buffer as a message. This function
 		/// may invoke any callbacks that have been attached.
 		/// @warning This function must only be called from one thread, and must not be
@@ -28543,7 +28703,7 @@ namespace gamelink
 
 				if (payload)
 				{
-					if (payload->data.size() > 0)
+					if (payload->Length() > 0)
 					{
 						networkCallback(payload);
 					}
@@ -28617,187 +28777,9 @@ namespace gamelink
 		///
 		/// @param[in] req A request id, as returned from an API call.
 		void WaitForResponse(RequestId req);
+#pragma endregion
 
-		/// Sets the OnPollUpdate callback. This callback is invoked after SubscribeToPoll is called.
-		/// @remark SubscribeToPoll takes in a poll id, but can be called multiple times with different poll ids.
-		///        Callbacks registered through OnPollUpdate receive all update messages, regardless of poll id.
-		///        Callbacks that are designed to only get updates for a specific poll id should test the poll id
-		///        from within the callback itself.
-		///
-		/// @param[in] callback Callback to invoke when a poll update message is received
-		/// @return Returns an integer handle to the callback, to be used in DetachOnPollUpdate.
-		uint32_t OnPollUpdate(std::function<void(const schema::PollUpdateResponse&)> callback);
-
-		/// Sets the OnPollUpdate callback. This callback is invoked after SubscribeToPoll is called.
-		/// See the std::function overload for remarks.
-		///
-		/// @param[in] callback Callback to invoke when a poll update message is received
-		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnPollUpdate.
-		uint32_t OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr);
-
-		/// Detaches an OnPollUpdate callback.
-		///
-		/// @param[in] id A handle obtained from calling OnPollUpdate. Invalid handles are ignored.
-		void DetachOnPollUpdate(uint32_t id);
-
-		/// Sets the OnAuthenticate callback. This callback is invoked when an authentication
-		/// message is received.
-		///
-		/// @param[in] callback Callback to invoke when an authentication message is received.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnAuthenticate.
-		uint32_t OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> callback);
-
-		/// Sets the OnAuthenticate callback. This callback is invoked when an authentication
-		/// message is received.
-		///
-		/// @param[in] callback Callback to invoke when an authentication message is received.
-		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnAuthenticate.
-		uint32_t OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr);
-
-		/// Detaches an OnAuthenticate callback.
-		///
-		/// @param[in] id A handle obtained from calling OnAuthenticate. Invalid handles are ignored.
-		void DetachOnAuthenticate(uint32_t id);
-
-		/// Sets the OnStateUpdate callback. This callback is invoked when a state update
-		/// message is received.
-		///
-		/// @param[in] callback Callback to invoke when a state update message is received.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnStateUpdate.
-		uint32_t OnStateUpdate(std::function<void(const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback);
-
-		/// Sets the OnStateUpdate callback. This callback is invoked when a state update
-		/// message is received.
-		///
-		/// @param[in] callback Callback to invoke when a state update message is received.
-		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnStateUpdate.
-		uint32_t OnStateUpdate(void (*callback)(void*, const schema::SubscribeStateUpdateResponse<nlohmann::json>&), void* ptr);
-
-		/// Detaches an OnStateUpdate callback.
-		///
-		/// @param[in] id A handle obtained from calling OnStateUpdate. Invalid handles are ignored.
-		void DetachOnStateUpdate(uint32_t id);
-
-		/// Starts subscribing to OnTransaction updates for a specific SKU
-		///
-		/// @param[in] sku SKU of item to subscribe to
-		/// @return RequestId of the generated request
-		RequestId SubscribeToSKU(const string& sku);
-
-		/// Unsubscribes from a specific SKU listened to by SubscribeToSKU
-		///
-		/// @param[in] sku SKU of item to unsubscribe to
-		/// @return RequestId of the generated request
-		RequestId UnsubscribeFromSKU(const string& sku);
-
-		/// Subscribes to all SKUs.
-		/// @return RequestId of the generated request
-		RequestId SubscribeToAllPurchases();
-
-		/// Unsubscribes from all SKUs.
-		/// @return RequestId of the generated request
-		RequestId UnsubscribeFromAllPurchases();
-
-		/// Sets the OnTransaction callback. This callback is invoked whenever a transaction message
-		/// is received.
-		/// @remarks The purchase message has been authenticated and deduplicated by the server.
-		///          This callback receives all SKUs purchased, so a callback for a specific SKU should
-		///          test the SKU in the callback.
-		///
-		/// @param[in] callback Callback to invoke when a twitch purchase message is received.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnTransaction.
-		uint32_t OnTransaction(std::function<void(const schema::TransactionResponse&)> callback);
-
-		/// Sets the OnTransaction callback. This callback is invoked when twitch purchase
-		/// message is received.
-		/// See the std::function overload for remarks.
-		///
-		/// @param[in] callback Callback to invoke when a twitch purchase message is received.
-		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnTransaction.
-		uint32_t OnTransaction(void (*callback)(void*, const schema::TransactionResponse&), void* ptr);
-
-		/// Detaches an OnTransaction callback.
-		///
-		/// @deprecated
-		/// @param[in] id A handle obtained from calling OnTransaction. Invalid handles are ignored.
-		void DetachOnTransaction(uint32_t id);
-
-		/// Gets a list of unvalidated transactions.
-		///
-		/// @remarks These unvalidated transactions are ordered by purchase time, from the least recent
-		///          to most recent. Returns up to 10 entries at a time.
-		/// @param[in] sku SKU of the transactions to get. Can use '*' to get all SKUs.
-		/// @param[in] callback Callback to invoke after getting the outstanding transactions from the server.
-		/// @return RequestId of the generated request
-		RequestId GetOutstandingTransactions(const string& sku,
-											 std::function<void(const schema::GetOutstandingTransactionsResponse&)> callback);
-
-		/// Gets a list of unvalidated transactions.
-		///
-		/// @remarks These unvalidated transactions are ordered by purchase time, from the least recent
-		///          to most recent. Returns up to 10 entries at a time.
-		/// @param[in] sku SKU of the transactions to get. Can use '*' to get all SKUs.
-		/// @param[in] callback Callback to invoke after getting the outstanding transactions from the server.
-		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
-		/// @return RequestId of the generated request
-		RequestId GetOutstandingTransactions(const string& sku,
-											 void (*callback)(void*, const schema::GetOutstandingTransactionsResponse&),
-											 void* ptr);
-
-		/// Refunds a transaction by SKU and UserID
-		///
-		/// @param[in] sku The SKU of the transaction to refund.
-		/// @param[in] userId The UserID of the user the transaction is to be refunded to.
-		/// @return RequestId of the generated request
-		RequestId RefundTransactionBySKU(const string& sku, const string& userid);
-
-		/// Refunds a transaction by transaction id and UserID
-		///
-		/// @param[in] txid The Muxy transaction id of the transaction to refund.
-		/// @param[in] userId The UserID of the user the transaction is to be refunded to.
-		/// @return RequestId of the generated request
-		RequestId RefundTransactionByID(const string& txid, const string& userid);
-
-		/// Validates a specific transaction
-		///
-		/// @param[in] txid The Muxy transaction id of the transaction to validate.
-		/// @param[in] details Optional details about this validation.
-		/// @return RequestId of the generated request
-		RequestId ValidateTransaction(const string& txid, const string& details);
-
-		/// Gets drops of a given status. Valid status is FULFILLED and CLAIMED.
-		///
-		/// @param[in] status The string status of the set of drops to get. One of FULFILLED, CLAIMED
-		///                   or empty or '*' to get drops of all statuses.
-		/// @param[in] callback Callback to invoke after getting the drops from the server.
-		/// @return RequestId of the generated request
-		RequestId GetDrops(const string& status, std::function<void(const schema::GetDropsResponse&)> callback);
-
-		/// Gets drops of a given status. Valid status is FULFILLED and CLAIMED.
-		///
-		/// @param[in] status The string status of the set of drops to get. One of FULFILLED, CLAIMED
-		///                   or empty or '*' to get drops of all statuses.
-		/// @param[in] callback Callback to invoke after getting the drops from the server.
-		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
-		/// @return RequestId of the generated request
-		RequestId GetDrops(const string& status, void (*callback)(void*, const schema::GetDropsResponse&), void* ptr);
-
-		/// Moves a single drop from 'CLAIMED' status to 'FULFILLED' status.
-		///
-		/// @param[in] id the ID of the drop to update the status of.
-		/// @return RequestId of the generated request.
-		RequestId ValidateDrop(const string& id);
-
-		/// Deauths the user from the server. Additional requests will not succeed until another
-		/// successful authentication request is sent.
-		///
-		/// @return RequestId of the generated request
-		RequestId Deauthenticate();
-
+#pragma region authentication
 		/// Queues an authentication request using a PIN code, as received by the user from an
 		/// extension's config view.
 		///
@@ -28870,6 +28852,124 @@ namespace gamelink
 											   void (*callback)(void*, const schema::AuthenticateResponse&),
 											   void* user);
 
+		/// Deauths the user from the server. Additional requests will not succeed until another
+		/// successful authentication request is sent.
+		///
+		/// @return RequestId of the generated request
+		RequestId Deauthenticate();
+
+		/// Gets a reference to the OnAuthenticate event. This event is when an authentication request is
+		/// responded to. Unlike many other events, there are no corresponding SubscribeTo* calls required
+		/// to have this event be invoked.
+		///
+		/// @remark See the documentation for Event<T> for more information
+		///
+		/// @return Returns the OnAuthenticate event.
+		Event<schema::AuthenticateResponse>& OnAuthenticate();
+#pragma endregion
+
+#pragma region transactions
+		/// Starts subscribing to OnTransaction updates for a specific SKU
+		///
+		/// @param[in] sku SKU of item to subscribe to
+		/// @return RequestId of the generated request
+		RequestId SubscribeToSKU(const string& sku);
+
+		/// Unsubscribes from a specific SKU listened to by SubscribeToSKU
+		///
+		/// @param[in] sku SKU of item to unsubscribe to
+		/// @return RequestId of the generated request
+		RequestId UnsubscribeFromSKU(const string& sku);
+
+		/// Subscribes to all SKUs.
+		/// @return RequestId of the generated request
+		RequestId SubscribeToAllPurchases();
+
+		/// Unsubscribes from all SKUs.
+		/// @return RequestId of the generated request
+		RequestId UnsubscribeFromAllPurchases();
+
+		/// Gets a reference to the OnTransaction event. This event is when a purchase event occurs,
+		/// as a result of calling SubscribeToSKU or SubscribeToAllPurchases.
+		///
+		/// @remark SubscribeToSKU takes in an sku, but can be called multiple times with different skus.
+		///        Callbacks registered through OnTransaction receive all transaction messages, regardless of sku.
+		///        Callbacks that are designed to only get updates for an sku should test the sku
+		///        from within the callback itself.
+		///
+		/// @remark See the documentation for Event<T> for more information
+		///
+		/// @return Returns the OnTransaction event.
+		Event<schema::TransactionResponse>& OnTransaction();
+
+		/// Gets a list of unvalidated transactions.
+		///
+		/// @remarks These unvalidated transactions are ordered by purchase time, from the least recent
+		///          to most recent. Returns up to 10 entries at a time.
+		/// @param[in] sku SKU of the transactions to get. Can use '*' to get all SKUs.
+		/// @param[in] callback Callback to invoke after getting the outstanding transactions from the server.
+		/// @return RequestId of the generated request
+		RequestId GetOutstandingTransactions(const string& sku,
+											 std::function<void(const schema::GetOutstandingTransactionsResponse&)> callback);
+
+		/// Gets a list of unvalidated transactions.
+		///
+		/// @remarks These unvalidated transactions are ordered by purchase time, from the least recent
+		///          to most recent. Returns up to 10 entries at a time.
+		/// @param[in] sku SKU of the transactions to get. Can use '*' to get all SKUs.
+		/// @param[in] callback Callback to invoke after getting the outstanding transactions from the server.
+		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
+		/// @return RequestId of the generated request
+		RequestId GetOutstandingTransactions(const string& sku,
+											 void (*callback)(void*, const schema::GetOutstandingTransactionsResponse&),
+											 void* ptr);
+
+		/// Refunds a transaction by SKU and UserID
+		///
+		/// @param[in] sku The SKU of the transaction to refund.
+		/// @param[in] userId The UserID of the user the transaction is to be refunded to.
+		/// @return RequestId of the generated request
+		RequestId RefundTransactionBySKU(const string& sku, const string& userid);
+
+		/// Refunds a transaction by transaction id and UserID
+		///
+		/// @param[in] txid The Muxy transaction id of the transaction to refund.
+		/// @param[in] userId The UserID of the user the transaction is to be refunded to.
+		/// @return RequestId of the generated request
+		RequestId RefundTransactionByID(const string& txid, const string& userid);
+
+		/// Validates a specific transaction
+		///
+		/// @param[in] txid The Muxy transaction id of the transaction to validate.
+		/// @param[in] details Optional details about this validation.
+		/// @return RequestId of the generated request
+		RequestId ValidateTransaction(const string& txid, const string& details);
+
+		/// Gets drops of a given status. Valid status is FULFILLED and CLAIMED.
+		///
+		/// @param[in] status The string status of the set of drops to get. One of FULFILLED, CLAIMED
+		///                   or empty or '*' to get drops of all statuses.
+		/// @param[in] callback Callback to invoke after getting the drops from the server.
+		/// @return RequestId of the generated request
+		RequestId GetDrops(const string& status, std::function<void(const schema::GetDropsResponse&)> callback);
+
+		/// Gets drops of a given status. Valid status is FULFILLED and CLAIMED.
+		///
+		/// @param[in] status The string status of the set of drops to get. One of FULFILLED, CLAIMED
+		///                   or empty or '*' to get drops of all statuses.
+		/// @param[in] callback Callback to invoke after getting the drops from the server.
+		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
+		/// @return RequestId of the generated request
+		RequestId GetDrops(const string& status, void (*callback)(void*, const schema::GetDropsResponse&), void* ptr);
+
+		/// Moves a single drop from 'CLAIMED' status to 'FULFILLED' status.
+		///
+		/// @param[in] id the ID of the drop to update the status of.
+		/// @return RequestId of the generated request.
+		RequestId ValidateDrop(const string& id);
+#pragma endregion
+
+#pragma region polls
 		// Poll stuff, all async.
 
 		/// Queues a request to get poll information, including results, for the poll with the given ID.
@@ -28988,8 +29088,22 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId DeletePoll(const string& pollId);
 
-		// Config operations, all async.
+		/// Gets a reference to the OnPollUpdate event. This event is invoked whenever a message
+		/// resulting from SubscribeToPoll is processed by the SDK.
+		///
+		/// @remark SubscribeToPoll takes in a poll id, but can be called multiple times with different poll ids.
+		///        Callbacks registered through OnPollUpdate receive all update messages, regardless of poll id.
+		///        Callbacks that are designed to only get updates for a specific poll id should test the poll id
+		///        from within the callback itself.
+		///
+		/// @remark See the documentation for Event<T> for more information
+		///
+		/// @return Returns the OnPollUpdate event.
+		Event<schema::PollUpdateResponse>& OnPollUpdate();
+#pragma endregion
 
+#pragma region config
+		// Config operations, all async.
 		/// Queues a request to get cofiguration. This overload attaches a one-shot callback to be
 		/// called when config is received.
 		///
@@ -29148,26 +29262,17 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId SetChannelConfig(const nlohmann::json& js);
 
-		/// Sets an OnConfigUpdate callback. This callback is invoked when a config update
-		/// message is received.
+		/// Returns a reference to the OnConfigUpdate event.
+		/// This event will be invoked when the SDK receives an update to configuration
+		/// Must have called SubscribeToConfigurationChanges to receive any events.
 		///
-		/// @param[in] callback Callback to invoke when a config update message is received.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnConfigUpdate.
-		uint32_t OnConfigUpdate(std::function<void(const schema::ConfigUpdateResponse&)> callback);
-
-		/// Sets an OnConfigUpdate callback. This callback is invoked when a config update
-		/// message is received.
+		/// @remark See the documentation for Event<T> for more information.
 		///
-		/// @param[in] callback Callback to invoke when a config update message is received.
-		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnConfigUpdate.
-		uint32_t OnConfigUpdate(void (*callback)(void*, const schema::ConfigUpdateResponse&), void* user);
+		/// @return The OnConfigUpdate event
+		Event<schema::ConfigUpdateResponse>& OnConfigUpdate();
+#pragma endregion
 
-		/// Detaches an OnConfigUpdate callback.
-		///
-		/// @param[in] id A handle obtained from calling OnConfigUpdate. Invalid handles are ignored.
-		void DetachOnConfigUpdate(uint32_t);
-
+#pragma region state
 		// State operations, all async.
 
 		/// Queues a request to replace the entirety of state with new information.
@@ -29349,6 +29454,17 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId UnsubscribeFromStateUpdates(StateTarget target);
 
+		/// Returns a reference to the OnStateUpdate event.
+		/// This event will be invoked when the SDK receives an update to state
+		/// Must have called SubscribeToStateUpdates to receive any events.
+		///
+		/// @remark See the documentation for Event<T> for more information.
+		///
+		/// @return The OnStateUpdate event
+		Event<schema::SubscribeStateUpdateResponse<nlohmann::json> >& OnStateUpdate();
+#pragma endregion
+
+#pragma region broadcasts
 		/// Sends a broadcast to all viewers on the channel using the extension.
 		/// @remark The serialized size of the value parameter must be under 8 kilobytes.
 		///
@@ -29377,7 +29493,9 @@ namespace gamelink
 		///                  to filter messages.
 		/// @return RequestId of the generated request
 		RequestId SendBroadcast(const string& topic);
+#pragma endregion
 
+#pragma region datastream
 		/// Sends a request to subscribe to the datastream.
 		/// @return RequestId of the generated request
 		RequestId SubscribeToDatastream();
@@ -29386,26 +29504,17 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId UnsubscribeFromDatastream();
 
-		/// Sets an OnDatastream callback. This callback is invoked when a datastream update
-		/// message is received.
+		/// Returns a reference to the OnDatastreamUpdate event.
+		/// This event will be invoked when the SDK receives a datastream event.
+		/// Must have called SubscribeToDatastream to receive any events.
 		///
-		/// @param[in] callback Callback to invoke when a datastream update message is received.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnDatastream.
-		uint32_t OnDatastream(std::function<void(const schema::DatastreamUpdate&)> callback);
-
-		/// Sets an OnDatastream callback. This callback is invoked when a datastream update
-		/// message is received.
+		/// @remark See the documentation for Event<T> for more information.
 		///
-		/// @param[in] callback Callback to invoke when a datastream update message is received.
-		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnDatastream.
-		uint32_t OnDatastream(void (*callback)(void*, const schema::DatastreamUpdate&), void* user);
+		/// @return The OnDatastreamUpdate event
+		Event<schema::DatastreamUpdate>& OnDatastreamUpdate();
+#pragma endregion
 
-		/// Detaches an OnDatastream callback.
-		///
-		/// @param[in] id A handle obtained from calling OnDatastream. Invalid handles are ignored.
-		void DetachOnDatastream(uint32_t);
-
+#pragma region matchmaking
 		/// Clears the matchmaking queue
 		///
 		/// @return RequestId of the generated request
@@ -29428,27 +29537,15 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId UnsubscribeFromMatchmakingQueueInvite();
 
-		/// Sets an OnMatchmakingQueueInvite callback. This callback is invoked when a matchmaking queue
-		/// invite message is received.
-		/// You must call SubscribeToMatchmakingQueueInvite before any callbacks will be invoked.
+		/// Returns a reference to the OnMatchmakingQueueInvite event.
+		/// This event will be invoked when the SDK receives a matchmaking queue invite event.
+		/// Must have called SubscribeToMatchmakingQueueInvite to receive any events.
 		///
-		/// @param[in] callback Callback to invoke when a queue invite message is received.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnMatchmakingQueueInvite
-		uint32_t OnMatchmakingQueueInvite(std::function<void(const schema::MatchmakingUpdate&)> callback);
-
-		/// Sets an OnMatchmakingQueueInvite callback. This callback is invoked when a matchmaking queue
-		/// invite message is received.
-		/// You must call SubscribeToMatchmakingQueueInvite before any callbacks will be invoked.
+		/// @remark See the documentation for Event<T> for more information.
 		///
-		/// @param[in] callback Callback to invoke when a queue invite message is received.
-		/// @param[in] ptr User pointer that is passed into the callback whenever it is invoked.
-		/// @return Returns an integer handle to the callback, to be used in DetachOnMatchmakingQueueInvite
-		uint32_t OnMatchmakingQueueInvite(void (callback)(void*, const schema::MatchmakingUpdate&), void* user);
-
-		/// Detaches an OnMatchmakingQueueInvite callback.
-		///
-		/// @param[in] id A handle obtained from calling OnMatchmakingQueueInvite. Invalid handles are ignored.
-		void DetachOnMatchmakingQueueInvite(uint32_t id);
+		/// @return The OnMatchmakingQueueInvite event
+		Event<schema::MatchmakingUpdate>& OnMatchmakingQueueInvite();
+#pragma endregion
 	private:
 		void debugLogPayload(const Payload*);
 
@@ -29461,8 +29558,6 @@ namespace gamelink
 			p.params.request_id = id;
 
 			Payload* payload = new Payload(gamelink::string(to_string(p).c_str()));
-
-			debugLogPayload(payload);
 
 			_lock.lock();
 			_queuedPayloads.push_back(payload);
@@ -29490,26 +29585,51 @@ namespace gamelink
 		void removeFromBarrier(uint16_t);
 
 		std::vector<detail::TimedPoll> _timedPolls;
+		detail::SubscriptionSets _subscriptionSets;
 
 		detail::Callback<string> _onDebugMessage;
 
-		detail::CallbackCollection<schema::PollUpdateResponse, 1> _onPollUpdate;
-		detail::CallbackCollection<schema::AuthenticateResponse, 2> _onAuthenticate;
-		detail::CallbackCollection<schema::SubscribeStateUpdateResponse<nlohmann::json>, 3> _onStateUpdate;
-		detail::CallbackCollection<schema::GetStateResponse<nlohmann::json>, 4> _onGetState;
-		detail::CallbackCollection<schema::TransactionResponse, 5> _onTransaction;
-		detail::CallbackCollection<schema::GetPollResponse, 6> _onGetPoll;
-		detail::CallbackCollection<schema::DatastreamUpdate, 7> _onDatastreamUpdate;
+		Event<schema::PollUpdateResponse> _onPollUpdate;
+		Event<schema::AuthenticateResponse> _onAuthenticate;
+		Event<schema::SubscribeStateUpdateResponse<nlohmann::json> > _onStateUpdate;
+		Event<schema::GetStateResponse<nlohmann::json> > _onGetState;
+		Event<schema::TransactionResponse> _onTransaction;
+		Event<schema::GetPollResponse> _onGetPoll;
+		Event<schema::DatastreamUpdate> _onDatastreamUpdate;
 
-		detail::CallbackCollection<schema::GetConfigResponse, 8> _onGetConfig;
-		detail::CallbackCollection<schema::GetCombinedConfigResponse, 9> _onGetCombinedConfig;
-		detail::CallbackCollection<schema::ConfigUpdateResponse, 10> _onConfigUpdate;
+		Event<schema::GetConfigResponse> _onGetConfig;
+		Event<schema::GetCombinedConfigResponse> _onGetCombinedConfig;
+		Event<schema::ConfigUpdateResponse> _onConfigUpdate;
 
-		detail::CallbackCollection<schema::GetOutstandingTransactionsResponse, 11> _onGetOutstandingTransactions;
-		detail::CallbackCollection<schema::GetDropsResponse, 12> _onGetDrops;
+		Event<schema::GetOutstandingTransactionsResponse> _onGetOutstandingTransactions;
+		Event<schema::GetDropsResponse> _onGetDrops;
 
-		detail::CallbackCollection<schema::MatchmakingUpdate, 13> _onMatchmakingUpdate;
+		Event<schema::MatchmakingUpdate> _onMatchmakingUpdate;
 	};
+
+	// Implementation of Event::Remove is here because of completeness requirements of SDK.
+	template<typename T>
+	void Event<T>::Remove(uint32_t handle)
+	{
+		if (!validateId(handle))
+		{
+			char messageBuffer[128];
+			snprintf(messageBuffer, 128, "Invalid callback handle passed to %s::Remove", _name);
+			_sdk->InvokeOnDebugMessage(gamelink::string(messageBuffer));
+			return;
+		}
+
+		_lock.lock();
+		for (uint32_t i = 0; i < _callbacks.size(); ++i)
+		{
+			if (_callbacks[i]->_id == handle)
+			{
+				_callbacks[i]->_status = detail::CALLBACK_REMOVED;
+			}
+		}
+		_lock.unlock();
+	}
+
 }
 
 #endif
@@ -30008,55 +30128,52 @@ namespace gamelink
 	static const char CONNECTION_URL_SANDBOX[] = "sandbox.gamelink.muxy.io";
 	static const char CONNECTION_URL_PRODUCTION[] = "gamelink.muxy.io";
 
-	namespace detail
+	string ProjectionWebsocketConnectionURL(
+		const string& clientId,
+		ConnectionStage stage,
+		const string& projection,
+		int projectionMajor, int projectionMinor, int projectionPatch)
 	{
-		string ProjectionWebsocketConnectionURL(
-			const string& clientId,
-			ConnectionStage stage,
-			const string& projection,
-			int projectionMajor, int projectionMinor, int projectionPatch)
+		char buffer[CONNECTION_URL_BUFFER_LENGTH];
+		// Ignore obviously too-large client IDs
+		if (clientId.size() > 100)
 		{
-			char buffer[CONNECTION_URL_BUFFER_LENGTH];
-			// Ignore obviously too-large client IDs
-			if (clientId.size() > 100)
-			{
-				return string("");
-			}
-
-			const char * url = nullptr;
-			if (stage == CONNECTION_STAGE_PRODUCTION)
-			{
-				url = CONNECTION_URL_PRODUCTION;
-			}
-			else if (stage == CONNECTION_STAGE_SANDBOX)
-			{
-				url = CONNECTION_URL_SANDBOX;
-			}
-
-			if (!url)
-			{
-				return string("");
-			}
-
-			if (projectionMajor < 0 || projectionMinor < 0 || projectionPatch < 0)
-			{
-				return string("");
-			}
-
-			int output = snprintf(buffer, CONNECTION_URL_BUFFER_LENGTH, "%s/%d.%d.%d/%s/%d.%d.%d/%s",
-				url,
-				MUXY_GAMELINK_VERSION_MAJOR, MUXY_GAMELINK_VERSION_MINOR, MUXY_GAMELINK_VERSION_PATCH,
-				projection.c_str(),
-				projectionMajor, projectionMinor, projectionPatch,
-				clientId.c_str());
-
-			if (output > 0 && output < CONNECTION_URL_BUFFER_LENGTH)
-			{
-				return string(buffer);
-			}
-
 			return string("");
 		}
+
+		const char * url = nullptr;
+		if (stage == ConnectionStage::Production)
+		{
+			url = CONNECTION_URL_PRODUCTION;
+		}
+		else if (stage == ConnectionStage::Sandbox)
+		{
+			url = CONNECTION_URL_SANDBOX;
+		}
+
+		if (!url)
+		{
+			return string("");
+		}
+
+		if (projectionMajor < 0 || projectionMinor < 0 || projectionPatch < 0)
+		{
+			return string("");
+		}
+
+		int output = snprintf(buffer, CONNECTION_URL_BUFFER_LENGTH, "%s/%d.%d.%d/%s/%d.%d.%d/%s",
+			url,
+			MUXY_GAMELINK_VERSION_MAJOR, MUXY_GAMELINK_VERSION_MINOR, MUXY_GAMELINK_VERSION_PATCH,
+			projection.c_str(),
+			projectionMajor, projectionMinor, projectionPatch,
+			clientId.c_str());
+
+		if (output > 0 && output < CONNECTION_URL_BUFFER_LENGTH)
+		{
+			return string(buffer);
+		}
+
+		return string("");
 	}
 
 	string WebsocketConnectionURL(const string& clientID, ConnectionStage stage)
@@ -30069,11 +30186,11 @@ namespace gamelink
 		}
 
 		const char * url = nullptr;
-		if (stage == CONNECTION_STAGE_PRODUCTION)
+		if (stage == ConnectionStage::Production)
 		{
 			url = CONNECTION_URL_PRODUCTION;
 		}
-		else if (stage == CONNECTION_STAGE_SANDBOX)
+		else if (stage == ConnectionStage::Sandbox)
 		{
 			url = CONNECTION_URL_SANDBOX;
 		}
@@ -30145,14 +30262,38 @@ namespace gamelink
 
 	Payload::Payload(string data)
 		: waitingForResponse(ANY_REQUEST_ID)
-		, data(data)
+		, _data(data)
 	{
+	}
+
+	const char* Payload::Data() const
+	{
+		return _data.c_str();
+	}
+
+	uint32_t Payload::Length() const
+	{
+		return static_cast<uint32_t>(_data.size());
 	}
 
 	SDK::SDK()
 		: _user(NULL)
 		, _currentRequestId(1)
-		, _onDebugMessage(0, 0, detail::CALLBACK_PERSISTENT){};
+		, _onDebugMessage(0, 0, detail::CALLBACK_PERSISTENT, string("??#debug"))
+		, _onPollUpdate(this, "OnPollUpdate", 1)
+		, _onAuthenticate(this, "OnAuthenticate", 2)
+		, _onStateUpdate(this, "OnStateUpdate", 3)
+		, _onGetState(this, "OnGetState", 4)
+		, _onTransaction(this, "OnTransaction", 5)
+		, _onGetPoll(this, "OnGetPoll", 6)
+		, _onDatastreamUpdate(this, "OnDatastreamUpdate", 7)
+		, _onGetConfig(this, "OnGetConfig", 8)
+		, _onGetCombinedConfig(this, "OnGetCombinedConfig", 9)
+		, _onConfigUpdate(this, "OnConfigUpdate", 10)
+		, _onGetOutstandingTransactions(this, "OnGetOutstandingTransactions", 11)
+		, _onGetDrops(this, "OnGetDrops", 12)
+		, _onMatchmakingUpdate(this, "OnMatchmakingUpdate", 13)
+	{}
 
 	SDK::~SDK()
 	{
@@ -30179,12 +30320,12 @@ namespace gamelink
 	{
 		if (_onDebugMessage.valid())
 		{
-			uint32_t bufferLength = s->data.size() + 128;
+			uint32_t bufferLength = s->Length() + 128;
 			char* buffer = new char[bufferLength];
 
-			int offset = snprintf(buffer, bufferLength, "send len=%d msg=", static_cast<int>(s->data.size()));
-			memcpy(buffer + offset, s->data.c_str(), s->data.size());
-			buffer[s->data.size() + offset] = '\0';
+			int offset = snprintf(buffer, bufferLength, "send len=%d msg=", static_cast<int>(s->Length()));
+			memcpy(buffer + offset, s->Data(), s->Length());
+			buffer[s->Length() + offset] = '\0';
 
 			_onDebugMessage.invoke(string(buffer));
 
@@ -30236,7 +30377,8 @@ namespace gamelink
 
 			if (payload)
 			{
-				if (payload->data.size() > 0)
+				debugLogPayload(payload);
+				if (payload->Length() > 0)
 				{
 					networkCallback(user, payload);
 				}
@@ -30253,6 +30395,7 @@ namespace gamelink
 		bool parsedFromBuffer = false;
 		schema::ReceiveEnvelope<schema::EmptyBody> env = schema::ParseEnvelope(bytes, length, &parseEnvelopeSuccess);
 
+		// Take lock
 		_lock.lock();
 		if (!parseEnvelopeSuccess)
 		{
@@ -30301,7 +30444,7 @@ namespace gamelink
 		while (_queuedPayloads.size() > 0)
 		{
 			Payload* p = _queuedPayloads.front();
-			if (p->waitingForResponse == ANY_REQUEST_ID && p->data.size() == 0)
+			if (p->waitingForResponse == ANY_REQUEST_ID && p->_data.size() == 0)
 			{
 				_queuedPayloads.pop_front();
 				delete p;
@@ -30311,7 +30454,6 @@ namespace gamelink
 				break;
 			}
 		}
-
 
 		// Successful parse of envelope, swap out the bytes and length values.
 		std::vector<char> receivedBytes;
@@ -30326,6 +30468,7 @@ namespace gamelink
 			length = receivedBytes.size();
 		}
 		_lock.unlock();
+		// Unlock
 
 		if (_onDebugMessage.valid())
 		{
@@ -30363,7 +30506,7 @@ namespace gamelink
 					_storedRefresh = authResp.data.refresh;
 				}
 
-				_onAuthenticate.invoke(authResp);
+				_onAuthenticate.Invoke(authResp);
 			}
 		}
 		else if (env.meta.action == "get")
@@ -30374,7 +30517,7 @@ namespace gamelink
 				success = schema::ParseResponse(bytes, length, stateResp);
 				if (success)
 				{
-					_onGetState.invoke(stateResp);
+					_onGetState.Invoke(stateResp);
 				}
 			}
 			else if (env.meta.target == "poll")
@@ -30383,7 +30526,7 @@ namespace gamelink
 				success = schema::ParseResponse(bytes, length, pollResp);
 				if (success)
 				{
-					_onGetPoll.invoke(pollResp);
+					_onGetPoll.Invoke(pollResp);
 				}
 			}
 			else if (env.meta.target == "config")
@@ -30398,12 +30541,12 @@ namespace gamelink
 						success = schema::ParseResponse(bytes, length, combinedResp);
 						if (success)
 						{
-							_onGetCombinedConfig.invoke(combinedResp);
+							_onGetCombinedConfig.Invoke(combinedResp);
 						}
 					}
 					else
 					{
-						_onGetConfig.invoke(configResp);
+						_onGetConfig.Invoke(configResp);
 					}
 				}
 			}
@@ -30414,7 +30557,7 @@ namespace gamelink
 
 				if (success)
 				{
-					_onGetOutstandingTransactions.invoke(resp);
+					_onGetOutstandingTransactions.Invoke(resp);
 				}
 			}
 			else if (env.meta.target == "drops") {
@@ -30423,7 +30566,7 @@ namespace gamelink
 
 				if (success)
 				{
-					_onGetDrops.invoke(resp);
+					_onGetDrops.Invoke(resp);
 				}
 			}
 		}
@@ -30437,7 +30580,7 @@ namespace gamelink
 				success = schema::ParseResponse<schema::PollUpdateResponse>(bytes, length, pollResp);
 				if (success)
 				{
-					_onPollUpdate.invoke(pollResp);
+					_onPollUpdate.Invoke(pollResp);
 				}
 			}
 			else if (env.meta.target == "channel")
@@ -30446,7 +30589,7 @@ namespace gamelink
 				success = schema::ParseResponse(bytes, length, resp);
 				if (success)
 				{
-					_onStateUpdate.invoke(resp);
+					_onStateUpdate.Invoke(resp);
 				}
 			}
 			else if (env.meta.target == "twitchPurchaseBits" || env.meta.target == "transaction")
@@ -30455,7 +30598,7 @@ namespace gamelink
 				success = schema::ParseResponse(bytes, length, resp);
 				if (success)
 				{
-					_onTransaction.invoke(resp);
+					_onTransaction.Invoke(resp);
 				}
 			}
 			else if (env.meta.target == "datastream")
@@ -30464,7 +30607,7 @@ namespace gamelink
 				success = schema::ParseResponse(bytes, length, resp);
 				if (success)
 				{
-					_onDatastreamUpdate.invoke(resp);
+					_onDatastreamUpdate.Invoke(resp);
 				}
 			}
 			else if (env.meta.target == "config")
@@ -30473,7 +30616,7 @@ namespace gamelink
 				success = schema::ParseResponse(bytes, length, resp);
 				if (success)
 				{
-					_onConfigUpdate.invoke(resp);
+					_onConfigUpdate.Invoke(resp);
 				}
 			}
 			else if (env.meta.target == "matchmaking")
@@ -30482,7 +30625,7 @@ namespace gamelink
 				success = schema::ParseResponse(bytes, length, resp);
 				if (success)
 				{
-					_onMatchmakingUpdate.invoke(resp);
+					_onMatchmakingUpdate.Invoke(resp);
 				}
 			}
 		}
@@ -30515,11 +30658,57 @@ namespace gamelink
 		{
 			schema::AuthenticateWithRefreshTokenRequest p(_storedClientId, _storedRefresh);
 			Payload* payload = new Payload(gamelink::string(to_string(p).c_str()));
-			debugLogPayload(payload);
 
+			// Push the authentication request to the front of the queue.
 			_lock.lock();
 			_queuedPayloads.push_front(payload);
 			_lock.unlock();
+
+			// Replay subscriptions.
+			for (size_t i = 0; i < _subscriptionSets._skus.size(); ++i)
+			{
+				schema::SubscribeTransactionsRequest payload(_subscriptionSets._skus[i].target);
+				queuePayload(payload);
+			}
+
+			// Replay polls.
+			for (size_t i = 0; i < _subscriptionSets._polls.size(); ++i)
+			{
+				schema::SubscribePollRequest payload(_subscriptionSets._polls[i].target);
+				queuePayload(payload);
+			}
+
+			// Replay config
+			for (int i = 0; i < static_cast<int>(ConfigTarget::ConfigTargetCount); ++i)
+			{
+				if (_subscriptionSets._configurationChanges[i].state == detail::SubscriptionState::Active)
+				{
+					schema::SubscribeToConfigRequest payload(static_cast<ConfigTarget>(i));
+					queuePayload(payload);
+				}
+			}
+
+			// Replay state
+			for (int i = 0; i < static_cast<int>(StateTarget::StateCount); ++i)
+			{
+				if (_subscriptionSets._stateSubscriptions[i].state == detail::SubscriptionState::Active)
+				{
+					schema::SubscribeStateRequest payload(static_cast<StateTarget>(i));
+					queuePayload(payload);
+				}
+			}
+
+			if (_subscriptionSets._datastream.state == detail::SubscriptionState::Active)
+			{
+				schema::SubscribeDatastreamRequest payload;
+				queuePayload(payload);
+			}
+
+			if (_subscriptionSets._matchmakingInvite.state  == detail::SubscriptionState::Active)
+			{
+				schema::SubscribeMatchmakingRequest payload;
+				queuePayload(payload);
+			}
 		}
 	}
 
@@ -30571,26 +30760,9 @@ namespace gamelink
 
 namespace gamelink
 {
-    uint32_t SDK::OnAuthenticate(std::function<void(const schema::AuthenticateResponse&)> callback)
+	Event<schema::AuthenticateResponse>& SDK::OnAuthenticate()
 	{
-		return _onAuthenticate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	uint32_t SDK::OnAuthenticate(void (*callback)(void*, const schema::AuthenticateResponse&), void* ptr)
-	{
-		return _onAuthenticate.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	void SDK::DetachOnAuthenticate(uint32_t id)
-	{
-		if (_onAuthenticate.validateId(id))
-		{
-			_onAuthenticate.remove(id);
-		}
-		else
-		{
-			_onDebugMessage.invoke("Invalid ID passed into DetachOnAuthenticate");
-		}
+		return _onAuthenticate;
 	}
 
 	RequestId SDK::Deauthenticate()
@@ -30601,7 +30773,7 @@ namespace gamelink
 
 		return ANY_REQUEST_ID;
 	}
-    
+
 	RequestId SDK::AuthenticateWithPIN(const string& clientId, const string& pin)
 	{
 		schema::AuthenticateWithPINRequest payload(clientId, pin);
@@ -30706,13 +30878,32 @@ namespace gamelink
 
     RequestId SDK::SubscribeToConfigurationChanges(ConfigTarget target)
     {
-        schema::SubscribeToConfigRequest req(target);
-        return queuePayload(req);
+		if (!IsValidConfigTarget(target))
+		{
+			InvokeOnDebugMessage("SubscribeToConfigurationChanges: target value out of bounds");
+			return ANY_REQUEST_ID;
+		}
+
+		if (_subscriptionSets.canRegisterConfigurationChanges(target))
+		{
+			schema::SubscribeToConfigRequest payload(target);
+			RequestId req = queuePayload(payload);
+
+			_subscriptionSets.registerConfigurationChanges(target);
+			return req;
+		}
+
+		char buffer[128];
+		snprintf(buffer, 128, "SubscribeToConfigurationChanges: duplicated subscription call with target=%s", TARGET_STRINGS[static_cast<int>(target)]);
+		InvokeOnDebugMessage(buffer);
+
+		return ANY_REQUEST_ID;
     }
 
     RequestId SDK::UnsubscribeFromConfigurationChanges(ConfigTarget target)
     {
         schema::UnsubscribeFromConfigRequest req(target);
+		_subscriptionSets.unregisterConfigurationChanges(target);
         return queuePayload(req);
     }
 
@@ -30722,27 +30913,10 @@ namespace gamelink
         return queuePayload(req);
     }
 
-    uint32_t SDK::OnConfigUpdate(std::function<void(const schema::ConfigUpdateResponse&)> callback)
-    {
-        return _onConfigUpdate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-    }
-
-    uint32_t SDK::OnConfigUpdate(void (*callback)(void*, const schema::ConfigUpdateResponse&), void* user)
-    {
-        return _onConfigUpdate.set(callback, user, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-    }
-
-    void SDK::DetachOnConfigUpdate(uint32_t id)
-    {
-        if (_onConfigUpdate.validateId(id))
-        {
-            _onConfigUpdate.remove(id);
-        }
-        else
-        {
-            _onDebugMessage.invoke("Invalid ID passed into DetachOnConfigUpdate");
-        }
-    }
+	Event<schema::ConfigUpdateResponse>& SDK::OnConfigUpdate()
+	{
+		return _onConfigUpdate;
+	}
 
     RequestId SDK::UpdateChannelConfig(const schema::PatchOperation* begin, const schema::PatchOperation* end)
 	{
@@ -30831,36 +31005,29 @@ namespace gamelink
 {
 	RequestId SDK::SubscribeToDatastream()
 	{
-		schema::SubscribeDatastreamRequest payload;
-		return queuePayload(payload);
+		if (_subscriptionSets.canRegisterDatastream())
+		{
+			schema::SubscribeDatastreamRequest payload;
+			RequestId req = queuePayload(payload);
+
+			_subscriptionSets.registerDatastream();
+			return req;
+		}
+
+		InvokeOnDebugMessage("SubscribeToDatastream: duplicated subscription call");
+		return ANY_REQUEST_ID;
 	}
 
 	RequestId SDK::UnsubscribeFromDatastream()
 	{
 		schema::UnsubscribeDatastreamRequest payload;
+		_subscriptionSets.unregisterDatastream();
 		return queuePayload(payload);
 	}
 
-	uint32_t SDK::OnDatastream(std::function<void(const schema::DatastreamUpdate&)> callback)
+	Event<schema::DatastreamUpdate>& SDK::OnDatastreamUpdate()
 	{
-		return _onDatastreamUpdate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	uint32_t SDK::OnDatastream(void (*callback)(void*, const schema::DatastreamUpdate&), void* user)
-	{
-		return _onDatastreamUpdate.set(callback, user, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	void SDK::DetachOnDatastream(uint32_t id)
-	{
-		if (_onDatastreamUpdate.validateId(id))
-		{
-			_onDatastreamUpdate.remove(id);
-		}
-		else
-		{
-			_onDebugMessage.invoke("Invalid ID passed into DetachOnDatastream");
-		}
+		return _onDatastreamUpdate;
 	}
 }
 
@@ -30897,13 +31064,23 @@ namespace gamelink
 {
 	RequestId SDK::SubscribeToMatchmakingQueueInvite()
 	{
-		schema::SubscribeMatchmakingRequest payload;
-		return queuePayload(payload);
+		if (_subscriptionSets.canRegisterMatchmakingQueueInvite())
+		{
+			schema::SubscribeMatchmakingRequest payload;
+			RequestId req = queuePayload(payload);
+
+			_subscriptionSets.registerMatchmakingQueueInvite();
+			return req;
+		}
+
+		InvokeOnDebugMessage("SubscribeToMatchmakingQueueInvite: duplicated subscription call");
+		return ANY_REQUEST_ID;
 	}
 
 	RequestId SDK::UnsubscribeFromMatchmakingQueueInvite()
 	{
 		schema::UnsubscribeMatchmakingRequest payload;
+		_subscriptionSets.unregisterMatchmakingQueueInvite();
 		return queuePayload(payload);
 	}
 
@@ -30919,45 +31096,18 @@ namespace gamelink
 		return queuePayload(payload);
 	}
 
-	uint32_t SDK::OnMatchmakingQueueInvite(std::function<void(const schema::MatchmakingUpdate&)> callback)
+	Event<schema::MatchmakingUpdate>& SDK::OnMatchmakingQueueInvite()
 	{
-		return _onMatchmakingUpdate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	uint32_t SDK::OnMatchmakingQueueInvite(void (callback)(void*, const schema::MatchmakingUpdate&), void* user)
-	{
-		return _onMatchmakingUpdate.set(callback, user, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	void SDK::DetachOnMatchmakingQueueInvite(uint32_t handle)
-	{
-		_onMatchmakingUpdate.remove(handle);
+		return _onMatchmakingUpdate;
 	}
 }
 
 
 namespace gamelink
 {
-    uint32_t SDK::OnPollUpdate(std::function<void(const schema::PollUpdateResponse& pollResponse)> callback)
+	Event<schema::PollUpdateResponse>& SDK::OnPollUpdate()
 	{
-		return _onPollUpdate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	uint32_t SDK::OnPollUpdate(void (*callback)(void*, const schema::PollUpdateResponse&), void* ptr)
-	{
-		return _onPollUpdate.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	void SDK::DetachOnPollUpdate(uint32_t id)
-	{
-		if (_onPollUpdate.validateId(id))
-		{
-			_onPollUpdate.remove(id);
-		}
-		else
-		{
-			_onDebugMessage.invoke("Invalid ID passed into DetachOnPollUpdate");
-		}
+		return _onPollUpdate;
 	}
 
 	RequestId SDK::GetPoll(const string& pollId)
@@ -31012,15 +31162,28 @@ namespace gamelink
 		return queuePayload(packet);
 	}
 
+	RequestId SDK::SubscribeToPoll(const string& pollId)
+	{
+		if (_subscriptionSets.canRegisterPoll(pollId))
+		{
+			schema::SubscribePollRequest packet(pollId);
+			RequestId req = queuePayload(packet);
+
+			_subscriptionSets.registerPoll(pollId);
+			return req;
+		}
+
+		char buffer[128];
+		snprintf(buffer, 128, "SubscribeToPoll: duplicated subscription call with target=%s", pollId.c_str());
+		InvokeOnDebugMessage(buffer);
+
+		return ANY_REQUEST_ID;
+	}
+
 	RequestId SDK::UnsubscribeFromPoll(const string& pollId)
 	{
 		schema::UnsubscribePollRequest packet(pollId);
-		return queuePayload(packet);
-	}
-
-	RequestId SDK::SubscribeToPoll(const string& pollId)
-	{
-		schema::SubscribePollRequest packet(pollId);
+		_subscriptionSets.unregisterPoll(pollId);
 		return queuePayload(packet);
 	}
 
@@ -31100,8 +31263,20 @@ namespace gamelink
 {
 	RequestId SDK::SubscribeToSKU(const string& sku)
 	{
-		schema::SubscribeTransactionsRequest payload(sku);
-		return queuePayload(payload);
+		if (_subscriptionSets.canRegisterSKU(sku))
+		{
+			schema::SubscribeTransactionsRequest payload(sku);
+			RequestId req = queuePayload(payload);
+
+			_subscriptionSets.registerSKU(sku);
+			return req;
+		}
+
+		char buffer[128];
+		snprintf(buffer, 128, "SubscribeToSKU: duplicated subscription call with target=%s", sku.c_str());
+		InvokeOnDebugMessage(buffer);
+
+		return ANY_REQUEST_ID;
 	}
 
 	RequestId SDK::SubscribeToAllPurchases()
@@ -31112,6 +31287,7 @@ namespace gamelink
 	RequestId SDK::UnsubscribeFromSKU(const string& sku)
 	{
 		schema::UnsubscribeTransactionsRequest payload(sku);
+		_subscriptionSets.unregisterSKU(sku);
 		return queuePayload(payload);
 	}
 
@@ -31120,26 +31296,9 @@ namespace gamelink
 		return UnsubscribeFromSKU("*");
 	}
 
-	uint32_t SDK::OnTransaction(std::function<void(const schema::TransactionResponse&)> callback)
+	Event<schema::TransactionResponse>& SDK::OnTransaction()
 	{
-		return _onTransaction.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	uint32_t SDK::OnTransaction(void (*callback)(void*, const schema::TransactionResponse&), void* ptr)
-	{
-		return _onTransaction.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	void SDK::DetachOnTransaction(uint32_t id)
-	{
-		if (_onTransaction.validateId(id))
-		{
-			_onTransaction.remove(id);
-		}
-		else
-		{
-			_onDebugMessage.invoke("Invalid ID passed into DetachOnTransaction");
-		}
+		return _onTransaction;
 	}
 
 	RequestId SDK::GetOutstandingTransactions(const string& sku, std::function<void (const schema::GetOutstandingTransactionsResponse&)> callback)
@@ -31182,26 +31341,9 @@ namespace gamelink
 
 namespace gamelink
 {
-	uint32_t SDK::OnStateUpdate(std::function<void(const schema::SubscribeStateUpdateResponse<nlohmann::json>&)> callback)
+	Event<schema::SubscribeStateUpdateResponse<nlohmann::json> >& SDK::OnStateUpdate()
 	{
-		return _onStateUpdate.set(callback, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	uint32_t SDK::OnStateUpdate(void (*callback)(void*, const schema::SubscribeStateUpdateResponse<nlohmann::json>&), void* ptr)
-	{
-		return _onStateUpdate.set(callback, ptr, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT);
-	}
-
-	void SDK::DetachOnStateUpdate(uint32_t id)
-	{
-		if (_onStateUpdate.validateId(id))
-		{
-			_onStateUpdate.remove(id);
-		}
-		else
-		{
-			_onDebugMessage.invoke("Invalid ID passed into OnStateUpdate");
-		}
+		return _onStateUpdate;
 	}
 
 	RequestId SDK::SetState(StateTarget target, const nlohmann::json& value)
@@ -31210,7 +31352,7 @@ namespace gamelink
 		return queuePayload(payload);
 	}
 
-	RequestId SDK::ClearState(StateTarget target) 
+	RequestId SDK::ClearState(StateTarget target)
 	{
 		return SetState(target, nlohmann::json::object());
 	}
@@ -31240,13 +31382,33 @@ namespace gamelink
 
 	RequestId SDK::SubscribeToStateUpdates(StateTarget target)
 	{
-		schema::SubscribeStateRequest payload(target);
-		return queuePayload(payload);
+		if (!IsValidStateTarget(target))
+		{
+			InvokeOnDebugMessage("SubscribeToStateUpdates: target value out of bounds");
+			return ANY_REQUEST_ID;
+		}
+
+		if (_subscriptionSets.canRegisterStateUpdate(target))
+		{
+			schema::SubscribeStateRequest payload(target);
+			RequestId req = queuePayload(payload);
+
+			_subscriptionSets.registerStateUpdates(target);
+			return req;
+		}
+
+		char buffer[128];
+		snprintf(buffer, 128, "SubscribeToStateUpdates: duplicated subscription call with target=%s", STATETARGET_STRINGS[static_cast<int>(target)]);
+		InvokeOnDebugMessage(buffer);
+
+		return ANY_REQUEST_ID;
 	}
 
 	RequestId SDK::UnsubscribeFromStateUpdates(StateTarget target)
 	{
 		schema::UnsubscribeStateRequest payload(target);
+		_subscriptionSets.unregisterStateUpdates(target);
+
 		return queuePayload(payload);
 	}
 
@@ -31444,7 +31606,7 @@ namespace gamelink
 		lock.unlock();
 	}
 
-	void PatchList::UpdateStateWithEmptyArray(Operation operation, const string& path) 
+	void PatchList::UpdateStateWithEmptyArray(Operation operation, const string& path)
 	{
 		schema::PatchOperation op;
 		op.operation = OPERATION_STRINGS[static_cast<int>(operation)];
@@ -31466,6 +31628,232 @@ namespace gamelink
 		lock.lock();
 		this->operations.clear();
 		lock.unlock();
+	}
+}
+
+
+namespace gamelink
+{
+	namespace detail
+	{
+		SubscriptionSets::SubscriptionSets()
+		{
+			for (int i = 0; i < static_cast<int>(ConfigTarget::ConfigTargetCount); ++i)
+			{
+				_configurationChanges[i].state = SubscriptionState::Inactive;
+			}
+
+			for (int i = 0; i < static_cast<int>(StateTarget::StateCount); ++i)
+			{
+				_stateSubscriptions[i].state = SubscriptionState::Inactive;
+			}
+
+			_datastream.state = SubscriptionState::Inactive;;
+			_matchmakingInvite.state = SubscriptionState::Inactive;;
+		}
+
+		bool SubscriptionSets::canRegisterSKU(const string& sku)
+		{
+			_lock.lock();
+			for (size_t i = 0; i < _skus.size(); ++i)
+			{
+				if (_skus[i].target == sku && _skus[i].state == SubscriptionState::Active)
+				{
+					_lock.unlock();
+					return false;
+				}
+			}
+
+			_lock.unlock();
+			return true;
+		}
+
+		void SubscriptionSets::registerSKU(const string& sku)
+		{
+			SubscriptionWithString sub;
+			sub.state = SubscriptionState::Active;
+			sub.target = sku;
+
+			_lock.lock();
+			_skus.push_back(sub);
+			_lock.unlock();
+		}
+
+		void SubscriptionSets::unregisterSKU(const string& sku)
+		{
+			_lock.lock();
+			auto it = std::remove_if(_skus.begin(), _skus.end(), [&](const SubscriptionWithString& value)
+			{
+				return value.target == sku && value.state == SubscriptionState::Active;
+			});
+
+			_skus.erase(it, _skus.end());
+			_lock.unlock();
+		}
+
+		bool SubscriptionSets::canRegisterPoll(const string& pid)
+		{
+			_lock.lock();
+			for (size_t i = 0; i < _polls.size(); ++i)
+			{
+				if (_polls[i].target == pid && _polls[i].state == SubscriptionState::Active)
+				{
+					_lock.unlock();
+					return false;
+				}
+			}
+
+			_lock.unlock();
+			return true;
+		}
+
+		void SubscriptionSets::registerPoll(const string& pid)
+		{
+			SubscriptionWithString sub;
+			sub.state = SubscriptionState::Active;
+			sub.target = pid;
+
+
+			_lock.lock();
+			_polls.push_back(sub);
+			_lock.unlock();
+		}
+
+		void SubscriptionSets::unregisterPoll(const string& pid)
+		{
+			_lock.lock();
+			auto it = std::remove_if(_polls.begin(), _polls.end(), [&](const SubscriptionWithString& value)
+			{
+				return value.target == pid && value.state == SubscriptionState::Active;
+			});
+
+			_polls.erase(it, _polls.end());
+			_lock.unlock();
+		}
+
+		bool SubscriptionSets::canRegisterStateUpdate(StateTarget target)
+		{
+			if (!IsValidStateTarget(target))
+			{
+				return false;
+			}
+
+
+			_lock.lock();
+			if (_stateSubscriptions[static_cast<int>(target)].state == SubscriptionState::Inactive)
+			{
+				_lock.unlock();
+				return true;
+			}
+
+			_lock.unlock();
+			return false;
+		}
+
+		void SubscriptionSets::registerStateUpdates(StateTarget target)
+		{
+			if (!IsValidStateTarget(target))
+			{
+				return;
+			}
+
+			_lock.lock();
+			_stateSubscriptions[static_cast<int>(target)].state = SubscriptionState::Active;
+			_lock.unlock();
+		}
+
+		void SubscriptionSets::unregisterStateUpdates(StateTarget target)
+		{
+			if (!IsValidStateTarget(target))
+			{
+				return;
+			}
+
+			_lock.lock();
+			_stateSubscriptions[static_cast<int>(target)].state = SubscriptionState::Inactive;
+			_lock.unlock();
+		}
+
+
+		bool SubscriptionSets::canRegisterConfigurationChanges(ConfigTarget target)
+		{
+			if (!IsValidConfigTarget(target))
+			{
+				return false;
+			}
+
+			_lock.lock();
+			if (_configurationChanges[static_cast<int>(target)].state == SubscriptionState::Inactive)
+			{
+				_lock.unlock();
+				return true;
+			}
+
+			_lock.unlock();
+			return false;
+		}
+
+		void SubscriptionSets::registerConfigurationChanges(ConfigTarget target)
+		{
+			if (!IsValidConfigTarget(target))
+			{
+				return;
+			}
+
+			_lock.lock();
+			_configurationChanges[static_cast<int>(target)].state = SubscriptionState::Active;
+			_lock.unlock();
+		}
+
+		void SubscriptionSets::unregisterConfigurationChanges(ConfigTarget target)
+		{
+			if (!IsValidConfigTarget(target))
+			{
+				return;
+			}
+
+			_lock.lock();
+			_configurationChanges[static_cast<int>(target)].state = SubscriptionState::Inactive;
+			_lock.unlock();
+		}
+
+		bool SubscriptionSets::canRegisterDatastream()
+		{
+			return _datastream.state == SubscriptionState::Inactive;
+		}
+
+		void SubscriptionSets::registerDatastream()
+		{
+			_lock.lock();
+			_datastream.state = SubscriptionState::Active;
+			_lock.unlock();
+		}
+
+		void SubscriptionSets::unregisterDatastream()
+		{
+			_lock.lock();
+			_datastream.state = SubscriptionState::Inactive;
+			_lock.unlock();
+		}
+
+		bool SubscriptionSets::canRegisterMatchmakingQueueInvite()
+		{
+			return _matchmakingInvite.state == SubscriptionState::Inactive;
+		}
+
+		void SubscriptionSets::registerMatchmakingQueueInvite()
+		{
+			_lock.lock();
+			_matchmakingInvite.state = SubscriptionState::Active;
+			_lock.unlock();
+		}
+
+		void SubscriptionSets::unregisterMatchmakingQueueInvite()
+		{
+			_lock.lock();
+			_matchmakingInvite.state = SubscriptionState::Inactive;
+			_lock.unlock();
+		}
 	}
 }
 #endif

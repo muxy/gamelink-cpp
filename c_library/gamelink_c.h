@@ -441,7 +441,7 @@ extern "C"
 	MUXY_CLIB_API uint32_t MuxyGameLink_OnMatchmakingQueueInvite(MuxyGameLink GameLink,
 																 MGL_MatchmakingResponseCallback Callback,
 																 void* UserData);
-	MUXY_CLIB_API uint32_t MuxyGameLink_DetachOnMatchmakingQueueInvite(MuxyGameLink GameLink, uint32_t Id);
+	MUXY_CLIB_API void MuxyGameLink_DetachOnMatchmakingQueueInvite(MuxyGameLink GameLink, uint32_t Id);
 
 #ifdef __cplusplus
 }
