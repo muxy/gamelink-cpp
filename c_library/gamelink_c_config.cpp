@@ -1,5 +1,6 @@
 #include "gamelink.h"
 #include "gamelink_c.h"
+#include "gamelink_c_interop.h"
 
 using namespace gamelink;
 
@@ -83,12 +84,13 @@ MGL_RequestId MuxyGameLink_UnsubscribeToConfigurationChanges(MuxyGameLink GameLi
 uint32_t MuxyGameLink_OnConfigUpdate(MuxyGameLink GameLink, MGL_ConfigUpdateResponseCallback Callback, void* UserData)
 {
 	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
-	return Instance->OnConfigUpdate().Add([Callback, UserData](const schema::ConfigUpdateResponse& UpdateResponse) {
-		MGL_Schema_ConfigUpdateResponse Response;
-		Response.Obj = &UpdateResponse;
+	return Instance->OnConfigUpdate().Add(C_CALLBACK(Callback, UserData, ConfigUpdateResponse));
+}
 
-		Callback(UserData, Response);
-	});
+uint32_t MuxyGameLink_OnConfigUpdateUnique(MuxyGameLink GameLink, const char* Name, MGL_ConfigUpdateResponseCallback Callback, void* UserData)
+{
+	SDK* Instance = static_cast<SDK*>(GameLink.SDK);
+	return Instance->OnConfigUpdate().AddUnique(gamelink::string(Name), C_CALLBACK(Callback, UserData, ConfigUpdateResponse));
 }
 
 void MuxyGameLink_DetachOnConfigUpdate(MuxyGameLink GameLink, uint32_t Id)
