@@ -27060,7 +27060,10 @@ namespace gamelink
 	{
 		struct MUXY_GAMELINK_API DatastreamEvent
 		{
+			// Event
 			nlohmann::json event;
+
+			// Unix seconds
 			int64_t timestamp;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(DatastreamEvent, "event", event, "timestamp", timestamp);
@@ -27471,13 +27474,16 @@ namespace gamelink
 			/// Cost in coins of the product
 			int cost;
 
+			// Currency used to purchase the product
+			string currency;
+
 			/// Millisecond unix timestamp of the purchase.
 			int64_t timestamp;
 
 			/// Arbitrary additional data, added by the extension to this purchase receipt.
 			nlohmann::json additional;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_9(Transaction,
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_10(Transaction,
 												"id",
 												id,
 												"muxy_id",
@@ -27492,6 +27498,8 @@ namespace gamelink
 												userName,
 												"cost",
 												cost,
+												"currency",
+												currency,
 												"timestamp",
 												timestamp,
 												"additional",
@@ -27693,10 +27701,9 @@ namespace gamelink
 		template<typename T>
 		struct StateUpdateBody
 		{
-			string topic_id;
 			T state;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(StateUpdateBody, "topic_id", topic_id, "state", state);
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(StateUpdateBody, "state", state);
 		};
 
 		struct MUXY_GAMELINK_API SubscribeStateRequest : SendEnvelope<SubscribeTopicRequestBody>
@@ -27731,7 +27738,7 @@ namespace gamelink
         struct MUXY_GAMELINK_API SetConfigRequestBody
         {
             nlohmann::json config;
-            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SetConfigRequestBody, "config", config); 
+            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SetConfigRequestBody, "config", config);
         };
 
         struct MUXY_GAMELINK_API GetConfigRequestBody
@@ -27749,13 +27756,13 @@ namespace gamelink
 
             MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ConfigResponseBody, "config", config, "config_id", configId);
         };
-        
+
         struct MUXY_GAMELINK_API ConfigUpdateBody
         {
             nlohmann::json config;
             string topicId;
 
-            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ConfigUpdateBody, "config", config, "topic_id", topicId);
+            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ConfigUpdateBody, "config", config, "config_id", topicId);
         };
 
         struct MUXY_GAMELINK_API CombinedState
@@ -27771,7 +27778,7 @@ namespace gamelink
         {
             CombinedState config;
             string configId;
-            
+
             MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(CombinedStateResponseBody, "config", config, "config_id", configId);
         };
 
@@ -27786,7 +27793,7 @@ namespace gamelink
             string configId;
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(UnsubscribeConfigRequestBody, "config_id", configId);
         };
-        
+
 		struct MUXY_GAMELINK_API PatchConfigRequestBody
 		{
 			std::vector<PatchOperation> config;
@@ -27802,7 +27809,7 @@ namespace gamelink
         struct MUXY_GAMELINK_API GetConfigRequest : SendEnvelope<GetConfigRequestBody>
         {
             /// Creates a GetConfig request.
-            /// @param[in] target one of the CONFIG_TARGET constants 
+            /// @param[in] target one of the CONFIG_TARGET constants
             explicit GetConfigRequest(ConfigTarget target);
         };
 
