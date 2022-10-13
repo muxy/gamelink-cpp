@@ -55,6 +55,7 @@ TEST_CASE("Poll Update Response (De)Serialization", "[poll][update]")
 	pollResponse.data.poll.pollId = "poll-id";
 	pollResponse.data.poll.prompt = "Yes or No?";
 	pollResponse.data.poll.options = {"Yes", "No"};
+	pollResponse.data.poll.status = "active";
 	pollResponse.data.results = {1, 2};
 
 	SerializeEqual(pollResponse, R"({
@@ -71,7 +72,8 @@ TEST_CASE("Poll Update Response (De)Serialization", "[poll][update]")
 			"poll": {
 				"poll_id": "poll-id",
 				"prompt": "Yes or No?",
-				"options": ["Yes", "No"]
+				"options": ["Yes", "No"],
+				"status": "active"
 			}
 		}
 	})");
@@ -90,7 +92,8 @@ TEST_CASE("Poll Update Response (De)Serialization", "[poll][update]")
 			"poll": {
 				"poll_id": "poll-id",
 				"prompt": "Yes or No?",
-				"options": ["Yes", "No"]
+				"options": ["Yes", "No"],
+				"status": "active"
 			}
 		}
 	})",
@@ -100,6 +103,7 @@ TEST_CASE("Poll Update Response (De)Serialization", "[poll][update]")
 	REQUIRE(pollResponse.meta.target == "poll");
 	REQUIRE(pollResponse.data.poll.pollId == "poll-id");
 	REQUIRE(pollResponse.data.poll.prompt == "Yes or No?");
+	REQUIRE(pollResponse.data.poll.status == "active");
 	REQUIRE(pollResponse.data.poll.options[0] == "Yes");
 	REQUIRE(pollResponse.data.poll.options[1] == "No");
 	REQUIRE(pollResponse.data.results[0] == 1);
@@ -158,7 +162,6 @@ TEST_CASE("SDK Poll Creation", "[sdk][poll][creation]")
 
 	REQUIRE(!sdk.HasPayloads());
 }
-
 
 TEST_CASE("SDK Poll Creation With Options", "[sdk][poll][creation]")
 {
@@ -309,7 +312,8 @@ TEST_CASE("SDK Poll Update Response", "[sdk][poll][update]")
 			"poll": {
 				"poll_id": "test-poll",
 				"prompt": "Choose one",
-				"options": ["Red", "Blue"]
+				"options": ["Red", "Blue"],
+				"status": "expired"
 			},
 			"results": [3, 2]
 		}
@@ -322,4 +326,115 @@ TEST_CASE("SDK Poll Update Response", "[sdk][poll][update]")
 
 	sdk.ReceiveMessage(json, strlen(json));
 	REQUIRE(received);
+}
+
+TEST_CASE("SDK Run Poll", "[sdk][poll]")
+{
+	gamelink::SDK sdk;
+
+	gamelink::PollConfiguration config;
+	config.disabled = false;
+	config.distinctOptionsPerUser = 1;
+	config.totalVotesPerUser = 1024;
+	config.userIdVoting = true;
+	config.startsAt = 10;
+	config.endsAt = 20;
+	config.votesPerOption = 1024;
+
+	int updateCalls = 0;
+	std::function<void (const gs::PollUpdateResponse&)> update = [&updateCalls](const gs::PollUpdateResponse& resp)
+	{
+		REQUIRE(resp.data.poll.pollId == "test-poll");
+		updateCalls++;
+	};
+
+	int finishCalls = 0;
+	std::function<void (const gs::PollUpdateResponse&)> finish = [&finishCalls](const gs::PollUpdateResponse& resp)
+	{
+		REQUIRE(resp.data.poll.pollId == "test-poll");
+		finishCalls++;
+	};
+
+	sdk.RunPoll(
+		"test-poll",
+		"Is a hot dog a sandwich?",
+		config,
+		{ "Yes", "No "},
+		update,
+		finish
+	);
+
+	const char * updateMessage = R"({
+		"meta": {
+			"action": "update",
+			"target": "poll"
+		},
+		"data": {
+			"count": 3,
+			"mean": 0.0,
+			"sum": 0.0,
+
+			"results": [1, 2],
+			"poll": {
+				"poll_id": "test-poll",
+				"prompt": "Is a hot dog a sandwich?",
+				"options": ["Yes", "No"],
+				"status": "active"
+			}
+		}
+	})";
+
+	const char * otherUpdateMessage = R"({
+		"meta": {
+			"action": "update",
+			"target": "poll"
+		},
+		"data": {
+			"count": 3000,
+			"mean": 0.0,
+			"sum": 0.0,
+
+			"results": [1000, 2000],
+			"poll": {
+				"poll_id": "some-other-poll",
+				"prompt": "Irrelevant",
+				"options": ["Yes", "No"],
+				"status": "active"
+			}
+		}
+	})";
+
+
+	const char * finishMessage = R"({
+		"meta": {
+			"action": "update",
+			"target": "poll"
+		},
+		"data": {
+			"count": 4,
+			"mean": 0.0,
+			"sum": 0.0,
+
+			"results": [1, 3],
+			"poll": {
+				"poll_id": "test-poll",
+				"prompt": "Is a hot dog a sandwich?",
+				"options": ["Yes", "No"],
+				"status": "expired"
+			}
+		}
+	})";
+
+	// Send a few updates and then a finish, show that there is the expected number of calls.
+	sdk.ReceiveMessage(updateMessage, strlen(updateMessage));
+	sdk.ReceiveMessage(updateMessage, strlen(updateMessage));
+	sdk.ReceiveMessage(updateMessage, strlen(updateMessage));
+	sdk.ReceiveMessage(updateMessage, strlen(updateMessage));
+	sdk.ReceiveMessage(otherUpdateMessage, strlen(otherUpdateMessage));
+	sdk.ReceiveMessage(finishMessage, strlen(finishMessage));
+	sdk.ReceiveMessage(finishMessage, strlen(finishMessage));
+	sdk.ReceiveMessage(finishMessage, strlen(finishMessage));
+
+	REQUIRE(updateCalls == 4);
+	REQUIRE(finishCalls == 1);
 }

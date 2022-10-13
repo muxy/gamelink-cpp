@@ -132,25 +132,34 @@ namespace gamelink
 			/// The prompt for the poll.
 			string prompt;
 
+			/// The current status of the poll.
+			string status;
+
 			/// A list of answers to the prompt. Maximum 64.
 			std::vector<string> options;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PollResponseBody, "poll_id", pollId, "prompt", prompt, "options", options);
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_4(PollResponseBody, "poll_id", pollId, "prompt", prompt, "status", status, "options", options);
 		};
 
 		template<typename T>
 		struct MUXY_GAMELINK_API PollWithUserDataResponseBody
 		{
+			/// The Poll ID that the update is for
+			string pollId;
+
 			/// The prompt for the poll.
 			string prompt;
 
 			/// A list of answers to the prompt. Maximum 64.
 			std::vector<string> options;
 
+			/// The current status of the poll.
+			string status;
+
 			/// Arbitrary user data type. Must be marked up with the MUXY_GAMELINK_SERIALIZE macro.
 			T userData;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(PollWithUserDataResponseBody, "prompt", prompt, "options", options, "user_data", userData);
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_5(PollWithUserDataResponseBody, "poll_id", pollId, "prompt", prompt, "options", options, "status", status, "user_data", userData);
 		};
 
 		// Note that this is the same as PollUpdateBody, and is provided for consistency with each

@@ -90,66 +90,111 @@ namespace gamelink
 		return queuePayload(payload);
 	}
 
-	RequestId SDK::CreateTimedPoll(const string& pollId,
-								   const string& prompt,
-								   const std::vector<string>& options,
-								   float duration,
-								   std::function<void(const schema::GetPollResponse&)> onFinishCallback)
+	RequestId SDK::RunPoll(const string& pollId,
+		const string& prompt,
+		const PollConfiguration& config,
+		const std::vector<string>& options,
+		std::function<void(const schema::PollUpdateResponse&)> onUpdateCallback,
+		std::function<void(const schema::PollUpdateResponse&)> onFinishCallback)
 	{
-		detail::TimedPoll tp(pollId, duration);
-		tp.onFinishCallback.set(onFinishCallback);
+		RequestId del = DeletePoll(pollId);
+		RequestId unsub = UnsubscribeFromPoll(pollId);
 
-		_lock.lock();
-		_timedPolls.push_back(tp);
-		_lock.unlock();
-		return SDK::CreatePoll(pollId, prompt, options);
-	}
+		WaitForResponse(del);
+		WaitForResponse(unsub);
 
-	RequestId SDK::CreateTimedPoll(const string& pollId,
-								   const string& prompt,
-								   const std::vector<string>& options,
-								   float duration,
-								   void (*onFinishCallback)(void*, const schema::GetPollResponse&),
-								   void* user)
-	{
-		detail::TimedPoll tp(pollId, duration);
-		tp.onFinishCallback.set(onFinishCallback, user);
+		SubscribeToPoll(pollId);
+		RequestId result = CreatePollWithConfiguration(pollId, prompt, config, options);
 
-		_lock.lock();
-		_timedPolls.push_back(tp);
-		_lock.unlock();
-		return SDK::CreatePoll(pollId, prompt, options);
-	}
+		char buffer[128];
+		snprintf(buffer, 128, "<runpoll>_%s", pollId.c_str());
 
-	void SDK::TickTimedPolls(float dt)
-	{
-		_lock.lock();
-		for (auto &tp: _timedPolls)
+		gamelink::string callbackName = gamelink::string(buffer);
+
+		bool hasCalledOnFinish = false;
+		OnPollUpdate().AddUnique(callbackName, [this, callbackName, pollId, onUpdateCallback, onFinishCallback, hasCalledOnFinish](const schema::PollUpdateResponse& resp) mutable
 		{
-			tp.duration -= dt;
-			if (tp.duration <= 0 && !tp.finished)
+			// The requirements on string type overloading don't require operator !=
+			if (!(resp.data.poll.pollId == pollId))
 			{
-				SDK::GetPoll(tp.pollId, [&tp](const schema::GetPollResponse& Resp)
-				{
-					tp.finished = true;
-					tp.onFinishCallback.invoke(Resp);
-				});
+				return;
 			}
-		}
 
-		auto it = _timedPolls.begin();
-		while (it != _timedPolls.end())
-		{
-			if (it->finished)
+			if (resp.data.poll.status == gamelink::string("expired"))
 			{
-				SDK::DeletePoll(it->pollId);
-				it = _timedPolls.erase(it);
+				if (!hasCalledOnFinish)
+				{
+					onFinishCallback(resp);
+					this->UnsubscribeFromPoll(pollId);
+					this->OnPollUpdate().RemoveByName(callbackName);
+					hasCalledOnFinish = true;
+				}
 			}
 			else
 			{
-				++it;
+				onUpdateCallback(resp);
 			}
-		}
-		_lock.unlock();
+		});
+
+		return result;
+	}
+
+	RequestId SDK::RunPoll(const string& pollId,
+		const string& prompt,
+		const PollConfiguration& config,
+		const string* optionsBegin,
+		const string* optionsEnd,
+		void (*onUpdateCallback)(void*, const schema::PollUpdateResponse&),
+		void (*onFinishCallback)(void*, const schema::PollUpdateResponse&),
+		void* user)
+	{
+		RequestId del = DeletePoll(pollId);
+		RequestId unsub = UnsubscribeFromPoll(pollId);
+
+		WaitForResponse(del);
+		WaitForResponse(unsub);
+
+		SubscribeToPoll(pollId);
+		RequestId result = CreatePollWithConfiguration(pollId, prompt, config, optionsBegin, optionsEnd);
+
+		char buffer[128];
+		snprintf(buffer, 128, "<runpoll>_%s", pollId.c_str());
+
+		gamelink::string callbackName = gamelink::string(buffer);
+
+		bool hasCalledOnFinish = false;
+		OnPollUpdate().AddUnique(callbackName, [this, callbackName, user, pollId, onUpdateCallback, onFinishCallback, hasCalledOnFinish](const schema::PollUpdateResponse& resp) mutable
+		{
+			// The requirements on string type overloading don't require operator !=
+			if (!(resp.data.poll.pollId == pollId))
+			{
+				return;
+			}
+
+			if (resp.data.poll.status == gamelink::string("expired"))
+			{
+				if (!hasCalledOnFinish)
+				{
+					onFinishCallback(user, resp);
+					this->UnsubscribeFromPoll(pollId);
+					this->OnPollUpdate().RemoveByName(callbackName);
+					hasCalledOnFinish = true;
+				}
+			}
+			else
+			{
+				onUpdateCallback(user, resp);
+			}
+		});
+
+		return result;
+	}
+
+	RequestId SDK::StopRunningPoll(const string& pollId)
+	{
+		RequestId get = GetPoll(pollId);
+		WaitForResponse(get);
+
+		return UnsubscribeFromPoll(pollId);
 	}
 }
