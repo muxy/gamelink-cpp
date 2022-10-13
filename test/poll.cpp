@@ -404,10 +404,6 @@ TEST_CASE("SDK Run Poll", "[sdk][poll]")
 		}
 	})";
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 2b0f434 (Remove TimedPoll concept, replaced by RunPoll)
 	const char * finishMessage = R"({
 		"meta": {
 			"action": "update",
