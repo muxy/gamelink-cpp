@@ -190,11 +190,15 @@ namespace gamelink
 		return result;
 	}
 
-	RequestId SDK::StopRunningPoll(const string& pollId)
+	RequestId SDK::StopPoll(const string& pollId)
 	{
-		RequestId get = GetPoll(pollId);
-		WaitForResponse(get);
+		schema::ExpirePollRequest req(pollId);
+		return queuePayload(req);
+	}
 
-		return UnsubscribeFromPoll(pollId);
+	RequestId SDK::SetPollDisabled(const string& pollId, bool disabled)
+	{
+		schema::SetPollDisabledStatusRequest req(pollId, disabled);
+		return queuePayload(req);
 	}
 }

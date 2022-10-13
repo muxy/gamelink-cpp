@@ -1001,9 +1001,6 @@ namespace gamelink
 		/// @note The onUpdate and onFinish callbacks do not receive updates or finishes
 		///   for other polls.
 		///
-		/// @note To cancel a poll that is being run by this function, use StopRunningPoll,
-		///   instead of the DeletePoll operation.
-		///
 		/// @note Roughly equivilent to Delete -> Unsubscribe -> CreatePollWithConfiguration -> Subscribe
 		///   and several OnPollUpdate().Adds
 		///
@@ -1027,10 +1024,21 @@ namespace gamelink
 			void* user
 		);
 
-		/// Stops a poll crated by RunPoll.
-		/// @note Roughly equivilent to GetPoll -> Unsubscribe
-		/// @note This does invoke onFinish callbacks of the poll.
-		RequestId StopRunningPoll(const string& pollId);
+		/// Stops a poll by setting the endsAt time to the current timestamp.
+		/// This works for all polls. even ones not started by RunPoll or
+		/// CreatePollWithConfiguration.
+		/// @note This does invoke onFinish callbacks of the poll, if created by RunPoll.
+		///
+		/// @param[in] pollId The Poll ID to stop
+		RequestId StopPoll(const string& pollId);
+
+		/// Sets the disabled status of the given poll.
+		/// This works for all polls. even ones not started by RunPoll or
+		/// CreatePollWithConfiguration.
+		///
+		/// @param[in] pollId The Poll ID to set the disabled status of
+		/// @param[in] disabled The disable status
+		RequestId SetPollDisabled(const string& pollId, bool disabled);
 
 		/// Subscribes to updates for a given poll.
 		/// Updates come through the OnPollUpdate callback.

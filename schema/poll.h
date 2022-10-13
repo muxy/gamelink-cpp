@@ -287,6 +287,43 @@ namespace gamelink
 			explicit UnsubscribePollRequest(const string& pollId);
 		};
 
+		struct ExpireConfig
+		{
+			int32_t endsAt;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(ExpireConfig, "endsAt", endsAt);
+		};
+
+		struct DisableConfig
+		{
+			bool disabled;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(DisableConfig, "disabled", disabled);
+		};
+
+		template<typename Config>
+		struct PollReconfigureBody
+		{
+			string pollId;
+			Config config;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(PollReconfigureBody, "poll_id", pollId, "config", config);
+		};
+
+		struct MUXY_GAMELINK_API ExpirePollRequest : SendEnvelope<PollReconfigureBody<ExpireConfig>>
+		{
+			/// Creates an ExpirePollRequest.
+			/// @param[in] pollId The ID of the poll expire
+			explicit ExpirePollRequest(const string& pollId);
+		};
+
+		struct MUXY_GAMELINK_API SetPollDisabledStatusRequest : SendEnvelope<PollReconfigureBody<DisableConfig>>
+		{
+			/// Creates an ExpirePollRequest.
+			/// @param[in] pollId The ID of the poll set the status of.
+			/// @param[in] disabled The new disabled state.
+			SetPollDisabledStatusRequest(const string& pollId, bool disabled);
+		};
 
 		struct MUXY_GAMELINK_API PollUpdateResponse : ReceiveEnvelope<PollUpdateBody>
 		{

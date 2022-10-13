@@ -64,5 +64,21 @@ namespace gamelink
 			params.target = string("poll");
 			data.topic_id = string(pollId);
 		}
+
+		ExpirePollRequest::ExpirePollRequest(const string& pollId)
+		{
+			action = string("reconfigure");
+			params.target = string("poll");
+			data.pollId = pollId;
+			data.config.endsAt = -1;
+		}
+
+		SetPollDisabledStatusRequest::SetPollDisabledStatusRequest(const string& pollId, bool status)
+		{
+			action = string("reconfigure");
+			params.target = string("poll");
+			data.pollId = pollId;
+			data.config.disabled = status;
+		}
 	}
 }

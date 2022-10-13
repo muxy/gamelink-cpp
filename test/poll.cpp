@@ -404,7 +404,6 @@ TEST_CASE("SDK Run Poll", "[sdk][poll]")
 		}
 	})";
 
-
 	const char * finishMessage = R"({
 		"meta": {
 			"action": "update",
@@ -437,4 +436,37 @@ TEST_CASE("SDK Run Poll", "[sdk][poll]")
 
 	REQUIRE(updateCalls == 4);
 	REQUIRE(finishCalls == 1);
+}
+
+TEST_CASE("Poll Reconfigure serialization", "[poll][update]")
+{
+	gs::ExpirePollRequest expireRequest("foobar");
+	SerializeEqual(expireRequest, R"({
+		"action": "reconfigure",
+		"params": {
+			"request_id": 65535,
+			"target": "poll"
+		},
+		"data": {
+			"poll_id": "foobar",
+			"config": {
+				"endsAt": -1
+			}
+		}
+	})");
+
+	gs::SetPollDisabledStatusRequest disableRequest("foobar", true);
+	SerializeEqual(disableRequest, R"({
+		"action": "reconfigure",
+		"params": {
+			"request_id": 65535,
+			"target": "poll"
+		},
+		"data": {
+			"poll_id": "foobar",
+			"config": {
+				"disabled": true
+			}
+		}
+	})");
 }
