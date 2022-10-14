@@ -26,11 +26,32 @@ file(GLOB SCHEMA_SOURCES "schema/*.cpp")
 file(GLOB SDK_TEST_SOURCES "test/*.cpp")
 file(GLOB SDK_SOURCES "src/*.cpp")
 file(GLOB C_SOURCES "c_library/*.cpp")
+file(GLOB WEBSOCKET_SOURCES "websocket_network/*.cpp")
+
+## Check if we have CURL and LIB_WEBSOCKETS.
+find_package(CURL)
+
+find_package(PkgConfig)
+pkg_check_modules(LIB_WEBSOCKETS libwebsockets>=4.0.0)
+
+find_package(OpenSSL)
 
 ## Unit tests
-add_executable(tests ${SCHEMA_SOURCES} ${SDK_TEST_SOURCES} ${SDK_SOURCES} ${C_SOURCES})
+add_executable(tests ${SCHEMA_SOURCES} ${SDK_TEST_SOURCES} ${SDK_SOURCES} ${C_SOURCES} ${WEBSOCKET_SOURCES})
 target_include_directories(tests PRIVATE "test" "c_library")
 target_compile_definitions(tests PRIVATE "MUXY_GAMELINK_CUSTOM_STRING_TYPE=ConstrainedString" "MUXY_GAMELINK_CUSTOM_LOCK_TYPE=ConstrainedLock" "MUXY_GAMELINK_CUSTOM_STRING_INCLUDE=\"constrained_types.h\"")
+
+IF(CURL_FOUND)
+	IF(LIB_WEBSOCKETS_FOUND)
+		IF (OpenSSL_FOUND)
+			target_compile_definitions(tests PRIVATE "MUXY_GAMELINK_ENABLE_INTEGRATION_TESTS=1")
+			target_include_directories(tests PRIVATE ${OPENSSL_INCLUDE_DIR} ${LIB_WEBSOCKETS_INCLUDE_DIRS} "./websocket_network")
+			target_link_directories(tests PRIVATE ${LIB_WEBSOCKETS_LIBRARY_DIRS})
+			target_link_libraries(tests CURL::libcurl ${LIB_WEBSOCKETS_LIBRARIES})
+		ENDIF()
+	ENDIF()
+ENDIF()
+
 
 # Amalgamation
 set(AMALGAM_IN "${CMAKE_CURRENT_SOURCE_DIR}/amalgamate.in")
@@ -42,8 +63,8 @@ string(REPLACE ";" " " AMALGAM_PUBLIC_HEADERS "${PUBLIC_HEADERS}")
 string(REPLACE ";" " " AMALGAM_PUBLIC_SOURCES "${AMALGAM_SOURCES}")
 
 configure_file(${AMALGAM_IN} ${AMALGAM_OUT} @ONLY)
-add_custom_target(amalgam ALL 
-    COMMAND 
+add_custom_target(amalgam ALL
+    COMMAND
     ${AMALGAM_OUT}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "Generating Amalgam file")
@@ -52,7 +73,7 @@ add_custom_target(amalgam ALL
 add_executable(amalgam_compile_check "amalgam_check.cpp")
 add_dependencies(amalgam_compile_check amalgam)
 
-# Shared library 
+# Shared library
 add_library(cgamelink SHARED ${SDK_SOURCES} ${SCHEMA_SOURCES} ${C_SOURCES})
 target_compile_definitions(cgamelink PRIVATE "MUXY_CLIB_EXPORT")
 
@@ -61,9 +82,6 @@ target_link_libraries(cgamelink_compile_check cgamelink)
 add_dependencies(cgamelink_compile_check cgamelink)
 
 ## Examples
-find_package(PkgConfig)
-pkg_check_modules(LIB_WEBSOCKETS libwebsockets>=4.0.0)
-
 if(LIB_WEBSOCKETS_INCLUDE_DIRS)
     add_subdirectory("examples/01-authenticate")
     add_subdirectory("examples/02-voting")

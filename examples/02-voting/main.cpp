@@ -17,7 +17,7 @@ int main()
 	gamelink::SDK sdk;
 
 	// Set up network connection
-	std::string url = gamelink::WebsocketConnectionURL(cfg.clientID, gamelink::CONNECTION_STAGE_SANDBOX);
+	std::string url = gamelink::WebsocketConnectionURL(cfg.clientID, gamelink::ConnectionStage::Sandbox);
 	WebsocketConnection websocket(url, 80);
 	websocket.onMessage([&](const char* bytes, uint32_t len) { sdk.ReceiveMessage(bytes, len); });
 
@@ -27,7 +27,7 @@ int main()
 	bool done = false;
 
 	// Set up SDK event handlers
-	sdk.OnPollUpdate([&](const gamelink::schema::PollUpdateResponse& pollResponse) {
+	auto updateCallback = [&](const gamelink::schema::PollUpdateResponse& pollResponse) {
 		std::cout << "Got poll info, id=" << pollResponse.data.poll.pollId << " prompt=" << pollResponse.data.poll.prompt << "\n";
 		for (uint32_t i = 0; i < pollResponse.data.poll.options.size(); i++)
 		{
@@ -35,18 +35,16 @@ int main()
 		}
 
 		done = true;
-	});
+	};
 
 	std::string refresh = examples::LoadRefresh();
 
 	sdk.AuthenticateWithRefreshToken(cfg.clientID, refresh);
-	sdk.CreatePoll("vote-and-win", "Who's your favorite?", {"Me", "Him", "Her"});
-	sdk.SubscribeToPoll("vote-and-win");
-
-	sdk.ForeachPayload([&](const gamelink::Payload* send) { websocket.send(send->data.c_str(), send->data.size()); });
+	sdk.RunPoll("vote-and-win", "Who's your favorite?", gamelink::PollConfiguration(), {"Me", "Not Me", "Someone else"}, updateCallback, updateCallback);
 
 	while (!done)
 	{
+		sdk.ForeachPayload([&](const gamelink::Payload* send) { websocket.send(send->Data(), send->Length()); });
 		websocket.run();
 	}
 

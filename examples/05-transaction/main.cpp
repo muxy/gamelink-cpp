@@ -10,9 +10,9 @@ int main()
 	gamelink::SDK sdk;
 
 	// Setup the connection
-	std::string url = gamelink::WebsocketConnectionURL(config.clientID, gamelink::CONNECTION_STAGE_SANDBOX);
+	std::string url = gamelink::WebsocketConnectionURL(config.clientID, gamelink::ConnectionStage::Sandbox);
 	WebsocketConnection connection(url, 80);
-	
+
 	connection.onMessage([&](const char* bytes, uint32_t len) { sdk.ReceiveMessage(bytes, len); });
 
 	// Setup the debug logger.
@@ -26,7 +26,7 @@ int main()
 	}
 
 	bool done = false;
-	sdk.OnAuthenticate([&](const gamelink::schema::AuthenticateResponse& response) {
+	sdk.OnAuthenticate().Add([&](const gamelink::schema::AuthenticateResponse& response) {
 		const gamelink::schema::Error* err = gamelink::FirstError(response);
 		if (err)
 		{
@@ -39,7 +39,7 @@ int main()
 		examples::SaveRefresh(response.data.refresh);
 	});
 
-	sdk.OnTransaction([&](const gamelink::schema::TransactionResponse& response) {
+	sdk.OnTransaction().Add([&](const gamelink::schema::TransactionResponse& response) {
 		std::cout << "Got transaction: " << response.data.sku << " from " << response.data.userName << "\n";
 		sdk.ValidateTransaction(response.data.muxyId, response.data.userId);
 	});
@@ -49,7 +49,7 @@ int main()
 
 	while (!done)
 	{
-		sdk.ForeachPayload([&](const gamelink::Payload* send) { connection.send(send->data.c_str(), send->data.size()); });
+		sdk.ForeachPayload([&](const gamelink::Payload* send) { connection.send(send->Data(), send->Length()); });
 		connection.run();
 	}
 }

@@ -54,7 +54,7 @@ namespace gamelink
 	enum class ConnectionStage
 	{
 		Production = 0,
-		Sandbox,
+		Sandbox
 	};
 
 	class SDK;
