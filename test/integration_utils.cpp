@@ -1,5 +1,5 @@
 #include "integration_utils.h"
-
+#ifdef MUXY_GAMELINK_ENABLE_INTEGRATION_TESTS
 #include <curl/curl.h>
 #include "catch2/catch.hpp"
 #include <iostream>
@@ -8,7 +8,7 @@
 #include <thread>
 #include <ctime>
 
-const char * IntegrationBaseUrl = "https://sandbox.api.muxy.io/v1/e/";
+const char * IntegrationBaseUrl = "https://%s.api.muxy.io/v1/e/%s";
 
 // Writer functions
 inline size_t writeFunction(char* ptr, size_t size, size_t nmemb, void* userdata)
@@ -23,11 +23,11 @@ IntegrationTestFixture::IntegrationTestFixture()
 	:done(false)
 {
 	LoadEnvironment();
+
 	// Init CURL and websocket connection, setup thread runner for websockets
 	curl_global_init(CURL_GLOBAL_ALL);
 
 	Reconnect();
-
 
 	// Get the authorization token by doing either token flow or refresh token.
 	std::stringstream ss;
@@ -129,13 +129,29 @@ void IntegrationTestFixture::LoadEnvironment()
 		client = clientEnv;
 	}
 	REQUIRE(client.size());
+
+	target = "sandbox";
+	const char * targetEnv = std::getenv("MUXY_INTEGRATION_TARGET");
+	if (targetEnv)
+	{
+		target = targetEnv;
+	}
 }
 
 void IntegrationTestFixture::Reconnect()
 {
 	ForceDisconnect();
 
-	gamelink::string url = gamelink::WebsocketConnectionURL(client.c_str(), gamelink::ConnectionStage::Sandbox);
+	char buffer[256];
+	int output = snprintf(buffer, 256, "%s.gamelink.muxy.io/%d.%d.%d/%s",
+		target.c_str(),
+		MUXY_GAMELINK_VERSION_MAJOR, MUXY_GAMELINK_VERSION_MINOR, MUXY_GAMELINK_VERSION_PATCH,
+		client.c_str());
+
+	REQUIRE(output > 0);
+	REQUIRE(output < 256);
+
+	gamelink::string url = gamelink::string(buffer);
 	connection = std::unique_ptr<WebsocketConnection>(new WebsocketConnection(url.c_str(), 80));
 	std::cerr << "!<   connect: " << url.c_str() << "\n";
 
@@ -175,10 +191,15 @@ int IntegrationTestFixture::Request(const char* method, const char* endpoint, co
 		headers = curl_slist_append(headers, authenticationHeader.c_str());
 	}
 
-	std::stringstream ss;
-	ss << IntegrationBaseUrl << endpoint;
+	char buffer[256];
+	int writtenBytes = snprintf(buffer, 256, "https://%s.api.muxy.io/v1/e/%s",
+		target.c_str(),
+		endpoint);
 
-	std::string url = ss.str();
+	REQUIRE(writtenBytes > 0);
+	REQUIRE(writtenBytes < 256);
+
+	std::string url = std::string(buffer);
 
 	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method);
 	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
@@ -221,3 +242,4 @@ int IntegrationTestFixture::Request(const char* method, const char* endpoint, co
 
 	return code;
 }
+#endif

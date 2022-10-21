@@ -1,5 +1,4 @@
 #pragma once
-#define MUXY_GAMELINK_ENABLE_INTEGRATION_TESTS
 #ifdef MUXY_GAMELINK_ENABLE_INTEGRATION_TESTS
 #include <nlohmann/json.hpp>
 #include <atomic>
@@ -28,6 +27,7 @@ private:
 
 	std::string jwt;
 	std::string client;
+	std::string target;
 
 	std::string authenticationHeader;
 	std::unique_ptr<WebsocketConnection> connection;
