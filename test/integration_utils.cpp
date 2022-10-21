@@ -87,7 +87,6 @@ void IntegrationTestFixture::Connect()
 	}
 }
 
-
 void IntegrationTestFixture::FlushSDKMessages()
 {
 	while (sdk.HasPayloads())
