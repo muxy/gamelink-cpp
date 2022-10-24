@@ -1,10 +1,11 @@
+#include "integration_utils.h"
+
 #ifdef MUXY_GAMELINK_ENABLE_INTEGRATION_TESTS
 #include "catch2/catch.hpp"
 #include "util.h"
 
 #include "gamelink.h"
 #include "websocket.h"
-#include "integration_utils.h"
 
 #include <thread>
 #include <atomic>
@@ -82,7 +83,6 @@ TEST_CASE_METHOD(IntegrationTestFixture, "State operations", "[.][integration]")
 
 	sdk.SetState(gamelink::StateTarget::Channel, obj);
 	Sleep();
-
 	REQUIRE(calls == 1);
 
 	sdk.UpdateStateWithDouble(gamelink::StateTarget::Channel, gamelink::Operation::Add,
@@ -94,14 +94,15 @@ TEST_CASE_METHOD(IntegrationTestFixture, "State operations", "[.][integration]")
 
 	Sleep();
 
+	// Show that these request are reflected in the state the extension frontend can see.
+	nlohmann::json resp;
+	Request("GET", "channel_state", nullptr, &resp);
+
 	// This handles the patch states done.
 	REQUIRE(updateData["health"] == 1000.0);
 	REQUIRE(updateData["exp"] == 999);
 	REQUIRE(updateData["in_combat"] == true);
 
-	// Show that these request are reflected in the state the extension frontend can see.
-	nlohmann::json resp;
-	Request("GET", "channel_state", nullptr, &resp);
 
 	REQUIRE(resp["health"] == 1000.0);
 	REQUIRE(resp["exp"] == 999);
@@ -215,7 +216,7 @@ TEST_CASE_METHOD(IntegrationTestFixture, "Poll lifetime management, with multipl
 	REQUIRE(responses[1].data.count == 0);
 }
 
-TEST_CASE_METHOD(IntegrationTestFixture, "Disconnect into a reconnection works", "[.][integration][t]")
+TEST_CASE_METHOD(IntegrationTestFixture, "Disconnect into a reconnection works", "[.][integration]")
 {
 	ForceDisconnect();
 	Sleep();
@@ -233,6 +234,46 @@ TEST_CASE_METHOD(IntegrationTestFixture, "Disconnect into a reconnection works",
 	Reconnect();
 
 	Sleep();
+}
+
+TEST_CASE_METHOD(IntegrationTestFixture, "GetDrops gets a response", "[.][integration]")
+{
+	int calls = 0;
+	sdk.GetDrops("*", [&](const gamelink::schema::GetDropsResponse& drops)
+	{
+		calls++;
+	});
+
+	Sleep();
+	REQUIRE(calls == 1);
+}
+
+TEST_CASE_METHOD(IntegrationTestFixture, "Datastream operations", "[.][integration][t]")
+{
+	int events = 0;
+	sdk.OnDatastreamUpdate().Add([&](const gamelink::schema::DatastreamUpdate& update)
+	{
+		for (size_t i = 0; i < update.data.events.size(); ++i)
+		{
+			const gamelink::schema::DatastreamEvent& e = update.data.events[i];
+			REQUIRE(e.event["click"]["x"] == 100);
+			REQUIRE(e.event["click"]["y"] == 120 + events);
+			events++;
+		}
+	});
+	sdk.SubscribeToDatastream();
+
+	for (int i = 0; i < 6; i++)
+	{
+		nlohmann::json datastreamValue;
+		datastreamValue["click"]["x"] = 100;
+		datastreamValue["click"]["y"] = 120 + i;
+
+		Request("POST", "datastream", &datastreamValue, nullptr);
+	}
+
+	Sleep();
+	REQUIRE(events == 6);
 }
 #endif
 
