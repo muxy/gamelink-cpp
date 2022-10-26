@@ -6,6 +6,6 @@ ADD . /gamelink-cpp
 WORKDIR gamelink-cpp
 
 RUN rm -rf build && mkdir -p build && cd build && cmake .. -GNinja && cd ..
-RUN cmake --build build --target tests
+RUN cmake --build build --target tests -- -j8
 
 ENTRYPOINT ["./build/tests"]

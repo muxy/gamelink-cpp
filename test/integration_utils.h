@@ -24,6 +24,7 @@ public:
 	int64_t UnixNow();
 
 	void ForceDisconnect();
+	void Connect();
 	void Reconnect();
 private:
 	void LoadEnvironment();
