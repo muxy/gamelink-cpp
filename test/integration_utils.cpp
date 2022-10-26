@@ -23,6 +23,22 @@ IntegrationTestFixture::IntegrationTestFixture()
 	:done(false)
 {
 	LoadEnvironment();
+}
+
+IntegrationTestFixture::~IntegrationTestFixture()
+{
+	done.store(true);
+	if (runner)
+	{
+		runner->join();
+		curl_global_cleanup();
+	}
+}
+
+void IntegrationTestFixture::Connect()
+{
+	REQUIRE(jwt.size());
+	REQUIRE(client.size());
 
 	// Init CURL and websocket connection, setup thread runner for websockets
 	curl_global_init(CURL_GLOBAL_ALL);
@@ -71,12 +87,6 @@ IntegrationTestFixture::IntegrationTestFixture()
 	}
 }
 
-IntegrationTestFixture::~IntegrationTestFixture()
-{
-	done.store(true);
-	runner->join();
-	curl_global_cleanup();
-}
 
 void IntegrationTestFixture::FlushSDKMessages()
 {
@@ -121,14 +131,12 @@ void IntegrationTestFixture::LoadEnvironment()
 	{
 		jwt = jwtenv;
 	}
-	REQUIRE(jwt.size());
 
 	const char * clientEnv = std::getenv("MUXY_INTEGRATION_ID");
 	if (clientEnv)
 	{
 		client = clientEnv;
 	}
-	REQUIRE(client.size());
 
 	target = "sandbox";
 	const char * targetEnv = std::getenv("MUXY_INTEGRATION_TARGET");

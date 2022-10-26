@@ -15,6 +15,7 @@
 // The [.] means we don't run this by default.
 TEST_CASE_METHOD(IntegrationTestFixture, "Run a poll", "[.][integration]")
 {
+	Connect();
 	gamelink::PollConfiguration cfg;
 
 	std::atomic<bool> gotUpdate;
@@ -64,6 +65,8 @@ TEST_CASE_METHOD(IntegrationTestFixture, "Run a poll", "[.][integration]")
 
 TEST_CASE_METHOD(IntegrationTestFixture, "State operations", "[.][integration]")
 {
+	Connect();
+
 	nlohmann::json obj;
 	obj["hello"] = "world";
 
@@ -115,6 +118,8 @@ TEST_CASE_METHOD(IntegrationTestFixture, "State operations", "[.][integration]")
 
 TEST_CASE_METHOD(IntegrationTestFixture, "Config operations", "[.][integration]")
 {
+	Connect();
+
 	nlohmann::json obj;
 	obj["hello"] = "world";
 
@@ -147,6 +152,8 @@ TEST_CASE_METHOD(IntegrationTestFixture, "Config operations", "[.][integration]"
 
 TEST_CASE_METHOD(IntegrationTestFixture, "Poll lifetime management", "[.][integration]")
 {
+	Connect();
+
 	gamelink::PollConfiguration cfg;
 	cfg.endsAt = UnixNow() + 5;
 	cfg.startsAt = UnixNow() + 3;
@@ -176,6 +183,8 @@ TEST_CASE_METHOD(IntegrationTestFixture, "Poll lifetime management", "[.][integr
 
 TEST_CASE_METHOD(IntegrationTestFixture, "Poll lifetime management, with multiple stop calls", "[.][integration]")
 {
+	Connect();
+
 	gamelink::PollConfiguration cfg;
 	cfg.endsAt = UnixNow() + 100;
 	cfg.startsAt = UnixNow() + 3;
@@ -218,6 +227,8 @@ TEST_CASE_METHOD(IntegrationTestFixture, "Poll lifetime management, with multipl
 
 TEST_CASE_METHOD(IntegrationTestFixture, "Disconnect into a reconnection works", "[.][integration]")
 {
+	Connect();
+
 	ForceDisconnect();
 	Sleep();
 
@@ -238,6 +249,8 @@ TEST_CASE_METHOD(IntegrationTestFixture, "Disconnect into a reconnection works",
 
 TEST_CASE_METHOD(IntegrationTestFixture, "GetDrops gets a response", "[.][integration]")
 {
+	Connect();
+
 	int calls = 0;
 	sdk.GetDrops("*", [&](const gamelink::schema::GetDropsResponse& drops)
 	{
@@ -250,6 +263,8 @@ TEST_CASE_METHOD(IntegrationTestFixture, "GetDrops gets a response", "[.][integr
 
 TEST_CASE_METHOD(IntegrationTestFixture, "Datastream operations", "[.][integration][t]")
 {
+	Connect();
+
 	int events = 0;
 	sdk.OnDatastreamUpdate().Add([&](const gamelink::schema::DatastreamUpdate& update)
 	{

@@ -195,7 +195,7 @@ TEST_CASE("State update deserialize", "[state][deserialization]")
 
 	REQUIRE(resp.meta.action == "update");
 	REQUIRE(resp.meta.request_id == 4);
-	REQUIRE(resp.meta.target == "state");
+	REQUIRE(resp.meta.target == "extension");
 
 	REQUIRE(resp.data.state.name == "hp");
 	REQUIRE(resp.data.state.value == 100);
