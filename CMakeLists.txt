@@ -13,7 +13,7 @@ add_compile_definitions("FMT_HEADER_ONLY=1" "JSON_NOEXCEPTION" "_HAS_EXCEPTIONS=
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS "/EHs-c- /GR-")
 else()
-    set(CMAKE_CXX_FLAGS "-Wall -fno-exceptions")
+    set(CMAKE_CXX_FLAGS "-Wall -fno-exceptions -Wno-unknown-pragmas")
     set(CMAKE_CXX_FLAGS_DEBUG "-g")
 endif()
 
@@ -51,7 +51,6 @@ IF(CURL_FOUND)
 		ENDIF()
 	ENDIF()
 ENDIF()
-
 
 # Amalgamation
 set(AMALGAM_IN "${CMAKE_CURRENT_SOURCE_DIR}/amalgamate.in")

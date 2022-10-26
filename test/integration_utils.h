@@ -2,6 +2,9 @@
 #ifdef MUXY_GAMELINK_ENABLE_INTEGRATION_TESTS
 #include <nlohmann/json.hpp>
 #include <atomic>
+#include <thread>
+#include <string>
+#include <memory>
 
 #include "gamelink.h"
 #include "websocket.h"
