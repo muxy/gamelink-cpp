@@ -97,10 +97,9 @@ namespace gamelink
 		template<typename T>
 		struct StateUpdateBody
 		{
-			string topic_id;
 			T state;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(StateUpdateBody, "topic_id", topic_id, "state", state);
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(StateUpdateBody, "state", state);
 		};
 
 		struct MUXY_GAMELINK_API SubscribeStateRequest : SendEnvelope<SubscribeTopicRequestBody>

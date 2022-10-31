@@ -10,7 +10,10 @@ namespace gamelink
 	{
 		struct MUXY_GAMELINK_API DatastreamEvent
 		{
+			// Event
 			nlohmann::json event;
+
+			// Unix seconds
 			int64_t timestamp;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(DatastreamEvent, "event", event, "timestamp", timestamp);

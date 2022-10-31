@@ -174,10 +174,9 @@ TEST_CASE("State update deserialize", "[state][deserialization]")
         "meta": {
             "action": "update",
             "request_id": 4,
-            "target": "state"
+            "target": "extension"
         },
         "data": {
-            "topic_id": "extension",
             "state": {
                 "name": "hp",
                 "value": 100,
@@ -196,9 +195,8 @@ TEST_CASE("State update deserialize", "[state][deserialization]")
 
 	REQUIRE(resp.meta.action == "update");
 	REQUIRE(resp.meta.request_id == 4);
-	REQUIRE(resp.meta.target == "state");
+	REQUIRE(resp.meta.target == "extension");
 
-	REQUIRE(resp.data.topic_id == "extension");
 	REQUIRE(resp.data.state.name == "hp");
 	REQUIRE(resp.data.state.value == 100);
 	REQUIRE(resp.data.state.getPriv() == 32);

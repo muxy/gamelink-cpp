@@ -121,12 +121,13 @@ MGL_StateTarget MuxyGameLink_Schema_StateUpdateResponse_GetTarget(MGL_Schema_Sta
 {
 	const schema::SubscribeStateUpdateResponse<nlohmann::json>* UpdateResponse =
 		static_cast<const schema::SubscribeStateUpdateResponse<nlohmann::json>*>(Response.Obj);
-	if (UpdateResponse->data.topic_id == "channel")
+
+	if (UpdateResponse->meta.target == "channel")
 	{
 		// Make sure to return the global one declared in the C header.
 		return MGL_STATE_TARGET_CHANNEL;
 	}
-	else if (UpdateResponse->data.topic_id == "extension")
+	else if (UpdateResponse->meta.target == "extension")
 	{
 		return MGL_STATE_TARGET_EXTENSION;
 	}

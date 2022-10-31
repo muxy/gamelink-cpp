@@ -9,9 +9,13 @@ The repo contains a pre-compiled version of the single header library in the roo
 The library is documented using in-line Doxygen-style comments in `include/gamelink.h`. A distributable form of the documentation can be built using Doxygen and Sphinx.
 
 ## Configuration
-Near the top of `gamelink_single.hpp` there are two configuration macros, `MUXY_GAMELINK_CUSTOM_STRING_TYPE` and 
+Near the top of `gamelink_single.hpp` there are two configuration macros, `MUXY_GAMELINK_CUSTOM_STRING_TYPE` and
 `MUXY_GAMELINK_CUSTOM_LOCK_TYPE` that can be defined to modify the string and lock types used by the C++ library.
 The inline documentation describes the required methods and behaviors that the string and lock types must satisfy.
 
 ## Testing
 The test suite can be built through the CMake target `tests`.
+
+If libcurl and libwebsockets are availiable, the tests suite will also build the integration tests. To run the integration tests,
+generate a valid JWT and run the tests binary with the environment variables MUXY_INTEGRATION_JWT and MUXY_INTEGRATION_ID with the
+test filter "[integration]"

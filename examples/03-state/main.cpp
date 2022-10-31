@@ -61,7 +61,7 @@ int main()
 	gamelink::SDK sdk;
 
 	// Set up network connection
-	std::string url = gamelink::WebsocketConnectionURL(cfg.clientID, gamelink::CONNECTION_STAGE_SANDBOX);
+	std::string url = gamelink::WebsocketConnectionURL(cfg.clientID, gamelink::ConnectionStage::Sandbox);
 	WebsocketConnection websocket(url, 80);
 	websocket.onMessage([&](const char* bytes, uint32_t len) { sdk.ReceiveMessage(bytes, len); });
 
@@ -87,40 +87,39 @@ int main()
 	gandalf.spellbook.push_back({"Shatter", 1});
 	gandalf.spellbook.push_back({"Speak With Animals", 1});
 
-	sdk.SetState(gamelink::schema::STATE_TARGET_CHANNEL, gandalf);
+	sdk.SetState(gamelink::StateTarget::Channel, gandalf);
 
 	// Level up int
-	sdk.UpdateStateWithInteger(gamelink::schema::STATE_TARGET_CHANNEL, "replace", "/int", 19);
+	sdk.UpdateStateWithInteger(gamelink::StateTarget::Channel, gamelink::Operation::Replace, "/int", 19);
 
 	// Learn a useful spell
 	Spell fireball { "Fireball", 3 };
-	sdk.UpdateStateWithObject(gamelink::schema::STATE_TARGET_CHANNEL, "add", "/spellbook/3", fireball);
+	sdk.UpdateStateWithObject(gamelink::StateTarget::Channel, gamelink::Operation::Add, "/spellbook/3", fireball);
 
 	// Actually, learn lightning bolt.
 	Spell lightningBolt { "Lightning Bolt", 3 };
-	sdk.UpdateStateWithObject(gamelink::schema::STATE_TARGET_CHANNEL, "replace", "/spellbook/3", lightningBolt);
+	sdk.UpdateStateWithObject(gamelink::StateTarget::Channel, gamelink::Operation::Replace, "/spellbook/3", lightningBolt);
 
 	// Get state now:
-	sdk.GetState(gamelink::schema::STATE_TARGET_CHANNEL, [](const gamelink::schema::GetStateResponse<nlohmann::json>& state) {
+	sdk.GetState(gamelink::StateTarget::Channel, [](const gamelink::schema::GetStateResponse<nlohmann::json>& state) {
 		std::cout << " Got state: " << state.data.state["name"] << " has " << state.data.state["int"] << " int\n";
 	});
 
 	// Subscribe to state
-	sdk.OnStateUpdate([&](const gamelink::schema::SubscribeStateUpdateResponse<nlohmann::json>& state) {
+	sdk.OnStateUpdate().Add([&](const gamelink::schema::SubscribeStateUpdateResponse<nlohmann::json>& state) {
 		std::cout << " Got a state update: " << state.data.state["name"] << " has " << state.data.state["int"] << " int\n";
 		done = true;
 	});
 
-	sdk.SubscribeToStateUpdates(gamelink::schema::STATE_TARGET_CHANNEL);
+	sdk.SubscribeToStateUpdates(gamelink::StateTarget::Channel);
 
 	// Forget a spell
-	sdk.UpdateStateWithNull(gamelink::schema::STATE_TARGET_CHANNEL, "remove", "/spellbook/1");
+	sdk.UpdateStateWithNull(gamelink::StateTarget::Channel, gamelink::Operation::Remove, "/spellbook/1");
 
-	sdk.ForeachPayload([&](const gamelink::Payload* send) { websocket.send(send->data.c_str(), send->data.size()); });
 	while (!done)
 	{
+		sdk.ForeachPayload([&](const gamelink::Payload* send) { websocket.send(send->Data(), send->Length()); });
 		websocket.run();
-		std::this_thread::sleep_for(std::chrono::milliseconds(250));
 	}
 
 	return 0;
