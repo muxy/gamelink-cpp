@@ -104,6 +104,111 @@ int64_t IntegrationTestFixture::UnixNow()
 	return static_cast<int64_t>(std::time(nullptr));
 }
 
+std::string IntegrationTestFixture::Decode64(const std::string& input)
+{
+	if (input.empty())
+	{
+		return "";
+	}
+
+	std::string copy = input;
+	while (copy.size() % 4 != 0)
+	{
+		copy = copy + "=";
+	}
+
+	const std::string Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	std::array<uint32_t, 256> lut;
+	for (size_t i = 0; i < Alphabet.size(); i++)
+	{
+		lut[Alphabet[i]] = i;
+		lut['='] = 0;
+	}
+
+	std::vector<char> output;
+
+	// Cut out 4 characters at a time.
+	for (size_t i = 0; i < copy.size(); i += 4)
+	{
+		uint32_t full =
+			(lut[copy[i + 0]] << 6 * 3) |
+			(lut[copy[i + 1]] << 6 * 2) |
+			(lut[copy[i + 2]] << 6 * 1) |
+			(lut[copy[i + 3]] << 6 * 0);
+
+		// Decode 3 bytes.
+		char a = static_cast<char>((full >> 16) & 0xFF);
+		char b = static_cast<char>((full >> 8) & 0xFF);
+		char c = static_cast<char>((full >> 0) & 0xFF);
+
+		output.push_back(a);
+		output.push_back(b);
+		output.push_back(c);
+	}
+
+	uint32_t extraBytes = 0;
+	if (copy[copy.size() - 1] == '=' && copy[copy.size() - 2] == '=')
+	{
+		extraBytes = 2;
+	}
+	else if (copy[copy.size() - 1] == '=')
+	{
+		extraBytes = 1;
+	}
+
+	for (uint32_t i = 0; i < extraBytes; ++i)
+	{
+		output.pop_back();
+	}
+
+	return std::string(output.begin(), output.end());
+}
+
+std::string IntegrationTestFixture::Base64(const std::string& input)
+{
+	const std::string Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+	std::vector<char> copy(input.begin(), input.end());
+
+	// Add bytes
+	size_t addedBytes = 0;
+	while (copy.size() % 3 != 0)
+	{
+		copy.push_back(0);
+		addedBytes++;
+	}
+
+	std::vector<char> output;
+
+	// Encode 3 bytes at a time, left to right.
+	for (size_t i = 0; i < copy.size(); i += 3)
+	{
+		uint32_t full =
+			static_cast<uint32_t>(copy[i + 0]) << 16 |
+			static_cast<uint32_t>(copy[i + 1]) << 8 |
+			static_cast<uint32_t>(copy[i + 2]) << 0;
+
+		// Cut out 6 bits at a time.
+		uint8_t a = (full >> 6 * 3) & 0x3F;
+		uint8_t b = (full >> 6 * 2) & 0x3F;
+		uint8_t c = (full >> 6 * 1) & 0x3F;
+		uint8_t d = (full >> 6 * 0) & 0x3F;
+
+		output.push_back(Alphabet[a]);
+		output.push_back(Alphabet[b]);
+		output.push_back(Alphabet[c]);
+		output.push_back(Alphabet[d]);
+	}
+
+	// Pad output with =s
+	for (size_t i = 0; i < addedBytes; ++i)
+	{
+		output[output.size() - 1 - i] = '=';
+	}
+
+	return std::string(output.begin(), output.end());
+}
+
 void IntegrationTestFixture::ForceDisconnect()
 {
 	if (runner)
@@ -154,6 +259,13 @@ void IntegrationTestFixture::LoadEnvironment()
 	{
 		targetPrefix = target + ".";
 		targetDomain = "muxy.io";
+	}
+
+	signature = "";
+	const char * signatureEnv = std::getenv("MUXY_SIGNATURE");
+	if (signatureEnv)
+	{
+		signature = signatureEnv;
 	}
 }
 

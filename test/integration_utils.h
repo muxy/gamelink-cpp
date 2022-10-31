@@ -22,15 +22,19 @@ public:
 	void FlushSDKMessages();
 
 	int64_t UnixNow();
+	std::string Base64(const std::string& input);
+	std::string Decode64(const std::string& input);
 
 	void ForceDisconnect();
 	void Connect();
 	void Reconnect();
+
+	std::string jwt;
+	std::string signature;
+	std::string client;
 private:
 	void LoadEnvironment();
 
-	std::string jwt;
-	std::string client;
 	std::string target;
 
 	std::string targetDomain;
