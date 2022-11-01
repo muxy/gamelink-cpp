@@ -8,8 +8,6 @@
 #include <thread>
 #include <ctime>
 
-const char * IntegrationBaseUrl = "https://%s.api.muxy.io/v1/e/%s";
-
 // Writer functions
 inline size_t writeFunction(char* ptr, size_t size, size_t nmemb, void* userdata)
 {
@@ -131,10 +129,23 @@ void IntegrationTestFixture::LoadEnvironment()
 	REQUIRE(client.size());
 
 	target = "sandbox";
+	targetDomain = "sandbox.muxy.io";
 	const char * targetEnv = std::getenv("MUXY_INTEGRATION_TARGET");
-	if (targetEnv)
+	if (targetEnv) {
+		if (std::string(targetEnv) != "production")
+		{
+			target = std::string(targetEnv);
+			targetDomain = target + ".muxy.io";
+		}
+	}
+	REQUIRE(targetDomain.size());
+
+	targetPrefix = "";
+	const char * prefixEnv = std::getenv("MUXY_INTEGRATION_OLD_URLS");
+	if (prefixEnv && std::string(prefixEnv) == "true")
 	{
-		target = targetEnv;
+		targetPrefix = target + ".";
+		targetDomain = "muxy.io";
 	}
 }
 
@@ -143,8 +154,9 @@ void IntegrationTestFixture::Reconnect()
 	ForceDisconnect();
 
 	char buffer[256];
-	int output = snprintf(buffer, 256, "%s.gamelink.muxy.io/%d.%d.%d/%s",
-		target.c_str(),
+	int output = snprintf(buffer, 256, "%sgamelink.%s/%d.%d.%d/%s",
+		targetPrefix.c_str(),
+		targetDomain.c_str(),
 		MUXY_GAMELINK_VERSION_MAJOR, MUXY_GAMELINK_VERSION_MINOR, MUXY_GAMELINK_VERSION_PATCH,
 		client.c_str());
 
@@ -192,8 +204,9 @@ int IntegrationTestFixture::Request(const char* method, const char* endpoint, co
 	}
 
 	char buffer[256];
-	int writtenBytes = snprintf(buffer, 256, "https://%s.api.muxy.io/v1/e/%s",
-		target.c_str(),
+	int writtenBytes = snprintf(buffer, 256, "https://%sapi.%s/v1/e/%s",
+		targetPrefix.c_str(),
+		targetDomain.c_str(),
 		endpoint);
 
 	REQUIRE(writtenBytes > 0);
