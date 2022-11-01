@@ -11,4 +11,15 @@ MUXY_INTEGRATION_ID=<client-id>
 
 Build the docker file with `docker build -f docker/integration-tests/Dockerfile . -t gamelink-tests`
 
-Run the integration tests with `docker run --env-file target.env gamelink-tests "[integration]"`
+Run the integration tests with `docker run --rm --env-file target.env gamelink-tests "[integration]"`
+
+Or using the Muxy CLI to pull extension data:
+
+```
+export ENV=staging
+docker run --rm \
+  -e MUXY_INTEGRATION_TARGET=$ENV \
+  -e MUXY_INTEGRATION_ID=`muxy ext info NBL -e $ENV --json | jq -r '.id'` \
+  -e MUXY_INTEGRATION_JWT=`muxy jwt create -x NBL -e $ENV` \
+  gamelink-tests "[integration]"
+```
