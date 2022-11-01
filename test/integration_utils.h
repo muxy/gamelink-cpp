@@ -37,6 +37,9 @@ private:
 
 	std::string target;
 
+	std::string targetDomain;
+	std::string targetPrefix;
+
 	std::string authenticationHeader;
 	std::unique_ptr<WebsocketConnection> connection;
 	std::unique_ptr<std::thread> runner;

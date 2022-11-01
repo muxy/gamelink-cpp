@@ -5,7 +5,7 @@
 namespace gamelink
 {
 	static const size_t CONNECTION_URL_BUFFER_LENGTH = 256;
-	static const char CONNECTION_URL_SANDBOX[] = "sandbox.gamelink.muxy.io";
+	static const char CONNECTION_URL_SANDBOX[] = "gamelink.sandbox.muxy.io";
 	static const char CONNECTION_URL_PRODUCTION[] = "gamelink.muxy.io";
 
 	string ProjectionWebsocketConnectionURL(
