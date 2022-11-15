@@ -284,6 +284,10 @@ TEST_CASE_METHOD(IntegrationTestFixture, "Transactions Support", "[.][integratio
 	});
 
 	// Forge a transaction receipt. This does not work on production.
+	if (signature.empty())
+	{
+		return;
+	}
 
 	// JWT header
 	std::string header = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
