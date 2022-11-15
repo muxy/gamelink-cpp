@@ -243,11 +243,16 @@ void IntegrationTestFixture::LoadEnvironment()
 	target = "sandbox";
 	targetDomain = "sandbox.muxy.io";
 	const char * targetEnv = std::getenv("MUXY_INTEGRATION_TARGET");
-	if (targetEnv) {
+	if (targetEnv)
+	{
 		if (std::string(targetEnv) != "production")
 		{
 			target = std::string(targetEnv);
 			targetDomain = target + ".muxy.io";
+		} else
+		{
+			target = "production";
+			targetDomain = "muxy.io";
 		}
 	}
 	REQUIRE(targetDomain.size());
