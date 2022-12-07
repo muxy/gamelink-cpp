@@ -1,7 +1,7 @@
 #include "gamelink_c.h"
 #include "gamelink.h"
 
-MGL_Error MuxyGameLink_Schema_GetFirstError(void* Resp)
+MGL_Error MuxyGameLink_GetFirstError(void* Resp)
 {
 	const gamelink::schema::ReceiveEnvelopeCommon* Common = static_cast<gamelink::schema::ReceiveEnvelopeCommon*>(Resp);
 	const gamelink::schema::Error* MGLErr = gamelink::FirstError(*Common);

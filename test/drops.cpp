@@ -2,7 +2,6 @@
 #include "util.h"
 
 #include "gamelink.h"
-#include <iostream>
 
 TEST_CASE("Get drops", "[drops]")
 {
@@ -10,24 +9,24 @@ TEST_CASE("Get drops", "[drops]")
 	sdk.GetDrops("FULFILLED", [](const gamelink::schema::GetDropsResponse&) {});
 
 	validateSinglePayload(sdk, R"({
-		"action": "get", 
+		"action": "get",
 		"data": {
 			"status": "FULFILLED"
 		},
-		"params": { 
-			"request_id": 65535, 
+		"params": {
+			"request_id": 65535,
 			"target": "drops"
 		}
 	})");
 
 	sdk.ValidateDrop("someid");
 	validateSinglePayload(sdk, R"({
-		"action": "validate", 
+		"action": "validate",
 		"data": {
 			"id": "someid"
 		},
-		"params": { 
-			"request_id": 65535, 
+		"params": {
+			"request_id": 65535,
 			"target": "drops"
 		}
 	})");
@@ -41,12 +40,12 @@ TEST_CASE("Get drops callback", "[drops]")
 	sdk.GetDrops("FULFILLED", [&](const gamelink::schema::GetDropsResponse&) { called = true; });
 
 	validateSinglePayload(sdk, R"({
-		"action": "get", 
+		"action": "get",
 		"data": {
 			"status": "FULFILLED"
 		},
-		"params": { 
-			"request_id": 65535, 
+		"params": {
+			"request_id": 65535,
 			"target": "drops"
 		}
 	})");

@@ -31,13 +31,16 @@ namespace gamelink
 			/// Cost in coins of the product
 			int cost;
 
+			// Currency used to purchase the product
+			string currency;
+
 			/// Millisecond unix timestamp of the purchase.
 			int64_t timestamp;
 
 			/// Arbitrary additional data, added by the extension to this purchase receipt.
 			nlohmann::json additional;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_9(Transaction,
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_10(Transaction,
 												"id",
 												id,
 												"muxy_id",
@@ -52,6 +55,8 @@ namespace gamelink
 												userName,
 												"cost",
 												cost,
+												"currency",
+												currency,
 												"timestamp",
 												timestamp,
 												"additional",

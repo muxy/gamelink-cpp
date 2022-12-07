@@ -61,7 +61,7 @@ int main()
 	gamelink::SDK sdk;
 
 	// Set up network connection
-	std::string url = gamelink::WebsocketConnectionURL(config.clientID, gamelink::CONNECTION_STAGE_SANDBOX);
+	std::string url = gamelink::WebsocketConnectionURL(config.clientID, gamelink::ConnectionStage::Sandbox);
 	WebsocketConnection websocket(url, 80);
 	websocket.onMessage([&](const char* bytes, uint32_t len) { sdk.ReceiveMessage(bytes, len); });
 
@@ -90,11 +90,10 @@ int main()
 
 	sdk.SendBroadcast("cool-cats", gandalf);
 
-	sdk.ForeachPayload([&](const gamelink::Payload* send) { websocket.send(send->data.c_str(), send->data.size()); });
 	while (!done)
 	{
+		sdk.ForeachPayload([&](const gamelink::Payload* send) { websocket.send(send->Data(), send->Length()); });
 		websocket.run();
-		std::this_thread::sleep_for(std::chrono::milliseconds(250));
 	}
 
 	return 0;

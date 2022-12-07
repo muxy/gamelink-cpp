@@ -1,0 +1,14 @@
+Running integration tests
+===============================
+
+Create a target.env file with the following environment variables:
+
+```
+MUXY_INTEGRATION_TARGET=<sandbox|testing|staging>
+MUXY_INTEGRATION_JWT=<jwt>
+MUXY_INTEGRATION_ID=<client-id>
+```
+
+Build the docker file with `docker build -f docker/integration-tests/Dockerfile . -t gamelink-tests`
+
+Run the integration tests with `docker run --env-file target.env gamelink-tests "[integration]"`

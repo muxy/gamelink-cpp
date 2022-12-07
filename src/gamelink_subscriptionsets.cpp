@@ -142,7 +142,6 @@ namespace gamelink
 			_lock.unlock();
 		}
 
-
 		bool SubscriptionSets::canRegisterConfigurationChanges(ConfigTarget target)
 		{
 			if (!IsValidConfigTarget(target))

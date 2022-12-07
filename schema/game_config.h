@@ -12,7 +12,7 @@ namespace gamelink
         struct MUXY_GAMELINK_API SetConfigRequestBody
         {
             nlohmann::json config;
-            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SetConfigRequestBody, "config", config); 
+            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(SetConfigRequestBody, "config", config);
         };
 
         struct MUXY_GAMELINK_API GetConfigRequestBody
@@ -30,13 +30,13 @@ namespace gamelink
 
             MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ConfigResponseBody, "config", config, "config_id", configId);
         };
-        
+
         struct MUXY_GAMELINK_API ConfigUpdateBody
         {
             nlohmann::json config;
             string topicId;
 
-            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ConfigUpdateBody, "config", config, "topic_id", topicId);
+            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ConfigUpdateBody, "config", config, "config_id", topicId);
         };
 
         struct MUXY_GAMELINK_API CombinedState
@@ -52,7 +52,7 @@ namespace gamelink
         {
             CombinedState config;
             string configId;
-            
+
             MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(CombinedStateResponseBody, "config", config, "config_id", configId);
         };
 
@@ -67,7 +67,7 @@ namespace gamelink
             string configId;
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(UnsubscribeConfigRequestBody, "config_id", configId);
         };
-        
+
 		struct MUXY_GAMELINK_API PatchConfigRequestBody
 		{
 			std::vector<PatchOperation> config;
@@ -83,7 +83,7 @@ namespace gamelink
         struct MUXY_GAMELINK_API GetConfigRequest : SendEnvelope<GetConfigRequestBody>
         {
             /// Creates a GetConfig request.
-            /// @param[in] target one of the CONFIG_TARGET constants 
+            /// @param[in] target one of the CONFIG_TARGET constants
             explicit GetConfigRequest(ConfigTarget target);
         };
 

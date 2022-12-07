@@ -183,7 +183,7 @@ extern "C"
 	/*
 		SDK Error manipulation functions
 	*/
-	MUXY_CLIB_API MGL_Error MuxyGameLink_Schema_GetFirstError(void* Resp);
+	MUXY_CLIB_API MGL_Error MuxyGameLink_GetFirstError(void* Resp);
 	MUXY_CLIB_API bool MuxyGameLink_Error_IsValid(MGL_Error Error);
 	MUXY_CLIB_API uint32_t MuxyGameLink_Error_GetCode(MGL_Error Error);
 	MUXY_CLIB_API const char* MuxyGameLink_Error_GetTitle(MGL_Error Error);

@@ -54,7 +54,7 @@ namespace gamelink
 	enum class ConnectionStage
 	{
 		Production = 0,
-		Sandbox,
+		Sandbox
 	};
 
 	class SDK;
@@ -150,23 +150,6 @@ namespace gamelink
 			void* _user;
 
 			std::function<void(const T&)> _callback;
-		};
-
-		// TimedPoll is used internally to hold data from CreateTimedPoll
-		struct TimedPoll
-		{
-			string pollId;
-			float duration;
-			detail::Callback<const schema::GetPollResponse&> onFinishCallback;
-			bool finished;
-
-			TimedPoll(string pollId, float duration)
-				: pollId(pollId)
-				, duration(duration)
-				, onFinishCallback(0, ANY_REQUEST_ID, detail::CALLBACK_PERSISTENT, string(""))
-				, finished(false)
-			{
-			}
 		};
 
 		enum class SubscriptionState
@@ -970,39 +953,92 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId CreatePollWithConfiguration(const string& pollId, const string& prompt, const PollConfiguration& config, const string* optionsBegin, const string* optionsEnd);
 
-		/// Queues a request to create a timed poll.
+		/// Creates a poll with the given prompt, configuration and options.
+		/// Takes an update callback, which is called when a poll update event happens.
+		///   Poll updates may not have any actual numerical changee.
+		/// The finish callback is called after the poll is moved into the 'expired' state,
+		///   as defined by the endsAt field in config. With no endsAt field, the poll
+		///   will continue forever, and onFinish will never be called.
+		///
+		/// @note This overwrites any existing poll with the same pollId. If that poll was
+		///   with RunPoll, that poll's onFinish callback will not be invoked.
+		///
+		/// @note The onUpdate and onFinish callbacks do not receive updates or finishes
+		///   for other polls.
+		///
+		/// @note To cancel a poll that is being run by this function, use StopRunningPoll,
+		///   instead of the DeletePoll operation.
+		///
+		/// @note Roughly equivilent to Delete -> Unsubscribe -> CreatePollWithConfiguration -> Subscribe
+		///   and several OnPollUpdate().Adds
 		///
 		/// @param[in] pollId The Poll ID to create
 		/// @param[in] prompt The Prompt to store in the poll.
+		/// @param[in] config The PollConfiguration instance to use to configure the poll with.
 		/// @param[in] options An array of options to store in the poll.
-		/// @param[in] duration How long the poll will last for (in your own provided unit of time).
-		/// @param[in] onFinishCallback Callback to be called when poll finishes.
-		/// @return RequestId of the generated request
-		RequestId CreateTimedPoll(const string& pollId,
-									   const string& prompt,
-									   const std::vector<string>& options,
-									   float duration,
-									   std::function<void(const schema::GetPollResponse&)> onFinishCallback);
+		/// @param[in] onUpdateCallback A callback that will be called when the poll receives an update.
+		/// @param[in] onFinishCallback A callback that will be called when the poll is finished, according to endsAt in config.
+		/// @return RequestId of the generated CreatePollWithConfiguration request.
+		RequestId RunPoll(
+			const string& pollId,
+			const string& prompt,
+			const PollConfiguration& config,
+			const std::vector<string>& options,
+			std::function<void(const schema::PollUpdateResponse&)> onUpdateCallback,
+			std::function<void(const schema::PollUpdateResponse&)> onFinishCallback
+		);
 
-		/// Queues a request to create a timed poll.
+		/// Creates a poll with the given prompt, configuration and options.
+		/// Takes an update callback, which is called when a poll update event happens.
+		///   Poll updates may not have any actual numerical changee.
+		/// The finish callback is called after the poll is moved into the 'expired' state,
+		///   as defined by the endsAt field in config. With no endsAt field, the poll
+		///   will continue forever, and onFinish will never be called.
+		///
+		/// @note This overwrites any existing poll with the same pollId. If that poll was
+		///   with RunPoll, that poll's onFinish callback will not be invoked.
+		///
+		/// @note The onUpdate and onFinish callbacks do not receive updates or finishes
+		///   for other polls.
+		///
+		/// @note Roughly equivilent to Delete -> Unsubscribe -> CreatePollWithConfiguration -> Subscribe
+		///   and several OnPollUpdate().Adds
 		///
 		/// @param[in] pollId The Poll ID to create
 		/// @param[in] prompt The Prompt to store in the poll.
-		/// @param[in] options An array of options to store in the poll.
-		/// @param[in] duration How long the poll will last for (in your own provided unit of time).
-		/// @param[in] onFinishCallback Callback to be called when poll finishes.
-		/// @param[in] user User data to pass into the provided callback
-		/// @return RequestId of the generated request
-		RequestId CreateTimedPoll(const string& pollId,
-									   const string& prompt,
-									   const std::vector<string>& options,
-									   float duration,
-									   void (*onFinishCallback)(void*, const schema::GetPollResponse&),
-									   void* user);
+		/// @param[in] config The PollConfiguration instance to use to configure the poll with.
+		/// @param[in] optionsBegin Pointer to the first element in an array of options to store in the poll.
+		/// @param[in] optionsEnd Pointer one past the final entry in an array of options to store in the poll.
+		/// @param[in] onUpdateCallback A callback that will be called when the poll receives an update.
+		/// @param[in] onFinishCallback A callback that will be called when the poll is finished, according to endsAt in config.
+		/// @param[in] user User data that is passed into the callbacks.
+		/// @return RequestId of the generated CreatePollWithConfiguration request.
+		RequestId RunPoll(
+			const string& pollId,
+			const string& prompt,
+			const PollConfiguration& config,
+			const string* optionsBegin,
+			const string* optionsEnd,
+			void (*onUpdateCallback)(void*, const schema::PollUpdateResponse&),
+			void (*onFinishCallback)(void*, const schema::PollUpdateResponse&),
+			void* user
+		);
 
-		/// Ticks all timed polls and subtracts dt from the polls duration, callbacks are triggered when duration is <= 0
-		/// @param[in] dt Time to subtract from duration (in your own provided unit of time)
-		void TickTimedPolls(float dt);
+		/// Stops a poll by setting the endsAt time to the current timestamp.
+		/// This works for all polls. even ones not started by RunPoll or
+		/// CreatePollWithConfiguration.
+		/// @note This does invoke onFinish callbacks of the poll, if created by RunPoll.
+		///
+		/// @param[in] pollId The Poll ID to stop
+		RequestId StopPoll(const string& pollId);
+
+		/// Sets the disabled status of the given poll.
+		/// This works for all polls. even ones not started by RunPoll or
+		/// CreatePollWithConfiguration.
+		///
+		/// @param[in] pollId The Poll ID to set the disabled status of
+		/// @param[in] disabled The disable status
+		RequestId SetPollDisabled(const string& pollId, bool disabled);
 
 		/// Subscribes to updates for a given poll.
 		/// Updates come through the OnPollUpdate callback.
@@ -1520,7 +1556,6 @@ namespace gamelink
 		void addToBarrier(uint16_t);
 		void removeFromBarrier(uint16_t);
 
-		std::vector<detail::TimedPoll> _timedPolls;
 		detail::SubscriptionSets _subscriptionSets;
 
 		detail::Callback<string> _onDebugMessage;
