@@ -703,9 +703,34 @@ namespace gamelink
 		/// extension's config view.
 		///
 		/// @param[in] clientId The extension's client ID
+		/// @param[in] gameId The Twitch game ID
+		/// @param[in] pin 		The PIN input from the broadcaster
+		/// @return RequestId of the generated request
+		RequestId AuthenticateWithPIN(const string& clientId, const string& gameId, const string& pin);
+
+		/// Queues an authentication request using a PIN code, as received by the user from an
+		/// extension's config view.
+		///
+		/// @param[in] clientId The extension's client ID
 		/// @param[in] pin 		The PIN input from the broadcaster
 		/// @return RequestId of the generated request
 		RequestId AuthenticateWithPIN(const string& clientId, const string& pin);
+
+		/// Queues an authentication request using a PIN code, as received by the user from an
+		/// extension's config view.
+		/// This overload attaches a one-shot callback to be called when the authentication response
+		/// message is received.
+		///
+		/// @param[in] clientId The extension's client ID
+		/// @param[in] gameId The Twitch game ID
+		/// @param[in] pin 		The PIN input from the broadcaster
+		/// @param[in] callback Callback that is invoked once when this authentication request
+		///                     is responded to.
+		/// @return RequestId of the generated request
+		RequestId AuthenticateWithPIN(const string& clientId,
+									  const string& gameId,
+									  const string& pin,
+									  std::function<void(const schema::AuthenticateResponse&)> callback);
 
 		/// Queues an authentication request using a PIN code, as received by the user from an
 		/// extension's config view.
@@ -717,8 +742,25 @@ namespace gamelink
 		/// @param[in] callback Callback that is invoked once when this authentication request
 		///                     is responded to.
 		/// @return RequestId of the generated request
-		RequestId
-		AuthenticateWithPIN(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback);
+		RequestId AuthenticateWithPIN(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback);
+
+		/// Queues an authentication request using a PIN code, as received by the user from an
+		/// extension's config view.
+		/// This overload attaches a one-shot callback to be called when the authentication response
+		/// message is received.
+		///
+		/// @param[in] clientId The extension's client ID
+		/// @param[in] gameId The Twitch game ID
+		/// @param[in] pin 		The PIN input from the broadcaster
+		/// @param[in] callback Callback that is invoked once when this authentication request
+		///                     is responded to.
+		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
+		/// @return RequestId of the generated request
+		RequestId AuthenticateWithPIN(const string& clientId,
+									  const string& gameId,
+									  const string& pin,
+									  void (*callback)(void*, const schema::AuthenticateResponse&),
+									  void* user);
 
 		/// Queues an authentication request using a PIN code, as received by the user from an
 		/// extension's config view.
@@ -739,9 +781,32 @@ namespace gamelink
 		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
 		///
 		/// @param[in] clientId 	The extension's client ID
+		/// @param[in] gameId The Twitch game ID
+		/// @param[in] refreshToken The stored refresh token from a previous authentication
+		/// @return RequestId of the generated request
+		RequestId AuthenticateWithRefreshToken(const string& clientId, const string& gameId, const string& refreshToken);
+
+		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
+		///
+		/// @param[in] clientId 	The extension's client ID
 		/// @param[in] refreshToken The stored refresh token from a previous authentication
 		/// @return RequestId of the generated request
 		RequestId AuthenticateWithRefreshToken(const string& clientId, const string& refreshToken);
+
+		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
+		/// This overload attaches a one-shot callback to be called when the authentication response
+		/// message is received.
+		///
+		/// @param[in] clientId 	The extension's client ID
+		/// @param[in] gameId The Twitch game ID
+		/// @param[in] refreshToken The stored refresh token from a previous authentication
+		/// @param[in] callback 	Callback that is invoked once when this authentication request
+		///                     	is responded to.
+		/// @return RequestId of the generated request
+		RequestId AuthenticateWithRefreshToken(const string& clientId,
+											   const string& gameId,
+											   const string& refreshToken,
+											   std::function<void(const schema::AuthenticateResponse&)> callback);
 
 		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
 		/// This overload attaches a one-shot callback to be called when the authentication response
@@ -755,6 +820,23 @@ namespace gamelink
 		RequestId AuthenticateWithRefreshToken(const string& clientId,
 											   const string& refreshToken,
 											   std::function<void(const schema::AuthenticateResponse&)> callback);
+
+		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
+		/// This overload attaches a one-shot callback to be called when the authentication response
+		/// message is received.
+		///
+		/// @param[in] clientId 	The extension's client ID
+		/// @param[in] gameId The Twitch game ID
+		/// @param[in] refreshToken The stored refresh token from a previous authentication
+		/// @param[in] callback 	Callback that is invoked once when this authentication request
+		///                     	is responded to.
+		/// @param[in] user     	User pointer that is passed into the callback whenever it is invoked.
+		/// @return RequestId of the generated request
+		RequestId AuthenticateWithRefreshToken(const string& clientId,
+											   const string& gameId,
+											   const string& refreshToken,
+											   void (*callback)(void*, const schema::AuthenticateResponse&),
+											   void* user);
 
 		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
 		/// This overload attaches a one-shot callback to be called when the authentication response
@@ -1518,6 +1600,12 @@ namespace gamelink
 		/// @return The OnMatchmakingQueueInvite event
 		Event<schema::MatchmakingUpdate>& OnMatchmakingQueueInvite();
 #pragma endregion
+
+		/// Sends a request to set your games metadata. You're expected to fill out a gamelink::GameMetadata struct with your games metadata
+		/// and provide it.
+		/// @return RequestId of the generated request
+		RequestId SetGameMetadata(const gamelink::GameMetadata& meta);
+
 	private:
 		void debugLogPayload(const Payload*);
 

@@ -74,24 +74,27 @@ uint32_t MuxyGameLink_Strlen(MGL_String Str)
 
 MGL_RequestId MuxyGameLink_AuthenticateWithPIN(MuxyGameLink GameLink,
 											   const char* ClientId,
+											   const char* GameId,
 											   const char* PIN,
                                                MGL_AuthenticateResponseCallback Callback,
 											   void* UserData)
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	MGL_RequestId res = SDK->AuthenticateWithPIN(ClientId, PIN, C_CALLBACK(Callback, UserData, AuthenticateResponse));
+	MGL_RequestId res = SDK->AuthenticateWithPIN(ClientId, GameId ? GameId : "", PIN, C_CALLBACK(Callback, UserData, AuthenticateResponse));
 
 	return res;
 }
 
 MGL_RequestId MuxyGameLink_AuthenticateWithRefreshToken(MuxyGameLink GameLink,
 														const char* ClientId,
+														const char* GameId,
 														const char* RefreshToken,
                                                         MGL_AuthenticateResponseCallback Callback,
 														void* UserData)
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	MGL_RequestId res = SDK->AuthenticateWithRefreshToken(ClientId, RefreshToken, C_CALLBACK(Callback, UserData, AuthenticateResponse));
+	MGL_RequestId res = SDK->AuthenticateWithRefreshToken(ClientId, GameId ? GameId : "", RefreshToken,
+														  C_CALLBACK(Callback, UserData, AuthenticateResponse));
 	return res;
 }
 
@@ -156,4 +159,14 @@ MGL_RequestId MuxyGameLink_SendBroadcast(MuxyGameLink GameLink, const char* Topi
 		SDK->InvokeOnDebugMessage(gamelink::string("Couldn't parse broadcast"));
 		return gamelink::ANY_REQUEST_ID;
 	}
+}
+
+MGL_RequestId MuxyGameLink_SetGameMetadata(MuxyGameLink GameLink, const MGL_GameMetadata* Meta)
+{
+	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
+	gamelink::GameMetadata CPPMeta;
+	CPPMeta.game_name = Meta->GameName;
+	CPPMeta.game_logo = Meta->GameLogo;
+
+	return SDK->SetGameMetadata(CPPMeta);
 }

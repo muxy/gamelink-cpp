@@ -17,8 +17,11 @@ namespace gamelink
 
 			/// Client ID, as obtained from Twitch.
 			string client_id;
+
+			/// Game ID, as obtained from Twitch.
+			string game_id;
 		};
-		MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithPINRequestBody, "pin", pin, "client_id", client_id);
+		MUXY_GAMELINK_SERIALIZE_3(AuthenticateWithPINRequestBody, "pin", pin, "client_id", client_id, "game_id", game_id);
 
 		struct MUXY_GAMELINK_API AuthenticateWithPINRequest : SendEnvelope<AuthenticateWithPINRequestBody>
 		{
@@ -26,6 +29,12 @@ namespace gamelink
 			/// @param[in] clientId Client ID.
 			/// @param[in] pin PIN obtained from user input.
 			AuthenticateWithPINRequest(const string& clientId, const string& pin);
+
+			/// Creates an authorization request.
+			/// @param[in] clientId Client ID.
+			/// @param[in] gameId Game ID from Twitch.
+			/// @param[in] pin PIN obtained from user input.
+			AuthenticateWithPINRequest(const string& clientId, const string& gameId, const string& pin);
 		};
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37,8 +46,12 @@ namespace gamelink
 			/// Client ID, as obtained from Twitch.
 			// TODO: Needs to be 'clientId' everywhere to match network as much as possible (when that change takes place, remove this when it does). NETWORK == camelCase
 			string client_id;
+
+			/// Game ID, as obtained from Twitch.
+			string game_id;
 		};
-		MUXY_GAMELINK_SERIALIZE_2(AuthenticateWithRefreshTokenRequestBody, "refresh", refresh, "client_id", client_id);
+
+		MUXY_GAMELINK_SERIALIZE_3(AuthenticateWithRefreshTokenRequestBody, "refresh", refresh, "client_id", client_id, "game_id", game_id);
 
 		struct MUXY_GAMELINK_API AuthenticateWithRefreshTokenRequest : SendEnvelope<AuthenticateWithRefreshTokenRequestBody>
 		{
@@ -46,6 +59,12 @@ namespace gamelink
 			/// @param[in] clientId Client Id.
 			/// @param[in] RefreshToken Refresh token obtained from authorization.
 			AuthenticateWithRefreshTokenRequest(const string& clientId, const string& refreshToken);
+
+			/// Creates an authorization request
+			/// @param[in] clientId Client Id.
+			/// @param[in] gameId Game ID from Twitch.
+			/// @param[in] RefreshToken Refresh token obtained from authorization.
+			AuthenticateWithRefreshTokenRequest(const string& clientId, const string& gameId, const string& refreshToken);
 		};
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

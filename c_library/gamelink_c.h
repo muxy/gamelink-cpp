@@ -190,23 +190,41 @@ extern "C"
 	MUXY_CLIB_API const char* MuxyGameLink_Error_GetDetail(MGL_Error Error);
 
 	/*
+		Set your games metadata
+	*/
+	typedef struct
+	{
+		const char* GameName;
+		// Base64 encoded image
+		const char* GameLogo;
+
+	} MGL_GameMetadata;
+
+	MGL_RequestId MuxyGameLink_SetGameMetadata(MuxyGameLink GameLink, const MGL_GameMetadata* Meta);
+
+	/*
 		Authentication functions.
 
 		The lifetime of MGL_Schema_AuthenticateResponse in the callback ends
 		as soon as the callback finishes executing. Copying this parameter
 		is not supported.
 	*/
-	MUXY_CLIB_API MGL_RequestId MuxyGameLink_AuthenticateWithPIN(MuxyGameLink GameLink,
-												   const char* ClientId,
-												   const char* PIN,
-												   MGL_AuthenticateResponseCallback Callback,
-												   void* UserData);
 
+	/* GameId is optional, you can pass NULL or "" to represent no value */
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_AuthenticateWithPIN(MuxyGameLink GameLink,
+																 const char* ClientId,
+																 const char* GameId,
+																 const char* PIN,
+																 MGL_AuthenticateResponseCallback Callback,
+																 void* UserData);
+
+	/* GameId is optional, you can pass NULL or "" to represent no value */
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_AuthenticateWithRefreshToken(MuxyGameLink GameLink,
-															const char* ClientId,
-															const char* RefreshToken,
-															MGL_AuthenticateResponseCallback Callback,
-															void* UserData);
+																		  const char* ClientId,
+																		  const char* GameId,
+																		  const char* RefreshToken,
+																		  MGL_AuthenticateResponseCallback Callback,
+																		  void* UserData);
 
 	/*
 		Authentication checking.
