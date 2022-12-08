@@ -16,17 +16,25 @@ namespace gamelink
 		return ANY_REQUEST_ID;
 	}
 
-	RequestId SDK::AuthenticateWithPIN(const string& clientId, const string& pin)
+	RequestId SDK::AuthenticateWithPIN(const string& clientId, const string& gameId, const string& pin)
 	{
-		schema::AuthenticateWithPINRequest payload(clientId, pin);
+		schema::AuthenticateWithPINRequest payload(clientId, gameId, pin);
 		_storedClientId = clientId;
 
 		return queuePayload(payload);
 	}
 
-	RequestId SDK::AuthenticateWithPIN(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback)
+	RequestId SDK::AuthenticateWithPIN(const string& clientId, const string& pin)
 	{
-		schema::AuthenticateWithPINRequest payload(clientId, pin);
+		return AuthenticateWithPIN(clientId, "", pin);
+	}
+
+	RequestId SDK::AuthenticateWithPIN(const string& clientId,
+									   const string& gameId,
+									   const string& pin,
+									   std::function<void(const schema::AuthenticateResponse&)> callback)
+	{
+		schema::AuthenticateWithPINRequest payload(clientId, gameId, pin);
 		_storedClientId = clientId;
 
 		RequestId id = queuePayload(payload);
@@ -34,12 +42,18 @@ namespace gamelink
 		return id;
 	}
 
-	RequestId SDK::AuthenticateWithPIN(const string& clientId,
-								  const string& pin,
-								  void (*callback)(void*, const schema::AuthenticateResponse&),
-								  void* user)
+	RequestId SDK::AuthenticateWithPIN(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback)
 	{
-		schema::AuthenticateWithPINRequest payload(clientId, pin);
+		return AuthenticateWithPIN(clientId, "", pin, callback);
+	}
+
+	RequestId SDK::AuthenticateWithPIN(const string& clientId,
+									   const string& gameId,
+									   const string& pin,
+									   void (*callback)(void*, const schema::AuthenticateResponse&),
+									   void* user)
+	{
+		schema::AuthenticateWithPINRequest payload(clientId, gameId, pin);
 		_storedClientId = clientId;
 
 		RequestId id = queuePayload(payload);
@@ -47,17 +61,33 @@ namespace gamelink
 		return id;
 	}
 
-	RequestId SDK::AuthenticateWithRefreshToken(const string& clientId, const string& refreshToken)
+	RequestId SDK::AuthenticateWithPIN(const string& clientId,
+									   const string& pin,
+									   void (*callback)(void*, const schema::AuthenticateResponse&),
+									   void* user)
 	{
-		schema::AuthenticateWithRefreshTokenRequest payload(clientId, refreshToken);
+		return AuthenticateWithPIN(clientId, "", pin, callback, user);
+	}
+
+	RequestId SDK::AuthenticateWithRefreshToken(const string& clientId, const string& gameId, const string& refreshToken)
+	{
+		schema::AuthenticateWithRefreshTokenRequest payload(clientId, gameId, refreshToken);
 		_storedClientId = clientId;
 
 		return queuePayload(payload);
 	}
 
-	RequestId SDK::AuthenticateWithRefreshToken(const string& clientId, const string& refreshToken, std::function<void(const schema::AuthenticateResponse&)> callback)
+	RequestId SDK::AuthenticateWithRefreshToken(const string& clientId, const string& refreshToken)
 	{
-		schema::AuthenticateWithRefreshTokenRequest payload(clientId, refreshToken);
+		return AuthenticateWithRefreshToken(clientId, "", refreshToken);
+	}
+
+	RequestId SDK::AuthenticateWithRefreshToken(const string& clientId,
+												const string& gameId,
+												const string& refreshToken,
+												std::function<void(const schema::AuthenticateResponse&)> callback)
+	{
+		schema::AuthenticateWithRefreshTokenRequest payload(clientId, gameId, refreshToken);
 		_storedClientId = clientId;
 
 		RequestId id = queuePayload(payload);
@@ -66,15 +96,31 @@ namespace gamelink
 	}
 
 	RequestId SDK::AuthenticateWithRefreshToken(const string& clientId,
-								  const string& refreshToken,
-								  void (*callback)(void*, const schema::AuthenticateResponse&),
-								  void* user)
+												const string& refreshToken,
+												std::function<void(const schema::AuthenticateResponse&)> callback)
 	{
-		schema::AuthenticateWithRefreshTokenRequest payload(clientId, refreshToken);
+		return AuthenticateWithRefreshToken(clientId, "", refreshToken, callback);
+	}
+
+	RequestId SDK::AuthenticateWithRefreshToken(const string& clientId,
+												const string& gameId,
+												const string& refreshToken,
+												void (*callback)(void*, const schema::AuthenticateResponse&),
+												void* user)
+	{
+		schema::AuthenticateWithRefreshTokenRequest payload(clientId, gameId, refreshToken);
 		_storedClientId = clientId;
 
 		RequestId id = queuePayload(payload);
 		_onAuthenticate.set(callback, user, id, detail::CALLBACK_ONESHOT);
 		return id;
+	}
+
+	RequestId SDK::AuthenticateWithRefreshToken(const string& clientId,
+												const string& refreshToken,
+												void (*callback)(void*, const schema::AuthenticateResponse&),
+												void* user)
+	{
+		return AuthenticateWithRefreshToken(clientId, "", refreshToken, callback, user);
 	}
 }

@@ -634,4 +634,10 @@ namespace gamelink
 		schema::BroadcastRequest<nlohmann::json> payload(topic, nlohmann::json::object());
 		return queuePayload(payload);
 	}
+
+	RequestId SDK::SetGameMetadata(const gamelink::GameMetadata& meta)
+	{
+		schema::SetGameMetadataRequest payload(meta);
+		return queuePayload(payload);
+	}
 }

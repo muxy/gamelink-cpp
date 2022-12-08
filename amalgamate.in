@@ -19,6 +19,7 @@ INPUT_HEADERS=(
     ./schema/game_config.h
     ./schema/drops.h
     ./schema/matchmaking.h
+    ./schema/game_metadata.h
 
     ./include/gamelink.h
 )
