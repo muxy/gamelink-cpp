@@ -197,6 +197,7 @@ extern "C"
 		const char* GameName;
 		// Base64 encoded image
 		const char* GameLogo;
+		const char* Theme;
 
 	} MGL_GameMetadata;
 
