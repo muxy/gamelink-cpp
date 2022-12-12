@@ -163,3 +163,19 @@ TEST_CASE_METHOD(ParityFixture, "Broadcast parity", "[sdk][c]")
 	cpp.SendBroadcast("topic", nlohmann::json::parse(message));
 	MuxyGameLink_SendBroadcast(c, "topic", message);
 }
+
+TEST_CASE_METHOD(ParityFixture, "GameMetaData parity", "[sdk][c]")
+{
+	MGL_GameMetadata c_metadata;
+	c_metadata.GameName = "mygamename";
+	c_metadata.GameLogo = "pretendimbase64";
+	c_metadata.Theme = "dark";
+	MuxyGameLink_SetGameMetadata(c, &c_metadata);
+
+	gamelink::GameMetadata cpp_metadata;
+	cpp_metadata.game_name = "mygamename";
+	cpp_metadata.game_logo = "pretendimbase64";
+	cpp_metadata.theme = "dark";
+	cpp.SetGameMetadata(cpp_metadata);
+
+}
