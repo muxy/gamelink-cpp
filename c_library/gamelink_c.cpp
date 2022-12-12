@@ -167,6 +167,7 @@ MGL_RequestId MuxyGameLink_SetGameMetadata(MuxyGameLink GameLink, const MGL_Game
 	gamelink::GameMetadata CPPMeta;
 	CPPMeta.game_name = Meta->GameName;
 	CPPMeta.game_logo = Meta->GameLogo;
+	CPPMeta.theme = Meta->Theme;
 
 	return SDK->SetGameMetadata(CPPMeta);
 }

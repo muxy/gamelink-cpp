@@ -10,6 +10,7 @@ namespace gamelink
 		string game_name;
 		// Base64 encoded image
 		string game_logo;
+		string theme;
 	};
 
 	namespace schema
@@ -18,8 +19,9 @@ namespace gamelink
 		{
 			string game_name;
 			string game_logo;
+			string theme;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(SetGameMetadataRequestBody, "game_name", game_name, "game_logo", game_logo);
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(SetGameMetadataRequestBody, "game_name", game_name, "game_logo", game_logo, "theme", theme);
 		};
 
 		struct SetGameMetadataRequest : SendEnvelope<SetGameMetadataRequestBody>
@@ -31,6 +33,7 @@ namespace gamelink
 
 				this->data.game_name = meta.game_name;
 				this->data.game_logo = meta.game_logo;
+				this->data.theme = meta.theme;
 			}
 		};
 
