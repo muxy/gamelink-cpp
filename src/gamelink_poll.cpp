@@ -33,6 +33,11 @@ namespace gamelink
 
 	RequestId SDK::CreatePoll(const string& pollId, const string& prompt, const std::vector<string>& options)
 	{
+		if (!gamelink::limits::VerifyPoll(prompt, options))
+		{
+			return gamelink::REJECTED_REQUEST_ID;
+		}
+
 		schema::CreatePollRequest packet(pollId, prompt, options);
 		return queuePayload(packet);
 	}
@@ -41,12 +46,22 @@ namespace gamelink
 	{
 		std::vector<string> opts(start, end);
 
+		if (!gamelink::limits::VerifyPoll(prompt, opts))
+		{
+			return gamelink::REJECTED_REQUEST_ID;
+		}
+
 		schema::CreatePollRequest packet(pollId, prompt, opts);
 		return queuePayload(packet);
 	}
 
 	RequestId SDK::CreatePollWithConfiguration(const string& pollId, const string& prompt, const PollConfiguration& config, const std::vector<string>& options)
 	{
+		if (!gamelink::limits::VerifyPoll(prompt, options))
+		{
+			return gamelink::REJECTED_REQUEST_ID;
+		}
+
 		schema::CreatePollWithConfigurationRequest packet(pollId, prompt, config, options);
 		return queuePayload(packet);
 	}
@@ -54,6 +69,11 @@ namespace gamelink
 	RequestId SDK::CreatePollWithConfiguration(const string& pollId, const string& prompt, const PollConfiguration& config, const string* start, const string* end)
 	{
 		std::vector<string> opts(start, end);
+
+		if (!gamelink::limits::VerifyPoll(prompt, opts))
+		{
+			return gamelink::REJECTED_REQUEST_ID;
+		}
 
 		schema::CreatePollWithConfigurationRequest packet(pollId, prompt, config, opts);
 		return queuePayload(packet);

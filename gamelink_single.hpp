@@ -27750,6 +27750,7 @@ namespace gamelink
 
 
 
+
 #endif
 
 
@@ -28217,7 +28218,9 @@ namespace gamelink
 	typedef uint16_t RequestId;
 
 	/// Constant RequestId that represents the "don't care" request id.
-	static const RequestId ANY_REQUEST_ID = 0xFFFF;
+	static const RequestId ANY_REQUEST_ID = UINT16_MAX;
+	// Constant RequestId that represents a rejected request
+	static const RequestId REJECTED_REQUEST_ID = UINT16_MAX-1;
 
 	/// Payload represents a block of data to be sent through the websocket.
 	class MUXY_GAMELINK_API Payload
@@ -31026,6 +31029,11 @@ namespace gamelink
 
 	RequestId SDK::SetGameMetadata(const gamelink::GameMetadata& meta)
 	{
+		if (!gamelink::limits::VerifyGameMetadata(meta))
+		{
+			return gamelink::REJECTED_REQUEST_ID;
+		}
+
 		schema::SetGameMetadataRequest payload(meta);
 		return queuePayload(payload);
 	}
@@ -31471,6 +31479,11 @@ namespace gamelink
 
 	RequestId SDK::CreatePollWithConfiguration(const string& pollId, const string& prompt, const PollConfiguration& config, const std::vector<string>& options)
 	{
+		if (!gamelink::limits::VerifyPoll(prompt, options))
+		{
+			return gamelink::REJECTED_REQUEST_ID;
+		}
+
 		schema::CreatePollWithConfigurationRequest packet(pollId, prompt, config, options);
 		return queuePayload(packet);
 	}
@@ -31478,6 +31491,11 @@ namespace gamelink
 	RequestId SDK::CreatePollWithConfiguration(const string& pollId, const string& prompt, const PollConfiguration& config, const string* start, const string* end)
 	{
 		std::vector<string> opts(start, end);
+
+		if (!gamelink::limits::VerifyPoll(prompt, opts))
+		{
+			return gamelink::REJECTED_REQUEST_ID;
+		}
 
 		schema::CreatePollWithConfigurationRequest packet(pollId, prompt, config, opts);
 		return queuePayload(packet);

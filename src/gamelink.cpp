@@ -637,6 +637,11 @@ namespace gamelink
 
 	RequestId SDK::SetGameMetadata(const gamelink::GameMetadata& meta)
 	{
+		if (!gamelink::limits::VerifyGameMetadata(meta))
+		{
+			return gamelink::REJECTED_REQUEST_ID;
+		}
+
 		schema::SetGameMetadataRequest payload(meta);
 		return queuePayload(payload);
 	}
