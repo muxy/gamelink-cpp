@@ -25,8 +25,9 @@ extern "C"
 
 	typedef char* MGL_String;
 	typedef uint16_t MGL_RequestId;
-	static const MGL_RequestId ANY_REQUEST_ID = 0xFFFF;
-
+	static const MGL_RequestId ANY_REQUEST_ID = UINT16_MAX;
+	static const MGL_RequestId REJECTED_REQUEST_ID = UINT16_MAX-1;
+	
 	typedef struct
 	{
 		void* SDK;

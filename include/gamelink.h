@@ -34,7 +34,9 @@ namespace gamelink
 	typedef uint16_t RequestId;
 
 	/// Constant RequestId that represents the "don't care" request id.
-	static const RequestId ANY_REQUEST_ID = 0xFFFF;
+	static const RequestId ANY_REQUEST_ID = UINT16_MAX;
+	// Constant RequestId that represents a rejected request
+	static const RequestId REJECTED_REQUEST_ID = UINT16_MAX-1;
 
 	/// Payload represents a block of data to be sent through the websocket.
 	class MUXY_GAMELINK_API Payload

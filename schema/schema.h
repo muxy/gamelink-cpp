@@ -3,6 +3,7 @@
 #define MUXY_GAMELINK_SCHEMA_H
 #include "config.h"
 #include "serialization.h"
+#include "limits.h"
 #include "consts.h"
 
 #include "authentication.h"
