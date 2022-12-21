@@ -33,7 +33,7 @@ namespace gamelink
 
 	RequestId SDK::CreatePoll(const string& pollId, const string& prompt, const std::vector<string>& options)
 	{
-		if (!gamelink::limits::VerifyPoll(prompt, options))
+		if (!VerifyPollLimits(prompt, options))
 		{
 			return gamelink::REJECTED_REQUEST_ID;
 		}
@@ -46,7 +46,7 @@ namespace gamelink
 	{
 		std::vector<string> opts(start, end);
 
-		if (!gamelink::limits::VerifyPoll(prompt, opts))
+		if (!VerifyPollLimits(prompt, opts))
 		{
 			return gamelink::REJECTED_REQUEST_ID;
 		}
@@ -57,7 +57,7 @@ namespace gamelink
 
 	RequestId SDK::CreatePollWithConfiguration(const string& pollId, const string& prompt, const PollConfiguration& config, const std::vector<string>& options)
 	{
-		if (!gamelink::limits::VerifyPoll(prompt, options))
+		if (!VerifyPollLimits(prompt, options))
 		{
 			return gamelink::REJECTED_REQUEST_ID;
 		}
@@ -70,7 +70,7 @@ namespace gamelink
 	{
 		std::vector<string> opts(start, end);
 
-		if (!gamelink::limits::VerifyPoll(prompt, opts))
+		if (!VerifyPollLimits(prompt, opts))
 		{
 			return gamelink::REJECTED_REQUEST_ID;
 		}

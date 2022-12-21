@@ -1613,6 +1613,9 @@ namespace gamelink
 
 		bool HasPayloadsNoLock() const;
 
+		bool VerifyPollLimits(const string& prompt, const std::vector<string>& options);
+		bool VerifyGameMetadataLimits(const gamelink::GameMetadata& meta);
+
 		template<typename T>
 		RequestId queuePayload(T& p)
 		{

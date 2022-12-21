@@ -637,12 +637,65 @@ namespace gamelink
 
 	RequestId SDK::SetGameMetadata(const gamelink::GameMetadata& meta)
 	{
-		if (!gamelink::limits::VerifyGameMetadata(meta))
+		if (!VerifyGameMetadataLimits(meta))
 		{
 			return gamelink::REJECTED_REQUEST_ID;
 		}
 
 		schema::SetGameMetadataRequest payload(meta);
 		return queuePayload(payload);
+	}
+
+	bool SDK::VerifyPollLimits(const string& prompt, const std::vector<string>& options)
+	{
+		const uint32_t BUF_SIZE = 256;
+		char buffer[BUF_SIZE];
+
+		if (options.size() > gamelink::limits::POLL_MAX_OPTIONS)
+		{
+			snprintf(buffer, BUF_SIZE, "Poll options size %zu is larger than the max allowed %u", options.size(), gamelink::limits::POLL_MAX_OPTIONS);
+			InvokeOnDebugMessage(buffer);
+			return false;
+		}
+
+		if (prompt.size() > gamelink::limits::POLL_MAX_PROMPT_SIZE)
+		{
+			snprintf(buffer, BUF_SIZE, "Poll prompt size %zu is larger than the max allowed %u", prompt.size(), gamelink::limits::POLL_MAX_PROMPT_SIZE);
+			InvokeOnDebugMessage(buffer);
+			return false;
+		}
+
+		for (auto opt : options)
+		{
+			if (opt.size() > gamelink::limits::POLL_MAX_OPTION_NAME_SIZE)
+			{
+				snprintf(buffer, BUF_SIZE, "Poll option name size %zu is larger than the max allowed %u", opt.size(), gamelink::limits::POLL_MAX_OPTION_NAME_SIZE);
+				InvokeOnDebugMessage(buffer);
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	bool SDK::VerifyGameMetadataLimits(const gamelink::GameMetadata& meta)
+	{
+		const uint32_t BUF_SIZE = 256;
+		char buffer[BUF_SIZE];
+
+		if (meta.game_name.size() > gamelink::limits::METADATA_MAX_GAME_NAME_SIZE)
+		{
+			snprintf(buffer, BUF_SIZE, "Game Metadata game name size %zu is larger than the max allowed %u", meta.game_name.size(), gamelink::limits::METADATA_MAX_GAME_NAME_SIZE);
+			InvokeOnDebugMessage(buffer);
+			return false;
+		}
+		if (meta.game_logo.size() > gamelink::limits::METADATA_MAX_GAME_LOGO_SIZE)
+		{
+			snprintf(buffer, BUF_SIZE, "Game Metadata game logo size %zu is larger than the max allowed %u", meta.game_logo.size(), gamelink::limits::METADATA_MAX_GAME_LOGO_SIZE);
+			InvokeOnDebugMessage(buffer);
+			return false;
+		}
+
+		return true;
 	}
 }

@@ -26965,6 +26965,16 @@ namespace gamelink
 #define MUXY_GAMELINK_CONSTS_H
 namespace gamelink
 {
+	namespace limits
+	{
+		static const int POLL_MAX_PROMPT_SIZE = 256;
+		static const int POLL_MAX_OPTIONS = 10;
+		static const int POLL_MAX_OPTION_NAME_SIZE = 128;
+
+		static const int METADATA_MAX_GAME_NAME_SIZE = 256;
+		static const int METADATA_MAX_GAME_LOGO_SIZE = 1024 * 1024 * 1;
+	}
+
 	enum class Operation
 	{
 		Add = 0,
@@ -27013,6 +27023,7 @@ namespace gamelink
 	{
 		return static_cast<int>(ct) >= 0 && static_cast<int>(ct) < static_cast<int>(ConfigTarget::ConfigTargetCount);
 	}
+
 
 	static const char* TARGET_STRINGS[] = {"channel", "extension", "combined"};
 }
@@ -27735,7 +27746,6 @@ namespace gamelink
 
 #ifndef MUXY_GAMELINK_SCHEMA_H
 #define MUXY_GAMELINK_SCHEMA_H
-
 
 
 
@@ -29797,6 +29807,9 @@ namespace gamelink
 
 		bool HasPayloadsNoLock() const;
 
+		bool VerifyPollLimits(const string& prompt, const std::vector<string>& options);
+		bool VerifyGameMetadataLimits(const gamelink::GameMetadata& meta);
+
 		template<typename T>
 		RequestId queuePayload(T& p)
 		{
@@ -31029,13 +31042,66 @@ namespace gamelink
 
 	RequestId SDK::SetGameMetadata(const gamelink::GameMetadata& meta)
 	{
-		if (!gamelink::limits::VerifyGameMetadata(meta))
+		if (!VerifyGameMetadataLimits(meta))
 		{
 			return gamelink::REJECTED_REQUEST_ID;
 		}
 
 		schema::SetGameMetadataRequest payload(meta);
 		return queuePayload(payload);
+	}
+
+	bool SDK::VerifyPollLimits(const string& prompt, const std::vector<string>& options)
+	{
+		const uint32_t BUF_SIZE = 256;
+		char buffer[BUF_SIZE];
+
+		if (options.size() > gamelink::limits::POLL_MAX_OPTIONS)
+		{
+			snprintf(buffer, BUF_SIZE, "Poll options size %zu is larger than the max allowed %u", options.size(), gamelink::limits::POLL_MAX_OPTIONS);
+			InvokeOnDebugMessage(buffer);
+			return false;
+		}
+
+		if (prompt.size() > gamelink::limits::POLL_MAX_PROMPT_SIZE)
+		{
+			snprintf(buffer, BUF_SIZE, "Poll prompt size %zu is larger than the max allowed %u", prompt.size(), gamelink::limits::POLL_MAX_PROMPT_SIZE);
+			InvokeOnDebugMessage(buffer);
+			return false;
+		}
+
+		for (auto opt : options)
+		{
+			if (opt.size() > gamelink::limits::POLL_MAX_OPTION_NAME_SIZE)
+			{
+				snprintf(buffer, BUF_SIZE, "Poll option name size %zu is larger than the max allowed %u", opt.size(), gamelink::limits::POLL_MAX_OPTION_NAME_SIZE);
+				InvokeOnDebugMessage(buffer);
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	bool SDK::VerifyGameMetadataLimits(const gamelink::GameMetadata& meta)
+	{
+		const uint32_t BUF_SIZE = 256;
+		char buffer[BUF_SIZE];
+
+		if (meta.game_name.size() > gamelink::limits::METADATA_MAX_GAME_NAME_SIZE)
+		{
+			snprintf(buffer, BUF_SIZE, "Game Metadata game name size %zu is larger than the max allowed %u", meta.game_name.size(), gamelink::limits::METADATA_MAX_GAME_NAME_SIZE);
+			InvokeOnDebugMessage(buffer);
+			return false;
+		}
+		if (meta.game_logo.size() > gamelink::limits::METADATA_MAX_GAME_LOGO_SIZE)
+		{
+			snprintf(buffer, BUF_SIZE, "Game Metadata game logo size %zu is larger than the max allowed %u", meta.game_logo.size(), gamelink::limits::METADATA_MAX_GAME_LOGO_SIZE);
+			InvokeOnDebugMessage(buffer);
+			return false;
+		}
+
+		return true;
 	}
 }
 
@@ -31465,6 +31531,11 @@ namespace gamelink
 
 	RequestId SDK::CreatePoll(const string& pollId, const string& prompt, const std::vector<string>& options)
 	{
+		if (!VerifyPollLimits(prompt, options))
+		{
+			return gamelink::REJECTED_REQUEST_ID;
+		}
+
 		schema::CreatePollRequest packet(pollId, prompt, options);
 		return queuePayload(packet);
 	}
@@ -31473,13 +31544,18 @@ namespace gamelink
 	{
 		std::vector<string> opts(start, end);
 
+		if (!VerifyPollLimits(prompt, opts))
+		{
+			return gamelink::REJECTED_REQUEST_ID;
+		}
+
 		schema::CreatePollRequest packet(pollId, prompt, opts);
 		return queuePayload(packet);
 	}
 
 	RequestId SDK::CreatePollWithConfiguration(const string& pollId, const string& prompt, const PollConfiguration& config, const std::vector<string>& options)
 	{
-		if (!gamelink::limits::VerifyPoll(prompt, options))
+		if (!VerifyPollLimits(prompt, options))
 		{
 			return gamelink::REJECTED_REQUEST_ID;
 		}
@@ -31492,7 +31568,7 @@ namespace gamelink
 	{
 		std::vector<string> opts(start, end);
 
-		if (!gamelink::limits::VerifyPoll(prompt, opts))
+		if (!VerifyPollLimits(prompt, opts))
 		{
 			return gamelink::REJECTED_REQUEST_ID;
 		}
