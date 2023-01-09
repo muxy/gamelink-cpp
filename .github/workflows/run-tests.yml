@@ -1,0 +1,41 @@
+name: RunTests
+
+on:
+  pull_request:
+    branches: [ master ]
+    types: [ opened, synchronize, closed ]
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Debug
+  VCPKG_INSTALLED_DIR: '${{github.workspace}}/vcpkg_installed'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - uses: lukka/get-cmake@latest
+
+    - name: Grab dependencies
+      uses: lukka/run-vcpkg@v10
+      id: runvcpkg
+      with:
+        vcpkgDirectory: '${{ runner.workspace }}/b/vcpkg'
+        vcpkgGitCommitId: '94bfbda514961bf2e29ef803c975ec36379d75e5'
+        vcpkgJsonGlob: '**/${{ github.workspace }}/vcpkg.json'
+
+    - name: Run CMake with Ninja
+      uses: lukka/run-cmake@v10
+      with:
+        cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
+        configurePreset: 'tests'
+        buildPreset: 'tests'
+
+    - name: Test
+      working-directory: ${{github.workspace}}/builds/tests/Debug
+      run: ./tests

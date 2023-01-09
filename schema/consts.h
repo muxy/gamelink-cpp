@@ -1,5 +1,6 @@
 #ifndef MUXY_GAMELINK_CONSTS_H
 #define MUXY_GAMELINK_CONSTS_H
+
 namespace gamelink
 {
 	enum class Operation
@@ -20,7 +21,6 @@ namespace gamelink
 	}
 
 	static const char* OPERATION_STRINGS[] = {"add", "remove", "replace", "copy", "move", "test"};
-
 
 	enum class StateTarget
 	{
