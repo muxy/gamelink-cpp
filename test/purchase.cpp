@@ -54,6 +54,7 @@ TEST_CASE("SDK Twitch Bits Purchase Response", "[sdk][purchase][twitch]")
 			"id": "123-512-abwe",
 			"sku": "test-sku",
 			"muxy_id": "abc",
+			"currency": "coins",
 			"displayName": "Test User",
 			"userId": "12345",
 			"cost": 42,
