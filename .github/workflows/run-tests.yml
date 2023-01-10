@@ -1,4 +1,4 @@
-name: RunTests
+name: Run CI Tests
 
 on:
   pull_request:
@@ -36,6 +36,6 @@ jobs:
         configurePreset: 'tests'
         buildPreset: 'tests'
 
-    - name: Test
+    - name: Run CI Tests
       working-directory: ${{github.workspace}}/builds/tests/Debug
       run: ./tests
