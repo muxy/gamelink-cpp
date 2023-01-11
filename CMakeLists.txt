@@ -17,6 +17,7 @@ else()
     set(CMAKE_CXX_FLAGS_DEBUG "-g")
 endif()
 
+
 include_directories(.)
 include_directories(include)
 include_directories(third_party)
@@ -41,6 +42,11 @@ find_package(libuv)
 add_executable(tests ${SCHEMA_SOURCES} ${SDK_TEST_SOURCES} ${SDK_SOURCES} ${C_SOURCES})
 target_include_directories(tests PRIVATE "test" "c_library")
 target_compile_definitions(tests PRIVATE "MUXY_GAMELINK_CUSTOM_STRING_TYPE=ConstrainedString" "MUXY_GAMELINK_CUSTOM_LOCK_TYPE=ConstrainedLock" "MUXY_GAMELINK_CUSTOM_STRING_INCLUDE=\"constrained_types.h\"")
+
+IF(GENERATE_COVERAGE)
+	target_compile_options(tests PRIVATE "-fprofile-instr-generate" "-fcoverage-mapping")
+	target_link_options(tests PRIVATE "-fprofile-instr-generate")
+endif()
 
 IF(BUILD_INTEGRATION_TESTS)
 	message("Configuring with integration tests")

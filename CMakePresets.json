@@ -19,6 +19,9 @@
         }, 
         "BUILD_INTEGRATION_TESTS": {
           "value": "TRUE"
+        },
+        "GENERATE_COVERAGE": {
+          "value": "TRUE"
         }
       }
     }
