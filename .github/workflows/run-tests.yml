@@ -8,34 +8,55 @@ on:
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Debug
-  VCPKG_INSTALLED_DIR: '${{github.workspace}}/vcpkg_installed'
+  CC: ${{github.workspace}}/llvm/bin/clang
+  CXX: ${{github.workspace}}/llvm/bin/clang++
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v3
       with:
         submodules: true
 
-    - uses: lukka/get-cmake@latest
+    - name: Get LLVM from cache
+      id: cache-llvm
+      uses: actions/cache@v3
+      with:
+        path: |
+          C:/Program Files/LLVM
+          ./llvm
+        key: llvm-cache
 
-    - name: Grab dependencies
+    - name: Install LLVM
+      uses: KyleMayes/install-llvm-action@v1
+      with:
+        version: "15"
+        cached: ${{ steps.cache-llvm.outputs.cache-hit }}
+
+    - name: Run vcpkg
       uses: lukka/run-vcpkg@v10
       id: runvcpkg
       with:
         vcpkgDirectory: '${{ runner.workspace }}/b/vcpkg'
         vcpkgGitCommitId: '94bfbda514961bf2e29ef803c975ec36379d75e5'
-        vcpkgJsonGlob: '**/${{ github.workspace }}/vcpkg.json'
+        vcpkgJsonGlob: '**/vcpkg.json'
 
-    - name: Run CMake with Ninja
+    - name: Install cmake
+      uses: lukka/get-cmake@latest
+
+    - name: Get dependencies and build
       uses: lukka/run-cmake@v10
       with:
         cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
         configurePreset: 'tests'
         buildPreset: 'tests'
 
-    - name: Run CI Tests
+    - name: Run CI Tests with coverage
       working-directory: ${{github.workspace}}/builds/tests/Debug
       run: ./tests
+
+    - name: Generate and print coverage stats
+      run: ${{github.workspace}}/llvm/bin/llvm-profdata merge -sparse ${{github.workspace}}/builds/tests/Debug/default.profraw -o default.profdata && ${{github.workspace}}/llvm/bin/llvm-cov report ${{github.workspace}}/builds/tests/Debug/tests -instr-profile=default.profdata -ignore-filename-regex "(third_party|websocket_network)/.*"
