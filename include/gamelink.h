@@ -1635,6 +1635,7 @@ namespace gamelink
 		gamelink::string _storedRefresh;
 		gamelink::string _storedJWT;
 		gamelink::string _storedClientId;
+		gamelink::string _storedGameId;
 
 		mutable gamelink::lock _lock;
 
