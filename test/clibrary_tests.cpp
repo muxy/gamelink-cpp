@@ -86,10 +86,10 @@ struct NoopCCallback
 TEST_CASE_METHOD(ParityFixture, "Authentication parity", "[sdk][c]")
 {
 	cpp.AuthenticateWithPIN("client-id", "pin123", CPP_NOOP());
-	MuxyGameLink_AuthenticateWithPIN(c, "client-id", "my-game-id", "pin123", C_NOOP(), nullptr);
+	MuxyGameLink_AuthenticateWithPIN(c, "client-id", "pin123", C_NOOP(), nullptr);
 
 	cpp.AuthenticateWithRefreshToken("client-id", "refresh-token", CPP_NOOP());
-	MuxyGameLink_AuthenticateWithRefreshToken(c, "client-id", "my-game-id", "refresh-token", C_NOOP(), nullptr);
+	MuxyGameLink_AuthenticateWithRefreshToken(c, "client-id", "refresh-token", C_NOOP(), nullptr);
 }
 
 TEST_CASE_METHOD(ParityFixture, "State operation parity", "[sdk][c]")

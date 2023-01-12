@@ -71,8 +71,7 @@ uint32_t MuxyGameLink_Strlen(MGL_String Str)
 	return static_cast<uint32_t>(strlen(Str));
 }
 
-
-MGL_RequestId MuxyGameLink_AuthenticateWithPIN(MuxyGameLink GameLink,
+MGL_RequestId MuxyGameLink_AuthenticateWithPINAndGameID(MuxyGameLink GameLink,
 											   const char* ClientId,
 											   const char* GameId,
 											   const char* PIN,
@@ -80,12 +79,21 @@ MGL_RequestId MuxyGameLink_AuthenticateWithPIN(MuxyGameLink GameLink,
 											   void* UserData)
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	MGL_RequestId res = SDK->AuthenticateWithPIN(ClientId, GameId ? GameId : "", PIN, C_CALLBACK(Callback, UserData, AuthenticateResponse));
+	MGL_RequestId res = SDK->AuthenticateWithPINAndGameID(ClientId, GameId ? GameId : "", PIN, C_CALLBACK(Callback, UserData, AuthenticateResponse));
 
 	return res;
 }
 
-MGL_RequestId MuxyGameLink_AuthenticateWithRefreshToken(MuxyGameLink GameLink,
+MGL_RequestId MuxyGameLink_AuthenticateWithPIN(MuxyGameLink GameLink,
+													const char* ClientId,
+													const char* PIN,
+													MGL_AuthenticateResponseCallback Callback,
+													void* UserData)
+{
+	return MuxyGameLink_AuthenticateWithPINAndGameID(GameLink, ClientId, NULL, PIN, Callback, UserData);
+}
+
+MGL_RequestId MuxyGameLink_AuthenticateWithRefreshTokenAndGameID(MuxyGameLink GameLink,
 														const char* ClientId,
 														const char* GameId,
 														const char* RefreshToken,
@@ -93,9 +101,18 @@ MGL_RequestId MuxyGameLink_AuthenticateWithRefreshToken(MuxyGameLink GameLink,
 														void* UserData)
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	MGL_RequestId res = SDK->AuthenticateWithRefreshToken(ClientId, GameId ? GameId : "", RefreshToken,
+	MGL_RequestId res = SDK->AuthenticateWithRefreshTokenAndGameID(ClientId, GameId ? GameId : "", RefreshToken,
 														  C_CALLBACK(Callback, UserData, AuthenticateResponse));
 	return res;
+}
+
+MGL_RequestId MuxyGameLink_AuthenticateWithRefreshToken(MuxyGameLink GameLink,
+													const char* ClientId,
+													const char* RefreshToken,
+													MGL_AuthenticateResponseCallback Callback,
+													void* UserData)
+{
+	return MuxyGameLink_AuthenticateWithRefreshTokenAndGameID(GameLink, ClientId, NULL, RefreshToken, Callback, UserData);
 }
 
 bool MuxyGameLink_IsAuthenticated(MuxyGameLink GameLink)
