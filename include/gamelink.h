@@ -708,7 +708,7 @@ namespace gamelink
 		/// @param[in] gameId The Twitch game ID
 		/// @param[in] pin 		The PIN input from the broadcaster
 		/// @return RequestId of the generated request
-		RequestId AuthenticateWithPIN(const string& clientId, const string& gameId, const string& pin);
+		RequestId AuthenticateWithPINAndGameID(const string& clientId, const string& gameId, const string& pin);
 
 		/// Queues an authentication request using a PIN code, as received by the user from an
 		/// extension's config view.
@@ -729,7 +729,7 @@ namespace gamelink
 		/// @param[in] callback Callback that is invoked once when this authentication request
 		///                     is responded to.
 		/// @return RequestId of the generated request
-		RequestId AuthenticateWithPIN(const string& clientId,
+		RequestId AuthenticateWithPINAndGameID(const string& clientId,
 									  const string& gameId,
 									  const string& pin,
 									  std::function<void(const schema::AuthenticateResponse&)> callback);
@@ -758,7 +758,7 @@ namespace gamelink
 		///                     is responded to.
 		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
 		/// @return RequestId of the generated request
-		RequestId AuthenticateWithPIN(const string& clientId,
+		RequestId AuthenticateWithPINAndGameID(const string& clientId,
 									  const string& gameId,
 									  const string& pin,
 									  void (*callback)(void*, const schema::AuthenticateResponse&),
@@ -786,7 +786,7 @@ namespace gamelink
 		/// @param[in] gameId The Twitch game ID
 		/// @param[in] refreshToken The stored refresh token from a previous authentication
 		/// @return RequestId of the generated request
-		RequestId AuthenticateWithRefreshToken(const string& clientId, const string& gameId, const string& refreshToken);
+		RequestId AuthenticateWithRefreshTokenAndGameID(const string& clientId, const string& gameId, const string& refreshToken);
 
 		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
 		///
@@ -805,7 +805,7 @@ namespace gamelink
 		/// @param[in] callback 	Callback that is invoked once when this authentication request
 		///                     	is responded to.
 		/// @return RequestId of the generated request
-		RequestId AuthenticateWithRefreshToken(const string& clientId,
+		RequestId AuthenticateWithRefreshTokenAndGameID(const string& clientId,
 											   const string& gameId,
 											   const string& refreshToken,
 											   std::function<void(const schema::AuthenticateResponse&)> callback);
@@ -834,7 +834,7 @@ namespace gamelink
 		///                     	is responded to.
 		/// @param[in] user     	User pointer that is passed into the callback whenever it is invoked.
 		/// @return RequestId of the generated request
-		RequestId AuthenticateWithRefreshToken(const string& clientId,
+		RequestId AuthenticateWithRefreshTokenAndGameID(const string& clientId,
 											   const string& gameId,
 											   const string& refreshToken,
 											   void (*callback)(void*, const schema::AuthenticateResponse&),

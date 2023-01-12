@@ -212,18 +212,28 @@ extern "C"
 		is not supported.
 	*/
 
-	/* GameId is optional, you can pass NULL or "" to represent no value */
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_AuthenticateWithPINAndGameID(MuxyGameLink GameLink,
+																	const char* ClientId,
+																	const char* GameId,
+																	const char* PIN,
+																	MGL_AuthenticateResponseCallback Callback,
+																	void* UserData);
+
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_AuthenticateWithRefreshTokenAndGameID(MuxyGameLink GameLink,
+																	const char* ClientId,
+																	 const char* GameId,
+																	 const char* RefreshToken,
+																	 MGL_AuthenticateResponseCallback Callback,
+																	 void* UserData);
+
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_AuthenticateWithPIN(MuxyGameLink GameLink,
 																 const char* ClientId,
-																 const char* GameId,
 																 const char* PIN,
 																 MGL_AuthenticateResponseCallback Callback,
 																 void* UserData);
 
-	/* GameId is optional, you can pass NULL or "" to represent no value */
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_AuthenticateWithRefreshToken(MuxyGameLink GameLink,
 																		  const char* ClientId,
-																		  const char* GameId,
 																		  const char* RefreshToken,
 																		  MGL_AuthenticateResponseCallback Callback,
 																		  void* UserData);

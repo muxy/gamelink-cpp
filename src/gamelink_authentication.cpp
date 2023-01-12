@@ -16,7 +16,7 @@ namespace gamelink
 		return ANY_REQUEST_ID;
 	}
 
-	RequestId SDK::AuthenticateWithPIN(const string& clientId, const string& gameId, const string& pin)
+	RequestId SDK::AuthenticateWithPINAndGameID(const string& clientId, const string& gameId, const string& pin)
 	{
 		schema::AuthenticateWithPINRequest payload(clientId, gameId, pin);
 		_storedClientId = clientId;
@@ -26,10 +26,10 @@ namespace gamelink
 
 	RequestId SDK::AuthenticateWithPIN(const string& clientId, const string& pin)
 	{
-		return AuthenticateWithPIN(clientId, "", pin);
+		return AuthenticateWithPINAndGameID(clientId, "", pin);
 	}
 
-	RequestId SDK::AuthenticateWithPIN(const string& clientId,
+	RequestId SDK::AuthenticateWithPINAndGameID(const string& clientId,
 									   const string& gameId,
 									   const string& pin,
 									   std::function<void(const schema::AuthenticateResponse&)> callback)
@@ -44,10 +44,10 @@ namespace gamelink
 
 	RequestId SDK::AuthenticateWithPIN(const string& clientId, const string& pin, std::function<void(const schema::AuthenticateResponse&)> callback)
 	{
-		return AuthenticateWithPIN(clientId, "", pin, callback);
+		return AuthenticateWithPINAndGameID(clientId, "", pin, callback);
 	}
 
-	RequestId SDK::AuthenticateWithPIN(const string& clientId,
+	RequestId SDK::AuthenticateWithPINAndGameID(const string& clientId,
 									   const string& gameId,
 									   const string& pin,
 									   void (*callback)(void*, const schema::AuthenticateResponse&),
@@ -66,10 +66,10 @@ namespace gamelink
 									   void (*callback)(void*, const schema::AuthenticateResponse&),
 									   void* user)
 	{
-		return AuthenticateWithPIN(clientId, "", pin, callback, user);
+		return AuthenticateWithPINAndGameID(clientId, "", pin, callback, user);
 	}
 
-	RequestId SDK::AuthenticateWithRefreshToken(const string& clientId, const string& gameId, const string& refreshToken)
+	RequestId SDK::AuthenticateWithRefreshTokenAndGameID(const string& clientId, const string& gameId, const string& refreshToken)
 	{
 		schema::AuthenticateWithRefreshTokenRequest payload(clientId, gameId, refreshToken);
 		_storedClientId = clientId;
@@ -79,10 +79,10 @@ namespace gamelink
 
 	RequestId SDK::AuthenticateWithRefreshToken(const string& clientId, const string& refreshToken)
 	{
-		return AuthenticateWithRefreshToken(clientId, "", refreshToken);
+		return AuthenticateWithRefreshTokenAndGameID(clientId, "", refreshToken);
 	}
 
-	RequestId SDK::AuthenticateWithRefreshToken(const string& clientId,
+	RequestId SDK::AuthenticateWithRefreshTokenAndGameID(const string& clientId,
 												const string& gameId,
 												const string& refreshToken,
 												std::function<void(const schema::AuthenticateResponse&)> callback)
@@ -99,10 +99,10 @@ namespace gamelink
 												const string& refreshToken,
 												std::function<void(const schema::AuthenticateResponse&)> callback)
 	{
-		return AuthenticateWithRefreshToken(clientId, "", refreshToken, callback);
+		return AuthenticateWithRefreshTokenAndGameID(clientId, "", refreshToken, callback);
 	}
 
-	RequestId SDK::AuthenticateWithRefreshToken(const string& clientId,
+	RequestId SDK::AuthenticateWithRefreshTokenAndGameID(const string& clientId,
 												const string& gameId,
 												const string& refreshToken,
 												void (*callback)(void*, const schema::AuthenticateResponse&),
@@ -121,6 +121,6 @@ namespace gamelink
 												void (*callback)(void*, const schema::AuthenticateResponse&),
 												void* user)
 	{
-		return AuthenticateWithRefreshToken(clientId, "", refreshToken, callback, user);
+		return AuthenticateWithRefreshTokenAndGameID(clientId, "", refreshToken, callback, user);
 	}
 }
