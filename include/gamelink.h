@@ -167,8 +167,6 @@ namespace gamelink
 			SubscriptionSets();
 		public:
 			// All methods should be called under a lock.
-			void replay(SDK* sdk);
-
 			bool canRegisterSKU(const string& sku);
 			void registerSKU(const string& sku);
 			void unregisterSKU(const string& sku);
@@ -624,10 +622,12 @@ namespace gamelink
 
 				if (payload)
 				{
+					debugLogPayload(payload);
 					if (payload->Length() > 0)
 					{
 						networkCallback(payload);
 					}
+
 					delete payload;
 				}
 			}
@@ -708,7 +708,7 @@ namespace gamelink
 		/// @param[in] gameId The Twitch game ID
 		/// @param[in] pin 		The PIN input from the broadcaster
 		/// @return RequestId of the generated request
-		RequestId AuthenticateWithPINAndGameID(const string& clientId, const string& gameId, const string& pin);
+		RequestId AuthenticateWithGameIDAndPIN(const string& clientId, const string& gameId, const string& pin);
 
 		/// Queues an authentication request using a PIN code, as received by the user from an
 		/// extension's config view.
@@ -729,7 +729,7 @@ namespace gamelink
 		/// @param[in] callback Callback that is invoked once when this authentication request
 		///                     is responded to.
 		/// @return RequestId of the generated request
-		RequestId AuthenticateWithPINAndGameID(const string& clientId,
+		RequestId AuthenticateWithGameIDAndPIN(const string& clientId,
 									  const string& gameId,
 									  const string& pin,
 									  std::function<void(const schema::AuthenticateResponse&)> callback);
@@ -758,7 +758,7 @@ namespace gamelink
 		///                     is responded to.
 		/// @param[in] user     User pointer that is passed into the callback whenever it is invoked.
 		/// @return RequestId of the generated request
-		RequestId AuthenticateWithPINAndGameID(const string& clientId,
+		RequestId AuthenticateWithGameIDAndPIN(const string& clientId,
 									  const string& gameId,
 									  const string& pin,
 									  void (*callback)(void*, const schema::AuthenticateResponse&),
@@ -786,7 +786,7 @@ namespace gamelink
 		/// @param[in] gameId The Twitch game ID
 		/// @param[in] refreshToken The stored refresh token from a previous authentication
 		/// @return RequestId of the generated request
-		RequestId AuthenticateWithRefreshTokenAndGameID(const string& clientId, const string& gameId, const string& refreshToken);
+		RequestId AuthenticateWithGameIDAndRefreshToken(const string& clientId, const string& gameId, const string& refreshToken);
 
 		/// Queues an authentication request using a JWT, as received after a successful PIN authentication request.
 		///
@@ -805,7 +805,7 @@ namespace gamelink
 		/// @param[in] callback 	Callback that is invoked once when this authentication request
 		///                     	is responded to.
 		/// @return RequestId of the generated request
-		RequestId AuthenticateWithRefreshTokenAndGameID(const string& clientId,
+		RequestId AuthenticateWithGameIDAndRefreshToken(const string& clientId,
 											   const string& gameId,
 											   const string& refreshToken,
 											   std::function<void(const schema::AuthenticateResponse&)> callback);
@@ -834,7 +834,7 @@ namespace gamelink
 		///                     	is responded to.
 		/// @param[in] user     	User pointer that is passed into the callback whenever it is invoked.
 		/// @return RequestId of the generated request
-		RequestId AuthenticateWithRefreshTokenAndGameID(const string& clientId,
+		RequestId AuthenticateWithGameIDAndRefreshToken(const string& clientId,
 											   const string& gameId,
 											   const string& refreshToken,
 											   void (*callback)(void*, const schema::AuthenticateResponse&),
@@ -1039,7 +1039,7 @@ namespace gamelink
 
 		/// Creates a poll with the given prompt, configuration and options.
 		/// Takes an update callback, which is called when a poll update event happens.
-		///   Poll updates may not have any actual numerical changee.
+		///   Poll updates may not have any actual numerical change.
 		/// The finish callback is called after the poll is moved into the 'expired' state,
 		///   as defined by the endsAt field in config. With no endsAt field, the poll
 		///   will continue forever, and onFinish will never be called.
@@ -1050,11 +1050,32 @@ namespace gamelink
 		/// @note The onUpdate and onFinish callbacks do not receive updates or finishes
 		///   for other polls.
 		///
-		/// @note To cancel a poll that is being run by this function, use StopRunningPoll,
+		/// @note To cancel a poll that is being run by this function, use StopPoll,
 		///   instead of the DeletePoll operation.
 		///
 		/// @note Roughly equivilent to Delete -> Unsubscribe -> CreatePollWithConfiguration -> Subscribe
 		///   and several OnPollUpdate().Adds
+		///
+		/// @param[in] pollId The Poll ID to create
+		/// @param[in] prompt The Prompt to store in the poll.
+		/// @param[in] config The PollConfiguration instance to use to configure the poll with.
+		/// @param[in] optionsBegin Pointer to the first element in an array of options to store in the poll.
+		/// @param[in] optionsEnd Pointer one past the final entry in an array of options to store in the poll.
+		/// @param[in] onUpdateCallback A callback that will be called when the poll receives an update.
+		/// @param[in] onFinishCallback A callback that will be called when the poll is finished, according to endsAt in config.
+		/// @return RequestId of the generated CreatePollWithConfiguration request.
+		RequestId RunPoll(
+			const string& pollId,
+			const string& prompt,
+			const PollConfiguration& config,
+			const string* optionsBegin,
+			const string* optionsEnd,
+			std::function<void(const schema::PollUpdateResponse&)> onUpdateCallback,
+			std::function<void(const schema::PollUpdateResponse&)> onFinishCallback
+		);
+
+		/// Creates a poll with the given prompt, configuration and options.
+		/// @see RunPoll with std::function<...> overload.
 		///
 		/// @param[in] pollId The Poll ID to create
 		/// @param[in] prompt The Prompt to store in the poll.
@@ -1073,20 +1094,7 @@ namespace gamelink
 		);
 
 		/// Creates a poll with the given prompt, configuration and options.
-		/// Takes an update callback, which is called when a poll update event happens.
-		///   Poll updates may not have any actual numerical changee.
-		/// The finish callback is called after the poll is moved into the 'expired' state,
-		///   as defined by the endsAt field in config. With no endsAt field, the poll
-		///   will continue forever, and onFinish will never be called.
-		///
-		/// @note This overwrites any existing poll with the same pollId. If that poll was
-		///   with RunPoll, that poll's onFinish callback will not be invoked.
-		///
-		/// @note The onUpdate and onFinish callbacks do not receive updates or finishes
-		///   for other polls.
-		///
-		/// @note Roughly equivilent to Delete -> Unsubscribe -> CreatePollWithConfiguration -> Subscribe
-		///   and several OnPollUpdate().Adds
+		/// @see RunPoll with std::function<...> overload.
 		///
 		/// @param[in] pollId The Poll ID to create
 		/// @param[in] prompt The Prompt to store in the poll.

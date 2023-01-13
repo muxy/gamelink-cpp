@@ -16,7 +16,7 @@ namespace gamelink
 		return ANY_REQUEST_ID;
 	}
 
-	RequestId SDK::AuthenticateWithPINAndGameID(const string& clientId, const string& gameId, const string& pin)
+	RequestId SDK::AuthenticateWithGameIDAndPIN(const string& clientId, const string& gameId, const string& pin)
 	{
 		schema::AuthenticateWithGameAndPINRequest payload(clientId, gameId, pin);
 
@@ -34,7 +34,7 @@ namespace gamelink
 		return queuePayload(payload);
 	}
 
-	RequestId SDK::AuthenticateWithPINAndGameID(const string& clientId,
+	RequestId SDK::AuthenticateWithGameIDAndPIN(const string& clientId,
 									   const string& gameId,
 									   const string& pin,
 									   std::function<void(const schema::AuthenticateResponse&)> callback)
@@ -59,7 +59,7 @@ namespace gamelink
 		return id;
 	}
 
-	RequestId SDK::AuthenticateWithPINAndGameID(const string& clientId,
+	RequestId SDK::AuthenticateWithGameIDAndPIN(const string& clientId,
 									   const string& gameId,
 									   const string& pin,
 									   void (*callback)(void*, const schema::AuthenticateResponse&),
@@ -88,7 +88,7 @@ namespace gamelink
 		return id;
 	}
 
-	RequestId SDK::AuthenticateWithRefreshTokenAndGameID(const string& clientId, const string& gameId, const string& refreshToken)
+	RequestId SDK::AuthenticateWithGameIDAndRefreshToken(const string& clientId, const string& gameId, const string& refreshToken)
 	{
 		schema::AuthenticateWithRefreshTokenAndGameRequest payload(clientId, gameId, refreshToken);
 
@@ -107,7 +107,7 @@ namespace gamelink
 		return queuePayload(payload);
 	}
 
-	RequestId SDK::AuthenticateWithRefreshTokenAndGameID(const string& clientId,
+	RequestId SDK::AuthenticateWithGameIDAndRefreshToken(const string& clientId,
 												const string& gameId,
 												const string& refreshToken,
 												std::function<void(const schema::AuthenticateResponse&)> callback)
@@ -135,7 +135,7 @@ namespace gamelink
 		return id;
 	}
 
-	RequestId SDK::AuthenticateWithRefreshTokenAndGameID(const string& clientId,
+	RequestId SDK::AuthenticateWithGameIDAndRefreshToken(const string& clientId,
 												const string& gameId,
 												const string& refreshToken,
 												void (*callback)(void*, const schema::AuthenticateResponse&),

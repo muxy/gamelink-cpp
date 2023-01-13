@@ -212,14 +212,14 @@ extern "C"
 		is not supported.
 	*/
 
-	MUXY_CLIB_API MGL_RequestId MuxyGameLink_AuthenticateWithPINAndGameID(MuxyGameLink GameLink,
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_AuthenticateWithGameIDAndPIN(MuxyGameLink GameLink,
 																	const char* ClientId,
 																	const char* GameId,
 																	const char* PIN,
 																	MGL_AuthenticateResponseCallback Callback,
 																	void* UserData);
 
-	MUXY_CLIB_API MGL_RequestId MuxyGameLink_AuthenticateWithRefreshTokenAndGameID(MuxyGameLink GameLink,
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_AuthenticateWithGameIDAndRefreshToken(MuxyGameLink GameLink,
 																	const char* ClientId,
 																	 const char* GameId,
 																	 const char* RefreshToken,
