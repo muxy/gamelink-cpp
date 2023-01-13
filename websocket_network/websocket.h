@@ -5,6 +5,7 @@
 
 struct Impl;
 
+// This is a sample websocket connection, used for demostration purposes only.
 class WebsocketConnection
 {
 public:

@@ -3,8 +3,13 @@
   "name": "gamelink-cpp-tests",
   "version": "0.1.0",
   "dependencies": [
-    "libwebsockets", 
-    "curl",
-    "libuv"
-  ]
+    {
+      "name": "curl",
+      "default-features": true,
+      "features": [
+        "websockets"
+      ]
+    }
+  ], 
+  "builtin-baseline": "94bfbda514961bf2e29ef803c975ec36379d75e5"
 }

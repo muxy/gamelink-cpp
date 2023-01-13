@@ -32,11 +32,6 @@ file(GLOB WEBSOCKET_SOURCES "websocket_network/*.cpp")
 ## Check if we have CURL and LIB_WEBSOCKETS.
 find_package(CURL)
 
-find_package(PkgConfig)
-pkg_check_modules(LIB_WEBSOCKETS libwebsockets>=4.0.0)
-
-find_package(OpenSSL)
-find_package(libuv)
 
 ## Unit tests
 add_executable(tests ${SCHEMA_SOURCES} ${SDK_TEST_SOURCES} ${SDK_SOURCES} ${C_SOURCES})
@@ -50,12 +45,11 @@ endif()
 
 IF(BUILD_INTEGRATION_TESTS)
 	message("Configuring with integration tests")
-	IF(CURL_FOUND AND LIB_WEBSOCKETS_FOUND AND OpenSSL_FOUND AND libuv_FOUND)
+	IF(CURL_FOUND)
 		target_sources(tests PRIVATE ${WEBSOCKET_SOURCES})
 		target_compile_definitions(tests PRIVATE "MUXY_GAMELINK_ENABLE_INTEGRATION_TESTS=1")
-		target_include_directories(tests PRIVATE ${OPENSSL_INCLUDE_DIR} ${LIB_WEBSOCKETS_INCLUDE_DIRS} "./websocket_network")
-		target_link_directories(tests PRIVATE ${LIB_WEBSOCKETS_LIBRARY_DIRS})
-		target_link_libraries(tests CURL::libcurl ${LIB_WEBSOCKETS_LIBRARIES} $<IF:$<TARGET_EXISTS:uv_a>,uv_a,uv> ${OPENSSL_LIBRARIES})
+		target_include_directories(tests PRIVATE "./websocket_network")
+		target_link_libraries(tests CURL::libcurl)
 	ENDIF()
 ENDIF()
 
