@@ -62,3 +62,19 @@ TEST_CASE("Broadcast", "[sdk][broadcast]")
 
 	REQUIRE(!sdk.HasPayloads());
 }
+
+TEST_CASE("Broadcast without body", "[broadcast]")
+{
+	gamelink::SDK sdk;
+	sdk.SendBroadcast("ping");
+	validateSinglePayload(sdk, R"({
+		"action": "broadcast", 
+		"data": {
+			"topic": "ping",
+			"data": {}
+		},
+		"params": {
+			"request_id": 65535
+		}
+	})");
+}

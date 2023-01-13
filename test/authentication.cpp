@@ -128,3 +128,120 @@ TEST_CASE("SDK PIN Authentication", "[sdk][authentication][pin]")
 	sdk.Deauthenticate();
 	REQUIRE(!sdk.IsAuthenticated());
 }
+
+TEST_CASE("SDK Authentication callback", "[sdk][authentication]")
+{
+	gamelink::SDK sdk;
+	std::string jwt = "test-jwt";
+
+	// Test initial state
+	REQUIRE(!sdk.IsAuthenticated());
+	REQUIRE(sdk.GetUser() == NULL);
+	REQUIRE(!sdk.HasPayloads());
+
+	uint32_t calls = 0;
+	sdk.OnAuthenticate().Add([&](const gamelink::schema::AuthenticateResponse& resp)
+	{
+		calls++;
+	});
+
+	// Verify generated auth request
+	sdk.AuthenticateWithPIN("client_id", "pin", [&](const gamelink::schema::AuthenticateResponse& resp) {
+		REQUIRE(sdk.IsAuthenticated());
+		REQUIRE(resp.data.jwt == "test-jwt");
+		calls++;
+	});
+
+	REQUIRE(sdk.HasPayloads());
+	validateSinglePayload(sdk, R"({
+		"action":"authenticate",
+		"data": {
+			"client_id":"client_id",
+			"pin":"pin"
+		},
+
+		"params":{
+			"request_id": 1
+		}
+	})");
+
+	REQUIRE(!sdk.HasPayloads());
+
+	// Verify state after successful auth
+	const char* msg = R"({
+		"meta": {
+			"request_id": 1,
+			"action": "authenticate"
+		},
+
+		"data": {
+			"jwt": "test-jwt"
+		}
+	})";
+
+	sdk.ReceiveMessage(msg, strlen(msg));
+
+	REQUIRE(calls == 2);
+
+	sdk.Deauthenticate();
+	REQUIRE(!sdk.IsAuthenticated());
+}
+
+TEST_CASE("SDK Gateway auth", "[sdk][authentication]")
+{
+	{
+		gamelink::SDK sdk;
+		sdk.AuthenticateWithGameIDAndPIN("client_id", "game", "pin");
+
+		REQUIRE(sdk.HasPayloads());
+		validateSinglePayload(sdk, R"({
+			"action":"authenticate",
+			"data": {
+				"client_id":"client_id",
+				"pin":"pin",
+				"game_id": "game"
+			},
+
+			"params":{
+				"request_id": 1
+			}
+		})");
+	}
+
+	{
+		gamelink::SDK sdk;
+		sdk.AuthenticateWithGameIDAndRefreshToken("client_id", "game", "refresh");
+
+		REQUIRE(sdk.HasPayloads());
+		validateSinglePayload(sdk, R"({
+			"action":"authenticate",
+			"data": {
+				"client_id":"client_id",
+				"refresh":"refresh",
+				"game_id": "game"
+			},
+
+			"params":{
+				"request_id": 1
+			}
+		})");
+	}
+
+	{
+		gamelink::SDK sdk;
+		sdk.AuthenticateWithRefreshToken("client_id", "refresh");
+
+		REQUIRE(sdk.HasPayloads());
+		validateSinglePayload(sdk, R"({
+			"action":"authenticate",
+			"data": {
+				"client_id":"client_id",
+				"refresh":"refresh"
+			},
+
+			"params":{
+				"request_id": 1
+			}
+		})");
+	}
+}

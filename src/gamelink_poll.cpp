@@ -110,10 +110,12 @@ namespace gamelink
 		return queuePayload(payload);
 	}
 
-	RequestId SDK::RunPoll(const string& pollId,
+	RequestId SDK::RunPoll(
+		const string& pollId,
 		const string& prompt,
 		const PollConfiguration& config,
-		const std::vector<string>& options,
+		const string* optionsBegin,
+		const string* optionsEnd,
 		std::function<void(const schema::PollUpdateResponse&)> onUpdateCallback,
 		std::function<void(const schema::PollUpdateResponse&)> onFinishCallback)
 	{
@@ -124,7 +126,7 @@ namespace gamelink
 		WaitForResponse(unsub);
 
 		SubscribeToPoll(pollId);
-		RequestId result = CreatePollWithConfiguration(pollId, prompt, config, options);
+		RequestId result = CreatePollWithConfiguration(pollId, prompt, config, optionsBegin, optionsEnd);
 
 		char buffer[128];
 		snprintf(buffer, 128, "<runpoll>_%s", pollId.c_str());
@@ -159,6 +161,41 @@ namespace gamelink
 		return result;
 	}
 
+	RequestId SDK::RunPoll(
+		const string& pollId,
+		const string& prompt,
+		const PollConfiguration& config,
+		const std::vector<string>& options,
+		std::function<void(const schema::PollUpdateResponse&)> onUpdateCallback,
+		std::function<void(const schema::PollUpdateResponse&)> onFinishCallback)
+	{
+		if (options.size() == 0)
+		{
+			return gamelink::REJECTED_REQUEST_ID;
+		}
+
+		const string* begin = nullptr;
+		if (!options.empty())
+		{
+			begin = options.data();
+		}
+
+		const string* end = nullptr;
+		if (!options.empty())
+		{
+			end = options.data() + options.size();
+		}
+
+		return RunPoll(
+			pollId, 
+			prompt, 
+			config, 
+			begin, end,
+			std::move(onUpdateCallback), 
+			std::move(onFinishCallback)
+		);
+	}
+
 	RequestId SDK::RunPoll(const string& pollId,
 		const string& prompt,
 		const PollConfiguration& config,
@@ -168,46 +205,21 @@ namespace gamelink
 		void (*onFinishCallback)(void*, const schema::PollUpdateResponse&),
 		void* user)
 	{
-		RequestId del = DeletePoll(pollId);
-		RequestId unsub = UnsubscribeFromPoll(pollId);
-
-		WaitForResponse(del);
-		WaitForResponse(unsub);
-
-		SubscribeToPoll(pollId);
-		RequestId result = CreatePollWithConfiguration(pollId, prompt, config, optionsBegin, optionsEnd);
-
-		char buffer[128];
-		snprintf(buffer, 128, "<runpoll>_%s", pollId.c_str());
-
-		gamelink::string callbackName = gamelink::string(buffer);
-
-		bool hasCalledOnFinish = false;
-		OnPollUpdate().AddUnique(callbackName, [this, callbackName, user, pollId, onUpdateCallback, onFinishCallback, hasCalledOnFinish](const schema::PollUpdateResponse& resp) mutable
-		{
-			// The requirements on string type overloading don't require operator !=
-			if (!(resp.data.poll.pollId == pollId))
-			{
-				return;
-			}
-
-			if (resp.data.poll.status == gamelink::string("expired"))
-			{
-				if (!hasCalledOnFinish)
-				{
-					onFinishCallback(user, resp);
-					this->UnsubscribeFromPoll(pollId);
-					this->OnPollUpdate().RemoveByName(callbackName);
-					hasCalledOnFinish = true;
-				}
-			}
-			else
+		return RunPoll(
+			pollId, 
+			prompt, 
+			config, 
+			optionsBegin, 
+			optionsEnd, 
+			[=](const schema::PollUpdateResponse& resp)
 			{
 				onUpdateCallback(user, resp);
+			}, 
+			[=](const schema::PollUpdateResponse& resp)
+			{
+				onFinishCallback(user, resp);
 			}
-		});
-
-		return result;
+		);
 	}
 
 	RequestId SDK::StopPoll(const string& pollId)
