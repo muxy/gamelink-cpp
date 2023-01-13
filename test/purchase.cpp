@@ -73,6 +73,69 @@ TEST_CASE("SDK Twitch Bits Purchase Response", "[sdk][purchase][twitch]")
 	REQUIRE(received);
 }
 
+TEST_CASE("Get outstanding transactions", "[purchase]")
+{
+	gamelink::SDK sdk;
+	sdk.GetOutstandingTransactions("*", [](const gamelink::schema::GetOutstandingTransactionsResponse& resp)
+	{
+		REQUIRE(resp.data.transactions.size() == 3);
+		REQUIRE(resp.data.transactions[0].displayName == "first user");
+		REQUIRE(resp.data.transactions[1].displayName == "second user");
+		REQUIRE(resp.data.transactions[2].displayName == "third user");
+	});
+
+	const char* json = R"({
+		"meta": {
+			"action": "get",
+			"request_id": 3,
+			"target": "transaction"
+		},
+		"data": {
+			"transactions": [
+				{
+					"id": "123-512-abwe-1",
+					"sku": "test-sku",
+					"muxy_id": "abc",
+					"currency": "coins",
+					"displayName": "first user",
+					"userId": "12345",
+					"cost": 42,
+					"timestamp": 100,
+					"username": "test-user",
+					"additional": "extra-data"
+				},
+				{
+					"id": "123-512-abwe-2",
+					"sku": "test-sku",
+					"muxy_id": "abc",
+					"currency": "coins",
+					"displayName": "second user",
+					"userId": "12345",
+					"cost": 42,
+					"timestamp": 100,
+					"username": "test-user",
+					"additional": "extra-data"
+				},
+				{
+					"id": "123-512-abwe-3",
+					"sku": "test-sku",
+					"muxy_id": "abc",
+					"currency": "coins",
+					"displayName": "third user",
+					"userId": "12345",
+					"cost": 42,
+					"timestamp": 100,
+					"username": "test-user",
+					"additional": "extra-data"
+				}
+			]
+		}
+	})";
+
+
+	sdk.ReceiveMessage(json, strlen(json));
+}
+
 TEST_CASE("Purchase subsciptions", "[purchase]")
 {
 	gamelink::SDK sdk;
@@ -86,6 +149,66 @@ TEST_CASE("Purchase subsciptions", "[purchase]")
 		"params": {
 			"request_id": 65535,
 			"target": "twitchPurchaseBits"
+		}
+	})");
+
+	REQUIRE(!sdk.HasPayloads());
+}
+
+TEST_CASE("Refund request by txid", "[purchase]")
+{
+	gamelink::SDK sdk;
+	sdk.RefundTransactionByID("some-tx-id", "some-user-id");
+	
+	validateSinglePayload(sdk, R"({
+		"action": "refund",
+		"data": {
+			"transaction_id": "some-tx-id",
+			"user_id": "some-user-id"
+		},
+		"params": {
+			"request_id": 65535,
+			"target": "transaction"
+		}
+	})");
+
+	REQUIRE(!sdk.HasPayloads());
+}
+
+TEST_CASE("Refund request by sku", "[purchase]")
+{
+	gamelink::SDK sdk;
+	sdk.RefundTransactionBySKU("some-sku", "some-user-id");
+	
+	validateSinglePayload(sdk, R"({
+		"action": "refund",
+		"data": {
+			"sku": "some-sku",
+			"user_id": "some-user-id"
+		},
+		"params": {
+			"request_id": 65535,
+			"target": "transaction"
+		}
+	})");
+
+	REQUIRE(!sdk.HasPayloads());
+}
+
+TEST_CASE("Validate request", "[purchase]")
+{
+	gamelink::SDK sdk;
+	sdk.ValidateTransaction("some-tx-id", "Human readable description");
+	
+	validateSinglePayload(sdk, R"({
+		"action": "validate",
+		"data": {
+			"transaction_id": "some-tx-id",
+			"details": "Human readable description"
+		},
+		"params": {
+			"request_id": 65535,
+			"target": "transaction"
 		}
 	})");
 

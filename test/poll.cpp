@@ -286,6 +286,72 @@ TEST_CASE("SDK Poll Get Results", "[sdk][poll][results]")
 	REQUIRE(calls == 1);
 }
 
+TEST_CASE("SDK Poll Get Results C-style", "[sdk][poll][results]")
+{
+	gamelink::SDK sdk;
+
+	sdk.GetPoll("test-poll");
+	validateSinglePayload(sdk, R"({
+		"action":"get",
+		"data":{"poll_id":"test-poll"},
+		"params":{"request_id":65535,"target":"poll"}
+	})");
+
+
+	uint32_t calls = 0;
+	sdk.GetPoll("something-else", [](void* data, const gamelink::schema::GetPollResponse& poll) {
+		uint32_t* calls = static_cast<uint32_t*>(data);
+		(*calls)++;
+
+		REQUIRE(poll.data.poll.pollId == "something-else");
+	}, &calls);
+
+	const char* msg = R"({
+		 "data": {
+            "poll": {
+                "poll_id": "something-else",
+				"prompt": "Superman or Batman",
+				"options": ["Superman", "Batman"],
+				"user_data": {}
+            },
+			"results": [
+				100,
+				93
+			]
+        },
+        "meta":{
+            "request_id":2,
+            "action": "get",
+            "target":"poll"
+        }
+	})";
+
+	sdk.ReceiveMessage(msg, strlen(msg));
+
+	msg = R"({
+		 "data": {
+            "poll": {
+                "poll_id": "wrong",
+				"prompt": "no",
+				"options": ["yes", "no"],
+				"user_data": {}
+            },
+			"results": [
+				0,
+				1
+			]
+        },
+        "meta":{
+            "request_id":2,
+            "action": "get",
+            "target":"poll"
+        }
+	})";
+
+	sdk.ReceiveMessage(msg, strlen(msg));
+	REQUIRE(calls == 1);
+}
+
 TEST_CASE("SDK Poll Subscription", "[sdk][poll][subscription]")
 {
 	gamelink::SDK sdk;
@@ -437,6 +503,57 @@ TEST_CASE("SDK Run Poll", "[sdk][poll]")
 	REQUIRE(updateCalls == 4);
 	REQUIRE(finishCalls == 1);
 }
+
+TEST_CASE("SDK Poll other operations", "[sdk][poll]")
+{
+	gamelink::SDK sdk;
+
+	sdk.StopPoll("pizza-toppings");
+	validateSinglePayload(sdk, R"({
+		"action": "reconfigure", 
+		"params": {
+			"request_id": 65535,
+			"target": "poll"
+		}, 
+		"data": {
+			"poll_id": "pizza-toppings",
+			"config": {
+				"endsAt": -1
+			}
+		}
+	})");
+
+	sdk.SetPollDisabled("pizza-toppings", true);
+	validateSinglePayload(sdk, R"({
+		"action": "reconfigure", 
+		"params": {
+			"request_id": 65535,
+			"target": "poll"
+		}, 
+		"data": {
+			"poll_id": "pizza-toppings", 
+			"config": {
+				"disabled": true
+			}
+		}
+	})");
+
+	sdk.SetPollDisabled("pizza-toppings", false);
+	validateSinglePayload(sdk, R"({
+		"action": "reconfigure", 
+		"params": {
+			"request_id": 65535,
+			"target": "poll"
+		}, 
+		"data": {
+			"poll_id": "pizza-toppings", 
+			"config": {
+				"disabled": false
+			}
+		}
+	})");
+}
+
 
 TEST_CASE("Poll Reconfigure serialization", "[poll][update]")
 {

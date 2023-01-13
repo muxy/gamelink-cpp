@@ -71,7 +71,7 @@ uint32_t MuxyGameLink_Strlen(MGL_String Str)
 	return static_cast<uint32_t>(strlen(Str));
 }
 
-MGL_RequestId MuxyGameLink_AuthenticateWithPINAndGameID(MuxyGameLink GameLink,
+MGL_RequestId MuxyGameLink_AuthenticateWithGameIDAndPIN(MuxyGameLink GameLink,
 											   const char* ClientId,
 											   const char* GameId,
 											   const char* PIN,
@@ -86,7 +86,7 @@ MGL_RequestId MuxyGameLink_AuthenticateWithPINAndGameID(MuxyGameLink GameLink,
 	}
 	else
 	{
-		MGL_RequestId res = SDK->AuthenticateWithPINAndGameID(ClientId, gamelink::string(GameId), PIN, C_CALLBACK(Callback, UserData, AuthenticateResponse));
+		MGL_RequestId res = SDK->AuthenticateWithGameIDAndPIN(ClientId, gamelink::string(GameId), PIN, C_CALLBACK(Callback, UserData, AuthenticateResponse));
 		return res;
 	}
 }
@@ -97,7 +97,7 @@ MGL_RequestId MuxyGameLink_AuthenticateWithPIN(MuxyGameLink GameLink,
 													MGL_AuthenticateResponseCallback Callback,
 													void* UserData)
 {
-	return MuxyGameLink_AuthenticateWithPINAndGameID(GameLink, ClientId, NULL, PIN, Callback, UserData);
+	return MuxyGameLink_AuthenticateWithGameIDAndPIN(GameLink, ClientId, NULL, PIN, Callback, UserData);
 }
 
 MGL_RequestId MuxyGameLink_AuthenticateWithRefreshTokenAndGameID(MuxyGameLink GameLink,
@@ -110,7 +110,7 @@ MGL_RequestId MuxyGameLink_AuthenticateWithRefreshTokenAndGameID(MuxyGameLink Ga
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
 	if (GameId)
 	{
-		MGL_RequestId res = SDK->AuthenticateWithRefreshTokenAndGameID(ClientId, GameId, RefreshToken,
+		MGL_RequestId res = SDK->AuthenticateWithGameIDAndRefreshToken(ClientId, GameId, RefreshToken,
 														  C_CALLBACK(Callback, UserData, AuthenticateResponse));
 		return res;
 	} 

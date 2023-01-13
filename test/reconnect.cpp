@@ -38,6 +38,43 @@ TEST_CASE("Reconnect will push an authentication request to the start of the que
 	})");
 }
 
+TEST_CASE("Reconnect will push an authentication request to the start of the queue with game id", "[sdk][reconnect]")
+{
+	gamelink::SDK sdk;
+	sdk.AuthenticateWithGameIDAndPIN("client_id", "rock paper scissors", "1234");
+	sdk.ForeachPayload([](const gamelink::Payload*){});
+
+	REQUIRE(!sdk.IsAuthenticated());
+	const char* msg = R"({
+		"meta": {
+			"request_id": 1,
+			"action": "authenticate"
+		},
+
+		"data": {
+			"jwt": "test-jwt",
+			"refresh": "refresh"
+		}
+	})";
+
+	bool ok = sdk.ReceiveMessage(msg, strlen(msg));
+	REQUIRE(ok);
+	REQUIRE(sdk.IsAuthenticated());
+
+	sdk.HandleReconnect();
+	validateSinglePayload(sdk, R"({
+		"action":"authenticate",
+		"data":{
+			"client_id":"client_id",
+			"refresh":"refresh",
+			"game_id": "rock paper scissors"
+		},
+		"params":{
+			"request_id":65535
+		}
+	})");
+}
+
 TEST_CASE("Reconnect will redo subscriptions", "[sdk][reconnect]")
 {
 	gamelink::SDK sdk;
@@ -137,6 +174,82 @@ TEST_CASE("Reconnect will redo subscriptions", "[sdk][reconnect]")
 	}
 }
 
+TEST_CASE("Reconnect will redo subscriptions, but not after unsubscribing to everything", "[sdk][reconnect]")
+{
+	gamelink::SDK sdk;
+	sdk.AuthenticateWithPIN("client_id", "1234");
+	sdk.ForeachPayload([](const gamelink::Payload*){});
+
+	REQUIRE(!sdk.IsAuthenticated());
+	const char* msg = R"({
+		"meta": {
+			"request_id": 1,
+			"action": "authenticate"
+		},
+
+		"data": {
+			"jwt": "test-jwt",
+			"refresh": "refresh"
+		}
+	})";
+
+	bool ok = sdk.ReceiveMessage(msg, strlen(msg));
+	REQUIRE(ok);
+	REQUIRE(sdk.IsAuthenticated());
+
+	sdk.SubscribeToAllPurchases();
+	sdk.SubscribeToDatastream();
+	sdk.SubscribeToStateUpdates(gamelink::StateTarget::Channel);
+	sdk.SubscribeToStateUpdates(gamelink::StateTarget::Extension);
+	sdk.SubscribeToMatchmakingQueueInvite();
+	sdk.SubscribeToPoll("what-toppings");
+	sdk.SubscribeToConfigurationChanges(gamelink::ConfigTarget::Channel);
+	sdk.SubscribeToConfigurationChanges(gamelink::ConfigTarget::Extension);
+
+	// Duplicate requests, these should all be deduped by the sdk.
+	sdk.SubscribeToAllPurchases();
+	sdk.SubscribeToDatastream();
+	sdk.SubscribeToStateUpdates(gamelink::StateTarget::Channel);
+	sdk.SubscribeToStateUpdates(gamelink::StateTarget::Extension);
+	sdk.SubscribeToMatchmakingQueueInvite();
+	sdk.SubscribeToPoll("what-toppings");
+	sdk.SubscribeToConfigurationChanges(gamelink::ConfigTarget::Channel);
+	sdk.SubscribeToConfigurationChanges(gamelink::ConfigTarget::Extension);
+
+	uint32_t subscribeCount = 0;
+	sdk.ForeachPayload([&](const gamelink::Payload*){
+		subscribeCount++;
+	});
+
+	sdk.UnsubscribeFromAllPurchases();
+	sdk.UnsubscribeFromDatastream();
+	sdk.UnsubscribeFromStateUpdates(gamelink::StateTarget::Channel);
+	sdk.UnsubscribeFromStateUpdates(gamelink::StateTarget::Extension);
+	sdk.UnsubscribeFromMatchmakingQueueInvite();
+	sdk.UnsubscribeFromPoll("what-toppings");
+	sdk.UnsubscribeFromConfigurationChanges(gamelink::ConfigTarget::Channel);
+	sdk.UnsubscribeFromConfigurationChanges(gamelink::ConfigTarget::Extension);
+	
+	uint32_t unsubscribeCount = 0;
+	sdk.ForeachPayload([&](const gamelink::Payload*){
+		unsubscribeCount++;
+	});
+
+	REQUIRE(subscribeCount == unsubscribeCount);
+	
+	sdk.HandleReconnect();
+	validateSinglePayload(sdk, R"({
+		"action":"authenticate",
+		"data":{
+			"client_id":"client_id",
+			"refresh":"refresh"
+		},
+		"params":{
+			"request_id":65535
+		}
+	})");
+}
+
 TEST_CASE("Reconnect will redo subscriptions, but not after unsubscribing", "[sdk][reconnect]")
 {
 	gamelink::SDK sdk;
@@ -169,6 +282,7 @@ TEST_CASE("Reconnect will redo subscriptions, but not after unsubscribing", "[sd
 	sdk.SubscribeToConfigurationChanges(gamelink::ConfigTarget::Extension);
 	sdk.UnsubscribeFromAllPurchases();
 
+	// "send" all the payloads
 	sdk.ForeachPayload([](const gamelink::Payload*){});
 	sdk.HandleReconnect();
 
