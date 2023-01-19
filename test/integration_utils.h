@@ -15,7 +15,8 @@ public:
 	IntegrationTestFixture();
 	~IntegrationTestFixture();
 
-	int Request(const char* method, const char* endpoint,  const nlohmann::json* input, nlohmann::json* output);
+	int Request(const char* method, const char* endpoint, const nlohmann::json* input, nlohmann::json* output);
+	int RequestURL(const char *method, const char* url, nlohmann::json* output);
 	gamelink::SDK sdk;
 
 	void Sleep(int seconds = 1);

@@ -379,4 +379,37 @@ int IntegrationTestFixture::Request(const char* method, const char* endpoint, co
 
 	return code;
 }
+
+int IntegrationTestFixture::RequestURL(const char* method, const char* url, nlohmann::json* output)
+{
+	CURL* curl = curl_easy_init();
+	REQUIRE(curl);
+
+	std::vector<char> response;
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeFunction);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+
+	std::cerr << "#>   http " << method << " url=" << url << "\n";
+
+	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method);
+	curl_easy_setopt(curl, CURLOPT_URL, url);
+
+	CURLcode res = curl_easy_perform(curl);
+	REQUIRE(!res);
+
+	if (output)
+	{
+		std::string responseString(response.begin(), response.end());
+		nlohmann::json parsed = nlohmann::json::parse(responseString);
+
+		*output = parsed;
+	}
+
+	int code = 0;
+	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+
+	curl_easy_cleanup(curl);
+	return code;
+}
+
 #endif
