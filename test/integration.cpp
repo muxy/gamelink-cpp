@@ -402,5 +402,30 @@ TEST_CASE_METHOD(IntegrationTestFixture, "Datastream operations", "[.][integrati
 	Sleep();
 	REQUIRE(events == 6);
 }
-#endif
 
+TEST_CASE_METHOD(IntegrationTestFixture, "Client IP access", "[.][integration]")
+{
+	int code;
+
+	nlohmann::json ip_resp;
+	code = RequestURL("GET", "https://api.ipify.org?format=json", &ip_resp);
+	REQUIRE(code == 200);
+
+	// Server changes last octet to 0 for security
+	unsigned short octet1, octet2, octet3;
+
+	std::string full_ip = ip_resp["ip"];
+	sscanf(full_ip.c_str(), "%hu.%hu.%hu.%*hu", &octet1, &octet2, &octet3);
+
+	char ip[64];
+	snprintf(ip, 64, "%d.%d.%d.0", octet1, octet2, octet3);
+
+	Connect();
+	nlohmann::json info_resp;
+	code = Request("GET", "user_info", nullptr, &info_resp);
+	REQUIRE(code == 200);
+
+	REQUIRE(ip == info_resp["ip_address"]);
+}
+
+#endif
