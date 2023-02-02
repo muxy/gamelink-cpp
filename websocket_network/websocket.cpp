@@ -6,6 +6,8 @@
 #include <iostream>
 #include <atomic>
 
+#define LOGF(msg) std::cerr << "[DEBUG] " << msg << "\n"
+
 struct Message
 {
 	std::vector<char> data;
@@ -22,6 +24,9 @@ struct Impl
 	bool done = false;
 
 	CURL* connection;
+	char curlErrorBuffer[CURL_ERROR_SIZE];
+
+	bool connected = false;
 
 	std::mutex lock;
 	std::vector<std::unique_ptr<Message>> messages;
@@ -55,6 +60,15 @@ size_t writeResponse(char* ptr, size_t size, size_t nmemb, void* data)
 
 size_t writeHeader(char* buffer, size_t size, size_t nitems, void* userdata)
 {
+	std::string headerView(buffer, size * nitems);
+	if (headerView == "\r\n")
+	{
+		Impl* impl = static_cast<Impl*>(userdata);
+		impl->connected = true;
+
+		LOGF("Connection established");
+	}
+
 	return size * nitems;
 }
 
@@ -68,16 +82,6 @@ static void panic(const char* msg)
 
 WebsocketConnection::WebsocketConnection(const std::string& url, uint16_t port)
 {
-	int initial = refcount.fetch_add(1);
-	if (initial == 0)
-	{
-		CURLcode code = curl_global_init(CURL_GLOBAL_ALL);
-		if (code != 0)
-		{
-			panic("Nonzero return from curl_global_init");
-		}
-	}
-
 	impl = new Impl();
 	impl->multi = curl_multi_init();
 	if (!impl->multi)
@@ -93,15 +97,22 @@ WebsocketConnection::WebsocketConnection(const std::string& url, uint16_t port)
 	curl_easy_setopt(curl, CURLOPT_URL, protocolURL.c_str());
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeResponse);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, impl);
-	curl_easy_setopt(curl, CURLOPT_WRITEHEADER, writeHeader);
-	curl_easy_setopt(curl, CURLOPT_HEADERDATA, nullptr);
+
+	curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, writeHeader);
+	curl_easy_setopt(curl, CURLOPT_HEADERDATA, impl);
+
+	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, impl->curlErrorBuffer);
+	impl->curlErrorBuffer[0] = '\0';
 
 	impl->connection = curl;
 	curl_multi_add_handle(impl->multi, curl);
+
+	LOGF("Add connection");
 }
 
 WebsocketConnection::~WebsocketConnection()
 {
+	LOGF("Cleaning up connection");
 	impl->done = true;
 	if (impl->connection)
 	{
@@ -113,12 +124,6 @@ WebsocketConnection::~WebsocketConnection()
 	curl_multi_cleanup(impl->multi);
 
 	delete impl;
-
-	int initial = refcount.fetch_sub(1);
-	if (initial == 1)
-	{
-		curl_global_cleanup();
-	}
 }
 
 int WebsocketConnection::run()
@@ -132,6 +137,7 @@ int WebsocketConnection::run()
 	CURLMcode err = curl_multi_perform(impl->multi, &running);
 	if (err != 0)
 	{
+		LOGF("Error while perform: " << err);
 		return err;
 	}
 
@@ -140,14 +146,25 @@ int WebsocketConnection::run()
 	{
 		if (msg->msg == CURLMSG_DONE)
 		{
+			if (msg->easy_handle != impl->connection)
+			{
+				LOGF("Connection mismatch?");
+			}
+
 			curl_multi_remove_handle(impl->multi, impl->connection);
 			curl_easy_cleanup(impl->connection);
 			impl->connection = nullptr;
+
+			LOGF("Removing connection");
+			if (msg->data.result != CURLE_OK)
+			{
+				LOGF("code=" << msg->data.result << " err=" << impl->curlErrorBuffer);
+			}
 		}
 	}
 
 	std::lock_guard<std::mutex> lock(impl->lock);
-	if (!impl->connection)
+	if (!impl->connection || !impl->connected)
 	{
 		return 0;
 	}
