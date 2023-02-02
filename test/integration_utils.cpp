@@ -306,7 +306,6 @@ void IntegrationTestFixture::Reconnect()
 		while (!done)
 		{
 			sdk.ForeachPayload([&](const gamelink::Payload* send) {
-				std::cerr << "!>   send len=" << send->Length() << " msg=" << std::string(send->Data(), send->Data() + send->Length()) << "\n";
 				connection->send(send->Data(), send->Length());
 			});
 
