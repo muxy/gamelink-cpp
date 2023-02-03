@@ -13,7 +13,7 @@ MuxyGateway MuxyGateway_Make(void)
 
 void MuxyGateway_Kill(MuxyGateway Gateway)
 {
-	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(Gateway.SDK);
+	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
 	delete SDK;
 }
 
