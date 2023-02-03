@@ -4,10 +4,10 @@
 
 namespace gateway
 {
-    using string                               = gamelink::string;
-    using RequestID                            = gamelink::RequestId;
-    static const RequestID ANY_REQUEST_ID      = gamelink::ANY_REQUEST_ID;
-    static const RequestID REJECTED_REQUEST_ID = gamelink::REJECTED_REQUEST_ID;
+	using string = gamelink::string;
+	using RequestID = gamelink::RequestId;
+	static const RequestID ANY_REQUEST_ID = gamelink::ANY_REQUEST_ID;
+	static const RequestID REJECTED_REQUEST_ID = gamelink::REJECTED_REQUEST_ID;
 
 	struct GameMetadata
 	{
@@ -17,45 +17,53 @@ namespace gateway
 		string Theme;
 	};
 
-    class Payload
+	class Payload
 	{
 		friend class SDK;
+
 	private:
 		explicit Payload(string data);
-		RequestID WaitingForResponse;
 
 		/// Data to be sent.
 		const string _Data;
+
 	public:
 		const char* GetData() const;
 		uint32_t GetLength() const;
 	};
 
-	struct AuthenticateResponse 
+	struct AuthenticateResponse
 	{
 
-        AuthenticateResponse(string JWT, string RefreshToken, string TwitchName, bool DidError): JWT(JWT), RefreshToken(RefreshToken), TwitchName(TwitchName), DidError(DidError) {}
-        /// Signed JWT. Will expire.
-        string JWT;
+		AuthenticateResponse(string JWT, string RefreshToken, string TwitchName, bool DidError)
+			: JWT(JWT)
+			, RefreshToken(RefreshToken)
+			, TwitchName(TwitchName)
+			, DidError(DidError)
+		{
+		}
+		/// Signed JWT. Will expire.
+		string JWT;
 
-        /// Refresh token, used to reauth after the JWT expires.
-        string RefreshToken;
+		/// Refresh token, used to reauth after the JWT expires.
+		string RefreshToken;
 
-        /// Information about the channel the auth was done with
-        string TwitchName;
+		/// Information about the channel the auth was done with
+		string TwitchName;
 
-        bool HasError() const { return DidError; };
+		bool HasError() const
+		{
+			return DidError;
+		};
 
-        private:
-        bool DidError; 
+	private:
+		bool DidError;
 	};
 
-
-
-    class SDK
-    {
-    public:
-		SDK(string gameID);
+	class SDK
+	{
+	public:
+		explicit SDK(string gameID);
 		~SDK();
 
 		// Not implemented. SDK is not copyable
@@ -69,7 +77,7 @@ namespace gateway
 		bool ReceiveMessage(const char* Bytes, uint32_t Length);
 		bool HasPayloads() const;
 
-        /// Type used in ForeachPayload below. Takes in the user pointer as the first argument,
+		/// Type used in ForeachPayload below. Takes in the user pointer as the first argument,
 		/// and a pointer to a payload as the second parameter.
 		typedef void (*NetworkCallback)(void*, const Payload*);
 
@@ -83,9 +91,9 @@ namespace gateway
 
 		void HandleReconnect();
 
-	    RequestID AuthenticateWithPIN(const string& PIN, std::function<void(const gateway::AuthenticateResponse&)> Callback);
+		RequestID AuthenticateWithPIN(const string& PIN, std::function<void(const gateway::AuthenticateResponse&)> Callback);
 
-	    RequestID AuthenticateWithRefreshToken(const string& JWT, std::function<void(const gateway::AuthenticateResponse&)> Callback);
+		RequestID AuthenticateWithRefreshToken(const string& JWT, std::function<void(const gateway::AuthenticateResponse&)> Callback);
 
 		/// Returns if an authentication message has been received.
 		///
@@ -94,14 +102,12 @@ namespace gateway
 
 		RequestID SetGameMetadata(gateway::GameMetadata Meta);
 
-        string GetSandboxURL() const;
-        string GetProductionURL() const; 
+		string GetSandboxURL() const;
+		string GetProductionURL() const;
 
-
-    private:
-        gamelink::SDK Base;
-        string GameID;
-        string ClientID = "i575hs2x9lb3u8hqujtezit03w1740";
-    };
- 
+	private:
+		gamelink::SDK Base;
+		string GameID;
+		string ClientID = string("i575hs2x9lb3u8hqujtezit03w1740");
+	};
 }
