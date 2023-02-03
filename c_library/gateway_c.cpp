@@ -4,10 +4,10 @@
 #include "gateway.h"
 
 
-MuxyGateway MuxyGateway_Make(void)
+MuxyGateway MuxyGateway_Make(const char* GameID)
 {
     MuxyGateway Gateway;
-	Gateway.SDK = new gateway::SDK();
+	Gateway.SDK = new gateway::SDK(gateway::string(GameID));
     return Gateway;
 }
 

@@ -37,7 +37,7 @@ typedef struct
 typedef void (*GW_AuthenticateResponseCallback)(void *User, const GW_AuthenticateResponse *AuthResp);
 typedef void (*GW_PayloadCallback)(void *User, const GW_Payload *Payload);
 
-MuxyGateway  MuxyGateway_Make(void);
+MuxyGateway  MuxyGateway_Make(const char* GameID);
 void         MuxyGateway_Kill(MuxyGateway Gateway);
 GW_RequestID MuxyGateway_AuthenticateWithPIN(MuxyGateway Gateway, const char *PIN, GW_AuthenticateResponseCallback Callback, void *User);
 GW_RequestID MuxyGateway_AuthenticateWithRefreshToken(MuxyGateway Gateway, const char *RefreshToken, GW_AuthenticateResponseCallback Callback, void *User);
