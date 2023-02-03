@@ -4,8 +4,9 @@
 
 namespace gateway
 {
-	using string = gamelink::string;
-	using RequestID = gamelink::RequestId;
+	typedef gamelink::string string;
+	typedef gamelink::RequestId RequestID;
+
 	static const RequestID ANY_REQUEST_ID = gamelink::ANY_REQUEST_ID;
 	static const RequestID REJECTED_REQUEST_ID = gamelink::REJECTED_REQUEST_ID;
 
@@ -32,9 +33,9 @@ namespace gateway
 		uint32_t GetLength() const;
 	};
 
-	struct AuthenticateResponse
+	class AuthenticateResponse
 	{
-
+	public:
 		AuthenticateResponse(string JWT, string RefreshToken, string TwitchName, bool DidError)
 			: JWT(JWT)
 			, RefreshToken(RefreshToken)
@@ -42,6 +43,7 @@ namespace gateway
 			, DidError(DidError)
 		{
 		}
+
 		/// Signed JWT. Will expire.
 		string JWT;
 
@@ -58,6 +60,33 @@ namespace gateway
 
 	private:
 		bool DidError;
+	};
+
+	enum class PollMode
+	{
+		Chaos,
+		Order
+	};
+
+	enum class PollLocation
+	{
+		Default,
+	};
+
+	struct PollUpdate
+	{
+	};
+
+	struct PollConfiguration
+	{
+		string Prompt;
+		std::vector<string> Options;
+
+		PollMode Mode = PollMode::Order;
+		PollLocation Location = PollLocation::Default;
+		int32_t Duration = 0;
+
+		std::function<void(const PollUpdate&)> OnUpdate;
 	};
 
 	class SDK
@@ -92,13 +121,15 @@ namespace gateway
 		void HandleReconnect();
 
 		RequestID AuthenticateWithPIN(const string& PIN, std::function<void(const gateway::AuthenticateResponse&)> Callback);
-
 		RequestID AuthenticateWithRefreshToken(const string& JWT, std::function<void(const gateway::AuthenticateResponse&)> Callback);
 
 		/// Returns if an authentication message has been received.
 		///
 		/// @return true if an authentication message has been received.
 		bool IsAuthenticated() const;
+
+		// Polling
+		void RunPoll(const PollConfiguration& cfg);
 
 		RequestID SetGameMetadata(gateway::GameMetadata Meta);
 
