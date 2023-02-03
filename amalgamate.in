@@ -22,6 +22,8 @@ INPUT_HEADERS=(
     ./schema/game_metadata.h
 
     ./include/gamelink.h
+
+    ./include/gateway.h
 )
 
 INPUT_SOURCES=(@AMALGAM_PUBLIC_SOURCES@)
