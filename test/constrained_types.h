@@ -36,6 +36,11 @@ public:
 	{
 	}
 
+	inline ConstrainedString(const char* v, size_t len)
+		: _data(std::string(v, len))
+	{
+	}
+
 	inline bool operator==(const ConstrainedString& other) const
 	{
 		return _data == other._data;
