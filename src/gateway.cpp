@@ -118,15 +118,31 @@ namespace gateway
 			cfg.Prompt, 
 			config, 
 			cfg.Options, 
-			[=](const gamelink::schema::PollUpdateResponse&)
+			[=](const gamelink::schema::PollUpdateResponse& response)
 			{
 				PollUpdate update;
 
+				uint32_t idx = gamelink::GetPollWinnerIndex(response.data.results);
+				update.Winner = static_cast<int>(idx);
+				update.WinningVoteCount = response.data.results[idx];
+				update.Results = response.data.results;
+				update.IsFinal = false;
+				update.Mean = response.data.mean;
+				update.Count = response.data.count;
+
 				cfg.OnUpdate(update);
 			}, 
-			[=](const gamelink::schema::PollUpdateResponse&)
+			[=](const gamelink::schema::PollUpdateResponse& response)
 			{
 				PollUpdate finish;
+
+				uint32_t idx = gamelink::GetPollWinnerIndex(response.data.results);
+				finish.Winner = static_cast<int>(idx);
+				finish.WinningVoteCount = response.data.results[idx];
+				finish.Results = response.data.results;
+				finish.IsFinal = true;
+				finish.Mean = response.data.mean;
+				finish.Count = response.data.count;
 
 				cfg.OnUpdate(finish);
 			}
