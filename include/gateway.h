@@ -75,6 +75,24 @@ namespace gateway
 
 	struct PollUpdate
 	{
+		// Index of the winner, in [0, 32).
+		// If one or more values are tied, returns the first one.
+		int Winner;
+
+		// The number of votes cast for the winning vote.
+		int WinningVoteCount;
+
+		// All results in the range [0, 32).
+		std::vector<int> Results;
+		
+		// How many votes were cast in total.
+		int Count;
+
+		// The average value of all votes.
+		double Mean;
+
+		// True iff this is a final update for the vote.
+		bool IsFinal;
 	};
 
 	struct PollConfiguration
@@ -120,8 +138,8 @@ namespace gateway
 
 		void HandleReconnect();
 
-		RequestID AuthenticateWithPIN(const string& PIN, std::function<void(const gateway::AuthenticateResponse&)> Callback);
-		RequestID AuthenticateWithRefreshToken(const string& JWT, std::function<void(const gateway::AuthenticateResponse&)> Callback);
+		RequestID AuthenticateWithPIN(const string& PIN, std::function<void(const AuthenticateResponse&)> Callback);
+		RequestID AuthenticateWithRefreshToken(const string& JWT, std::function<void(const AuthenticateResponse&)> Callback);
 
 		/// Returns if an authentication message has been received.
 		///
@@ -131,7 +149,7 @@ namespace gateway
 		// Polling
 		void RunPoll(const PollConfiguration& cfg);
 
-		RequestID SetGameMetadata(gateway::GameMetadata Meta);
+		RequestID SetGameMetadata(GameMetadata Meta);
 
 		string GetSandboxURL() const;
 		string GetProductionURL() const;
