@@ -89,7 +89,12 @@ namespace gateway
 		return gamelink::WebsocketConnectionURL(ClientID, gamelink::ConnectionStage::Production);
 	}
 
-	void SDK::RunPoll(const PollConfiguration& cfg)
+	void SDK::StopPoll()
+	{
+		Base.StopPoll("default");
+	}
+
+	void SDK::StartPoll(const PollConfiguration& cfg)
 	{
 		gamelink::PollConfiguration config;
 
