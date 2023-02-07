@@ -64,13 +64,13 @@ namespace gateway
 
 	enum class PollMode
 	{
-		Chaos,
-		Order
+		Chaos = 0,
+		Order = 1
 	};
 
 	enum class PollLocation
 	{
-		Default,
+		Default = 0,
 	};
 
 	struct PollUpdate
@@ -147,7 +147,8 @@ namespace gateway
 		bool IsAuthenticated() const;
 
 		// Polling
-		void RunPoll(const PollConfiguration& cfg);
+		void StartPoll(const PollConfiguration& cfg);
+		void StopPoll();
 
 		RequestID SetGameMetadata(GameMetadata Meta);
 

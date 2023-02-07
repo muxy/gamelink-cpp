@@ -109,3 +109,47 @@ const char* MuxyGateway_GetProductionURL(MuxyGateway Gateway)
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
     return SDK->GetProductionURL().c_str();
 }
+
+void MuxyGateway_StartPoll(MuxyGateway Gateway, GW_PollConfiguration cfg)
+{
+	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
+
+	gateway::PollConfiguration config;
+	config.Duration = cfg.Duration;
+	config.Location = static_cast<gateway::PollLocation>(cfg.Location);
+	config.Mode = static_cast<gateway::PollMode>(cfg.Mode);
+	config.Prompt = gamelink::string(cfg.Prompt);
+	
+	for (size_t i = 0; i < cfg.OptionsCount; ++i)
+	{
+		config.Options.push_back(gamelink::string(cfg.Options[i]));
+	}
+
+	config.OnUpdate = [=](const gateway::PollUpdate& update)
+	{
+		GW_PollUpdate upd;
+		upd.Winner = update.Winner;
+		upd.WinningVoteCount = update.WinningVoteCount;
+		upd.ResultCount = update.Results.size();
+		
+		upd.Results = nullptr;
+		if (!update.Results.empty())
+		{
+			upd.Results = update.Results.data();
+		}
+
+		upd.Count = update.Count;
+		upd.Mean = update.Mean;
+		upd.IsFinal = update.IsFinal;
+
+		cfg.OnUpdate(cfg.User, &upd);
+	};
+
+	SDK->StartPoll(config);
+}
+
+void MuxyGateway_StopPoll(MuxyGateway Gateway)
+{
+	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
+	SDK->StopPoll();
+}

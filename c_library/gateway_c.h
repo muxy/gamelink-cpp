@@ -51,3 +51,40 @@ void MuxyGateway_ForeachPayload(MuxyGateway Gateway, GW_PayloadCallback Callback
 
 const char* MuxyGateway_GetSandboxURL(MuxyGateway Gateway);
 const char* MuxyGateway_GetProductionURL(MuxyGateway Gateway);
+
+// Polling.
+static const int GW_POLL_LOCATION_DEFAULT = 0;
+static const int GW_POLL_MODE_CHAOS = 0;
+static const int GW_POLL_MODE_ORDER = 1;
+
+typedef struct {
+	int Winner;
+	int WinningVoteCount;
+
+	const int* Results;
+	size_t ResultCount;
+
+	int Count;
+	double Mean;
+	bool IsFinal;
+} GW_PollUpdate;
+
+typedef void (*GW_PollUpdateCallback)(void*, GW_PollUpdate*);
+
+typedef struct {
+	const char* Prompt;
+
+	int Location;
+	int Mode;
+
+	const char** Options;
+	size_t OptionsCount;
+
+	int Duration;
+
+	GW_PollUpdateCallback OnUpdate;
+	void* User;
+} GW_PollConfiguration;
+
+void MuxyGateway_StartPoll(MuxyGateway Gateway, GW_PollConfiguration config);
+void MuxyGateway_StopPoll(MuxyGateway Gateway);
