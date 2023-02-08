@@ -5,8 +5,11 @@
 #include "catch2/catch.hpp"
 #include "constrained_types.h"
 #include "gamelink.h"
+#include "gateway.h"
 #include "nlohmann/json.hpp"
+
 #include <iostream>
+#include <sstream>
 
 template<typename T>
 void SerializeEqual(const T& v, const std::string& in)
@@ -83,8 +86,41 @@ inline bool JSONEquals(const ConstrainedString& in, const ConstrainedString& exp
 	if (input != expected)
 	{
 		std::cerr << "Mismatch: (input)\n";
-		std::cerr << input.dump(2) << "\n===== (expected): \n";
-		std::cerr << expected.dump(2) << "\n\n";
+
+		std::string inputDump =  input.dump(2);
+		std::string expectedDump = expected.dump(2);
+
+		std::cerr << inputDump << "\n===== (expected): \n";
+		std::cerr << expectedDump << "\n\n";
+
+		auto lines = [](const std::string& str)
+		{
+			std::vector<std::string> result;
+			std::stringstream ss(str);
+
+			std::string item;
+			while(std::getline(ss, item, '\n'))
+			{
+				result.push_back(item);
+			}
+			return result;
+		};
+
+		std::vector<std::string> inputLines = lines(inputDump);
+		std::vector<std::string> expectedLines = lines(expectedDump);
+
+		size_t line = std::min(inputLines.size(), expectedLines.size());
+		for (size_t i = 0; i < line; ++i)
+		{
+			if (inputLines[i] != expectedLines[i])
+			{
+				std::cerr << "First divergent line at line=" << i << "\n";
+				std::cerr << "in: " << inputLines[i] << "\n";
+				std::cerr << "ex: " << expectedLines[i] << "\n";
+				break;
+			}
+		}
+
 		return false;
 	}
 
@@ -105,6 +141,21 @@ inline void validateSinglePayload(gamelink::SDK& sdk, const std::string& p)
 	uint32_t count = 0;
 	sdk.ForeachPayload([p, &count](const gamelink::Payload* payload) {
 		ConstrainedString str(reinterpret_cast<const char *>(payload->Data()));
+		REQUIRE(JSONEquals(str, ConstrainedString(p.c_str())));
+		count++;
+	});
+
+	REQUIRE(count == 1);
+	REQUIRE(!sdk.HasPayloads());
+}
+
+inline void validateSinglePayload(gateway::SDK& sdk, const std::string& p)
+{
+	REQUIRE(sdk.HasPayloads());
+
+	uint32_t count = 0;
+	sdk.ForeachPayload([p, &count](const gateway::Payload* payload) {
+		ConstrainedString str(reinterpret_cast<const char *>(payload->GetData()));
 		REQUIRE(JSONEquals(str, ConstrainedString(p.c_str())));
 		count++;
 	});
