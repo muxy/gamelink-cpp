@@ -3,23 +3,22 @@
 #include "gateway_c.h"
 #include "gateway.h"
 
-
-MuxyGateway MuxyGateway_Make(const char* GameID)
+MGW_SDK MGW_MakeSDK(const char* GameID)
 {
-    MuxyGateway Gateway;
+    MGW_SDK Gateway;
 	Gateway.SDK = new gateway::SDK(gateway::string(GameID));
     return Gateway;
 }
 
-void MuxyGateway_Kill(MuxyGateway Gateway)
+void MGW_KillSDK(MGW_SDK Gateway)
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
 	delete SDK;
 }
 
-GW_RequestID MuxyGateway_AuthenticateWithPIN(MuxyGateway Gateway, const char *PIN, GW_AuthenticateResponseCallback Callback, void *User)
+MGW_RequestID MGW_SDK_AuthenticateWithPIN(MGW_SDK Gateway, const char *PIN, MGW_AuthenticateResponseCallback Callback, void *User)
 {
-    GW_AuthenticateResponse Auth;
+    MGW_AuthenticateResponse Auth;
     
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
     return SDK->AuthenticateWithPIN(PIN, [&](const gateway::AuthenticateResponse Resp)
@@ -32,9 +31,9 @@ GW_RequestID MuxyGateway_AuthenticateWithPIN(MuxyGateway Gateway, const char *PI
     });
 }
 
-GW_RequestID MuxyGateway_AuthenticateWithRefreshToken(MuxyGateway Gateway, const char *RefreshToken, GW_AuthenticateResponseCallback Callback, void *User)
+MGW_RequestID MGW_SDK_AuthenticateWithRefreshToken(MGW_SDK Gateway, const char *RefreshToken, MGW_AuthenticateResponseCallback Callback, void *User)
 {
-    GW_AuthenticateResponse Auth;
+    MGW_AuthenticateResponse Auth;
     
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
     return SDK->AuthenticateWithRefreshToken(RefreshToken, [&](const gateway::AuthenticateResponse Resp)
@@ -47,13 +46,13 @@ GW_RequestID MuxyGateway_AuthenticateWithRefreshToken(MuxyGateway Gateway, const
     });
 }
 
-bool MuxyGateway_IsAuthenticated(MuxyGateway Gateway)
+bool MGW_SDK_IsAuthenticated(MGW_SDK Gateway)
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
     return SDK->IsAuthenticated();
 }
 
-GW_RequestID MuxyGateway_SetGameMetadata(MuxyGateway Gateway, const GW_GameMetadata *Meta)
+MGW_RequestID MGW_SDK_SetGameMetadata(MGW_SDK Gateway, const MGW_GameMetadata *Meta)
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
     gateway::GameMetadata MD;
@@ -63,13 +62,13 @@ GW_RequestID MuxyGateway_SetGameMetadata(MuxyGateway Gateway, const GW_GameMetad
     return SDK->SetGameMetadata(MD);
 }
 
-bool MuxyGateway_ReceiveMessage(MuxyGateway Gateway, const char *Bytes, uint32_t Length)
+bool MGW_SDK_ReceiveMessage(MGW_SDK Gateway, const char *Bytes, uint32_t Length)
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
     return SDK->ReceiveMessage(Bytes, Length);
 }
 
-bool MuxyGateway_HasPayloads(MuxyGateway Gateway)
+bool MGW_SDK_HasPayloads(MGW_SDK Gateway)
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
     return SDK->HasPayloads();
@@ -77,40 +76,45 @@ bool MuxyGateway_HasPayloads(MuxyGateway Gateway)
 
 typedef struct
 {
-    GW_PayloadCallback Callback;
+    MGW_PayloadCallback Callback;
     void *User;
-} GW_PayloadUserdata;
+} MGW_ForeachPayloadUserdata;
 
-static void Gateway_ForeachPayload(void *User, const gateway::Payload *Payload)
+static void ForeachPayloadCallback(void *User, const gateway::Payload *Payload)
 {
-    GW_PayloadUserdata *UD = (GW_PayloadUserdata*) User;
+	MGW_ForeachPayloadUserdata* data = static_cast<MGW_ForeachPayloadUserdata*>(User);
 
-    GW_Payload PL;
+    MGW_Payload PL;
     PL.Bytes = Payload->GetData();
     PL.Length = Payload->GetLength();
 
-    UD->Callback(UD->User, &PL);
+    data->Callback(data->User, &PL);
 }
 
-void MuxyGateway_ForeachPayload(MuxyGateway Gateway, GW_PayloadCallback Callback, void *User)
+void MGW_SDK_ForeachPayload(MGW_SDK Gateway, MGW_PayloadCallback Callback, void *User)
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
-    SDK->ForeachPayload(Gateway_ForeachPayload, NULL);
+
+	MGW_ForeachPayloadUserdata data;
+	data.Callback = Callback;
+	data.User = User;
+
+    SDK->ForeachPayload(ForeachPayloadCallback, &data);
 }
 
-const char* MuxyGateway_GetSandboxURL(MuxyGateway Gateway)
+const char* MGW_SDK_GetSandboxURL(MGW_SDK Gateway)
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
     return SDK->GetSandboxURL().c_str();
 }
 
-const char* MuxyGateway_GetProductionURL(MuxyGateway Gateway)
+const char* MGW_SDK_GetProductionURL(MGW_SDK Gateway)
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
     return SDK->GetProductionURL().c_str();
 }
 
-void MuxyGateway_StartPoll(MuxyGateway Gateway, GW_PollConfiguration cfg)
+void MGW_SDK_StartPoll(MGW_SDK Gateway, MGW_PollConfiguration cfg)
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
 
@@ -127,7 +131,7 @@ void MuxyGateway_StartPoll(MuxyGateway Gateway, GW_PollConfiguration cfg)
 
 	config.OnUpdate = [=](const gateway::PollUpdate& update)
 	{
-		GW_PollUpdate upd;
+		MGW_PollUpdate upd;
 		upd.Winner = update.Winner;
 		upd.WinningVoteCount = update.WinningVoteCount;
 		upd.ResultCount = update.Results.size();
@@ -148,7 +152,7 @@ void MuxyGateway_StartPoll(MuxyGateway Gateway, GW_PollConfiguration cfg)
 	SDK->StartPoll(config);
 }
 
-void MuxyGateway_StopPoll(MuxyGateway Gateway)
+void MGW_SDK_StopPoll(MGW_SDK Gateway)
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
 	SDK->StopPoll();

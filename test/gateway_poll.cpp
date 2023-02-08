@@ -51,9 +51,9 @@ TEST_CASE("Run Poll in Gateway", "[gateway][poll]")
 
 TEST_CASE("Run Poll in Gateway, C", "[gateway][poll][c]")
 {
-	MuxyGateway sdk = MuxyGateway_Make("gameid");
+	MGW_SDK sdk = MGW_MakeSDK("gameid");
 
-	GW_PollConfiguration cfg;
+	MGW_PollConfiguration cfg;
 	cfg.Prompt = "Pizza toppings"; 
 
 	const char* options[] = {
@@ -67,15 +67,15 @@ TEST_CASE("Run Poll in Gateway, C", "[gateway][poll][c]")
 	size_t finishCalls = 0;
 
 	cfg.User = &finishCalls;
-	cfg.OnUpdate = [](void* user, GW_PollUpdate* upd)
+	cfg.OnUpdate = [](void* user, MGW_PollUpdate* upd)
 	{
 		REQUIRE(upd->IsFinal);
 		(*reinterpret_cast<size_t*>(user))++;
 	};
 
-	MuxyGateway_StartPoll(sdk, cfg);
+	MGW_SDK_StartPoll(sdk, cfg);
 	
-	REQUIRE(MuxyGateway_HasPayloads(sdk));
+	REQUIRE(MGW_SDK_HasPayloads(sdk));
 	const char* finishMessage = R"({
 		"meta": {
 			"action": "update",
@@ -96,6 +96,6 @@ TEST_CASE("Run Poll in Gateway, C", "[gateway][poll][c]")
 		}
 	})";
 
-	MuxyGateway_ReceiveMessage(sdk, finishMessage, strlen(finishMessage));
+	MGW_SDK_ReceiveMessage(sdk, finishMessage, strlen(finishMessage));
 	REQUIRE(finishCalls == 1);
 }
