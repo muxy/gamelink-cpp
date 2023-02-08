@@ -21,16 +21,15 @@ namespace gateway
 	class Payload
 	{
 		friend class SDK;
-
-	private:
-		explicit Payload(string data);
-
-		/// Data to be sent.
-		const string _Data;
-
 	public:
 		const char* GetData() const;
 		uint32_t GetLength() const;
+
+	private:
+		Payload(const char* data, uint32_t length);
+
+		const char* _Data;
+		uint32_t _Length;
 	};
 
 	class AuthenticateResponse
@@ -107,6 +106,35 @@ namespace gateway
 		std::function<void(const PollUpdate&)> OnUpdate;
 	};
 
+	enum class ActionCategory
+	{
+		Neutral = 0, 
+		Hinder = 1, 
+		Help = 2
+	};
+
+	enum class ActionState
+	{
+		Unavailable = 0,
+		Available = 1,
+		Hidden = 2,
+	};
+
+	static const int ACTION_INFINITE_USES = -1;
+	struct Action
+	{
+		string ID;
+		ActionCategory Category;
+		ActionState State;
+		int Impact;
+
+		string Name;
+		string Description;
+		string Icon;
+
+		int Count;
+	};
+
 	class SDK
 	{
 	public:
@@ -135,6 +163,15 @@ namespace gateway
 		/// @param[in] cb Callback to be invoked for each avaliable payload
 		/// @param[in] user User pointer that is passed into the callback
 		void ForeachPayload(NetworkCallback Callback, void* User);
+		
+		template<typename CallbackType>
+		void ForeachPayload(CallbackType Callback)
+		{
+			Base.ForeachPayload([=](const gamelink::Payload* Send) {
+				gateway::Payload P(Send->Data(), Send->Length());
+				Callback(&P);
+			});
+		}
 
 		void HandleReconnect();
 
@@ -149,6 +186,12 @@ namespace gateway
 		// Polling
 		void StartPoll(const PollConfiguration& cfg);
 		void StopPoll();
+
+		// Actions
+		void SetActions(const Action* begin, const Action* end);
+		void EnableAction(const string& id);
+		void DisableAction(const string& id);
+		void SetActionCount(const string& id, int number);
 
 		RequestID SetGameMetadata(GameMetadata Meta);
 

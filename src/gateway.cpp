@@ -2,19 +2,20 @@
 
 namespace gateway
 {
-	Payload::Payload(string Data)
-		: _Data(Data)
+	Payload::Payload(const char* data, uint32_t length)
+		: _Data(data)
+		, _Length(length)
 	{
 	}
 
 	const char* Payload::GetData() const
 	{
-		return this->_Data.c_str();
+		return _Data;
 	}
 
 	uint32_t Payload::GetLength() const
 	{
-		return static_cast<uint32_t>(this->_Data.size());
+		return _Length;
 	}
 
 	SDK::SDK(gateway::string GameID)
@@ -36,8 +37,8 @@ namespace gateway
 
 	void SDK::ForeachPayload(SDK::NetworkCallback Callback, void* User)
 	{
-		Base.ForeachPayload([&](const gamelink::Payload* Send) {
-			gateway::Payload P(gateway::string(Send->Data(), Send->Length()));
+		Base.ForeachPayload([=](const gamelink::Payload* Send) {
+			gateway::Payload P(Send->Data(), Send->Length());
 			Callback(User, &P);
 		});
 	}

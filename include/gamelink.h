@@ -5,6 +5,11 @@
 #include "schema/schema.h"
 #include <deque>
 
+namespace gateway
+{
+	class SDK;
+}
+
 namespace gamelink
 {
 	/// FirstError gets a pointer to the first error in the errors array in a
@@ -555,6 +560,7 @@ namespace gamelink
 	///         concurrently, unless specifically denoted.
 	class MUXY_GAMELINK_API SDK
 	{
+		friend class ::gateway::SDK;
 	public:
 		SDK();
 		~SDK();
