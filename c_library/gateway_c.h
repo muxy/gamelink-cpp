@@ -3,14 +3,14 @@
 #include <stdint.h>
 #include <stddef.h>
 
-typedef uint16_t GW_RequestID;
-static const GW_RequestID GW_ANY_REQUEST_ID      = UINT16_MAX;
-static const GW_RequestID GW_REJECTED_REQUEST_ID = UINT16_MAX-1;
+typedef uint16_t MGW_RequestID;
+static const MGW_RequestID MGW_ANY_REQUEST_ID      = UINT16_MAX;
+static const MGW_RequestID MGW_REJECTED_REQUEST_ID = UINT16_MAX-1;
 
 typedef struct
 {
     void *SDK;
-} MuxyGateway;
+} MGW_SDK;
 
 typedef struct
 {
@@ -18,7 +18,7 @@ typedef struct
     const char *RefreshToken;
     const char *TwitchName;
     bool HasError;
-} GW_AuthenticateResponse;
+} MGW_AuthenticateResponse;
 
 typedef struct
 {
@@ -26,36 +26,36 @@ typedef struct
     // Base64 encoded image
     const char *GameLogo;
     const char *Theme;
-} GW_GameMetadata;
+} MGW_GameMetadata;
 
 typedef struct
 {
     const char *Bytes;
     size_t Length;
-} GW_Payload;
+} MGW_Payload;
 
-typedef void (*GW_AuthenticateResponseCallback)(void *User, const GW_AuthenticateResponse *AuthResp);
-typedef void (*GW_PayloadCallback)(void *User, const GW_Payload *Payload);
+typedef void (*MGW_AuthenticateResponseCallback)(void *User, const MGW_AuthenticateResponse *AuthResp);
+typedef void (*MGW_PayloadCallback)(void *User, const MGW_Payload *Payload);
 
-MuxyGateway  MuxyGateway_Make(const char* GameID);
-void         MuxyGateway_Kill(MuxyGateway Gateway);
-GW_RequestID MuxyGateway_AuthenticateWithPIN(MuxyGateway Gateway, const char *PIN, GW_AuthenticateResponseCallback Callback, void *User);
-GW_RequestID MuxyGateway_AuthenticateWithRefreshToken(MuxyGateway Gateway, const char *RefreshToken, GW_AuthenticateResponseCallback Callback, void *User);
-bool         MuxyGateway_IsAuthenticated(MuxyGateway Gateway);
+MGW_SDK  MGW_MakeSDK(const char* GameID);
+void         MGW_KillSDK(MGW_SDK Gateway);
+MGW_RequestID MGW_SDK_AuthenticateWithPIN(MGW_SDK Gateway, const char *PIN, MGW_AuthenticateResponseCallback Callback, void *User);
+MGW_RequestID MGW_SDK_AuthenticateWithRefreshToken(MGW_SDK Gateway, const char *RefreshToken, MGW_AuthenticateResponseCallback Callback, void *User);
+bool         MGW_SDK_IsAuthenticated(MGW_SDK Gateway);
 
-GW_RequestID MuxyGateway_SetGameMetadata(MuxyGateway Gateway, const GW_GameMetadata *Meta);
+MGW_RequestID MGW_SDK_SetGameMetadata(MGW_SDK Gateway, const MGW_GameMetadata *Meta);
 
-bool MuxyGateway_ReceiveMessage(MuxyGateway Gateway, const char *Bytes, uint32_t Length);
-bool MuxyGateway_HasPayloads(MuxyGateway Gateway);
-void MuxyGateway_ForeachPayload(MuxyGateway Gateway, GW_PayloadCallback Callback, void *User);
+bool MGW_SDK_ReceiveMessage(MGW_SDK Gateway, const char *Bytes, uint32_t Length);
+bool MGW_SDK_HasPayloads(MGW_SDK Gateway);
+void MGW_SDK_ForeachPayload(MGW_SDK Gateway, MGW_PayloadCallback Callback, void *User);
 
-const char* MuxyGateway_GetSandboxURL(MuxyGateway Gateway);
-const char* MuxyGateway_GetProductionURL(MuxyGateway Gateway);
+const char* MGW_SDK_GetSandboxURL(MGW_SDK Gateway);
+const char* MGW_SDK_GetProductionURL(MGW_SDK Gateway);
 
 // Polling.
-static const int GW_POLL_LOCATION_DEFAULT = 0;
-static const int GW_POLL_MODE_CHAOS = 0;
-static const int GW_POLL_MODE_ORDER = 1;
+static const int MGW_POLL_LOCATION_DEFAULT = 0;
+static const int MGW_POLL_MODE_CHAOS = 0;
+static const int MGW_POLL_MODE_ORDER = 1;
 
 typedef struct {
 	int Winner;
@@ -67,9 +67,9 @@ typedef struct {
 	int Count;
 	double Mean;
 	bool IsFinal;
-} GW_PollUpdate;
+} MGW_PollUpdate;
 
-typedef void (*GW_PollUpdateCallback)(void*, GW_PollUpdate*);
+typedef void (*MGW_PollUpdateCallback)(void*, MGW_PollUpdate*);
 
 typedef struct {
 	const char* Prompt;
@@ -82,9 +82,9 @@ typedef struct {
 
 	int Duration;
 
-	GW_PollUpdateCallback OnUpdate;
+	MGW_PollUpdateCallback OnUpdate;
 	void* User;
-} GW_PollConfiguration;
+} MGW_PollConfiguration;
 
-void MuxyGateway_StartPoll(MuxyGateway Gateway, GW_PollConfiguration config);
-void MuxyGateway_StopPoll(MuxyGateway Gateway);
+void MGW_SDK_StartPoll(MGW_SDK Gateway, MGW_PollConfiguration config);
+void MGW_SDK_StopPoll(MGW_SDK Gateway);
