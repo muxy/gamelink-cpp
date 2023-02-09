@@ -6,6 +6,7 @@
 #include "constrained_types.h"
 #include "gamelink.h"
 #include "gateway.h"
+#include "gateway_c.h"
 #include "nlohmann/json.hpp"
 
 #include <iostream>
@@ -162,5 +163,11 @@ inline void validateSinglePayload(gateway::SDK& sdk, const std::string& p)
 
 	REQUIRE(count == 1);
 	REQUIRE(!sdk.HasPayloads());
+}
+
+inline void validateSinglePayload(MGW_SDK sdk, const std::string& p)
+{
+	gateway::SDK* SDK = static_cast<gateway::SDK*>(sdk.SDK);
+	return validateSinglePayload(*SDK, p);
 }
 #endif

@@ -157,3 +157,49 @@ void MGW_SDK_StopPoll(MGW_SDK Gateway)
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
 	SDK->StopPoll();
 }
+
+void MGW_SDK_SetActions(MGW_SDK Gateway, const MGW_Action* Begin, const MGW_Action* End)
+{
+	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
+
+	std::vector<gateway::Action> actions;
+	while (Begin != End)
+	{
+		gateway::Action action;
+		action.ID = gamelink::string(Begin->ID);
+		action.Category = static_cast<gateway::ActionCategory>(Begin->Category);
+		action.State = static_cast<gateway::ActionState>(Begin->State);
+		action.Impact = Begin->Impact;
+		action.Name = gamelink::string(Begin->Name);
+		action.Description = gamelink::string(Begin->Description);
+		action.Icon = gamelink::string(Begin->Icon);
+		action.Count = Begin->Count;
+
+		actions.emplace_back(std::move(action));
+
+		Begin++;
+	}
+
+	if (!actions.empty())
+	{
+		SDK->SetActions(actions.data(), actions.data() + actions.size());
+	}
+}
+
+void MGW_SDK_EnableAction(MGW_SDK Gateway, const char* id)
+{
+	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
+	SDK->EnableAction(gamelink::string(id));
+}
+
+void MGW_SDK_DisableAction(MGW_SDK Gateway, const char* id)
+{
+	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
+	SDK->DisableAction(gamelink::string(id));
+}
+
+void MGW_SDK_SetActionCount(MGW_SDK Gateway, const char* id, int count)
+{
+	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
+	SDK->SetActionCount(gamelink::string(id), count);
+}
