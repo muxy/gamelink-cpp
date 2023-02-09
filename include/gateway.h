@@ -135,6 +135,18 @@ namespace gateway
 		int Count;
 	};
 
+	struct GameText
+	{
+		string Label;
+		string Value;
+		string Icon;
+	};
+
+	struct GameTexts
+	{
+		std::vector<GameText> Texts;
+	};
+
 	class SDK
 	{
 	public:
@@ -192,6 +204,9 @@ namespace gateway
 		void EnableAction(const string& id);
 		void DisableAction(const string& id);
 		void SetActionCount(const string& id, int number);
+
+		// Game Data
+		void SetGameTexts(const GameTexts& data);
 
 		RequestID SetGameMetadata(GameMetadata Meta);
 
