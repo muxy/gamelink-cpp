@@ -197,7 +197,6 @@ namespace gateway
 
 		string GetSandboxURL() const;
 		string GetProductionURL() const;
-
 	private:
 		gamelink::SDK Base;
 		string GameID;
