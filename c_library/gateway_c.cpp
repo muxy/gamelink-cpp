@@ -203,3 +203,21 @@ void MGW_SDK_SetActionCount(MGW_SDK Gateway, const char* id, int count)
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
 	SDK->SetActionCount(gamelink::string(id), count);
 }
+
+void MGW_SDK_SetGameTexts(MGW_SDK Gateway, const MGW_GameTexts* Texts)
+{
+	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
+
+	gateway::GameTexts texts;
+	for (size_t i = 0; i < Texts->TextsCount; ++i)
+	{
+		gateway::GameText entry;
+		entry.Label = gateway::string(Texts->Texts[i].Label);
+		entry.Value = gateway::string(Texts->Texts[i].Value);
+		entry.Icon = gateway::string(Texts->Texts[i].Icon);
+
+		texts.Texts.emplace_back(std::move(entry));
+	}
+
+	SDK->SetGameTexts(texts);
+}

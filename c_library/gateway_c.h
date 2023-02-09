@@ -117,3 +117,16 @@ void MGW_SDK_SetActions(MGW_SDK Gateway, const MGW_Action* Begin, const MGW_Acti
 void MGW_SDK_EnableAction(MGW_SDK Gateway, const char* id);
 void MGW_SDK_DisableAction(MGW_SDK Gateway, const char* id);
 void MGW_SDK_SetActionCount(MGW_SDK Gateway, const char* id, int count);
+
+typedef struct {
+	const char* Label;
+	const char* Value;
+	const char* Icon;
+} MGW_GameText;
+
+typedef struct {
+	MGW_GameText* Texts;
+	size_t TextsCount;
+} MGW_GameTexts;
+
+void MGW_SDK_SetGameTexts(MGW_SDK Gateway, const MGW_GameTexts* Texts);
