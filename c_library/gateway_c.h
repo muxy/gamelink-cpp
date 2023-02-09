@@ -88,3 +88,32 @@ typedef struct {
 
 void MGW_SDK_StartPoll(MGW_SDK Gateway, MGW_PollConfiguration config);
 void MGW_SDK_StopPoll(MGW_SDK Gateway);
+
+
+static const int MGW_ACTIONSTATE_UNAVAILABLE = 0;
+static const int MGW_ACTIONSTATE_AVAILABLE = 1;
+static const int MGW_ACTIONSTATE_HIDDEN = 2;
+
+static const int MGW_ACTIONCATEGORY_NEUTRAL = 0;
+static const int MGW_ACTIONCATEGORY_HINDER = 1;
+static const int MGW_ACTIONCATEGORY_HELP = 2;
+
+static const int MGW_ACTION_INFINITE_USES = -1;
+
+typedef struct {
+	const char* ID;
+	int Category;
+	int State;
+	int Impact;
+
+	const char* Name;
+	const char* Description;
+	const char* Icon;
+
+	int Count;
+} MGW_Action;
+
+void MGW_SDK_SetActions(MGW_SDK Gateway, const MGW_Action* Begin, const MGW_Action* End);
+void MGW_SDK_EnableAction(MGW_SDK Gateway, const char* id);
+void MGW_SDK_DisableAction(MGW_SDK Gateway, const char* id);
+void MGW_SDK_SetActionCount(MGW_SDK Gateway, const char* id, int count);
