@@ -373,6 +373,122 @@ TEST_CASE_METHOD(IntegrationTestFixture, "Transactions Support", "[.][integratio
 	REQUIRE(calls == 6);
 }
 
+
+TEST_CASE_METHOD(IntegrationTestFixture, "Transactions Support through gateway", "[.][integration][t]")
+{
+	Connect();
+
+	size_t bitsCalls = 0;
+	gateway.OnBitsUsed([&](const gateway::BitsUsed& used)
+	{
+		// This should get 1 call, to purchase 50 coins.
+		REQUIRE(used.SKU == "muxy-bits-50");
+		REQUIRE(used.Bits == 50);
+		
+		bitsCalls++;
+	});
+
+	size_t coinCalls = 0;
+	gateway.OnCoinsUsed([&](const gateway::CoinsUsed& used)
+	{
+		// This should get 5 calls, which are all coins 
+		REQUIRE(used.SKU == "costs-ten");
+		REQUIRE(used.Cost == 10);
+
+		coinCalls++;
+	});
+
+	// Forge a transaction receipt. This does not work on production.
+	if (signature.empty())
+	{
+		return;
+	}
+
+	// JWT header
+	std::string header = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
+
+	std::time_t now;
+	std::time(&now);
+
+	std::tm* gmt;
+	gmt = std::gmtime(&now);
+
+	char dateBuffer[256];
+	std::strftime(dateBuffer, 256, "%F %T.000000000 +0000 UTC", gmt);
+
+	// Parse the passed in JWT and pull out the claims object.
+	std::istringstream splitter(jwt);
+	std::string output;
+
+	// Ignore header.
+	getline(splitter, output, '.');
+
+	// Get body.
+	getline(splitter, output, '.');
+	nlohmann::json inputClaims = nlohmann::json::parse(Decode64(output));
+	std::string userId = inputClaims["user_id"].get<std::string>();
+
+	// JWT claims
+	char claimsBuffer[1024];
+	snprintf(claimsBuffer, 1024, R"===({
+		"exp": %lld,
+		"topic": "bits_transaction_receipt",
+		"data": {
+			"transactionId": "fake-transaction-%lld",
+			"time": "%s",
+			"userId": "%s",
+			"product": {
+				"domainId": "twitch.ext.%s",
+				"sku": "muxy-bits-50",
+				"cost": {
+					"amount": 50,
+					"type": "bits"
+				}
+			}
+		}
+	})===", UnixNow() + 1000, UnixNow() + 1000, dateBuffer, userId.c_str(), client.c_str());
+
+	std::string claims = Base64(claimsBuffer);
+	std::string receipt = header + "." + claims + "." + signature;
+
+	nlohmann::json body;
+	body["transactionReceipt"] = receipt;
+	body["displayName"] = "somebody";
+
+	int resp = Request("POST", "bits/transactions", &body, nullptr);
+	REQUIRE(resp == 201);
+
+	Sleep();
+	REQUIRE(bitsCalls == 1);
+
+	// The above operation has credited the user with at least 50 coins, use them to generate
+	// coin-based SKUs
+	sdk.SetChannelConfig(nlohmann::json::parse(R"===({
+		"skus": {
+			"costs-ten": {
+				"price": 10,
+				"displayName": "This costs ten coins"
+			}
+		}
+	})==="));
+	Sleep();
+
+	nlohmann::json purchaseBody = nlohmann::json::parse(R"===({
+		"sku": "costs-ten",
+		"price": 10
+	})===");
+
+	for (uint32_t i = 0; i < 5; ++i)
+	{
+		resp = Request("POST", "coins/purchase", &purchaseBody, nullptr);
+		REQUIRE(resp == 200);
+	}
+
+	Sleep();
+	REQUIRE(bitsCalls == 1);
+	REQUIRE(coinCalls == 5);
+}
+
 TEST_CASE_METHOD(IntegrationTestFixture, "Datastream operations", "[.][integration]")
 {
 	Connect();
