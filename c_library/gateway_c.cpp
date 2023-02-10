@@ -221,3 +221,57 @@ void MGW_SDK_SetGameTexts(MGW_SDK Gateway, const MGW_GameTexts* Texts)
 
 	SDK->SetGameTexts(texts);
 }
+
+void MGW_SDK_OnBitsUsed(MGW_SDK Gateway, MGW_OnBitsUsedCallback Callback, void* User)
+{
+	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
+
+	SDK->OnBitsUsed([=](const gateway::BitsUsed& BitsUsed)
+	{
+		MGW_BitsUsed Used;
+		Used.TransactionID = BitsUsed.TransactionID.c_str();
+		Used.SKU = BitsUsed.SKU.c_str();
+		Used.Bits = BitsUsed.Bits;
+
+		Callback(User, &Used);
+	});
+}
+
+void MGW_SDK_OnCoinsUsed(MGW_SDK Gateway, MGW_OnCoinsUsedCallback Callback, void* User)
+{
+	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
+
+	SDK->OnCoinsUsed([=](const gateway::CoinsUsed& BitsUsed)
+	{
+		MGW_CoinsUsed Used;
+		Used.TransactionID = BitsUsed.TransactionID.c_str();
+		Used.SKU = BitsUsed.SKU.c_str();
+		Used.Cost = BitsUsed.Cost;
+
+		Callback(User, &Used);
+	});
+}
+
+void MGW_SDK_ValidateTransaction(MGW_SDK Gateway, MGW_CoinsUsed Coins, const char* Reason)
+{
+	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
+
+	gateway::CoinsUsed tx;
+	tx.SKU = gateway::string(Coins.SKU);
+	tx.TransactionID = gateway::string(Coins.TransactionID);
+	tx.Cost = Coins.Cost;
+
+	SDK->ValidateTransaction(tx, gateway::string(Reason));
+}
+
+void MGW_SDK_RefundTransaction(MGW_SDK Gateway, MGW_CoinsUsed Coins, const char* Reason)
+{
+	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
+
+	gateway::CoinsUsed tx;
+	tx.SKU = gateway::string(Coins.SKU);
+	tx.TransactionID = gateway::string(Coins.TransactionID);
+	tx.Cost = Coins.Cost;
+
+	SDK->RefundTransaction(tx, gateway::string(Reason));
+}

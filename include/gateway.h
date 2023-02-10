@@ -147,6 +147,20 @@ namespace gateway
 		std::vector<GameText> Texts;
 	};
 
+	struct BitsUsed
+	{
+		string TransactionID;
+		string SKU;
+		int Bits;
+	};
+
+	struct CoinsUsed
+	{
+		string TransactionID;
+		string SKU;
+		int Cost;
+	};
+
 	class SDK
 	{
 	public:
@@ -212,6 +226,11 @@ namespace gateway
 
 		string GetSandboxURL() const;
 		string GetProductionURL() const;
+
+		void OnBitsUsed(std::function<void (const gateway::BitsUsed&)> Callback);
+		void OnCoinsUsed(std::function<void (const gateway::CoinsUsed&)> Callback);
+		void ValidateTransaction(const gateway::CoinsUsed& used, const gamelink::string& Details);
+		void RefundTransaction(const gateway::CoinsUsed& used, const gamelink::string& Details);
 	private:
 		gamelink::SDK Base;
 		string GameID;

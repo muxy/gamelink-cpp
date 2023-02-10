@@ -130,3 +130,24 @@ typedef struct {
 } MGW_GameTexts;
 
 void MGW_SDK_SetGameTexts(MGW_SDK Gateway, const MGW_GameTexts* Texts);
+
+typedef struct {
+	const char* TransactionID;
+	const char* SKU;
+	int Bits;
+} MGW_BitsUsed;
+
+typedef struct {
+	const char* TransactionID;
+	const char* SKU;
+	int Cost;
+} MGW_CoinsUsed;
+
+typedef void (*MGW_OnBitsUsedCallback)(void*, MGW_BitsUsed*);
+typedef void (*MGW_OnCoinsUsedCallback)(void*, MGW_CoinsUsed*);
+
+void MGW_SDK_OnBitsUsed(MGW_SDK Gateway, MGW_OnBitsUsedCallback Callback, void* User);
+void MGW_SDK_OnCoinsUsed(MGW_SDK Gateway, MGW_OnCoinsUsedCallback Callback, void* User);
+
+void MGW_SDK_ValidateTransaction(MGW_SDK Gateway, MGW_CoinsUsed Coins, const char* Reason);
+void MGW_SDK_RefundTransaction(MGW_SDK Gateway, MGW_CoinsUsed Coins, const char* Reason);
