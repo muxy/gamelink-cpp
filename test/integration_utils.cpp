@@ -18,7 +18,8 @@ inline size_t writeFunction(char* ptr, size_t size, size_t nmemb, void* userdata
 }
 
 IntegrationTestFixture::IntegrationTestFixture()
-	:done(false)
+	:gateway("notagame")
+	,done(false)
 {
 	LoadEnvironment();
 }
@@ -57,12 +58,21 @@ void IntegrationTestFixture::Connect()
 
 		std::string token = resp["token"];
 
-		gamelink::RequestId req = sdk.AuthenticateWithPIN(gamelink::string(client.c_str()), gamelink::string(token.c_str()));
+		gamelink::RequestId req = sdk.AuthenticateWithGameIDAndPIN(
+			gamelink::string(client.c_str()), 
+			gamelink::string("Mystery Fun House"),
+			gamelink::string(token.c_str())
+		);
 		sdk.WaitForResponse(req);
 	}
 	else
 	{
-		gamelink::RequestId req = sdk.AuthenticateWithRefreshToken(gamelink::string(client.c_str()), gamelink::string(refreshToken.c_str()));
+		gamelink::RequestId req = sdk.AuthenticateWithGameIDAndRefreshToken(
+			gamelink::string(client.c_str()), 
+			gamelink::string("Mystery Fun House"),
+			gamelink::string(refreshToken.c_str())
+		);
+
 		sdk.WaitForResponse(req);
 	}
 
@@ -294,6 +304,7 @@ void IntegrationTestFixture::Reconnect()
 	connection->onMessage([&](const char* bytes, uint32_t len)
 	{
 		sdk.ReceiveMessage(bytes, len);
+		gateway.ReceiveMessage(bytes, len);
 	});
 
 	sdk.OnDebugMessage([](const gamelink::string& str)
@@ -307,6 +318,10 @@ void IntegrationTestFixture::Reconnect()
 		{
 			sdk.ForeachPayload([&](const gamelink::Payload* send) {
 				connection->send(send->Data(), send->Length());
+			});
+
+			gateway.ForeachPayload([&](const gateway::Payload* send) {
+				connection->send(send->GetData(), send->GetLength());
 			});
 
 			connection->run();

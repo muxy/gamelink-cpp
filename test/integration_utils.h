@@ -7,6 +7,7 @@
 #include <memory>
 
 #include "gamelink.h"
+#include "gateway.h"
 #include "websocket.h"
 
 class IntegrationTestFixture
@@ -17,7 +18,9 @@ public:
 
 	int Request(const char* method, const char* endpoint, const nlohmann::json* input, nlohmann::json* output);
 	int RequestURL(const char *method, const char* url, nlohmann::json* output);
+
 	gamelink::SDK sdk;
+	gateway::SDK gateway;
 
 	void Sleep(int seconds = 1);
 	void FlushSDKMessages();
