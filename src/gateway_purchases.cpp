@@ -4,7 +4,7 @@ namespace gateway
 {	
 	void SDK::OnBitsUsed(std::function<void (const gateway::BitsUsed&)> Callback)
 	{
-		Base.OnTransaction().AddUnique(gamelink::string("gamelink-bits"), [=](const gamelink::schema::TransactionResponse& resp)
+		Base.OnTransaction().AddUnique(gamelink::string("gateway-bits"), [=](const gamelink::schema::TransactionResponse& resp)
 		{
 			if (resp.data.currency == "bits")
 			{
@@ -20,13 +20,13 @@ namespace gateway
 		Base.SubscribeToAllPurchases();
 	}
 
-	void SDK::OnCoinsUsed(std::function<void (const gateway::CoinsUsed&)> Callback)
+	void SDK::OnActionUsed(std::function<void (const gateway::ActionUsed&)> Callback)
 	{
-		Base.OnTransaction().AddUnique(gamelink::string("gamelink-coins"), [=](const gamelink::schema::TransactionResponse& resp)
+		Base.OnTransaction().AddUnique(gamelink::string("gateway-actions"), [=](const gamelink::schema::TransactionResponse& resp)
 		{
 			if (resp.data.currency == "coins")
 			{
-				gateway::CoinsUsed used;
+				gateway::ActionUsed used;
 				used.TransactionID = resp.data.muxyId;
 				used.Cost = resp.data.cost;
 				used.SKU = resp.data.sku;
@@ -38,11 +38,11 @@ namespace gateway
 		Base.SubscribeToAllPurchases();
 	}
 
-	void SDK::ValidateTransaction(const gateway::CoinsUsed& used, const gamelink::string& Details)
+	void SDK::ValidateActionTransaction(const gateway::ActionUsed& used, const gamelink::string& Details)
 	{
 		Base.ValidateTransaction(used.TransactionID, Details);
 	}
-	void SDK::RefundTransaction(const gateway::CoinsUsed& used, const gamelink::string& Details)
+	void SDK::RefundActionTransaction(const gateway::ActionUsed& used, const gamelink::string& Details)
 	{
 		Base.RefundTransactionByID(used.TransactionID, Details);
 	}

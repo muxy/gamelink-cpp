@@ -389,7 +389,7 @@ TEST_CASE_METHOD(IntegrationTestFixture, "Transactions Support through gateway",
 	});
 
 	size_t coinCalls = 0;
-	gateway.OnCoinsUsed([&](const gateway::CoinsUsed& used)
+	gateway.OnActionUsed([&](const gateway::ActionUsed& used)
 	{
 		// This should get 5 calls, which are all coins 
 		REQUIRE(used.SKU == "costs-ten");
