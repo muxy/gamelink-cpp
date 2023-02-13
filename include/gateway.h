@@ -154,7 +154,7 @@ namespace gateway
 		int Bits;
 	};
 
-	struct CoinsUsed
+	struct ActionUsed
 	{
 		string TransactionID;
 		string SKU;
@@ -228,9 +228,10 @@ namespace gateway
 		string GetProductionURL() const;
 
 		void OnBitsUsed(std::function<void (const gateway::BitsUsed&)> Callback);
-		void OnCoinsUsed(std::function<void (const gateway::CoinsUsed&)> Callback);
-		void ValidateTransaction(const gateway::CoinsUsed& used, const gamelink::string& Details);
-		void RefundTransaction(const gateway::CoinsUsed& used, const gamelink::string& Details);
+		void OnActionUsed(std::function<void (const gateway::ActionUsed&)> Callback);
+
+		void ValidateActionTransaction(const gateway::ActionUsed& used, const gamelink::string& Details);
+		void RefundActionTransaction(const gateway::ActionUsed& used, const gamelink::string& Details);
 	private:
 		gamelink::SDK Base;
 		string GameID;

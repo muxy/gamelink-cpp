@@ -141,13 +141,13 @@ typedef struct {
 	const char* TransactionID;
 	const char* SKU;
 	int Cost;
-} MGW_CoinsUsed;
+} MGW_ActionUsed;
 
 typedef void (*MGW_OnBitsUsedCallback)(void*, MGW_BitsUsed*);
-typedef void (*MGW_OnCoinsUsedCallback)(void*, MGW_CoinsUsed*);
+typedef void (*MGW_OnActionUsedCallback)(void*, MGW_ActionUsed*);
 
 void MGW_SDK_OnBitsUsed(MGW_SDK Gateway, MGW_OnBitsUsedCallback Callback, void* User);
-void MGW_SDK_OnCoinsUsed(MGW_SDK Gateway, MGW_OnCoinsUsedCallback Callback, void* User);
+void MGW_SDK_OnActionUsed(MGW_SDK Gateway, MGW_OnActionUsedCallback Callback, void* User);
 
-void MGW_SDK_ValidateTransaction(MGW_SDK Gateway, MGW_CoinsUsed Coins, const char* Reason);
-void MGW_SDK_RefundTransaction(MGW_SDK Gateway, MGW_CoinsUsed Coins, const char* Reason);
+void MGW_SDK_ValidateActionTransaction(MGW_SDK Gateway, MGW_ActionUsed Coins, const char* Reason);
+void MGW_SDK_RefundActionTransaction(MGW_SDK Gateway, MGW_ActionUsed Coins, const char* Reason);
