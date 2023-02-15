@@ -1,4 +1,6 @@
 #pragma once
+#ifndef MUXY_GATEWAY_C_H
+#define MUXY_GATEWAY_C_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -13,13 +15,13 @@ extern "C"
 	*/
 
 #ifdef MUXY_CLIB_EXPORT
-#ifdef _MSC_VER
-#define MUXY_GW_CLIB_API __declspec(dllexport)
+#	ifdef _MSC_VER
+#		define MUXY_GW_CLIB_API __declspec(dllexport)
+#	else
+#		define MUXY_GW_CLIB_API
+#	endif
 #else
-#define MUXY_GW_CLIB_API
-#endif
-#else
-#define MUXY_GW_CLIB_API
+#	define MUXY_GW_CLIB_API
 #endif
 
 	typedef char* MGW_String;
@@ -73,7 +75,6 @@ extern "C"
 	MUXY_GW_CLIB_API MGW_String MGW_SDK_GetProductionURL(MGW_SDK Gateway);
 
 	MUXY_GW_CLIB_API void MGW_FreeString(MGW_String Str);
-
 
 	// Polling.
 	static const int MGW_POLL_LOCATION_DEFAULT = 0;
