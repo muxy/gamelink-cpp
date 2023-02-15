@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "gateway_c.h"
 #include "gateway.h"
+#include "gamelink_c.h"
 
 MGW_SDK MGW_MakeSDK(const char* GameID)
 {
@@ -102,16 +103,16 @@ void MGW_SDK_ForeachPayload(MGW_SDK Gateway, MGW_PayloadCallback Callback, void 
     SDK->ForeachPayload(ForeachPayloadCallback, &data);
 }
 
-const char* MGW_SDK_GetSandboxURL(MGW_SDK Gateway)
+MGW_String MGW_SDK_GetSandboxURL(MGW_SDK Gateway)
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
-    return SDK->GetSandboxURL().c_str();
+	return MuxyGameLink_StrDup(SDK->GetSandboxURL().c_str());
 }
 
-const char* MGW_SDK_GetProductionURL(MGW_SDK Gateway)
+MGW_String MGW_SDK_GetProductionURL(MGW_SDK Gateway)
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
-    return SDK->GetProductionURL().c_str();
+	return MuxyGameLink_StrDup(SDK->GetProductionURL().c_str());
 }
 
 void MGW_SDK_StartPoll(MGW_SDK Gateway, MGW_PollConfiguration cfg)
@@ -274,4 +275,9 @@ void MGW_SDK_RefundTransaction(MGW_SDK Gateway, MGW_ActionUsed Coins, const char
 	tx.Cost = Coins.Cost;
 
 	SDK->RefundActionTransaction(tx, gateway::string(Reason));
+}
+
+void MGW_FreeString(MGW_String Str)
+{
+	free(Str);
 }
