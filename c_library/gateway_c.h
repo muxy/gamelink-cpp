@@ -111,8 +111,8 @@ extern "C"
 		void* User;
 	} MGW_PollConfiguration;
 
-	void MGW_SDK_StartPoll(MGW_SDK Gateway, MGW_PollConfiguration config);
-	void MGW_SDK_StopPoll(MGW_SDK Gateway);
+	MUXY_GW_CLIB_API void MGW_SDK_StartPoll(MGW_SDK Gateway, MGW_PollConfiguration config);
+	MUXY_GW_CLIB_API void MGW_SDK_StopPoll(MGW_SDK Gateway);
 
 	static const int MGW_ACTIONSTATE_UNAVAILABLE = 0;
 	static const int MGW_ACTIONSTATE_AVAILABLE = 1;
@@ -156,7 +156,7 @@ extern "C"
 		size_t TextsCount;
 	} MGW_GameTexts;
 
-	void MGW_SDK_SetGameTexts(MGW_SDK Gateway, const MGW_GameTexts* Texts);
+	MUXY_GW_CLIB_API void MGW_SDK_SetGameTexts(MGW_SDK Gateway, const MGW_GameTexts* Texts);
 
 	typedef struct
 	{
@@ -178,8 +178,8 @@ extern "C"
 	MUXY_GW_CLIB_API void MGW_SDK_OnBitsUsed(MGW_SDK Gateway, MGW_OnBitsUsedCallback Callback, void* User);
 	MUXY_GW_CLIB_API void MGW_SDK_OnActionUsed(MGW_SDK Gateway, MGW_OnActionUsedCallback Callback, void* User);
 
-	void MGW_SDK_ValidateActionTransaction(MGW_SDK Gateway, MGW_ActionUsed Coins, const char* Reason);
-	void MGW_SDK_RefundActionTransaction(MGW_SDK Gateway, MGW_ActionUsed Coins, const char* Reason);
+	MUXY_GW_CLIB_API void MGW_SDK_ValidateActionTransaction(MGW_SDK Gateway, MGW_ActionUsed Coins, const char* Reason);
+	MUXY_GW_CLIB_API void MGW_SDK_RefundActionTransaction(MGW_SDK Gateway, MGW_ActionUsed Coins, const char* Reason);
 
 #ifdef __cplusplus
 }
