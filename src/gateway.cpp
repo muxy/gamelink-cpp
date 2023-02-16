@@ -35,6 +35,16 @@ namespace gateway
 		return Base.HasPayloads();
 	}
 
+	void SDK::OnDebugMessage(std::function<void (const gateway::string&)> callback)
+	{
+		return Base.OnDebugMessage(std::move(callback));
+	}
+
+	void SDK::DetachOnDebugMessage()
+	{
+		Base.DetachOnDebugMessage();
+	}
+
 	void SDK::ForeachPayload(SDK::NetworkCallback Callback, void* User)
 	{
 		Base.ForeachPayload([=](const gamelink::Payload* Send) {

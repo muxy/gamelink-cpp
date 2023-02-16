@@ -178,6 +178,9 @@ namespace gateway
 		bool ReceiveMessage(const char* Bytes, uint32_t Length);
 		bool HasPayloads() const;
 
+		void OnDebugMessage(std::function<void (const gateway::string&)> message);
+		void DetachOnDebugMessage();
+
 		/// Type used in ForeachPayload below. Takes in the user pointer as the first argument,
 		/// and a pointer to a payload as the second parameter.
 		typedef void (*NetworkCallback)(void*, const Payload*);
