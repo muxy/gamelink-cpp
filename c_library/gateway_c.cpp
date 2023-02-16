@@ -53,13 +53,19 @@ bool MGW_SDK_IsAuthenticated(MGW_SDK Gateway)
     return SDK->IsAuthenticated();
 }
 
-MGW_RequestID MGW_SDK_SetGameMetadata(MGW_SDK Gateway, const MGW_GameMetadata *Meta)
+void MGW_SDK_HandleReconnect(MGW_SDK Gateway)
+{
+	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
+	SDK->HandleReconnect();
+}
+
+MGW_RequestID MGW_SDK_SetGameMetadata(MGW_SDK Gateway, MGW_GameMetadata Meta)
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
     gateway::GameMetadata MD;
-    MD.GameName = Meta->GameName;
-    MD.GameLogo = Meta->GameLogo;
-    MD.Theme = Meta->Theme;
+    MD.GameName = Meta.GameName;
+    MD.GameLogo = Meta.GameLogo;
+    MD.Theme = Meta.Theme;
     return SDK->SetGameMetadata(MD);
 }
 
