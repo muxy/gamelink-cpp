@@ -59,6 +59,21 @@ void MGW_SDK_HandleReconnect(MGW_SDK Gateway)
     SDK->HandleReconnect();
 }
 
+void MGW_SDK_OnDebugMessage(MGW_SDK Gateway, MGW_DebugMessageCallback Callback, void* UserData)
+{
+    gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
+    SDK->OnDebugMessage([=](const gateway::string& msg)
+    {
+        Callback(UserData, msg.c_str());
+    });
+}
+
+void MGW_SDK_DetachOnDebugMessage(MGW_SDK Gateway)
+{
+    gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
+    SDK->DetachOnDebugMessage();
+}
+
 MGW_RequestID MGW_SDK_SetGameMetadata(MGW_SDK Gateway, MGW_GameMetadata Meta)
 {
     gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
