@@ -8,6 +8,7 @@ MGW_SDK MGW_MakeSDK(const char* GameID)
 {
     MGW_SDK Gateway;
 	Gateway.SDK = new gateway::SDK(gateway::string(GameID));
+
     return Gateway;
 }
 
@@ -19,11 +20,10 @@ void MGW_KillSDK(MGW_SDK Gateway)
 
 MGW_RequestID MGW_SDK_AuthenticateWithPIN(MGW_SDK Gateway, const char *PIN, MGW_AuthenticateResponseCallback Callback, void *User)
 {
-    MGW_AuthenticateResponse Auth;
-    
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
-    return SDK->AuthenticateWithPIN(PIN, [&](const gateway::AuthenticateResponse Resp)
+    return SDK->AuthenticateWithPIN(PIN, [=](const gateway::AuthenticateResponse Resp)
     {
+		MGW_AuthenticateResponse Auth;
         Auth.JWT          = Resp.JWT.c_str();
         Auth.RefreshToken = Resp.RefreshToken.c_str();
         Auth.TwitchName   = Resp.TwitchName.c_str();
@@ -34,11 +34,11 @@ MGW_RequestID MGW_SDK_AuthenticateWithPIN(MGW_SDK Gateway, const char *PIN, MGW_
 
 MGW_RequestID MGW_SDK_AuthenticateWithRefreshToken(MGW_SDK Gateway, const char *RefreshToken, MGW_AuthenticateResponseCallback Callback, void *User)
 {
-    MGW_AuthenticateResponse Auth;
     
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
-    return SDK->AuthenticateWithRefreshToken(RefreshToken, [&](const gateway::AuthenticateResponse Resp)
+    return SDK->AuthenticateWithRefreshToken(RefreshToken, [=](const gateway::AuthenticateResponse Resp)
     {
+		MGW_AuthenticateResponse Auth;
         Auth.JWT          = Resp.JWT.c_str();
         Auth.RefreshToken = Resp.RefreshToken.c_str();
         Auth.TwitchName   = Resp.TwitchName.c_str();
