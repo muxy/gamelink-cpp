@@ -83,19 +83,19 @@ extern "C"
 	MUXY_GW_CLIB_API void MGW_FreeString(MGW_String Str);
 
 	// Polling.
-	static const int MGW_POLL_LOCATION_DEFAULT = 0;
-	static const int MGW_POLL_MODE_CHAOS = 0;
-	static const int MGW_POLL_MODE_ORDER = 1;
+	static const int32_t MGW_POLL_LOCATION_DEFAULT = 0;
+	static const int32_t MGW_POLL_MODE_CHAOS = 0;
+	static const int32_t MGW_POLL_MODE_ORDER = 1;
 
 	typedef struct
 	{
-		int Winner;
-		int WinningVoteCount;
+		int32_t Winner;
+		int32_t WinningVoteCount;
 
-		const int* Results;
-		size_t ResultCount;
+		const int32_t* Results;
+		uint64_t ResultCount;
 
-		int Count;
+		int32_t Count;
 		double Mean;
 		bool IsFinal;
 	} MGW_PollUpdate;
@@ -106,13 +106,13 @@ extern "C"
 	{
 		const char* Prompt;
 
-		int Location;
-		int Mode;
+		int32_t Location;
+		int32_t Mode;
 
 		const char** Options;
-		size_t OptionsCount;
+		uint64_t OptionsCount;
 
-		int Duration;
+		int32_t Duration;
 
 		MGW_PollUpdateCallback OnUpdate;
 		void* User;
@@ -121,34 +121,34 @@ extern "C"
 	MUXY_GW_CLIB_API void MGW_SDK_StartPoll(MGW_SDK Gateway, MGW_PollConfiguration config);
 	MUXY_GW_CLIB_API void MGW_SDK_StopPoll(MGW_SDK Gateway);
 
-	static const int MGW_ACTIONSTATE_UNAVAILABLE = 0;
-	static const int MGW_ACTIONSTATE_AVAILABLE = 1;
-	static const int MGW_ACTIONSTATE_HIDDEN = 2;
+	static const int32_t MGW_ACTIONSTATE_UNAVAILABLE = 0;
+	static const int32_t MGW_ACTIONSTATE_AVAILABLE = 1;
+	static const int32_t MGW_ACTIONSTATE_HIDDEN = 2;
 
-	static const int MGW_ACTIONCATEGORY_NEUTRAL = 0;
-	static const int MGW_ACTIONCATEGORY_HINDER = 1;
-	static const int MGW_ACTIONCATEGORY_HELP = 2;
+	static const int32_t MGW_ACTIONCATEGORY_NEUTRAL = 0;
+	static const int32_t MGW_ACTIONCATEGORY_HINDER = 1;
+	static const int32_t MGW_ACTIONCATEGORY_HELP = 2;
 
-	static const int MGW_ACTION_INFINITE_USES = -1;
+	static const int32_t MGW_ACTION_INFINITE_USES = -1;
 
 	typedef struct
 	{
 		const char* ID;
-		int Category;
-		int State;
-		int Impact;
+		int32_t Category;
+		int32_t State;
+		int32_t Impact;
 
 		const char* Name;
 		const char* Description;
 		const char* Icon;
 
-		int Count;
+		int32_t Count;
 	} MGW_Action;
 
-	MUXY_GW_CLIB_API void MGW_SDK_SetActions(MGW_SDK Gateway, const MGW_Action* Begin, const MGW_Action* End);
+	MUXY_GW_CLIB_API void MGW_SDK_SetActions(MGW_SDK Gateway, const MGW_Action* Actions, uint64_t Count);
 	MUXY_GW_CLIB_API void MGW_SDK_EnableAction(MGW_SDK Gateway, const char* id);
 	MUXY_GW_CLIB_API void MGW_SDK_DisableAction(MGW_SDK Gateway, const char* id);
-	MUXY_GW_CLIB_API void MGW_SDK_SetActionCount(MGW_SDK Gateway, const char* id, int count);
+	MUXY_GW_CLIB_API void MGW_SDK_SetActionCount(MGW_SDK Gateway, const char* id, int32_t count);
 
 	typedef struct
 	{
@@ -157,13 +157,7 @@ extern "C"
 		const char* Icon;
 	} MGW_GameText;
 
-	typedef struct
-	{
-		MGW_GameText* Texts;
-		size_t TextsCount;
-	} MGW_GameTexts;
-
-	MUXY_GW_CLIB_API void MGW_SDK_SetGameTexts(MGW_SDK Gateway, const MGW_GameTexts* Texts);
+	MUXY_GW_CLIB_API void MGW_SDK_SetGameTexts(MGW_SDK Gateway, const MGW_GameText* Texts, uint64_t Count);
 
 	typedef struct
 	{
