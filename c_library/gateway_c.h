@@ -58,12 +58,16 @@ extern "C"
 
 	typedef void (*MGW_AuthenticateResponseCallback)(void* User, const MGW_AuthenticateResponse* AuthResp);
 	typedef void (*MGW_PayloadCallback)(void* User, const MGW_Payload* Payload);
+	typedef void (*MGW_DebugMessageCallback)(void* User, const char* msg);
 
 	MUXY_GW_CLIB_API MGW_SDK MGW_MakeSDK(const char* GameID);
 	MUXY_GW_CLIB_API void MGW_KillSDK(MGW_SDK Gateway);
 	MUXY_GW_CLIB_API MGW_RequestID MGW_SDK_AuthenticateWithPIN(MGW_SDK Gateway, const char* PIN, MGW_AuthenticateResponseCallback Callback, void* User);
 	MUXY_GW_CLIB_API MGW_RequestID MGW_SDK_AuthenticateWithRefreshToken(MGW_SDK Gateway, const char* RefreshToken, MGW_AuthenticateResponseCallback Callback, void* User);
 	MUXY_GW_CLIB_API bool MGW_SDK_IsAuthenticated(MGW_SDK Gateway);
+
+	MUXY_GW_CLIB_API void MGW_SDK_OnDebugMessage(MGW_SDK Gateway, MGW_DebugMessageCallback Callback, void* UserData);
+	MUXY_GW_CLIB_API void MGW_SDK_DetachOnDebugMessage(MGW_SDK Gateway);
 
 	MUXY_GW_CLIB_API void MGW_SDK_HandleReconnect(MGW_SDK Gateway);
 
