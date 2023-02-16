@@ -65,7 +65,9 @@ extern "C"
 	MUXY_GW_CLIB_API MGW_RequestID MGW_SDK_AuthenticateWithRefreshToken(MGW_SDK Gateway, const char* RefreshToken, MGW_AuthenticateResponseCallback Callback, void* User);
 	MUXY_GW_CLIB_API bool MGW_SDK_IsAuthenticated(MGW_SDK Gateway);
 
-	MUXY_GW_CLIB_API MGW_RequestID MGW_SDK_SetGameMetadata(MGW_SDK Gateway, const MGW_GameMetadata* Meta);
+	MUXY_GW_CLIB_API void MGW_SDK_HandleReconnect(MGW_SDK Gateway);
+
+	MUXY_GW_CLIB_API MGW_RequestID MGW_SDK_SetGameMetadata(MGW_SDK Gateway, MGW_GameMetadata Meta);
 
 	MUXY_GW_CLIB_API bool MGW_SDK_ReceiveMessage(MGW_SDK Gateway, const char* Bytes, uint32_t Length);
 	MUXY_GW_CLIB_API bool MGW_SDK_HasPayloads(MGW_SDK Gateway);
