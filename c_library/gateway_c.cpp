@@ -78,9 +78,22 @@ MGW_RequestID MGW_SDK_SetGameMetadata(MGW_SDK Gateway, MGW_GameMetadata Meta)
 {
     gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
     gateway::GameMetadata MD;
-    MD.GameName = Meta.GameName;
-    MD.GameLogo = Meta.GameLogo;
-    MD.Theme = Meta.Theme;
+
+    if (Meta.GameName)
+    {
+        MD.GameName = Meta.GameName;
+    }
+
+    if (Meta.GameLogo)
+    {
+        MD.GameLogo = Meta.GameLogo;
+    }
+
+    if (Meta.Theme)
+    {
+        MD.Theme = Meta.Theme;
+    }
+
     return SDK->SetGameMetadata(MD);
 }
 
@@ -180,31 +193,51 @@ void MGW_SDK_StopPoll(MGW_SDK Gateway)
     SDK->StopPoll();
 }
 
-void MGW_SDK_SetActions(MGW_SDK Gateway, const MGW_Action* Begin, const MGW_Action* End)
+void MGW_SDK_SetActions(MGW_SDK Gateway, const MGW_Action* Actions, uint64_t Count)
 {
     gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
-
-    std::vector<gateway::Action> actions;
-    while (Begin != End)
+    
+    if (!Actions || Count == 0)
     {
-        gateway::Action action;
-        action.ID = gamelink::string(Begin->ID);
-        action.Category = static_cast<gateway::ActionCategory>(Begin->Category);
-        action.State = static_cast<gateway::ActionState>(Begin->State);
-        action.Impact = Begin->Impact;
-        action.Name = gamelink::string(Begin->Name);
-        action.Description = gamelink::string(Begin->Description);
-        action.Icon = gamelink::string(Begin->Icon);
-        action.Count = Begin->Count;
-
-        actions.emplace_back(std::move(action));
-
-        Begin++;
+        return;
     }
 
-    if (!actions.empty())
+    std::vector<gateway::Action> GatewayActions;
+    for (uint64_t i = 0; i < Count; ++i)
     {
-        SDK->SetActions(actions.data(), actions.data() + actions.size());
+        gateway::Action Action;
+
+        if (Actions[i].ID)
+        {
+            Action.ID = gamelink::string(Actions[i].ID);
+        }
+
+        if (Actions[i].Name)
+        {
+            Action.Name = gamelink::string(Actions[i].Name);
+        }
+
+        if (Actions[i].Description)
+        {
+            Action.Description = gamelink::string(Actions[i].Description);
+        }
+
+        if (Actions[i].Icon)
+        {
+            Action.Icon = gamelink::string(Actions[i].Icon);
+        }
+
+        Action.Category = static_cast<gateway::ActionCategory>(Actions[i].Category);
+        Action.State = static_cast<gateway::ActionState>(Actions[i].State);
+        Action.Impact = Actions[i].Impact;
+        Action.Count = Actions[i].Count;
+
+        GatewayActions.emplace_back(std::move(Action));
+    }
+
+    if (!GatewayActions.empty())
+    {
+        SDK->SetActions(GatewayActions.data(), GatewayActions.data() + GatewayActions.size());
     }
 }
 
@@ -220,23 +253,38 @@ void MGW_SDK_DisableAction(MGW_SDK Gateway, const char* id)
     SDK->DisableAction(gamelink::string(id));
 }
 
-void MGW_SDK_SetActionCount(MGW_SDK Gateway, const char* id, int count)
+void MGW_SDK_SetActionCount(MGW_SDK Gateway, const char* id, int32_t count)
 {
     gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
     SDK->SetActionCount(gamelink::string(id), count);
 }
 
-void MGW_SDK_SetGameTexts(MGW_SDK Gateway, const MGW_GameTexts* Texts)
+void MGW_SDK_SetGameTexts(MGW_SDK Gateway, const MGW_GameText* Texts, uint64_t count)
 {
     gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
+    if (!Texts || count == 0)
+    {
+        return;
+    }
 
     gateway::GameTexts texts;
-    for (size_t i = 0; i < Texts->TextsCount; ++i)
+    for (size_t i = 0; i < count; ++i)
     {
         gateway::GameText entry;
-        entry.Label = gateway::string(Texts->Texts[i].Label);
-        entry.Value = gateway::string(Texts->Texts[i].Value);
-        entry.Icon = gateway::string(Texts->Texts[i].Icon);
+        if (Texts[i].Label)
+        {
+            entry.Label = gateway::string(Texts[i].Label);
+        }
+
+        if (Texts[i].Value)
+        {
+            entry.Value = gateway::string(Texts[i].Value);
+        }
+
+        if (Texts[i].Icon)
+        {
+            entry.Icon = gateway::string(Texts[i].Icon);
+        }
 
         texts.Texts.emplace_back(std::move(entry));
     }
