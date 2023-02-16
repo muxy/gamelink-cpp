@@ -76,16 +76,16 @@ namespace gateway
 	{
 		// Index of the winner, in [0, 32).
 		// If one or more values are tied, returns the first one.
-		int Winner;
+		int32_t Winner;
 
 		// The number of votes cast for the winning vote.
-		int WinningVoteCount;
+		int32_t WinningVoteCount;
 
 		// All results in the range [0, 32).
-		std::vector<int> Results;
+		std::vector<int32_t> Results;
 		
 		// How many votes were cast in total.
-		int Count;
+		int32_t Count;
 
 		// The average value of all votes.
 		double Mean;
@@ -120,19 +120,19 @@ namespace gateway
 		Hidden = 2,
 	};
 
-	static const int ACTION_INFINITE_USES = -1;
+	static const int32_t ACTION_INFINITE_USES = -1;
 	struct Action
 	{
 		string ID;
 		ActionCategory Category;
 		ActionState State;
-		int Impact;
+		int32_t Impact;
 
 		string Name;
 		string Description;
 		string Icon;
 
-		int Count;
+		int32_t Count;
 	};
 
 	struct GameText
@@ -151,14 +151,14 @@ namespace gateway
 	{
 		string TransactionID;
 		string SKU;
-		int Bits;
+		int32_t Bits;
 	};
 
 	struct ActionUsed
 	{
 		string TransactionID;
 		string SKU;
-		int Cost;
+		int32_t Cost;
 	};
 
 	class SDK
@@ -220,7 +220,7 @@ namespace gateway
 		void SetActions(const Action* begin, const Action* end);
 		void EnableAction(const string& id);
 		void DisableAction(const string& id);
-		void SetActionCount(const string& id, int number);
+		void SetActionCount(const string& id, int32_t number);
 
 		// Game Data
 		void SetGameTexts(const GameTexts& data);

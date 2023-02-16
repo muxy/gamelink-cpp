@@ -49,7 +49,7 @@ namespace gateway
 		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ActionSetCount, "sku", ID, "count", Count);
 	};
 
-	void SDK::SetActionCount(const string& id, int count)
+	void SDK::SetActionCount(const string& id, int32_t count)
 	{
 		gamelink::schema::SendEnvelope<ActionSetCount> msg;
 		if (count < -1)
