@@ -173,7 +173,7 @@ extern "C"
 	typedef struct
 	{
 		const char* TransactionID;
-		const char* SKU;
+		const char* ActionID;
 		int32_t Cost;
 
 		const char* UserID;
