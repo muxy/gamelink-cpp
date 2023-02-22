@@ -36,19 +36,31 @@ namespace gamelink
 		/// If no startAt time is desired, set this to 0.
 		int64_t startsAt;
 
-		/// endsAt shoudl be a unix timestamp, in seconds, at which point the poll
+		/// endsAt should be a unix timestamp, in seconds, at which point the poll
 		/// will become disabled.
 		/// If no endsAt time is desired, set this to 0.
 		int64_t endsAt;
 
-		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_7(PollConfiguration,
+		/// startsIn will set a relative startsAt, in seconds from now, at which point the poll
+		/// will become enabled and will be able to be voted on.
+		/// if startsAt is non-zero, this field has no effect.
+		int64_t startsIn;
+
+		/// endsIn will set a relative endsAt, in seconds from now, at which point the poll
+		/// will become disabled.
+		/// if endsAt is non-zero, this field has no effect.
+		int64_t endsIn;
+
+		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_9(PollConfiguration,
 			"userIDVoting", userIdVoting,
 			"distinctOptionsPerUser", distinctOptionsPerUser,
 			"totalVotesPerUser", totalVotesPerUser,
 			"votesPerOption", votesPerOption,
 			"disabled", disabled,
 			"startsAt", startsAt,
-			"endsAt", endsAt);
+			"endsAt", endsAt, 
+			"startsIn", startsIn, 
+			"endsIn", endsIn);
 	};
 
 	namespace schema
