@@ -125,8 +125,7 @@ namespace gateway
 
 		if (cfg.Duration > 0)
 		{
-			std::time_t result = std::time(nullptr);
-			config.endsAt = result + 30;
+			config.endsIn = cfg.Duration;
 		}
 
 		Base.RunPoll(

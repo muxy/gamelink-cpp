@@ -49,6 +49,78 @@ TEST_CASE("Run Poll in Gateway", "[gateway][poll]")
 	REQUIRE(finishCalls == 1);
 }
 
+TEST_CASE("Run Poll in Gateway with duration", "[gateway][poll]")
+{
+	gateway::SDK sdk("This is a game");
+
+	gateway::PollConfiguration config;
+	config.Prompt = "Pizza toppings"; 
+	config.Options = {
+		"Pepperoni", 
+		"Cheese"
+	};
+
+	config.Duration = 20;
+	sdk.StartPoll(config);
+
+	REQUIRE(sdk.HasPayloads());
+	// Actually hitting this is difficult, since the SDK
+	// has waits involved.
+	sdk.ForeachPayload([](const gateway::Payload*){});
+
+	const char* msg = R"({
+		"meta": {
+			"action": "nothing",
+			"request_id": 1
+		}
+	})";
+	sdk.ReceiveMessage(msg, strlen(msg));
+
+	const char* msg2 = R"({
+		"meta": {
+			"action": "nothing",
+			"request_id": 2
+		}
+	})";
+	sdk.ReceiveMessage(msg2, strlen(msg2));
+
+	const char* expected =  R"({
+		"action": "create", 
+		"params": {
+			"request_id": 65535,
+			"target": "poll"
+		},
+		"data": {
+			"poll_id": "default",
+			"prompt": "Pizza toppings", 
+			"options": ["Pepperoni", "Cheese"], 
+			"config": {
+				"disabled": false,
+				"distinctOptionsPerUser": 1,
+				"endsAt": 0,
+				"endsIn": 20,
+				"startsAt": 0,
+				"startsIn": 0,
+				"totalVotesPerUser": 1,
+				"userIDVoting": true,
+				"votesPerOption": 1
+			}
+		}
+	})";
+
+	size_t count = 0;
+	sdk.ForeachPayload([=, &count](const gateway::Payload* payload) {
+		if (count == 1)
+		{
+			ConstrainedString str(reinterpret_cast<const char *>(payload->GetData()));
+			REQUIRE(JSONEquals(str, ConstrainedString(expected)));
+		}
+		count++;
+	});
+
+	REQUIRE(!sdk.HasPayloads());
+}
+
 TEST_CASE("Run Poll in Gateway, C", "[gateway][poll][c]")
 {
 	MGW_SDK sdk = MGW_MakeSDK("gameid");

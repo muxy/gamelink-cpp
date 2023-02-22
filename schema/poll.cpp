@@ -10,6 +10,8 @@ namespace gamelink
 		,disabled(false)
 		,startsAt(0)
 		,endsAt(0)
+		,startsIn(0)
+		,endsIn(0)
 	{}
 
 	namespace schema
