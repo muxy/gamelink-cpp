@@ -171,6 +171,9 @@ extern "C"
 		const char* TransactionID;
 		const char* SKU;
 		int Cost;
+
+		const char* UserID;
+		const char* UserNickname;
 	} MGW_ActionUsed;
 
 	typedef void (*MGW_OnBitsUsedCallback)(void*, MGW_BitsUsed*);
