@@ -179,8 +179,8 @@ extern "C"
 	MUXY_GW_CLIB_API void MGW_SDK_OnBitsUsed(MGW_SDK Gateway, MGW_OnBitsUsedCallback Callback, void* User);
 	MUXY_GW_CLIB_API void MGW_SDK_OnActionUsed(MGW_SDK Gateway, MGW_OnActionUsedCallback Callback, void* User);
 
-	MUXY_GW_CLIB_API void MGW_SDK_ValidateActionTransaction(MGW_SDK Gateway, MGW_ActionUsed Coins, const char* Reason);
-	MUXY_GW_CLIB_API void MGW_SDK_RefundActionTransaction(MGW_SDK Gateway, MGW_ActionUsed Coins, const char* Reason);
+	MUXY_GW_CLIB_API void MGW_SDK_AcceptAction(MGW_SDK Gateway, MGW_ActionUsed Coins, const char* Reason);
+	MUXY_GW_CLIB_API void MGW_SDK_RefundAction(MGW_SDK Gateway, MGW_ActionUsed Coins, const char* Reason);
 
 #ifdef __cplusplus
 }
