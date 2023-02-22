@@ -335,14 +335,14 @@ void MGW_SDK_OnActionUsed(MGW_SDK Gateway, MGW_OnActionUsedCallback Callback, vo
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
 
-	SDK->OnActionUsed([=](const gateway::ActionUsed& BitsUsed)
+	SDK->OnActionUsed([=](const gateway::ActionUsed& ActionUsed)
 	{
 		MGW_ActionUsed Used;
-		Used.TransactionID = BitsUsed.TransactionID.c_str();
-		Used.SKU = BitsUsed.SKU.c_str();
-		Used.Cost = BitsUsed.Cost;
-		Used.UserID = BitsUsed.UserID.c_str();
-		Used.Username = BitsUsed.Username.c_str();
+		Used.TransactionID = ActionUsed.TransactionID.c_str();
+		Used.ActionID = ActionUsed.ActionID.c_str();
+		Used.Cost = ActionUsed.Cost;
+		Used.UserID = ActionUsed.UserID.c_str();
+		Used.Username = ActionUsed.Username.c_str();
 
 		Callback(User, &Used);
 	});
@@ -353,7 +353,7 @@ void MGW_SDK_AcceptAction(MGW_SDK Gateway, MGW_ActionUsed Coins, const char* Rea
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
 
 	gateway::ActionUsed tx;
-	tx.SKU = gateway::string(Coins.SKU);
+	tx.ActionID = gateway::string(Coins.ActionID);
 	tx.TransactionID = gateway::string(Coins.TransactionID);
 	tx.Cost = Coins.Cost;
 	tx.UserID = gateway::string(Coins.UserID);
@@ -372,7 +372,7 @@ void MGW_SDK_RefundAction(MGW_SDK Gateway, MGW_ActionUsed Coins, const char* Rea
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
 
 	gateway::ActionUsed tx;
-	tx.SKU = gateway::string(Coins.SKU);
+	tx.ActionID = gateway::string(Coins.ActionID);
 	tx.TransactionID = gateway::string(Coins.TransactionID);
 	tx.Cost = Coins.Cost;
 	tx.UserID = gateway::string(Coins.UserID);
