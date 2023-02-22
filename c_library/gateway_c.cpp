@@ -339,6 +339,8 @@ void MGW_SDK_OnActionUsed(MGW_SDK Gateway, MGW_OnActionUsedCallback Callback, vo
 		Used.TransactionID = BitsUsed.TransactionID.c_str();
 		Used.SKU = BitsUsed.SKU.c_str();
 		Used.Cost = BitsUsed.Cost;
+		Used.UserID = BitsUsed.UserID.c_str();
+		Used.UserNickname = BitsUsed.UserNickname.c_str();
 
 		Callback(User, &Used);
 	});
@@ -352,6 +354,8 @@ void MGW_SDK_AcceptAction(MGW_SDK Gateway, MGW_ActionUsed Coins, const char* Rea
 	tx.SKU = gateway::string(Coins.SKU);
 	tx.TransactionID = gateway::string(Coins.TransactionID);
 	tx.Cost = Coins.Cost;
+	tx.UserID = gateway::string(Coins.UserID);
+	tx.UserNickname = gateway::string(Coins.UserNickname);
 
 	if (!Reason)
 	{
@@ -369,6 +373,8 @@ void MGW_SDK_RefundAction(MGW_SDK Gateway, MGW_ActionUsed Coins, const char* Rea
 	tx.SKU = gateway::string(Coins.SKU);
 	tx.TransactionID = gateway::string(Coins.TransactionID);
 	tx.Cost = Coins.Cost;
+	tx.UserID = gateway::string(Coins.UserID);
+	tx.UserNickname = gateway::string(Coins.UserNickname);
 
 	if (!Reason)
 	{
