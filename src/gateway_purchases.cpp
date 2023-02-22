@@ -27,9 +27,12 @@ namespace gateway
 			if (resp.data.currency == "coins")
 			{
 				gateway::ActionUsed used;
+
 				used.TransactionID = resp.data.muxyId;
 				used.Cost = resp.data.cost;
 				used.SKU = resp.data.sku;
+				used.UserID = resp.data.userId;
+				used.UserNickname = resp.data.userName;
 
 				Callback(used);
 			}
@@ -42,8 +45,9 @@ namespace gateway
 	{
 		Base.ValidateTransaction(used.TransactionID, Details);
 	}
+
 	void SDK::RefundAction(const gateway::ActionUsed& used, const gamelink::string& Details)
 	{
-		Base.RefundTransactionByID(used.TransactionID, Details);
+		Base.RefundTransactionByID(used.TransactionID, used.UserID);
 	}
 }
