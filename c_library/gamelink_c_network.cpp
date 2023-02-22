@@ -28,6 +28,12 @@ void MuxyGameLink_HandleReconnect(MuxyGameLink GameLink)
 	return SDK->HandleReconnect();
 }
 
+bool MuxyGameLink_HasPayloads(MuxyGameLink GameLink)
+{
+	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
+	return SDK->HasPayloads();
+}
+
 void MuxyGameLink_ForeachPayload(MuxyGameLink GameLink, MGL_PayloadCallback Callback, void* UserData)
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
