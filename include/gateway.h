@@ -55,8 +55,7 @@ namespace gateway
 		bool HasError() const
 		{
 			return DidError;
-		};
-
+		}
 	private:
 		bool DidError;
 	};
@@ -152,6 +151,9 @@ namespace gateway
 		string TransactionID;
 		string SKU;
 		int32_t Bits;
+
+		string UserID;
+		string Username;
 	};
 
 	struct ActionUsed
@@ -161,7 +163,7 @@ namespace gateway
 		int32_t Cost;
 
 		string UserID; 
-		string UserNickname;
+		string Username;
 	};
 
 	class SDK

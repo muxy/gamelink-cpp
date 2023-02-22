@@ -60,7 +60,7 @@ namespace gateway
 
 	RequestID SDK::AuthenticateWithPIN(const string& PIN, std::function<void(const gateway::AuthenticateResponse&)> Callback)
 	{
-		return Base.AuthenticateWithGameIDAndPIN(this->ClientID, this->GameID, PIN, [=](const gamelink::schema::AuthenticateResponse Resp) {
+		return Base.AuthenticateWithGameIDAndPIN(this->ClientID, this->GameID, PIN, [=](const gamelink::schema::AuthenticateResponse& Resp) {
 			gateway::AuthenticateResponse Auth(Resp.data.jwt, Resp.data.refresh, Resp.data.twitch_name, gamelink::FirstError(Resp) != NULL);
 			Callback(Auth);
 		});
@@ -69,7 +69,7 @@ namespace gateway
 	RequestID SDK::AuthenticateWithRefreshToken(const string& JWT, std::function<void(const gateway::AuthenticateResponse&)> Callback)
 	{
 		return Base.AuthenticateWithGameIDAndRefreshToken(
-			this->ClientID, this->GameID, JWT, [=](const gamelink::schema::AuthenticateResponse Resp) {
+			this->ClientID, this->GameID, JWT, [=](const gamelink::schema::AuthenticateResponse& Resp) {
 				gateway::AuthenticateResponse Auth(Resp.data.jwt, Resp.data.refresh, Resp.data.twitch_name,
 												   gamelink::FirstError(Resp) != NULL);
 				Callback(Auth);
