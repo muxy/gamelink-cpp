@@ -25,13 +25,13 @@ void MGW_KillSDK(MGW_SDK Gateway)
 MGW_RequestID MGW_SDK_AuthenticateWithPIN(MGW_SDK Gateway, const char *PIN, MGW_AuthenticateResponseCallback Callback, void *User)
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
-	return SDK->AuthenticateWithPIN(PIN, [=](const gateway::AuthenticateResponse Resp)
+	return SDK->AuthenticateWithPIN(PIN, [=](const gateway::AuthenticateResponse& Resp)
 	{
 		MGW_AuthenticateResponse Auth;
 		Auth.JWT          = Resp.JWT.c_str();
 		Auth.RefreshToken = Resp.RefreshToken.c_str();
 		Auth.TwitchName   = Resp.TwitchName.c_str();
-		Auth.HasError     = Resp.HasError();
+		Auth.HasError     = Resp.HasError() ? 1 : 0;
 		Callback(User, &Auth);
 	});
 }
@@ -40,13 +40,13 @@ MGW_RequestID MGW_SDK_AuthenticateWithRefreshToken(MGW_SDK Gateway, const char *
 {
 	
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
-	return SDK->AuthenticateWithRefreshToken(RefreshToken, [=](const gateway::AuthenticateResponse Resp)
+	return SDK->AuthenticateWithRefreshToken(RefreshToken, [=](const gateway::AuthenticateResponse& Resp)
 	{
 		MGW_AuthenticateResponse Auth;
 		Auth.JWT          = Resp.JWT.c_str();
 		Auth.RefreshToken = Resp.RefreshToken.c_str();
 		Auth.TwitchName   = Resp.TwitchName.c_str();
-		Auth.HasError     = Resp.HasError();
+		Auth.HasError     = Resp.HasError() ? 1 : 0;
 		Callback(User, &Auth);
 	});
 }
@@ -183,7 +183,7 @@ void MGW_SDK_StartPoll(MGW_SDK Gateway, MGW_PollConfiguration cfg)
 
 		upd.Count = update.Count;
 		upd.Mean = update.Mean;
-		upd.IsFinal = update.IsFinal;
+		upd.IsFinal = update.IsFinal ? 1 : 0;
 
 		cfg.OnUpdate(cfg.User, &upd);
 	};
@@ -324,6 +324,8 @@ void MGW_SDK_OnBitsUsed(MGW_SDK Gateway, MGW_OnBitsUsedCallback Callback, void* 
 		Used.TransactionID = BitsUsed.TransactionID.c_str();
 		Used.SKU = BitsUsed.SKU.c_str();
 		Used.Bits = BitsUsed.Bits;
+		Used.UserID = BitsUsed.UserID.c_str();
+		Used.Username = BitsUsed.Username.c_str();
 
 		Callback(User, &Used);
 	});
@@ -340,7 +342,7 @@ void MGW_SDK_OnActionUsed(MGW_SDK Gateway, MGW_OnActionUsedCallback Callback, vo
 		Used.SKU = BitsUsed.SKU.c_str();
 		Used.Cost = BitsUsed.Cost;
 		Used.UserID = BitsUsed.UserID.c_str();
-		Used.UserNickname = BitsUsed.UserNickname.c_str();
+		Used.Username = BitsUsed.Username.c_str();
 
 		Callback(User, &Used);
 	});
@@ -355,7 +357,7 @@ void MGW_SDK_AcceptAction(MGW_SDK Gateway, MGW_ActionUsed Coins, const char* Rea
 	tx.TransactionID = gateway::string(Coins.TransactionID);
 	tx.Cost = Coins.Cost;
 	tx.UserID = gateway::string(Coins.UserID);
-	tx.UserNickname = gateway::string(Coins.UserNickname);
+	tx.Username = gateway::string(Coins.Username);
 
 	if (!Reason)
 	{
@@ -374,7 +376,7 @@ void MGW_SDK_RefundAction(MGW_SDK Gateway, MGW_ActionUsed Coins, const char* Rea
 	tx.TransactionID = gateway::string(Coins.TransactionID);
 	tx.Cost = Coins.Cost;
 	tx.UserID = gateway::string(Coins.UserID);
-	tx.UserNickname = gateway::string(Coins.UserNickname);
+	tx.Username = gateway::string(Coins.Username);
 
 	if (!Reason)
 	{

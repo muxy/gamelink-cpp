@@ -12,6 +12,8 @@ namespace gateway
 				used.TransactionID = resp.data.id;
 				used.SKU = resp.data.sku;
 				used.Bits = resp.data.cost;
+				used.UserID = resp.data.userId;
+				used.Username = resp.data.userName;
 
 				Callback(used);
 			}
@@ -32,7 +34,7 @@ namespace gateway
 				used.Cost = resp.data.cost;
 				used.SKU = resp.data.sku;
 				used.UserID = resp.data.userId;
-				used.UserNickname = resp.data.userName;
+				used.Username = resp.data.userName;
 
 				Callback(used);
 			}
