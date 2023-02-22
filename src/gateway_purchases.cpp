@@ -32,7 +32,7 @@ namespace gateway
 
 				used.TransactionID = resp.data.muxyId;
 				used.Cost = resp.data.cost;
-				used.SKU = resp.data.sku;
+				used.ActionID = resp.data.sku;
 				used.UserID = resp.data.userId;
 				used.Username = resp.data.userName;
 

@@ -159,7 +159,7 @@ namespace gateway
 	struct ActionUsed
 	{
 		string TransactionID;
-		string SKU;
+		string ActionID;
 		int32_t Cost;
 
 		string UserID; 
