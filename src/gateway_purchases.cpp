@@ -38,11 +38,11 @@ namespace gateway
 		Base.SubscribeToAllPurchases();
 	}
 
-	void SDK::ValidateActionTransaction(const gateway::ActionUsed& used, const gamelink::string& Details)
+	void SDK::AcceptAction(const gateway::ActionUsed& used, const gamelink::string& Details)
 	{
 		Base.ValidateTransaction(used.TransactionID, Details);
 	}
-	void SDK::RefundActionTransaction(const gateway::ActionUsed& used, const gamelink::string& Details)
+	void SDK::RefundAction(const gateway::ActionUsed& used, const gamelink::string& Details)
 	{
 		Base.RefundTransactionByID(used.TransactionID, Details);
 	}
