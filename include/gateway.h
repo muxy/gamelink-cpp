@@ -159,6 +159,9 @@ namespace gateway
 		string TransactionID;
 		string SKU;
 		int32_t Cost;
+
+		string UserID; 
+		string UserNickname;
 	};
 
 	class SDK
