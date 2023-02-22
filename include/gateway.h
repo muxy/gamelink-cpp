@@ -233,8 +233,8 @@ namespace gateway
 		void OnBitsUsed(std::function<void (const gateway::BitsUsed&)> Callback);
 		void OnActionUsed(std::function<void (const gateway::ActionUsed&)> Callback);
 
-		void ValidateActionTransaction(const gateway::ActionUsed& used, const gamelink::string& Details);
-		void RefundActionTransaction(const gateway::ActionUsed& used, const gamelink::string& Details);
+		void AcceptAction(const gateway::ActionUsed& used, const gamelink::string& Details);
+		void RefundAction(const gateway::ActionUsed& used, const gamelink::string& Details);
 	private:
 		gamelink::SDK Base;
 		string GameID;
