@@ -39,7 +39,7 @@ extern "C"
 		const char* JWT;
 		const char* RefreshToken;
 		const char* TwitchName;
-		bool HasError;
+		uint32_t HasError;
 	} MGW_AuthenticateResponse;
 
 	typedef struct
@@ -97,7 +97,8 @@ extern "C"
 
 		int32_t Count;
 		double Mean;
-		bool IsFinal;
+
+		uint32_t IsFinal;
 	} MGW_PollUpdate;
 
 	typedef void (*MGW_PollUpdateCallback)(void*, MGW_PollUpdate*);
@@ -163,17 +164,20 @@ extern "C"
 	{
 		const char* TransactionID;
 		const char* SKU;
-		int Bits;
+		int32_t Bits;
+
+		const char* UserID;
+		const char* Username;
 	} MGW_BitsUsed;
 
 	typedef struct
 	{
 		const char* TransactionID;
 		const char* SKU;
-		int Cost;
+		int32_t Cost;
 
 		const char* UserID;
-		const char* UserNickname;
+		const char* Username;
 	} MGW_ActionUsed;
 
 	typedef void (*MGW_OnBitsUsedCallback)(void*, MGW_BitsUsed*);
