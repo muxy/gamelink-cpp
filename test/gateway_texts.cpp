@@ -52,8 +52,6 @@ TEST_CASE("Set text in C", "[gateway][text][c]")
 {
 	MGW_SDK sdk = MGW_MakeSDK("some game");
 
-	MGW_GameTexts texts;
-
 	MGW_GameText text[2];
 	text[0] = MGW_GameText{
 		"Matchup", 
@@ -67,10 +65,7 @@ TEST_CASE("Set text in C", "[gateway][text][c]")
 		"icon:map"
 	};
 
-	texts.Texts = text;
-	texts.TextsCount = 2;
-
-	MGW_SDK_SetGameTexts(sdk, &texts);
+	MGW_SDK_SetGameTexts(sdk, text, 2);
 	validateSinglePayload(sdk, R"({
 		"action": "patch", 
 		"params": {

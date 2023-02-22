@@ -101,7 +101,7 @@ TEST_CASE("Set action list in C", "[gateway][actions][c]")
 	drawThreeCards.Name = "Ancestral Recall";
 	drawThreeCards.State = MGW_ACTIONSTATE_AVAILABLE;
 
-	MGW_SDK_SetActions(sdk, &drawThreeCards, &drawThreeCards + 1);
+	MGW_SDK_SetActions(sdk, &drawThreeCards, 1);
 	REQUIRE(MGW_SDK_HasPayloads(sdk));
 
 	validateSinglePayload(sdk, R"({
