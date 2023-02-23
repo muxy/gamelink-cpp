@@ -51,12 +51,12 @@ MGL_Schema_DatastreamEvent MuxyGameLink_Schema_DatastreamUpdate_GetEventAt(MGL_S
 
 MGL_String MuxyGameLink_Schema_DatastreamEvent_GetJson(MGL_Schema_DatastreamEvent DatastreamEvent)
 {
-    const gamelink::schema::DatastreamEvent *DSE = static_cast<const gamelink::schema::DatastreamEvent*>(DatastreamEvent.Obj);
-    return MuxyGameLink_StrDup(DSE->event.dump().c_str());
+	const gamelink::schema::DatastreamEvent *DSE = static_cast<const gamelink::schema::DatastreamEvent*>(DatastreamEvent.Obj);
+	return MuxyGameLink_StrDup(DSE->event.dump().c_str());
 }
 
 int64_t	MuxyGameLink_Schema_DatastreamEvent_GetTimestamp(MGL_Schema_DatastreamEvent DatastreamEvent)
 {
-    const gamelink::schema::DatastreamEvent *DSE = static_cast<const gamelink::schema::DatastreamEvent*>(DatastreamEvent.Obj);
-    return DSE->timestamp;
+	const gamelink::schema::DatastreamEvent *DSE = static_cast<const gamelink::schema::DatastreamEvent*>(DatastreamEvent.Obj);
+	return DSE->timestamp;
 }

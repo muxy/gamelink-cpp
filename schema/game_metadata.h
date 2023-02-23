@@ -21,7 +21,7 @@ namespace gamelink
 			string game_logo;
 			string theme;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(SetGameMetadataRequestBody, "game_name", game_name, "game_logo", game_logo, "theme", theme);
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(SetGameMetadataRequestBody, "game", game_name, "logo", game_logo, "theme", theme);
 		};
 
 		struct SetGameMetadataRequest : SendEnvelope<SetGameMetadataRequestBody>
