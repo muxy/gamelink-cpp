@@ -15,7 +15,7 @@ namespace gateway
 	});
 
 	MUXY_GAMELINK_SERIALIZE_8(Action, 
-		"sku", ID, 
+		"id", ID, 
 		"category", Category, 
 		"state", State, 
 		"impact", Impact, 
@@ -46,7 +46,7 @@ namespace gateway
 		string ID;
 		int Count; 
 
-		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ActionSetCount, "sku", ID, "count", Count);
+		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ActionSetCount, "id", ID, "count", Count);
 	};
 
 	void SDK::SetActionCount(const string& id, int32_t count)
@@ -71,7 +71,7 @@ namespace gateway
 		string ID;
 		ActionState State; 
 
-		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ActionSetState, "sku", ID, "state", State);
+		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ActionSetState, "id", ID, "state", State);
 	};
 
 	void SDK::EnableAction(const string& id)
