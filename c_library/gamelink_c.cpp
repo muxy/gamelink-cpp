@@ -151,7 +151,7 @@ const char* MuxyGameLink_Schema_User_GetJWT(MGL_Schema_User User)
 	const gamelink::schema::User* MGLUser = static_cast<const gamelink::schema::User*>(User.Obj);
 	if (MGLUser)
 	{
-		return MGLUser->GetRefreshToken().c_str();
+		return MGLUser->GetJWT().c_str();
 	}
 
 	return "";
@@ -162,7 +162,7 @@ const char* MuxyGameLink_Schema_User_GetRefreshToken(MGL_Schema_User User)
 	const gamelink::schema::User* MGLUser = static_cast<const gamelink::schema::User*>(User.Obj);
 	if (MGLUser)
 	{
-		return MGLUser->GetJWT().c_str();
+		return MGLUser->GetRefreshToken().c_str();
 	}
 
 	return "";
