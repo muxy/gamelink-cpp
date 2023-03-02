@@ -177,5 +177,15 @@ TEST_CASE_METHOD(ParityFixture, "GameMetaData parity", "[sdk][c]")
 	cpp_metadata.game_logo = "pretendimbase64";
 	cpp_metadata.theme = "dark";
 	cpp.SetGameMetadata(cpp_metadata);
+}
 
+TEST_CASE_METHOD(ParityFixture, "User operations", "[sdk][c]")
+{
+	gamelink::schema::User user("jwt", "refresh", "username");
+	MGL_Schema_User cuser;
+	cuser.Obj = &user;
+
+	REQUIRE(ConstrainedString(MuxyGameLink_Schema_User_GetJWT(cuser)) == user.GetJWT());
+	REQUIRE(ConstrainedString(MuxyGameLink_Schema_User_GetRefreshToken(cuser)) == user.GetRefreshToken());
+	REQUIRE(ConstrainedString(MuxyGameLink_Schema_User_GetTwitchName(cuser)) == user.GetTwitchName());
 }
