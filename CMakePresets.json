@@ -24,6 +24,47 @@
           "value": "TRUE"
         }
       }
+    },
+    {
+      "name": "x64-library",
+      "displayName": "Builds the C libraries",
+      "description": "Configure with vcpkg toolchain",
+      "binaryDir": "${sourceDir}/builds/${presetName}",
+      "generator": "Ninja Multi-Config",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": {
+          "type": "FILEPATH",
+          "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+        }, 
+        "BUILD_INTEGRATION_TESTS": {
+          "value": "FALSE"
+        },
+        "GENERATE_COVERAGE": {
+          "value": "FALSE"
+        },
+        "CMAKE_OSX_ARCHITECTURES": {
+          "value": "x86_64"
+        }
+      }
+    },
+    {
+      "name": "arm-library",
+      "displayName": "Builds the C libraries",
+      "description": "Configure with vcpkg toolchain",
+      "binaryDir": "${sourceDir}/builds/${presetName}",
+      "generator": "Ninja Multi-Config",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": {
+          "type": "FILEPATH",
+          "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+        }, 
+        "BUILD_INTEGRATION_TESTS": {
+          "value": "FALSE"
+        },
+        "GENERATE_COVERAGE": {
+          "value": "FALSE"
+        }
+      }
     }
   ],
   "buildPresets": [
@@ -33,6 +74,22 @@
       "displayName": "Build tests, but without integrations",
       "description": "Build tests Configurations",
       "targets": ["tests"]
+    },
+  	{
+      "name": "x64-cgamelink",
+      "configurePreset": "x64-library",
+      "displayName": "Build the cgamelink library",
+      "description": "Build cgamelink library",
+      "configuration": "Release",
+      "targets": ["cgamelink"]
+    },
+    {
+      "name": "arm-cgamelink",
+      "configurePreset": "arm-library",
+      "displayName": "Build the cgamelink library",
+      "description": "Build cgamelink library",
+      "configuration": "Release",
+      "targets": ["cgamelink"]
     }
   ],
   "testPresets": [
