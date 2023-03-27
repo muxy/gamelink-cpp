@@ -149,7 +149,10 @@ extern "C"
 	MUXY_GW_CLIB_API void MGW_SDK_SetActions(MGW_SDK Gateway, const MGW_Action* Actions, uint64_t Count);
 	MUXY_GW_CLIB_API void MGW_SDK_EnableAction(MGW_SDK Gateway, const char* id);
 	MUXY_GW_CLIB_API void MGW_SDK_DisableAction(MGW_SDK Gateway, const char* id);
+	MUXY_GW_CLIB_API void MGW_SDK_SetActionMaximumCount(MGW_SDK Gateway, const char* id, int32_t count);
 	MUXY_GW_CLIB_API void MGW_SDK_SetActionCount(MGW_SDK Gateway, const char* id, int32_t count);
+	MUXY_GW_CLIB_API void MGW_SDK_IncrementActionCount(MGW_SDK Gateway, const char* id, int32_t count);
+	MUXY_GW_CLIB_API void MGW_SDK_DecrementActionCount(MGW_SDK Gateway, const char* id, int32_t count);
 
 	typedef struct
 	{
