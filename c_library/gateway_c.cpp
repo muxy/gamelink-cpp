@@ -253,7 +253,7 @@ void MGW_SDK_EnableAction(MGW_SDK Gateway, const char* id)
 	{
 		id = "";
 	}
-	
+
 	SDK->EnableAction(gamelink::string(id));
 }
 
@@ -269,6 +269,18 @@ void MGW_SDK_DisableAction(MGW_SDK Gateway, const char* id)
 	SDK->DisableAction(gamelink::string(id));
 }
 
+void MGW_SDK_SetActionMaximumCount(MGW_SDK Gateway, const char* id, int32_t count)
+{
+	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
+
+	if (!id)
+	{
+		id = "";
+	}
+
+	SDK->SetActionMaximumCount(gamelink::string(id), count);
+}
+
 void MGW_SDK_SetActionCount(MGW_SDK Gateway, const char* id, int32_t count)
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
@@ -279,6 +291,30 @@ void MGW_SDK_SetActionCount(MGW_SDK Gateway, const char* id, int32_t count)
 	}
 
 	SDK->SetActionCount(gamelink::string(id), count);
+}
+
+void MGW_SDK_IncrementActionCount(MGW_SDK Gateway, const char* id, int32_t count)
+{
+	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
+
+	if (!id)
+	{
+		id = "";
+	}
+
+	SDK->IncrementActionCount(gamelink::string(id), count);
+}
+
+void MGW_SDK_DecrementActionCount(MGW_SDK Gateway, const char* id, int32_t count)
+{
+	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
+
+	if (!id)
+	{
+		id = "";
+	}
+
+	SDK->DecrementActionCount(gamelink::string(id), count);
 }
 
 void MGW_SDK_SetGameTexts(MGW_SDK Gateway, const MGW_GameText* Texts, uint64_t count)
