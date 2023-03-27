@@ -225,7 +225,11 @@ namespace gateway
 		void SetActions(const Action* begin, const Action* end);
 		void EnableAction(const string& id);
 		void DisableAction(const string& id);
+		void SetActionMaximumCount(const string& id, int32_t number);
 		void SetActionCount(const string& id, int32_t number);
+		
+		void IncrementActionCount(const string& id, int32_t delta);
+		void DecrementActionCount(const string& id, int32_t delta);
 
 		// Game Data
 		void SetGameTexts(const GameTexts& data);

@@ -41,20 +41,20 @@ namespace gateway
 		Base.queuePayload(actionsList);
 	}
 
-	struct ActionSetCount
+	struct ActionSetMaxCount
 	{
 		string ID;
 		int Count; 
 
-		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ActionSetCount, "id", ID, "count", Count);
+		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ActionSetMaxCount, "id", ID, "count", Count);
 	};
 
-	void SDK::SetActionCount(const string& id, int32_t count)
+	void SDK::SetActionMaximumCount(const string& id, int32_t count)
 	{
-		gamelink::schema::SendEnvelope<ActionSetCount> msg;
+		gamelink::schema::SendEnvelope<ActionSetMaxCount> msg;
 		if (count < -1)
 		{
-			Base.InvokeOnDebugMessage("Invalid count passed into SDK::SetActionCount: count must be greater than zero or ACTION_INFINITE_USES");
+			Base.InvokeOnDebugMessage("Invalid count passed into SDK::SetActionMaximumInventory: count must be greater than zero or ACTION_INFINITE_USES");
 			return;
 		}
 
@@ -62,6 +62,69 @@ namespace gateway
 		msg.params.target = "gatewayActionState";
 		msg.data.ID = id;
 		msg.data.Count = count;
+
+		Base.queuePayload(msg);
+	}
+
+	struct ActionSetCount
+	{
+		string ID;
+		int Inventory;
+
+		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ActionSetCount, "id", ID, "inventory", Inventory);
+	};
+
+	void SDK::SetActionCount(const string& id, int32_t inventory)
+	{
+		gamelink::schema::SendEnvelope<ActionSetCount> msg;
+		if (inventory < -1)
+		{
+			Base.InvokeOnDebugMessage("Invalid count passed into SDK::SetActionInventory: inventory must be greater than zero or ACTION_INFINITE_USES");
+			return;
+		}
+
+		msg.action = "set";
+		msg.params.target = "gatewayActionState";
+		msg.data.ID = id;
+		msg.data.Inventory = inventory;
+
+		Base.queuePayload(msg);
+	}
+
+	struct DeltaCount
+	{
+		int Change;
+
+		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(DeltaCount, "change", Change);
+	};
+
+	struct ActionChangeCount
+	{
+		string ID;
+		DeltaCount Delta;
+
+		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(ActionChangeCount, "id", ID, "delta_inventory", Delta);
+	};
+
+	void SDK::IncrementActionCount(const string& id, int32_t change)
+	{
+		gamelink::schema::SendEnvelope<ActionChangeCount> msg;
+		msg.action = "set";
+		msg.params.target = "gatewayActionState";
+		msg.data.ID = id;
+		msg.data.Delta.Change = change;
+
+		Base.queuePayload(msg);
+	}
+
+	void SDK::DecrementActionCount(const string& id, int32_t change)
+	{
+		gamelink::schema::SendEnvelope<ActionChangeCount> msg;
+		
+		msg.action = "set";
+		msg.params.target = "gatewayActionState";
+		msg.data.ID = id;
+		msg.data.Delta.Change = -change;
 
 		Base.queuePayload(msg);
 	}
