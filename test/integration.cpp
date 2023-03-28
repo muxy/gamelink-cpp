@@ -392,7 +392,7 @@ TEST_CASE_METHOD(IntegrationTestFixture, "Transactions Support through gateway",
 	gateway.OnActionUsed([&](const gateway::ActionUsed& used)
 	{
 		// This should get 5 calls, which are all coins 
-		REQUIRE(used.SKU == "costs-ten");
+		REQUIRE(used.ActionID == "costs-ten");
 		REQUIRE(used.Cost == 10);
 
 		coinCalls++;
