@@ -1,4 +1,6 @@
 #pragma once
+#ifndef INCLUDE_MUXY_GATEWAY_H
+#define INCLUDE_MUXY_GATEWAY_H
 
 #include "gamelink.h"
 
@@ -21,7 +23,7 @@ namespace gateway
 
 #ifndef MUXY_GATEWAY_WITHOUT_PNG_ENCODER
 	/// Encodes an image as packed RGB(A) data into a base64 data url.
-	/// @param image - Pointer to array of bytes in RGB or RGBA format, 8 bits per pixel.
+	/// @param image - Pointer to array of bytes in RGB or RGBA format, 8 bits per component.
 	/// @param width - How many pixels wide the image is.
 	/// @param height - How many pixels high the image is.
 	/// @param components - 3 for RGB, 4 for RGBA. Other values are not supported.
@@ -260,3 +262,5 @@ namespace gateway
 		string ClientID = string("i575hs2x9lb3u8hqujtezit03w1740");
 	};
 }
+
+#endif

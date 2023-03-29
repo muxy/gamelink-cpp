@@ -14,5 +14,7 @@ int main()
         return 0;
     }
 
+	gateway::SDK gw("Some Game");
+
     return 1;
 }

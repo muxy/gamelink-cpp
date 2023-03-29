@@ -5,6 +5,18 @@
 #define STBI_WRITE_NO_STDIO
 #define STB_IMAGE_WRITE_STATIC
 #include "third_party/stb/stb_image_write.h"
+
+// Suppress warnings.
+namespace gateway 
+{
+	void unused() {
+		(void)stbi_write_png_to_func;
+		(void)stbi_write_bmp_to_func;
+		(void)stbi_write_tga_to_func;
+		(void)stbi_write_jpg_to_func;
+		(void)stbi_flip_vertically_on_write;
+	}
+}
 #endif
 
 namespace gateway
@@ -80,6 +92,11 @@ namespace gateway
 
 	string EncodeImageToBase64PNG(const void* untypedData, uint32_t w, uint32_t h, uint32_t components, uint32_t strideBytes, bool flipVertically)
 	{
+		if (!untypedData)
+		{
+			return string("");
+		}
+
 		const uint8_t* data = static_cast<const uint8_t*>(untypedData);
 		if (components != 3 && components != 4)
 		{
