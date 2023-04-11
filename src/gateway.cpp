@@ -76,6 +76,11 @@ namespace gateway
 			});
 	}
 
+	void SDK::Deauthenticate()
+	{
+		Base.Deauthenticate();
+	}
+
 	bool SDK::IsAuthenticated() const
 	{
 		return Base.IsAuthenticated();

@@ -38,7 +38,6 @@ MGW_RequestID MGW_SDK_AuthenticateWithPIN(MGW_SDK Gateway, const char *PIN, MGW_
 
 MGW_RequestID MGW_SDK_AuthenticateWithRefreshToken(MGW_SDK Gateway, const char *RefreshToken, MGW_AuthenticateResponseCallback Callback, void *User)
 {
-	
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
 	return SDK->AuthenticateWithRefreshToken(RefreshToken, [=](const gateway::AuthenticateResponse& Resp)
 	{
@@ -49,6 +48,12 @@ MGW_RequestID MGW_SDK_AuthenticateWithRefreshToken(MGW_SDK Gateway, const char *
 		Auth.HasError     = Resp.HasError() ? 1 : 0;
 		Callback(User, &Auth);
 	});
+}
+
+MUXY_GW_CLIB_API void MGW_SDK_Deauthenticate(MGW_SDK Gateway)
+{
+	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
+	SDK->Deauthenticate();
 }
 
 bool MGW_SDK_IsAuthenticated(MGW_SDK Gateway)
