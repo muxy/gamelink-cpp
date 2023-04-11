@@ -211,6 +211,8 @@ namespace gateway
 
 		RequestID AuthenticateWithPIN(const string& PIN, std::function<void(const AuthenticateResponse&)> Callback);
 		RequestID AuthenticateWithRefreshToken(const string& JWT, std::function<void(const AuthenticateResponse&)> Callback);
+		
+		void Deauthenticate();
 
 		/// Returns if an authentication message has been received.
 		///
