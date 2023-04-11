@@ -249,6 +249,8 @@ extern "C"
 																		  MGL_AuthenticateResponseCallback Callback,
 																		  void* UserData);
 
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_Deauthenticate(MuxyGameLink GameLink);
+
 	/*
 		Authentication checking.
 		The MGL_Schema_User object's lifetime is the same as the MuxyGameLink lifetime.

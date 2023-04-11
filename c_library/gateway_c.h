@@ -62,8 +62,10 @@ extern "C"
 
 	MUXY_GW_CLIB_API MGW_SDK MGW_MakeSDK(const char* GameID);
 	MUXY_GW_CLIB_API void MGW_KillSDK(MGW_SDK Gateway);
+
 	MUXY_GW_CLIB_API MGW_RequestID MGW_SDK_AuthenticateWithPIN(MGW_SDK Gateway, const char* PIN, MGW_AuthenticateResponseCallback Callback, void* User);
 	MUXY_GW_CLIB_API MGW_RequestID MGW_SDK_AuthenticateWithRefreshToken(MGW_SDK Gateway, const char* RefreshToken, MGW_AuthenticateResponseCallback Callback, void* User);
+	MUXY_GW_CLIB_API void MGW_SDK_Deauthenticate(MGW_SDK Gateway);
 	MUXY_GW_CLIB_API bool MGW_SDK_IsAuthenticated(MGW_SDK Gateway);
 
 	MUXY_GW_CLIB_API void MGW_SDK_OnDebugMessage(MGW_SDK Gateway, MGW_DebugMessageCallback Callback, void* UserData);
