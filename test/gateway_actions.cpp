@@ -23,20 +23,20 @@ TEST_CASE("Set action list", "[gateway][actions]")
 	REQUIRE(sdk.HasPayloads());
 
 	validateSinglePayload(sdk, R"({
-		"action": "set", 
+		"action": "set",
 		"params":{
 			"request_id": 65535,
 			"target": "gatewayActions"
 		},
 		"data": {
 			"actions": [{
-				"category": "help", 
-				"count": -1, 
+				"category": "help",
+				"count": -1,
 				"description": "Draw three cards",
-				"icon": "mdi:draw", 
-				"sku": "draw3", 
-				"impact": 5, 
-				"name": "Ancestral Recall", 
+				"icon": "mdi:draw",
+				"id": "draw3",
+				"impact": 5,
+				"name": "Ancestral Recall",
 				"state": "available"
 			}]
 		}
@@ -48,39 +48,39 @@ TEST_CASE("Set action status", "[gateway][actions]")
 	gateway::SDK sdk("This is a game");
 	sdk.SetActionCount("draw3", 10);
 	validateSinglePayload(sdk, R"({
-		"action": "set", 
+		"action": "set",
 		"params":{
 			"request_id": 65535,
 			"target": "gatewayActionState"
 		},
 		"data": {
-			"sku": "draw3", 
-			"count": 10
+			"id": "draw3",
+			"inventory": 10
 		}
 	})");
 
 	sdk.DisableAction("draw3");
 	validateSinglePayload(sdk, R"({
-		"action": "set", 
+		"action": "set",
 		"params":{
 			"request_id": 65535,
 			"target": "gatewayActionState"
 		},
 		"data": {
-			"sku": "draw3", 
+			"id": "draw3",
 			"state": "unavailable"
 		}
 	})");
 
 	sdk.EnableAction("draw3");
 	validateSinglePayload(sdk, R"({
-		"action": "set", 
+		"action": "set",
 		"params":{
 			"request_id": 65535,
 			"target": "gatewayActionState"
 		},
 		"data": {
-			"sku": "draw3", 
+			"id": "draw3",
 			"state": "available"
 		}
 	})");
@@ -90,7 +90,7 @@ TEST_CASE("Set action status", "[gateway][actions]")
 TEST_CASE("Set action list in C", "[gateway][actions][c]")
 {
 	MGW_SDK sdk = MGW_MakeSDK("This is a game");
-	
+
 	MGW_Action drawThreeCards;
 	drawThreeCards.Category = MGW_ACTIONCATEGORY_HELP;
 	drawThreeCards.Count = MGW_ACTION_INFINITE_USES;
@@ -105,20 +105,20 @@ TEST_CASE("Set action list in C", "[gateway][actions][c]")
 	REQUIRE(MGW_SDK_HasPayloads(sdk));
 
 	validateSinglePayload(sdk, R"({
-		"action": "set", 
+		"action": "set",
 		"params":{
 			"request_id": 65535,
 			"target": "gatewayActions"
 		},
 		"data": {
 			"actions": [{
-				"category": "help", 
-				"count": -1, 
+				"category": "help",
+				"count": -1,
 				"description": "Draw three cards",
-				"icon": "mdi:draw", 
-				"sku": "draw3", 
-				"impact": 5, 
-				"name": "Ancestral Recall", 
+				"icon": "mdi:draw",
+				"id": "draw3",
+				"impact": 5,
+				"name": "Ancestral Recall",
 				"state": "available"
 			}]
 		}
@@ -126,44 +126,44 @@ TEST_CASE("Set action list in C", "[gateway][actions][c]")
 }
 
 TEST_CASE("Set action status in C", "[gateway][actions][c]")
-{	
+{
 	MGW_SDK sdk = MGW_MakeSDK("This is a game");
 
 	MGW_SDK_SetActionCount(sdk, "draw3", 10);
 	validateSinglePayload(sdk, R"({
-		"action": "set", 
+		"action": "set",
 		"params":{
 			"request_id": 65535,
 			"target": "gatewayActionState"
 		},
 		"data": {
-			"sku": "draw3", 
-			"count": 10
+			"id": "draw3",
+			"inventory": 10
 		}
 	})");
 
 	MGW_SDK_DisableAction(sdk, "draw3");
 	validateSinglePayload(sdk, R"({
-		"action": "set", 
+		"action": "set",
 		"params":{
 			"request_id": 65535,
 			"target": "gatewayActionState"
 		},
 		"data": {
-			"sku": "draw3", 
+			"id": "draw3",
 			"state": "unavailable"
 		}
 	})");
 
 	MGW_SDK_EnableAction(sdk, "draw3");
 	validateSinglePayload(sdk, R"({
-		"action": "set", 
+		"action": "set",
 		"params":{
 			"request_id": 65535,
 			"target": "gatewayActionState"
 		},
 		"data": {
-			"sku": "draw3", 
+			"id": "draw3",
 			"state": "available"
 		}
 	})");
