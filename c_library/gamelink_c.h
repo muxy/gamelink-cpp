@@ -116,6 +116,16 @@ extern "C"
 		void* Obj;
 	} MGL_PatchList;
 
+	typedef struct
+	{
+		const void* Obj;
+	} MGL_GetDropsResponse;
+
+	typedef struct
+	{
+		const void* Obj;
+	} MGL_Drop;
+
 	/*
 		SDK Callbacks
 	*/
@@ -132,6 +142,7 @@ extern "C"
 	typedef void (*MGL_ConfigUpdateResponseCallback)(void* UserData, MGL_Schema_ConfigUpdateResponse ConfigResp);
 	typedef void (*MGL_MatchmakingUpdateCallback)(void* UserData, MGL_Schema_MatchmakingUpdate Update);
 	typedef void (*MGL_OnDebugMessageCallback)(void* UserData, const char *Message);
+	typedef void (*MGL_DropsCallback)(void* UserData, MGL_GetDropsResponse DropResp);
 
 	/*
 		Get URL for connection. Exposes the projection version.
@@ -463,6 +474,23 @@ extern "C"
 	MUXY_CLIB_API void MuxyGameLink_PatchList_UpdateStateWithEmptyArray(MGL_PatchList PList, MGL_Operation Operation, const char* Path);
 	MUXY_CLIB_API bool MuxyGameLink_PatchList_Empty(MGL_PatchList PList);
 	MUXY_CLIB_API void MuxyGameLink_PatchList_Clear(MGL_PatchList PList);
+
+	/* 
+		Drops
+	*/
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_GetDrops(MuxyGameLink GameLink, const char* Status, MGL_DropsCallback Callback, void* User);
+	MUXY_CLIB_API MGL_RequestId MuxyGameLink_ValidateDrop(MuxyGameLink GameLink, const char* DropId);
+
+	MUXY_CLIB_API MGL_Drop MuxyGameLink_GetDropsResponse_GetAt(MGL_GetDropsResponse Resp, uint64_t index);
+	MUXY_CLIB_API uint64_t MuxyGameLink_GetDropsResponse_GetCount(MGL_GetDropsResponse Resp);
+
+	MUXY_CLIB_API const char* MuxyGameLink_Drop_GetId(MGL_Drop Drop);
+	MUXY_CLIB_API const char* MuxyGameLink_Drop_GetBenefitId(MGL_Drop Drop);
+	MUXY_CLIB_API const char* MuxyGameLink_Drop_GetUserId(MGL_Drop Drop);
+	MUXY_CLIB_API const char* MuxyGameLink_Drop_GetStatus(MGL_Drop Drop);
+	MUXY_CLIB_API const char* MuxyGameLink_Drop_GetService(MGL_Drop Drop);
+	MUXY_CLIB_API const char* MuxyGameLink_Drop_GetUpdatedAt(MGL_Drop Drop);
+
 
 #ifdef __cplusplus
 }
