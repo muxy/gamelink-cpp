@@ -191,7 +191,9 @@ TEST_CASE("SDK Poll Creation With Options", "[sdk][poll][creation]")
 				"totalVotesPerUser": 1000,
 				"userIDVoting": true,
 				"startsAt": 10,
-				"endsAt": 20
+				"endsAt": 20,
+				"endsIn": 0,
+				"startsIn": 0
 			}
 		},
 		"params":{
@@ -215,7 +217,9 @@ TEST_CASE("SDK Poll Creation With Options", "[sdk][poll][creation]")
 				"totalVotesPerUser": 1000,
 				"userIDVoting": true,
 				"startsAt": 10,
-				"endsAt": 20
+				"endsAt": 20,
+				"endsIn": 0,
+				"startsIn": 0
 			}
 		},
 		"params":{
