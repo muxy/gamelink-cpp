@@ -61,6 +61,14 @@ echo "#endif" >> $OUTPUT_HEADER
 
 echo "#ifdef MUXY_GAMELINK_SINGLE_IMPL" >> $OUTPUT_HEADER
 
+echo "#ifndef MUXY_GATEWAY_WITHOUT_PNG_ENCODER" >> $OUTPUT_HEADER
+echo "#define STB_IMAGE_WRITE_IMPLEMENTATION" >> $OUTPUT_HEADER
+echo "#define STBI_WRITE_NO_STDIO" >> $OUTPUT_HEADER
+echo "#define STB_IMAGE_WRITE_STATIC" >> $OUTPUT_HEADER
+cat ./third_party/stb/stb_image_write.h >> $OUTPUT_HEADER
+echo "" >> $OUTPUT_HEADER
+echo "#endif" >> $OUTPUT_HEADER
+
 for file in ${INPUT_SOURCES[@]}; do
     # Remove any includes in quotes before amalgamating
     cat $file | sed 's/#include ".*"//g' >> $OUTPUT_HEADER

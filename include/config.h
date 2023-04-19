@@ -10,14 +10,17 @@
 	before you include this file in *one* C++ file to create the implementation
 
 	It should look like
-	#include ...
-	#include ...
-	#define MUXY_GAMELINK_SINGLE_IMPL
-	#include "gamelink_single.hpp"
+	# include ...
+	# include ...
+	# define MUXY_GAMELINK_SINGLE_IMPL
+	# include "gamelink_single.hpp"
 
 	This file also automatically includes nlohmann::json.
 	If you have an existing version of nlohmann::json, #define MUXY_NO_JSON_INCLUDE
 	to remove the one included in this file.
+
+	This file also automatically includes stb_image_write.h for PNG encoding.
+	To remove this, define MUXY_GATEWAY_WITHOUT_PNG_ENCODER
 
 	Exportable functions and types are annotated with MUXY_GAMELINK_API.
 	You can define that with your own dllexport macro or #define MUXY_GAMELINK_EXPORT_SYMBOLS

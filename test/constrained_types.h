@@ -55,7 +55,6 @@ public:
 	{
 		return _data.c_str();
 	}
-
 private:
 	std::string _data;
 };

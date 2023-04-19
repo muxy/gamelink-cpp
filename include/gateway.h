@@ -1,4 +1,6 @@
 #pragma once
+#ifndef INCLUDE_MUXY_GATEWAY_H
+#define INCLUDE_MUXY_GATEWAY_H
 
 #include "gamelink.h"
 
@@ -13,10 +15,24 @@ namespace gateway
 	struct GameMetadata
 	{
 		string GameName;
-		// Base64 encoded image
+
+		// Base64 encoded image, PNG, JPG or SVG
 		string GameLogo;
 		string Theme;
 	};
+
+#ifndef MUXY_GATEWAY_WITHOUT_PNG_ENCODER
+	/// Encodes an image as packed RGB(A) data into a base64 data url.
+	/// @param image - Pointer to array of bytes in RGB or RGBA format, 8 bits per component.
+	/// @param width - How many pixels wide the image is.
+	/// @param height - How many pixels high the image is.
+	/// @param components - 3 for RGB, 4 for RGBA. Other values are not supported.
+	/// @param strideBytes - How many bytes a row of pixels are. May be larger than width * component.
+	/// @param flipVertically - Set to true to flip the Y axis of the image efore encoding.
+	/// @return Returns a data url in the form "data:image/png;base64,<base64encoded image>"
+	/// @note This function is pretty slow, avoid calling this function on the main thread.
+	string EncodeImageToBase64PNG(const void* image, uint32_t width, uint32_t height, uint32_t components, uint32_t strideBytes, bool flipVertically);
+#endif
 
 	class Payload
 	{
@@ -252,3 +268,5 @@ namespace gateway
 		string ClientID = string("i575hs2x9lb3u8hqujtezit03w1740");
 	};
 }
+
+#endif
