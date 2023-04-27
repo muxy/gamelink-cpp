@@ -106,7 +106,7 @@ MGL_RequestId MuxyGameLink_AuthenticateWithPIN(MuxyGameLink GameLink,
 	return MuxyGameLink_AuthenticateWithGameIDAndPIN(GameLink, ClientId, NULL, PIN, Callback, UserData);
 }
 
-MGL_RequestId MuxyGameLink_AuthenticateWithRefreshTokenAndGameID(MuxyGameLink GameLink,
+MGL_RequestId MuxyGameLink_AuthenticateWithGameIDAndRefreshToken(MuxyGameLink GameLink,
 														const char* ClientId,
 														const char* GameId,
 														const char* RefreshToken,
@@ -134,7 +134,7 @@ MGL_RequestId MuxyGameLink_AuthenticateWithRefreshToken(MuxyGameLink GameLink,
 													MGL_AuthenticateResponseCallback Callback,
 													void* UserData)
 {
-	return MuxyGameLink_AuthenticateWithRefreshTokenAndGameID(GameLink, ClientId, NULL, RefreshToken, Callback, UserData);
+	return MuxyGameLink_AuthenticateWithGameIDAndRefreshToken(GameLink, ClientId, NULL, RefreshToken, Callback, UserData);
 }
 
 bool MuxyGameLink_IsAuthenticated(MuxyGameLink GameLink)
