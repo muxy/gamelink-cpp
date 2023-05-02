@@ -137,10 +137,10 @@ MGL_RequestId MuxyGameLink_AuthenticateWithRefreshToken(MuxyGameLink GameLink,
 	return MuxyGameLink_AuthenticateWithGameIDAndRefreshToken(GameLink, ClientId, NULL, RefreshToken, Callback, UserData);
 }
 
-bool MuxyGameLink_IsAuthenticated(MuxyGameLink GameLink)
+uint32_t MuxyGameLink_IsAuthenticated(MuxyGameLink GameLink)
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	return SDK->IsAuthenticated();
+	return SDK->IsAuthenticated() ? 1 : 0;
 }
 
 MGL_Schema_User MuxyGameLink_GetSchemaUser(MuxyGameLink GameLink)

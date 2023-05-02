@@ -16,10 +16,10 @@ void MuxyGameLink_DetachOnDebugMessage(MuxyGameLink GameLink)
 	SDK->DetachOnDebugMessage();
 }
 
-bool MuxyGameLink_ReceiveMessage(MuxyGameLink GameLink, const char* Bytes, uint32_t Length)
+uint32_t MuxyGameLink_ReceiveMessage(MuxyGameLink GameLink, const char* Bytes, uint32_t Length)
 {
 	gamelink::SDK* SDK = static_cast<gamelink::SDK*>(GameLink.SDK);
-	return SDK->ReceiveMessage(Bytes, Length);
+	return SDK->ReceiveMessage(Bytes, Length) ? 1 : 0;
 }
 
 void MuxyGameLink_HandleReconnect(MuxyGameLink GameLink)

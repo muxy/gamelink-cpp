@@ -66,7 +66,7 @@ extern "C"
 	MUXY_GW_CLIB_API MGW_RequestID MGW_SDK_AuthenticateWithPIN(MGW_SDK Gateway, const char* PIN, MGW_AuthenticateResponseCallback Callback, void* User);
 	MUXY_GW_CLIB_API MGW_RequestID MGW_SDK_AuthenticateWithRefreshToken(MGW_SDK Gateway, const char* RefreshToken, MGW_AuthenticateResponseCallback Callback, void* User);
 	MUXY_GW_CLIB_API void MGW_SDK_Deauthenticate(MGW_SDK Gateway);
-	MUXY_GW_CLIB_API bool MGW_SDK_IsAuthenticated(MGW_SDK Gateway);
+	MUXY_GW_CLIB_API uint32_t MGW_SDK_IsAuthenticated(MGW_SDK Gateway);
 
 	MUXY_GW_CLIB_API void MGW_SDK_OnDebugMessage(MGW_SDK Gateway, MGW_DebugMessageCallback Callback, void* UserData);
 	MUXY_GW_CLIB_API void MGW_SDK_DetachOnDebugMessage(MGW_SDK Gateway);
@@ -75,8 +75,8 @@ extern "C"
 
 	MUXY_GW_CLIB_API MGW_RequestID MGW_SDK_SetGameMetadata(MGW_SDK Gateway, MGW_GameMetadata Meta);
 
-	MUXY_GW_CLIB_API bool MGW_SDK_ReceiveMessage(MGW_SDK Gateway, const char* Bytes, uint32_t Length);
-	MUXY_GW_CLIB_API bool MGW_SDK_HasPayloads(MGW_SDK Gateway);
+	MUXY_GW_CLIB_API uint32_t MGW_SDK_ReceiveMessage(MGW_SDK Gateway, const char* Bytes, uint32_t Length);
+	MUXY_GW_CLIB_API uint32_t MGW_SDK_HasPayloads(MGW_SDK Gateway);
 	MUXY_GW_CLIB_API void MGW_SDK_ForeachPayload(MGW_SDK Gateway, MGW_PayloadCallback Callback, void* User);
 
 	MUXY_GW_CLIB_API MGW_String MGW_SDK_GetSandboxURL(MGW_SDK Gateway);
