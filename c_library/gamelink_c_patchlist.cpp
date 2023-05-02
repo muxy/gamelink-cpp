@@ -62,10 +62,10 @@ void MuxyGameLink_PatchList_UpdateStateWithEmptyArray(MGL_PatchList PList, MGL_O
 	Patch->UpdateStateWithEmptyArray(static_cast<gamelink::Operation>(Operation), Path);
 }
 
-bool MuxyGameLink_PatchList_Empty(MGL_PatchList PList)
+uint32_t MuxyGameLink_PatchList_Empty(MGL_PatchList PList)
 {
 	gamelink::PatchList* Patch = static_cast<gamelink::PatchList*>(PList.Obj);
-	return Patch->Empty();
+	return Patch->Empty() ? 1 : 0;
 }
 
 void MuxyGameLink_PatchList_Clear(MGL_PatchList PList)

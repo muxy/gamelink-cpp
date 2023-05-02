@@ -71,10 +71,10 @@ int64_t MuxyGameLink_MatchmakingUpdate_GetTimestamp(MGL_Schema_MatchmakingUpdate
 	return Object->data.timestamp;
 }
 
-int MuxyGameLink_MatchmakingUpdate_GetIsFollower(MGL_Schema_MatchmakingUpdate obj)
+uint32_t MuxyGameLink_MatchmakingUpdate_GetIsFollower(MGL_Schema_MatchmakingUpdate obj)
 {
 	const schema::MatchmakingUpdate* Object = static_cast<const schema::MatchmakingUpdate *>(obj.Obj);
-	return Object->data.isFollower;
+	return Object->data.isFollower ? 1 : 0;
 }
 
 int MuxyGameLink_MatchmakingUpdate_GetSubscriptionTier(MGL_Schema_MatchmakingUpdate obj)

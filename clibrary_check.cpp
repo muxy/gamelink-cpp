@@ -3,7 +3,7 @@
 int main(int argc, char* argv[])
 {
     MuxyGameLink sdk = MuxyGameLink_Make();
-    bool isAuthenticated = MuxyGameLink_IsAuthenticated(sdk);
+    uint32_t isAuthenticated = MuxyGameLink_IsAuthenticated(sdk);
     if (isAuthenticated)
     {
         return 0;

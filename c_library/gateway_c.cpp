@@ -56,7 +56,7 @@ MUXY_GW_CLIB_API void MGW_SDK_Deauthenticate(MGW_SDK Gateway)
 	SDK->Deauthenticate();
 }
 
-bool MGW_SDK_IsAuthenticated(MGW_SDK Gateway)
+uint32_t MGW_SDK_IsAuthenticated(MGW_SDK Gateway)
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
 	return SDK->IsAuthenticated();
@@ -106,13 +106,13 @@ MGW_RequestID MGW_SDK_SetGameMetadata(MGW_SDK Gateway, MGW_GameMetadata Meta)
 	return SDK->SetGameMetadata(MD);
 }
 
-bool MGW_SDK_ReceiveMessage(MGW_SDK Gateway, const char *Bytes, uint32_t Length)
+uint32_t MGW_SDK_ReceiveMessage(MGW_SDK Gateway, const char *Bytes, uint32_t Length)
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
 	return SDK->ReceiveMessage(Bytes, Length);
 }
 
-bool MGW_SDK_HasPayloads(MGW_SDK Gateway)
+uint32_t MGW_SDK_HasPayloads(MGW_SDK Gateway)
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
 	return SDK->HasPayloads();

@@ -12,9 +12,9 @@ MGL_Error MuxyGameLink_GetFirstError(void* Resp)
 	return WErr;
 }
 
-bool MuxyGameLink_Error_IsValid(MGL_Error Error)
+uint32_t MuxyGameLink_Error_IsValid(MGL_Error Error)
 {
-	return Error.Obj != nullptr;
+	return Error.Obj != nullptr ? 1 : 0;
 }
 
 uint32_t MuxyGameLink_Error_GetCode(MGL_Error Error)
