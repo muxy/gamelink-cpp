@@ -82,6 +82,9 @@ extern "C"
 	MUXY_GW_CLIB_API MGW_String MGW_SDK_GetSandboxURL(MGW_SDK Gateway);
 	MUXY_GW_CLIB_API MGW_String MGW_SDK_GetProductionURL(MGW_SDK Gateway);
 
+	MUXY_GW_CLIB_API MGW_String MGW_SDK_GetProjectionSandboxURL(MGW_SDK Gateway, const char* projection, int major, int minor, int patch);
+	MUXY_GW_CLIB_API MGW_String MGW_SDK_GetProjectionProductionURL(MGW_SDK Gateway, const char* projection, int major, int minor, int patch);
+
 	MUXY_GW_CLIB_API void MGW_FreeString(MGW_String Str);
 
 	// Polling.

@@ -105,6 +105,26 @@ namespace gateway
 		return gamelink::WebsocketConnectionURL(ClientID, gamelink::ConnectionStage::Production);
 	}
 
+	string SDK::GetProjectionSandboxURL(const string& projection, int major, int minor, int patch) const
+	{
+		return gamelink::ProjectionWebsocketConnectionURL(
+			ClientID, 
+			gamelink::ConnectionStage::Sandbox, 
+			projection, 
+			major, minor, patch
+		);
+	}
+
+	string SDK::GetProjectionProductionURL(const string& projection, int major, int minor, int patch) const
+	{
+		return gamelink::ProjectionWebsocketConnectionURL(
+			ClientID,
+			gamelink::ConnectionStage::Production,
+			projection,
+			major, minor, patch
+		);
+	}
+
 	void SDK::StopPoll()
 	{
 		Base.StopPoll("default");
