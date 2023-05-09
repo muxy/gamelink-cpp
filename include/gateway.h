@@ -238,6 +238,9 @@ namespace gateway
 
 		RequestID SetGameMetadata(GameMetadata Meta);
 
+		string GetProjectionSandboxURL(const string& projection, int major, int minor, int patch) const;
+		string GetProjectionProductionURL(const string& projection, int major, int minor, int patch) const;
+
 		string GetSandboxURL() const;
 		string GetProductionURL() const;
 

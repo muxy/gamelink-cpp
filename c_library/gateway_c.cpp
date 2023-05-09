@@ -59,7 +59,7 @@ MUXY_GW_CLIB_API void MGW_SDK_Deauthenticate(MGW_SDK Gateway)
 uint32_t MGW_SDK_IsAuthenticated(MGW_SDK Gateway)
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
-	return SDK->IsAuthenticated();
+	return SDK->IsAuthenticated() ? 1 : 0;
 }
 
 void MGW_SDK_HandleReconnect(MGW_SDK Gateway)
@@ -156,6 +156,18 @@ MGW_String MGW_SDK_GetProductionURL(MGW_SDK Gateway)
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
 	return MuxyGameLink_StrDup(SDK->GetProductionURL().c_str());
+}
+
+MGW_String MGW_SDK_GetProjectionSandboxURL(MGW_SDK Gateway, const char* projection, int major, int minor, int patch)
+{
+	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
+	return MuxyGameLink_StrDup(SDK->GetProjectionSandboxURL(gamelink::string(projection), major, minor, patch).c_str());
+}
+
+MGW_String MGW_SDK_GetProjectionProductionURL(MGW_SDK Gateway, const char* projection, int major, int minor, int patch)
+{
+	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
+	return MuxyGameLink_StrDup(SDK->GetProjectionProductionURL(gamelink::string(projection), major, minor, patch).c_str());
 }
 
 void MGW_SDK_StartPoll(MGW_SDK Gateway, MGW_PollConfiguration cfg)
