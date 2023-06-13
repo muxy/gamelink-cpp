@@ -2,7 +2,7 @@ name: Run CI Tests
 
 on:
   push:
-    branches: [ build-linux-library ]
+    branches: [ master ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -52,3 +52,9 @@ jobs:
         cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
         configurePreset: 'x64-library'
         buildPreset: 'x64-cgamelink'
+
+    - name: Archive the .so
+      uses: actions/upload-artifact@v3
+      with:
+        name: libcgamelink.so
+        path: builds/x64-library/Release/libcgamelink.so
