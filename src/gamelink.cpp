@@ -536,21 +536,21 @@ namespace gamelink
 	{
 		if (!(_storedRefresh == gamelink::string("")))
 		{
-			Payload* payload = nullptr;
+			Payload* authenticationPayload = nullptr;
 			if (_storedGameId == gamelink::string(""))
 			{
 				schema::AuthenticateWithRefreshTokenRequest p(_storedClientId, _storedRefresh);
-				payload = new Payload(gamelink::string(to_string(p).c_str()));
+				authenticationPayload = new Payload(gamelink::string(to_string(p).c_str()));
 			}
 			else
 			{
 				schema::AuthenticateWithRefreshTokenAndGameRequest p(_storedClientId, _storedGameId, _storedRefresh);
-				payload = new Payload(gamelink::string(to_string(p).c_str()));
+				authenticationPayload = new Payload(gamelink::string(to_string(p).c_str()));
 			}
-			
+
 			// Push the authentication request to the front of the queue.
 			_lock.lock();
-			_queuedPayloads.push_front(payload);
+			_queuedPayloads.push_front(authenticationPayload);
 			_lock.unlock();
 
 			// Replay subscriptions.
