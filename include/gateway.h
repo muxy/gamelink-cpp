@@ -82,14 +82,14 @@ namespace gateway
 
 		// All results in the range [0, 32).
 		std::vector<int32_t> Results;
-		
+
 		// How many votes were cast in total.
 		int32_t Count;
 
 		// The average value of all votes.
 		double Mean;
 
-		// True iff this is a final update for the vote.
+		// True if this is the final update.
 		bool IsFinal;
 	};
 
@@ -100,15 +100,23 @@ namespace gateway
 
 		PollMode Mode = PollMode::Order;
 		PollLocation Location = PollLocation::Default;
+
+		// Duration of the poll, in seconds.
+		// If set to a negative or zero duration, the poll lasts until a call
+		// to StopPoll
 		int32_t Duration = 0;
 
+		// Called regularly as poll results are streamed in from the server
 		std::function<void(const PollUpdate&)> OnUpdate;
+
+		// Called after the poll completes. This is called right after
+		std::function<void(const PollUpdate&)> OnComplete;
 	};
 
 	enum class ActionCategory
 	{
-		Neutral = 0, 
-		Hinder = 1, 
+		Neutral = 0,
+		Hinder = 1,
 		Help = 2
 	};
 
@@ -162,7 +170,7 @@ namespace gateway
 		string ActionID;
 		int32_t Cost;
 
-		string UserID; 
+		string UserID;
 		string Username;
 	};
 
@@ -171,6 +179,9 @@ namespace gateway
 	public:
 		explicit SDK(string gameID);
 		~SDK();
+
+		// Used to retarget this SDK to a new client ID.
+		void SetClientID(const gateway::string& id);
 
 		// Not implemented. SDK is not copyable
 		SDK(const SDK&) = delete;
@@ -197,7 +208,7 @@ namespace gateway
 		/// @param[in] cb Callback to be invoked for each avaliable payload
 		/// @param[in] user User pointer that is passed into the callback
 		void ForeachPayload(NetworkCallback Callback, void* User);
-		
+
 		template<typename CallbackType>
 		void ForeachPayload(CallbackType Callback)
 		{
@@ -211,7 +222,7 @@ namespace gateway
 
 		RequestID AuthenticateWithPIN(const string& PIN, std::function<void(const AuthenticateResponse&)> Callback);
 		RequestID AuthenticateWithRefreshToken(const string& JWT, std::function<void(const AuthenticateResponse&)> Callback);
-		
+
 		void Deauthenticate();
 
 		/// Returns if an authentication message has been received.
@@ -220,8 +231,14 @@ namespace gateway
 		bool IsAuthenticated() const;
 
 		// Polling
+
+		// These start a poll with id='default', and should be used in the majority of cases.
 		void StartPoll(const PollConfiguration& cfg);
 		void StopPoll();
+
+		// For multi-poll purposes, use these functions:
+		void StartPollWithID(const string& id, const PollConfiguration& cfg);
+		void StopPollWithID(const string& id);
 
 		// Actions
 		void SetActions(const Action* begin, const Action* end);
@@ -229,12 +246,20 @@ namespace gateway
 		void DisableAction(const string& id);
 		void SetActionMaximumCount(const string& id, int32_t number);
 		void SetActionCount(const string& id, int32_t number);
-		
+
 		void IncrementActionCount(const string& id, int32_t delta);
 		void DecrementActionCount(const string& id, int32_t delta);
 
 		// Game Data
+		// SetGameTexts sets ordered key-value pairs.
 		void SetGameTexts(const GameTexts& data);
+
+		// Sets the game text at the given index.
+		void SetGameText(int index, const GameText& text);
+
+		// SetGameVector4 sets a key->vec4 of single precision floating point data.
+		void SetGameVector4(const string& label, const float* ptr);
+		void SetGameVector4WithComponents(const string& label, float x, float y, float z, float w);
 
 		RequestID SetGameMetadata(GameMetadata Meta);
 
@@ -251,6 +276,7 @@ namespace gateway
 		void RefundAction(const gateway::ActionUsed& used, const gamelink::string& Details);
 	private:
 		gamelink::SDK Base;
+
 		string GameID;
 		string ClientID = string("i575hs2x9lb3u8hqujtezit03w1740");
 	};

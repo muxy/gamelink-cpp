@@ -32,7 +32,6 @@ file(GLOB WEBSOCKET_SOURCES "websocket_network/*.cpp")
 ## Check if we have CURL and LIB_WEBSOCKETS.
 find_package(CURL)
 
-
 ## Unit tests
 add_executable(tests ${SCHEMA_SOURCES} ${SDK_TEST_SOURCES} ${SDK_SOURCES} ${C_SOURCES})
 target_include_directories(tests PRIVATE "test" "c_library")

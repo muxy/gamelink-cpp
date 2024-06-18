@@ -26149,7 +26149,7 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 namespace nlohmann
 {
 	template<>
-	struct adl_serializer<gamelink::string> 
+	struct adl_serializer<gamelink::string>
 	{
 		static void to_json(json& j, const gamelink::string& s)
 		{
@@ -28532,7 +28532,8 @@ namespace gamelink
 																int projectionPatch);
 
 	// The PatchList set provides an easy api to generate a list of patches and send them
-	// in one request.
+	// in one request. This allocates memory enough to store all the patches as they are
+	// being accumulated.
 	class MUXY_GAMELINK_API PatchList
 	{
 		friend class SDK;
@@ -28548,8 +28549,8 @@ namespace gamelink
 		/// Queues a request to do many JSON Patch operations on the state object.
 		/// This will generate a StateUpdate event.
 		///
-		/// @param[in] begin Pointer to the first element in an array of UpdateOperations
-		/// @param[in] end Pointer one past the last element in an array of UpdateOperations
+		/// @param[in] begin Pointer to the first element in an array of PatchOperations
+		/// @param[in] end Pointer one past the last element in an array of PatchOperations
 		void UpdateState(const schema::PatchOperation* begin, const schema::PatchOperation* end);
 
 		/// Helper function that will call UpdateState with the input object as the value.
@@ -28585,55 +28586,55 @@ namespace gamelink
 
 		/// Helper function that will call UpdateState with the input integer as the value.
 		///
-		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] operation A valid JSON Patch operation
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] i The value to use in the patch operation
 		void UpdateStateWithInteger(Operation operation, const string& path, int64_t i);
 
 		/// Helper function that will call UpdateState with the input double as the value.
 		///
-		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] operation A valid JSON Patch operation
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] d The value to use in the patch operation
 		void UpdateStateWithDouble(Operation operation, const string& path, double d);
 
 		/// Helper function that will call UpdateState with a boolean value
 		///
-		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] operation A valid JSON Patch operation
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] b The value to use in the patch operation
 		void UpdateStateWithBoolean(Operation operation, const string& path, bool b);
 
 		/// Helper function that will call UpdateState with the input string as the value.
 		///
-		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] operation A valid JSON Patch operation
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] s The value to use in the patch operation
 		void UpdateStateWithString(Operation operation, const string& path, const string& s);
 
 		/// Helper function that will call UpdateState with the input json object literal as the value.
 		///
-		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] operation A valid JSON Patch operation
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] js The value to use in the patch operation
 		void UpdateStateWithLiteral(Operation operation, const string& path, const string& js);
 
 		/// Helper function that will call UpdateState with null as the value.
 		///
-		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] operation A valid JSON Patch operation
 		/// @param[in] path A JSON Patch path.
 		void UpdateStateWithNull(Operation operation, const string& path);
 
 		/// Helper function that will call UpdateState the input json object as the value.
 		///
-		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] operation A valid JSON Patch operation
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] js The value to use in the patch operation
 		void UpdateStateWithJson(Operation operation, const string& path, const nlohmann::json& js);
 
 		/// Helper function that will update state with an empty array
 		///
-		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] operation A valid JSON Patch operation
 		/// @param[in] path A JSON Patch path.
 		void UpdateStateWithEmptyArray(Operation operation, const string& path);
 
@@ -28642,7 +28643,6 @@ namespace gamelink
 
 		/// Clear the PatchList
 		void Clear();
-
 	private:
 		gamelink::lock lock;
 		std::vector<schema::PatchOperation> operations;
@@ -29886,14 +29886,14 @@ namespace gateway
 
 		// All results in the range [0, 32).
 		std::vector<int32_t> Results;
-		
+
 		// How many votes were cast in total.
 		int32_t Count;
 
 		// The average value of all votes.
 		double Mean;
 
-		// True iff this is a final update for the vote.
+		// True if this is the final update.
 		bool IsFinal;
 	};
 
@@ -29904,15 +29904,23 @@ namespace gateway
 
 		PollMode Mode = PollMode::Order;
 		PollLocation Location = PollLocation::Default;
+
+		// Duration of the poll, in seconds.
+		// If set to a negative or zero duration, the poll lasts until a call
+		// to StopPoll
 		int32_t Duration = 0;
 
+		// Called regularly as poll results are streamed in from the server
 		std::function<void(const PollUpdate&)> OnUpdate;
+
+		// Called after the poll completes. This is called right after
+		std::function<void(const PollUpdate&)> OnComplete;
 	};
 
 	enum class ActionCategory
 	{
-		Neutral = 0, 
-		Hinder = 1, 
+		Neutral = 0,
+		Hinder = 1,
 		Help = 2
 	};
 
@@ -29966,7 +29974,7 @@ namespace gateway
 		string ActionID;
 		int32_t Cost;
 
-		string UserID; 
+		string UserID;
 		string Username;
 	};
 
@@ -29975,6 +29983,9 @@ namespace gateway
 	public:
 		explicit SDK(string gameID);
 		~SDK();
+
+		// Used to retarget this SDK to a new client ID.
+		void SetClientID(const gateway::string& id);
 
 		// Not implemented. SDK is not copyable
 		SDK(const SDK&) = delete;
@@ -30001,7 +30012,7 @@ namespace gateway
 		/// @param[in] cb Callback to be invoked for each avaliable payload
 		/// @param[in] user User pointer that is passed into the callback
 		void ForeachPayload(NetworkCallback Callback, void* User);
-		
+
 		template<typename CallbackType>
 		void ForeachPayload(CallbackType Callback)
 		{
@@ -30015,7 +30026,7 @@ namespace gateway
 
 		RequestID AuthenticateWithPIN(const string& PIN, std::function<void(const AuthenticateResponse&)> Callback);
 		RequestID AuthenticateWithRefreshToken(const string& JWT, std::function<void(const AuthenticateResponse&)> Callback);
-		
+
 		void Deauthenticate();
 
 		/// Returns if an authentication message has been received.
@@ -30024,8 +30035,14 @@ namespace gateway
 		bool IsAuthenticated() const;
 
 		// Polling
+
+		// These start a poll with id='default', and should be used in the majority of cases.
 		void StartPoll(const PollConfiguration& cfg);
 		void StopPoll();
+
+		// For multi-poll purposes, use these functions:
+		void StartPollWithID(const string& id, const PollConfiguration& cfg);
+		void StopPollWithID(const string& id);
 
 		// Actions
 		void SetActions(const Action* begin, const Action* end);
@@ -30033,12 +30050,20 @@ namespace gateway
 		void DisableAction(const string& id);
 		void SetActionMaximumCount(const string& id, int32_t number);
 		void SetActionCount(const string& id, int32_t number);
-		
+
 		void IncrementActionCount(const string& id, int32_t delta);
 		void DecrementActionCount(const string& id, int32_t delta);
 
 		// Game Data
+		// SetGameTexts sets ordered key-value pairs.
 		void SetGameTexts(const GameTexts& data);
+
+		// Sets the game text at the given index.
+		void SetGameText(int index, const GameText& text);
+
+		// SetGameVector4 sets a key->vec4 of single precision floating point data.
+		void SetGameVector4(const string& label, const float* ptr);
+		void SetGameVector4WithComponents(const string& label, float x, float y, float z, float w);
 
 		RequestID SetGameMetadata(GameMetadata Meta);
 
@@ -30055,6 +30080,7 @@ namespace gateway
 		void RefundAction(const gateway::ActionUsed& used, const gamelink::string& Details);
 	private:
 		gamelink::SDK Base;
+
 		string GameID;
 		string ClientID = string("i575hs2x9lb3u8hqujtezit03w1740");
 	};
@@ -32559,6 +32585,11 @@ namespace gateway
 
 	SDK::~SDK() {}
 
+	void SDK::SetClientID(const gateway::string& id)
+	{
+		ClientID = id;
+	}
+
 	bool SDK::ReceiveMessage(const char* Bytes, uint32_t Length)
 	{
 		return Base.ReceiveMessage(Bytes, Length);
@@ -32642,9 +32673,9 @@ namespace gateway
 	string SDK::GetProjectionSandboxURL(const string& projection, int major, int minor, int patch) const
 	{
 		return gamelink::ProjectionWebsocketConnectionURL(
-			ClientID, 
-			gamelink::ConnectionStage::Sandbox, 
-			projection, 
+			ClientID,
+			gamelink::ConnectionStage::Sandbox,
+			projection,
 			major, minor, patch
 		);
 	}
@@ -32661,10 +32692,20 @@ namespace gateway
 
 	void SDK::StopPoll()
 	{
-		Base.StopPoll("default");
+		StopPollWithID(gateway::string("default"));
 	}
 
 	void SDK::StartPoll(const PollConfiguration& cfg)
+	{
+		StartPollWithID(gateway::string("default"), cfg);
+	}
+
+	void SDK::StopPollWithID(const gateway::string& id)
+	{
+		Base.StopPoll(id);
+	}
+
+	void SDK::StartPollWithID(const gateway::string& id, const PollConfiguration& cfg)
 	{
 		gamelink::PollConfiguration config;
 
@@ -32688,10 +32729,10 @@ namespace gateway
 		}
 
 		Base.RunPoll(
-			"default", 
-			cfg.Prompt, 
-			config, 
-			cfg.Options, 
+			id,
+			cfg.Prompt,
+			config,
+			cfg.Options,
 			[=](const gamelink::schema::PollUpdateResponse& response)
 			{
 				PollUpdate update;
@@ -32700,12 +32741,15 @@ namespace gateway
 				update.Winner = static_cast<int>(idx);
 				update.WinningVoteCount = response.data.results[idx];
 				update.Results = response.data.results;
-				update.IsFinal = false;
 				update.Mean = response.data.mean;
 				update.Count = response.data.count;
+				update.IsFinal = false;
 
-				cfg.OnUpdate(update);
-			}, 
+				if (cfg.OnUpdate)
+				{
+					cfg.OnUpdate(update);
+				}
+			},
 			[=](const gamelink::schema::PollUpdateResponse& response)
 			{
 				PollUpdate finish;
@@ -32714,11 +32758,19 @@ namespace gateway
 				finish.Winner = static_cast<int>(idx);
 				finish.WinningVoteCount = response.data.results[idx];
 				finish.Results = response.data.results;
-				finish.IsFinal = true;
 				finish.Mean = response.data.mean;
 				finish.Count = response.data.count;
+				finish.IsFinal = true;
 
-				cfg.OnUpdate(finish);
+				if (cfg.OnUpdate)
+				{
+					cfg.OnUpdate(finish);
+				}
+
+				if (cfg.OnComplete)
+				{
+					cfg.OnComplete(finish);
+				}
 			}
 		);
 	}
@@ -32887,16 +32939,55 @@ namespace gateway
 }
 
 namespace gateway
-{	
+{
 	MUXY_GAMELINK_SERIALIZE_3(GameText, "icon", Icon, "label", Label, "value", Value);
 
 	void SDK::SetGameTexts(const GameTexts& texts)
 	{
-		Base.UpdateStateWithArray(gamelink::StateTarget::Channel, 
-			gamelink::Operation::Add, 
-			gamelink::string("/game/text/game_data"), 
-			texts.Texts.data(), 
+		Base.UpdateStateWithArray(gamelink::StateTarget::Channel,
+			gamelink::Operation::Add,
+			gamelink::string("/game/text/game_data"),
+			texts.Texts.data(),
 			texts.Texts.data() + texts.Texts.size());
+	}
+
+	void SDK::SetGameText(int index, const GameText& text)
+	{
+		char pathBuffer[1024];
+		int written = snprintf(pathBuffer, 1024, "/game/text/game_data/%d", index);
+		pathBuffer[written] = '\0';
+
+		gamelink::string path(pathBuffer);
+
+		Base.UpdateStateWithObject(
+			gamelink::StateTarget::Channel,
+			gamelink::Operation::Add,
+			pathBuffer,
+			text);
+	}
+
+	void SDK::SetGameVector4(const string& label, const float* values)
+	{
+		char pathBuffer[1024];
+		int written = snprintf(pathBuffer, 1024, "/game/text/game_vectors/%s", label.c_str());
+		pathBuffer[written] = '\0';
+
+		gamelink::string path(pathBuffer);
+
+		Base.UpdateStateWithArray(
+			gamelink::StateTarget::Channel,
+			gamelink::Operation::Add,
+			pathBuffer,
+			values, values + 4);
+	}
+
+	void SDK::SetGameVector4WithComponents(const string& label, float x, float y, float z, float w)
+	{
+		float arr[] = {
+			x, y, z, w
+		};
+
+		SetGameVector4(label, arr);
 	}
 }
 

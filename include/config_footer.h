@@ -3,7 +3,7 @@
 namespace nlohmann
 {
 	template<>
-	struct adl_serializer<gamelink::string> 
+	struct adl_serializer<gamelink::string>
 	{
 		static void to_json(json& j, const gamelink::string& s)
 		{

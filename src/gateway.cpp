@@ -25,6 +25,11 @@ namespace gateway
 
 	SDK::~SDK() {}
 
+	void SDK::SetClientID(const gateway::string& id)
+	{
+		ClientID = id;
+	}
+
 	bool SDK::ReceiveMessage(const char* Bytes, uint32_t Length)
 	{
 		return Base.ReceiveMessage(Bytes, Length);
@@ -108,9 +113,9 @@ namespace gateway
 	string SDK::GetProjectionSandboxURL(const string& projection, int major, int minor, int patch) const
 	{
 		return gamelink::ProjectionWebsocketConnectionURL(
-			ClientID, 
-			gamelink::ConnectionStage::Sandbox, 
-			projection, 
+			ClientID,
+			gamelink::ConnectionStage::Sandbox,
+			projection,
 			major, minor, patch
 		);
 	}
@@ -127,10 +132,20 @@ namespace gateway
 
 	void SDK::StopPoll()
 	{
-		Base.StopPoll("default");
+		StopPollWithID(gateway::string("default"));
 	}
 
 	void SDK::StartPoll(const PollConfiguration& cfg)
+	{
+		StartPollWithID(gateway::string("default"), cfg);
+	}
+
+	void SDK::StopPollWithID(const gateway::string& id)
+	{
+		Base.StopPoll(id);
+	}
+
+	void SDK::StartPollWithID(const gateway::string& id, const PollConfiguration& cfg)
 	{
 		gamelink::PollConfiguration config;
 
@@ -154,10 +169,10 @@ namespace gateway
 		}
 
 		Base.RunPoll(
-			"default", 
-			cfg.Prompt, 
-			config, 
-			cfg.Options, 
+			id,
+			cfg.Prompt,
+			config,
+			cfg.Options,
 			[=](const gamelink::schema::PollUpdateResponse& response)
 			{
 				PollUpdate update;
@@ -166,12 +181,15 @@ namespace gateway
 				update.Winner = static_cast<int>(idx);
 				update.WinningVoteCount = response.data.results[idx];
 				update.Results = response.data.results;
-				update.IsFinal = false;
 				update.Mean = response.data.mean;
 				update.Count = response.data.count;
+				update.IsFinal = false;
 
-				cfg.OnUpdate(update);
-			}, 
+				if (cfg.OnUpdate)
+				{
+					cfg.OnUpdate(update);
+				}
+			},
 			[=](const gamelink::schema::PollUpdateResponse& response)
 			{
 				PollUpdate finish;
@@ -180,11 +198,19 @@ namespace gateway
 				finish.Winner = static_cast<int>(idx);
 				finish.WinningVoteCount = response.data.results[idx];
 				finish.Results = response.data.results;
-				finish.IsFinal = true;
 				finish.Mean = response.data.mean;
 				finish.Count = response.data.count;
+				finish.IsFinal = true;
 
-				cfg.OnUpdate(finish);
+				if (cfg.OnUpdate)
+				{
+					cfg.OnUpdate(finish);
+				}
+
+				if (cfg.OnComplete)
+				{
+					cfg.OnComplete(finish);
+				}
 			}
 		);
 	}
