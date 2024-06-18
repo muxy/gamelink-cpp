@@ -438,7 +438,8 @@ namespace gamelink
 																int projectionPatch);
 
 	// The PatchList set provides an easy api to generate a list of patches and send them
-	// in one request.
+	// in one request. This allocates memory enough to store all the patches as they are
+	// being accumulated.
 	class MUXY_GAMELINK_API PatchList
 	{
 		friend class SDK;
@@ -454,8 +455,8 @@ namespace gamelink
 		/// Queues a request to do many JSON Patch operations on the state object.
 		/// This will generate a StateUpdate event.
 		///
-		/// @param[in] begin Pointer to the first element in an array of UpdateOperations
-		/// @param[in] end Pointer one past the last element in an array of UpdateOperations
+		/// @param[in] begin Pointer to the first element in an array of PatchOperations
+		/// @param[in] end Pointer one past the last element in an array of PatchOperations
 		void UpdateState(const schema::PatchOperation* begin, const schema::PatchOperation* end);
 
 		/// Helper function that will call UpdateState with the input object as the value.
@@ -491,55 +492,55 @@ namespace gamelink
 
 		/// Helper function that will call UpdateState with the input integer as the value.
 		///
-		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] operation A valid JSON Patch operation
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] i The value to use in the patch operation
 		void UpdateStateWithInteger(Operation operation, const string& path, int64_t i);
 
 		/// Helper function that will call UpdateState with the input double as the value.
 		///
-		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] operation A valid JSON Patch operation
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] d The value to use in the patch operation
 		void UpdateStateWithDouble(Operation operation, const string& path, double d);
 
 		/// Helper function that will call UpdateState with a boolean value
 		///
-		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] operation A valid JSON Patch operation
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] b The value to use in the patch operation
 		void UpdateStateWithBoolean(Operation operation, const string& path, bool b);
 
 		/// Helper function that will call UpdateState with the input string as the value.
 		///
-		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] operation A valid JSON Patch operation
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] s The value to use in the patch operation
 		void UpdateStateWithString(Operation operation, const string& path, const string& s);
 
 		/// Helper function that will call UpdateState with the input json object literal as the value.
 		///
-		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] operation A valid JSON Patch operation
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] js The value to use in the patch operation
 		void UpdateStateWithLiteral(Operation operation, const string& path, const string& js);
 
 		/// Helper function that will call UpdateState with null as the value.
 		///
-		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] operation A valid JSON Patch operation
 		/// @param[in] path A JSON Patch path.
 		void UpdateStateWithNull(Operation operation, const string& path);
 
 		/// Helper function that will call UpdateState the input json object as the value.
 		///
-		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] operation A valid JSON Patch operation
 		/// @param[in] path A JSON Patch path.
 		/// @param[in] js The value to use in the patch operation
 		void UpdateStateWithJson(Operation operation, const string& path, const nlohmann::json& js);
 
 		/// Helper function that will update state with an empty array
 		///
-		/// @param[in] operation A valid JSON Patch operation, or "add_intermediates" or "remove_value"
+		/// @param[in] operation A valid JSON Patch operation
 		/// @param[in] path A JSON Patch path.
 		void UpdateStateWithEmptyArray(Operation operation, const string& path);
 
@@ -548,7 +549,6 @@ namespace gamelink
 
 		/// Clear the PatchList
 		void Clear();
-
 	private:
 		gamelink::lock lock;
 		std::vector<schema::PatchOperation> operations;
