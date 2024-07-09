@@ -127,7 +127,7 @@ namespace gateway
 		Hidden = 2,
 	};
 
-	static const int32_t ACTION_INFINITE_USES = -1;
+	static const int32_t ACTION_INFINITE_USES = 0xFFFF;
 	struct Action
 	{
 		string ID;
