@@ -9,9 +9,9 @@ TEST_CASE("Run Poll in Gateway", "[gateway][poll]")
 	gateway::SDK sdk("This is a game");
 
 	gateway::PollConfiguration config;
-	config.Prompt = "Pizza toppings"; 
+	config.Prompt = "Pizza toppings";
 	config.Options = {
-		"Pepperoni", 
+		"Pepperoni",
 		"Cheese"
 	};
 
@@ -54,10 +54,16 @@ TEST_CASE("Run Poll in Gateway with duration", "[gateway][poll]")
 	gateway::SDK sdk("This is a game");
 
 	gateway::PollConfiguration config;
-	config.Prompt = "Pizza toppings"; 
+	config.Prompt = "Pizza toppings";
 	config.Options = {
-		"Pepperoni", 
+		"Pepperoni",
 		"Cheese"
+	};
+
+	// Use std::map<std::string, std::string> to demostrate.
+	// In real user-code, this should be a type marked up with the MUXY_SERIALIZE macros.
+	config.UserData = std::map<std::string, std::string>{
+		{"SauceType", "Red"}
 	};
 
 	config.Duration = 20;
@@ -85,15 +91,15 @@ TEST_CASE("Run Poll in Gateway with duration", "[gateway][poll]")
 	sdk.ReceiveMessage(msg2, strlen(msg2));
 
 	const char* expected =  R"({
-		"action": "create", 
+		"action": "create",
 		"params": {
 			"request_id": 65535,
 			"target": "poll"
 		},
 		"data": {
 			"poll_id": "default",
-			"prompt": "Pizza toppings", 
-			"options": ["Pepperoni", "Cheese"], 
+			"prompt": "Pizza toppings",
+			"options": ["Pepperoni", "Cheese"],
 			"config": {
 				"disabled": false,
 				"distinctOptionsPerUser": 1,
@@ -104,6 +110,9 @@ TEST_CASE("Run Poll in Gateway with duration", "[gateway][poll]")
 				"totalVotesPerUser": 1,
 				"userIDVoting": true,
 				"votesPerOption": 1
+			},
+			"user_data": {
+				"SauceType": "Red"
 			}
 		}
 	})";
@@ -126,10 +135,10 @@ TEST_CASE("Run Poll in Gateway, C", "[gateway][poll][c]")
 	MGW_SDK sdk = MGW_MakeSDK("gameid");
 
 	MGW_PollConfiguration cfg;
-	cfg.Prompt = "Pizza toppings"; 
+	cfg.Prompt = "Pizza toppings";
 
 	const char* options[] = {
-		"Pepperoni", 
+		"Pepperoni",
 		"Cheese"
 	};
 
@@ -146,7 +155,7 @@ TEST_CASE("Run Poll in Gateway, C", "[gateway][poll][c]")
 	};
 
 	MGW_SDK_StartPoll(sdk, cfg);
-	
+
 	REQUIRE(MGW_SDK_HasPayloads(sdk));
 	const char* finishMessage = R"({
 		"meta": {

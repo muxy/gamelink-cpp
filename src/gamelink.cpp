@@ -662,14 +662,14 @@ namespace gamelink
 
 		if (options.size() > gamelink::limits::POLL_MAX_OPTIONS)
 		{
-			snprintf(buffer, BUF_SIZE, "Poll options size %zu is larger than the max allowed %u", options.size(), gamelink::limits::POLL_MAX_OPTIONS);
+			snprintf(buffer, BUF_SIZE, "Poll options size %u is larger than the max allowed %u", static_cast<uint32_t>(options.size()), gamelink::limits::POLL_MAX_OPTIONS);
 			InvokeOnDebugMessage(buffer);
 			return false;
 		}
 
 		if (prompt.size() > gamelink::limits::POLL_MAX_PROMPT_SIZE)
 		{
-			snprintf(buffer, BUF_SIZE, "Poll prompt size %zu is larger than the max allowed %u", prompt.size(), gamelink::limits::POLL_MAX_PROMPT_SIZE);
+			snprintf(buffer, BUF_SIZE, "Poll prompt size %u is larger than the max allowed %u", static_cast<uint32_t>(prompt.size()), gamelink::limits::POLL_MAX_PROMPT_SIZE);
 			InvokeOnDebugMessage(buffer);
 			return false;
 		}
@@ -678,7 +678,7 @@ namespace gamelink
 		{
 			if (opt.size() > gamelink::limits::POLL_MAX_OPTION_NAME_SIZE)
 			{
-				snprintf(buffer, BUF_SIZE, "Poll option name size %zu is larger than the max allowed %u", opt.size(), gamelink::limits::POLL_MAX_OPTION_NAME_SIZE);
+				snprintf(buffer, BUF_SIZE, "Poll option name size %u is larger than the max allowed %u", static_cast<uint32_t>(opt.size()), gamelink::limits::POLL_MAX_OPTION_NAME_SIZE);
 				InvokeOnDebugMessage(buffer);
 				return false;
 			}
@@ -694,13 +694,13 @@ namespace gamelink
 
 		if (meta.game_name.size() > gamelink::limits::METADATA_MAX_GAME_NAME_SIZE)
 		{
-			snprintf(buffer, BUF_SIZE, "Game Metadata game name size %zu is larger than the max allowed %u", meta.game_name.size(), gamelink::limits::METADATA_MAX_GAME_NAME_SIZE);
+			snprintf(buffer, BUF_SIZE, "Game Metadata game name size %u is larger than the max allowed %u", static_cast<uint32_t>(meta.game_name.size()), gamelink::limits::METADATA_MAX_GAME_NAME_SIZE);
 			InvokeOnDebugMessage(buffer);
 			return false;
 		}
 		if (meta.game_logo.size() > gamelink::limits::METADATA_MAX_GAME_LOGO_SIZE)
 		{
-			snprintf(buffer, BUF_SIZE, "Game Metadata game logo size %zu is larger than the max allowed %u", meta.game_logo.size(), gamelink::limits::METADATA_MAX_GAME_LOGO_SIZE);
+			snprintf(buffer, BUF_SIZE, "Game Metadata game logo size %u is larger than the max allowed %u", static_cast<uint32_t>(meta.game_logo.size()), gamelink::limits::METADATA_MAX_GAME_LOGO_SIZE);
 			InvokeOnDebugMessage(buffer);
 			return false;
 		}

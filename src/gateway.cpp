@@ -168,6 +168,8 @@ namespace gateway
 			config.endsIn = cfg.Duration;
 		}
 
+		config.userData = cfg.UserData;
+
 		Base.RunPoll(
 			id,
 			cfg.Prompt,

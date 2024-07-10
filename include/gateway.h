@@ -106,6 +106,9 @@ namespace gateway
 		// to StopPoll
 		int32_t Duration = 0;
 
+		// Arbitrary user data to send. Should be small.
+		nlohmann::json UserData;
+
 		// Called regularly as poll results are streamed in from the server
 		std::function<void(const PollUpdate&)> OnUpdate;
 
