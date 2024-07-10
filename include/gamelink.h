@@ -1023,7 +1023,6 @@ namespace gamelink
 		/// @return RequestId of the generated request
 		RequestId CreatePoll(const string& pollId, const string& prompt, const string* optionsBegin, const string* optionsEnd);
 
-
 		/// Queues a request to create a poll with configuration options.
 		///
 		/// @param[in] pollId The Poll ID to create

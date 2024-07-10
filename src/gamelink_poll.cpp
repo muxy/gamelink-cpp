@@ -187,11 +187,11 @@ namespace gamelink
 		}
 
 		return RunPoll(
-			pollId, 
-			prompt, 
-			config, 
+			pollId,
+			prompt,
+			config,
 			begin, end,
-			std::move(onUpdateCallback), 
+			std::move(onUpdateCallback),
 			std::move(onFinishCallback)
 		);
 	}
@@ -206,15 +206,15 @@ namespace gamelink
 		void* user)
 	{
 		return RunPoll(
-			pollId, 
-			prompt, 
-			config, 
-			optionsBegin, 
-			optionsEnd, 
+			pollId,
+			prompt,
+			config,
+			optionsBegin,
+			optionsEnd,
 			[=](const schema::PollUpdateResponse& resp)
 			{
 				onUpdateCallback(user, resp);
-			}, 
+			},
 			[=](const schema::PollUpdateResponse& resp)
 			{
 				onFinishCallback(user, resp);

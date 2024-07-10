@@ -4,6 +4,15 @@
 #include "gamelink.h"
 #include <iostream>
 
+struct ArbitraryUserData
+{
+	double value;
+
+	MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(ArbitraryUserData,
+		"value", value);
+};
+
+
 namespace gs = gamelink::schema;
 TEST_CASE("Poll Creation", "[poll][creation]")
 {
@@ -22,13 +31,24 @@ TEST_CASE("Poll Creation", "[poll][creation]")
 		}
 	})");
 
-	// Create poll with user data
-	std::map<std::string, gamelink::string> userData;
-	userData["showTitle"] = "true";
-	userData["title"] = "Yes or No?";
+	gamelink::PollConfiguration cfg;
+	cfg.disabled = true;
+	cfg.distinctOptionsPerUser = 2;
+	cfg.endsAt = 3;
+	cfg.endsIn = 4;
+	cfg.startsAt = 5;
+	cfg.startsIn = 6;
+	cfg.totalVotesPerUser = 7;
+	cfg.userIdVoting = true;
+	cfg.votesPerOption = 8;
 
-	gs::CreatePollWithUserDataRequest<std::map<std::string, gamelink::string>> req2("poll-id", "Yes or No?", {"Yes", "No"}, userData);
-	SerializeEqual(req2, R"({
+	ArbitraryUserData userData;
+	userData.value = 123;
+
+	cfg.userData = userData;
+
+	gs::CreatePollWithConfigurationRequest withConfiguration("poll-id", "Yes or No?", cfg, {"Yes", "No"});
+	SerializeEqual(withConfiguration, R"({
 		"action": "create",
 		"params": {
 			"request_id": 65535,
@@ -38,9 +58,19 @@ TEST_CASE("Poll Creation", "[poll][creation]")
 			"poll_id": "poll-id",
 			"prompt": "Yes or No?",
 			"options": ["Yes", "No"],
+			"config": {
+				"disabled": true,
+				"distinctOptionsPerUser": 2,
+				"endsAt": 3,
+				"endsIn": 4,
+				"startsAt": 5,
+				"startsIn": 6,
+				"totalVotesPerUser": 7,
+				"userIDVoting": true,
+				"votesPerOption": 8
+			},
 			"user_data": {
-				"showTitle": "true",
-				"title": "Yes or No?"
+				"value": 123
 			}
 		}
 	})");
@@ -175,6 +205,10 @@ TEST_CASE("SDK Poll Creation With Options", "[sdk][poll][creation]")
 	config.totalVotesPerUser = 1000;
 	config.disabled = true;
 
+	ArbitraryUserData userData;
+	userData.value = 42.0;
+	config.userData = userData;
+
 	sdk.CreatePollWithConfiguration("test-poll", "Me or Them?", config, {"Me", "Them"});
 	REQUIRE(sdk.HasPayloads());
 
@@ -194,6 +228,9 @@ TEST_CASE("SDK Poll Creation With Options", "[sdk][poll][creation]")
 				"endsAt": 20,
 				"endsIn": 0,
 				"startsIn": 0
+			},
+			"user_data": {
+				"value": 42
 			}
 		},
 		"params":{
@@ -220,6 +257,9 @@ TEST_CASE("SDK Poll Creation With Options", "[sdk][poll][creation]")
 				"endsAt": 20,
 				"endsIn": 0,
 				"startsIn": 0
+			},
+			"user_data": {
+				"value": 42
 			}
 		},
 		"params":{
@@ -514,11 +554,11 @@ TEST_CASE("SDK Poll other operations", "[sdk][poll]")
 
 	sdk.StopPoll("pizza-toppings");
 	validateSinglePayload(sdk, R"({
-		"action": "reconfigure", 
+		"action": "reconfigure",
 		"params": {
 			"request_id": 65535,
 			"target": "poll"
-		}, 
+		},
 		"data": {
 			"poll_id": "pizza-toppings",
 			"config": {
@@ -529,13 +569,13 @@ TEST_CASE("SDK Poll other operations", "[sdk][poll]")
 
 	sdk.SetPollDisabled("pizza-toppings", true);
 	validateSinglePayload(sdk, R"({
-		"action": "reconfigure", 
+		"action": "reconfigure",
 		"params": {
 			"request_id": 65535,
 			"target": "poll"
-		}, 
+		},
 		"data": {
-			"poll_id": "pizza-toppings", 
+			"poll_id": "pizza-toppings",
 			"config": {
 				"disabled": true
 			}
@@ -544,13 +584,13 @@ TEST_CASE("SDK Poll other operations", "[sdk][poll]")
 
 	sdk.SetPollDisabled("pizza-toppings", false);
 	validateSinglePayload(sdk, R"({
-		"action": "reconfigure", 
+		"action": "reconfigure",
 		"params": {
 			"request_id": 65535,
 			"target": "poll"
-		}, 
+		},
 		"data": {
-			"poll_id": "pizza-toppings", 
+			"poll_id": "pizza-toppings",
 			"config": {
 				"disabled": false
 			}

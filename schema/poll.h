@@ -51,6 +51,11 @@ namespace gamelink
 		/// if endsAt is non-zero, this field has no effect.
 		int64_t endsIn;
 
+		/// Arbitrary user data field.
+		/// For legacy reasons, this isn't part of the config schema, but rather
+		/// promoted to the request body when used as part of CreatePollWithConfigurationRequest
+		nlohmann::json userData;
+
 		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_9(PollConfiguration,
 			"userIDVoting", userIdVoting,
 			"distinctOptionsPerUser", distinctOptionsPerUser,
@@ -58,8 +63,8 @@ namespace gamelink
 			"votesPerOption", votesPerOption,
 			"disabled", disabled,
 			"startsAt", startsAt,
-			"endsAt", endsAt, 
-			"startsIn", startsIn, 
+			"endsAt", endsAt,
+			"startsIn", startsIn,
 			"endsIn", endsIn);
 	};
 
@@ -105,35 +110,18 @@ namespace gamelink
 			/// A list of answers to the prompt. Maximum 64.
 			std::vector<string> options;
 
+			/// Configuration information
 			PollConfiguration configuration;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_4(CreatePollWithConfigurationRequestBody, "poll_id", pollId, "prompt", prompt, "options", options, "config", configuration);
-		};
+			// Arbitrary user data
+			nlohmann::json userData;
 
-		template<typename T>
-		struct MUXY_GAMELINK_API CreatePollWithUserDataRequestBody
-		{
-			/// The Poll ID to create
-			string pollId;
-
-			/// The prompt for the poll.
-			string prompt;
-
-			/// An array of options for the poll
-			std::vector<string> options;
-
-			/// Arbitrary serializable user data.
-			T userData;
-
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_4(CreatePollWithUserDataRequestBody,
-												"poll_id",
-												pollId,
-												"prompt",
-												prompt,
-												"options",
-												options,
-												"user_data",
-												userData);
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_5(CreatePollWithConfigurationRequestBody,
+				"poll_id", pollId,
+				"prompt", prompt,
+				"options", options,
+				"config", configuration,
+				"user_data", userData);
 		};
 
 		struct MUXY_GAMELINK_API PollResponseBody
@@ -260,29 +248,6 @@ namespace gamelink
 			/// @param[in] config PollConfiguration for the poll.
 			/// @param[in] options vector of options for the poll.
 			CreatePollWithConfigurationRequest(const string& pollId, const string& prompt, const PollConfiguration& config, const std::vector<string>& options);
-		};
-
-		template<typename T>
-		struct CreatePollWithUserDataRequest : SendEnvelope<CreatePollWithUserDataRequestBody<T>>
-		{
-			/// Creates a CreatePoll request, but with user data.
-			/// @param[in] pollId The ID of the poll to create. This can overwrite existing polls if the same
-			///                   id is specified.
-			/// @param[in] prompt The prompt for the poll to create.
-			/// @param[in] options vector of options for the poll.
-			/// @param[in] userData Arbitrary user data to attach to this poll. This type should be serializable. The fully marshalled
-			///                     size of this type should be under 1kb.
-			CreatePollWithUserDataRequest(const string& pollId, const string& prompt, const std::vector<string>& options, const T& userData)
-			{
-				this->action = string("create");
-				this->params.target = string("poll");
-
-				this->data.pollId = pollId;
-				this->data.prompt = prompt;
-				this->data.options = options;
-
-				this->data.userData = userData;
-			}
 		};
 
 		struct MUXY_GAMELINK_API SubscribePollRequest : SendEnvelope<SubscribeTopicRequestBody>

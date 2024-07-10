@@ -31,7 +31,7 @@ TEST_CASE("Set action list", "[gateway][actions]")
 		"data": {
 			"actions": [{
 				"category": "help",
-				"count": -1,
+				"count": 65535,
 				"description": "Draw three cards",
 				"icon": "mdi:draw",
 				"id": "draw3",

@@ -51,6 +51,7 @@ namespace gamelink
 			data.prompt = prompt;
 			data.options = options;
 			data.configuration = config;
+			data.userData = config.userData;
 		}
 
 		SubscribePollRequest::SubscribePollRequest(const string& pollId)
