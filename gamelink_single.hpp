@@ -27206,6 +27206,11 @@ namespace gamelink
 		/// if endsAt is non-zero, this field has no effect.
 		int64_t endsIn;
 
+		/// Arbitrary user data field.
+		/// For legacy reasons, this isn't part of the config schema, but rather
+		/// promoted to the request body when used as part of CreatePollWithConfigurationRequest
+		nlohmann::json userData;
+
 		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_9(PollConfiguration,
 			"userIDVoting", userIdVoting,
 			"distinctOptionsPerUser", distinctOptionsPerUser,
@@ -27213,8 +27218,8 @@ namespace gamelink
 			"votesPerOption", votesPerOption,
 			"disabled", disabled,
 			"startsAt", startsAt,
-			"endsAt", endsAt, 
-			"startsIn", startsIn, 
+			"endsAt", endsAt,
+			"startsIn", startsIn,
 			"endsIn", endsIn);
 	};
 
@@ -27260,35 +27265,18 @@ namespace gamelink
 			/// A list of answers to the prompt. Maximum 64.
 			std::vector<string> options;
 
+			/// Configuration information
 			PollConfiguration configuration;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_4(CreatePollWithConfigurationRequestBody, "poll_id", pollId, "prompt", prompt, "options", options, "config", configuration);
-		};
+			// Arbitrary user data
+			nlohmann::json userData;
 
-		template<typename T>
-		struct MUXY_GAMELINK_API CreatePollWithUserDataRequestBody
-		{
-			/// The Poll ID to create
-			string pollId;
-
-			/// The prompt for the poll.
-			string prompt;
-
-			/// An array of options for the poll
-			std::vector<string> options;
-
-			/// Arbitrary serializable user data.
-			T userData;
-
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_4(CreatePollWithUserDataRequestBody,
-												"poll_id",
-												pollId,
-												"prompt",
-												prompt,
-												"options",
-												options,
-												"user_data",
-												userData);
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_5(CreatePollWithConfigurationRequestBody,
+				"poll_id", pollId,
+				"prompt", prompt,
+				"options", options,
+				"config", configuration,
+				"user_data", userData);
 		};
 
 		struct MUXY_GAMELINK_API PollResponseBody
@@ -27415,29 +27403,6 @@ namespace gamelink
 			/// @param[in] config PollConfiguration for the poll.
 			/// @param[in] options vector of options for the poll.
 			CreatePollWithConfigurationRequest(const string& pollId, const string& prompt, const PollConfiguration& config, const std::vector<string>& options);
-		};
-
-		template<typename T>
-		struct CreatePollWithUserDataRequest : SendEnvelope<CreatePollWithUserDataRequestBody<T>>
-		{
-			/// Creates a CreatePoll request, but with user data.
-			/// @param[in] pollId The ID of the poll to create. This can overwrite existing polls if the same
-			///                   id is specified.
-			/// @param[in] prompt The prompt for the poll to create.
-			/// @param[in] options vector of options for the poll.
-			/// @param[in] userData Arbitrary user data to attach to this poll. This type should be serializable. The fully marshalled
-			///                     size of this type should be under 1kb.
-			CreatePollWithUserDataRequest(const string& pollId, const string& prompt, const std::vector<string>& options, const T& userData)
-			{
-				this->action = string("create");
-				this->params.target = string("poll");
-
-				this->data.pollId = pollId;
-				this->data.prompt = prompt;
-				this->data.options = options;
-
-				this->data.userData = userData;
-			}
 		};
 
 		struct MUXY_GAMELINK_API SubscribePollRequest : SendEnvelope<SubscribeTopicRequestBody>
@@ -29910,6 +29875,9 @@ namespace gateway
 		// to StopPoll
 		int32_t Duration = 0;
 
+		// Arbitrary user data to send. Should be small.
+		nlohmann::json UserData;
+
 		// Called regularly as poll results are streamed in from the server
 		std::function<void(const PollUpdate&)> OnUpdate;
 
@@ -29931,7 +29899,7 @@ namespace gateway
 		Hidden = 2,
 	};
 
-	static const int32_t ACTION_INFINITE_USES = -1;
+	static const int32_t ACTION_INFINITE_USES = 0xFFFF;
 	struct Action
 	{
 		string ID;
@@ -30472,6 +30440,7 @@ namespace gamelink
 			data.prompt = prompt;
 			data.options = options;
 			data.configuration = config;
+			data.userData = config.userData;
 		}
 
 		SubscribePollRequest::SubscribePollRequest(const string& pollId)
@@ -31255,14 +31224,14 @@ namespace gamelink
 
 		if (options.size() > gamelink::limits::POLL_MAX_OPTIONS)
 		{
-			snprintf(buffer, BUF_SIZE, "Poll options size %zu is larger than the max allowed %u", options.size(), gamelink::limits::POLL_MAX_OPTIONS);
+			snprintf(buffer, BUF_SIZE, "Poll options size %u is larger than the max allowed %u", static_cast<uint32_t>(options.size()), gamelink::limits::POLL_MAX_OPTIONS);
 			InvokeOnDebugMessage(buffer);
 			return false;
 		}
 
 		if (prompt.size() > gamelink::limits::POLL_MAX_PROMPT_SIZE)
 		{
-			snprintf(buffer, BUF_SIZE, "Poll prompt size %zu is larger than the max allowed %u", prompt.size(), gamelink::limits::POLL_MAX_PROMPT_SIZE);
+			snprintf(buffer, BUF_SIZE, "Poll prompt size %u is larger than the max allowed %u", static_cast<uint32_t>(prompt.size()), gamelink::limits::POLL_MAX_PROMPT_SIZE);
 			InvokeOnDebugMessage(buffer);
 			return false;
 		}
@@ -31271,7 +31240,7 @@ namespace gamelink
 		{
 			if (opt.size() > gamelink::limits::POLL_MAX_OPTION_NAME_SIZE)
 			{
-				snprintf(buffer, BUF_SIZE, "Poll option name size %zu is larger than the max allowed %u", opt.size(), gamelink::limits::POLL_MAX_OPTION_NAME_SIZE);
+				snprintf(buffer, BUF_SIZE, "Poll option name size %u is larger than the max allowed %u", static_cast<uint32_t>(opt.size()), gamelink::limits::POLL_MAX_OPTION_NAME_SIZE);
 				InvokeOnDebugMessage(buffer);
 				return false;
 			}
@@ -31287,13 +31256,13 @@ namespace gamelink
 
 		if (meta.game_name.size() > gamelink::limits::METADATA_MAX_GAME_NAME_SIZE)
 		{
-			snprintf(buffer, BUF_SIZE, "Game Metadata game name size %zu is larger than the max allowed %u", meta.game_name.size(), gamelink::limits::METADATA_MAX_GAME_NAME_SIZE);
+			snprintf(buffer, BUF_SIZE, "Game Metadata game name size %u is larger than the max allowed %u", static_cast<uint32_t>(meta.game_name.size()), gamelink::limits::METADATA_MAX_GAME_NAME_SIZE);
 			InvokeOnDebugMessage(buffer);
 			return false;
 		}
 		if (meta.game_logo.size() > gamelink::limits::METADATA_MAX_GAME_LOGO_SIZE)
 		{
-			snprintf(buffer, BUF_SIZE, "Game Metadata game logo size %zu is larger than the max allowed %u", meta.game_logo.size(), gamelink::limits::METADATA_MAX_GAME_LOGO_SIZE);
+			snprintf(buffer, BUF_SIZE, "Game Metadata game logo size %u is larger than the max allowed %u", static_cast<uint32_t>(meta.game_logo.size()), gamelink::limits::METADATA_MAX_GAME_LOGO_SIZE);
 			InvokeOnDebugMessage(buffer);
 			return false;
 		}
@@ -31919,11 +31888,11 @@ namespace gamelink
 		}
 
 		return RunPoll(
-			pollId, 
-			prompt, 
-			config, 
+			pollId,
+			prompt,
+			config,
 			begin, end,
-			std::move(onUpdateCallback), 
+			std::move(onUpdateCallback),
 			std::move(onFinishCallback)
 		);
 	}
@@ -31938,15 +31907,15 @@ namespace gamelink
 		void* user)
 	{
 		return RunPoll(
-			pollId, 
-			prompt, 
-			config, 
-			optionsBegin, 
-			optionsEnd, 
+			pollId,
+			prompt,
+			config,
+			optionsBegin,
+			optionsEnd,
 			[=](const schema::PollUpdateResponse& resp)
 			{
 				onUpdateCallback(user, resp);
-			}, 
+			},
 			[=](const schema::PollUpdateResponse& resp)
 			{
 				onFinishCallback(user, resp);
@@ -32727,6 +32696,8 @@ namespace gateway
 		{
 			config.endsIn = cfg.Duration;
 		}
+
+		config.userData = cfg.UserData;
 
 		Base.RunPoll(
 			id,
