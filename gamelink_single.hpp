@@ -30033,6 +30033,20 @@ namespace gateway
 		void SetGameVector4(const string& label, const float* ptr);
 		void SetGameVector4WithComponents(const string& label, float x, float y, float z, float w);
 
+		// Low level set game access. Sets a serializable array to the json path.
+		template<typename T>
+		void UpdateGameStatePathWithArray(const string& path, const T* begin, const T* end)
+		{
+			Base.UpdateStateWithArray(gamelink::StateTarget::Channel, path, begin, end);
+		}
+
+		// Low level set game access. Sets an serializable object to the json path.
+		template<typename T>
+		void UpdateGameStatePathWithObject(const string& path, const T& obj)
+		{
+			Base.UpdateStateWithObject(gamelink::StateTarget::Channel, path, obj);
+		}
+
 		RequestID SetGameMetadata(GameMetadata Meta);
 
 		string GetProjectionSandboxURL(const string& projection, int major, int minor, int patch) const;
