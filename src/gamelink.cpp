@@ -173,6 +173,7 @@ namespace gamelink
 		, _onGetOutstandingTransactions(this, "OnGetOutstandingTransactions", 11)
 		, _onGetDrops(this, "OnGetDrops", 12)
 		, _onMatchmakingUpdate(this, "OnMatchmakingUpdate", 13)
+		, _onMatchPollUpdate(this, "OnMatchPollUpdate", 14)
 	{}
 
 	SDK::~SDK()
@@ -506,6 +507,15 @@ namespace gamelink
 				if (success)
 				{
 					_onMatchmakingUpdate.Invoke(resp);
+				}
+			}
+			else if (env.meta.target == "match_poll")
+			{
+				schema::MatchPollUpdate resp;
+				success = schema::ParseResponse(bytes, length, resp);
+				if (success)
+				{
+					_onMatchPollUpdate.Invoke(resp);
 				}
 			}
 		}

@@ -15,5 +15,6 @@
 #include "game_config.h"
 #include "drops.h"
 #include "matchmaking.h"
+#include "matches.h"
 #include "game_metadata.h"
 #endif

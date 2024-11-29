@@ -203,7 +203,13 @@ namespace gamelink
 			/// Number of responses, including ones that outside the [0, 32) range.
 			int32_t count;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_5(PollUpdateBody, "poll", poll, "results", results, "mean", mean, "sum", sum, "count", count);
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_5(PollUpdateBody,
+				"poll", poll,
+				"results", results,
+				"mean", mean,
+				"sum", sum,
+				"count", count
+			);
 		};
 
 		template<typename T>

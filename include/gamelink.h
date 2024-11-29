@@ -1616,6 +1616,63 @@ namespace gamelink
 		Event<schema::MatchmakingUpdate>& OnMatchmakingQueueInvite();
 #pragma endregion
 
+#pragma region Matches
+		// Creates a match, which is a collection of users that can have some operations performed on them
+		// as an entire collection, instead of channel by channel.
+		// Match manipulation functions are only supported by a server Gamelink connection. Calling these
+		// from a client will result in an authorization faiure.
+
+		// Creates a match with the given ID
+		RequestId CreateMatch(const string& id);
+
+		// Keeps a match alive
+		RequestId KeepMatchAlive(const string& id);
+
+		// Adds channels to a match
+		RequestId AddChannelsToMatch(const string& id, const std::vector<string>& channels);
+
+		// Removes channels from a match.
+		RequestId RemoveChannelsFromMatch(const string& id, const std::vector<string>& channels);
+
+		// Runs a poll in a match. Very similar to RunPoll, except for the callback type, as it receives
+		// information for all matches.
+
+		RequestId RunMatchPoll(
+			const string& matchId,
+			const string& pollId,
+			const string& prompt,
+			const PollConfiguration& config,
+			const string* optionsBegin,
+			const string* optionsEnd,
+			std::function<void(const schema::MatchPollUpdate&)> onUpdateCallback,
+			std::function<void(const schema::MatchPollUpdate&)> onFinishCallback
+		);
+
+		RequestId RunMatchPoll(
+			const string& matchId,
+			const string& pollId,
+			const string& prompt,
+			const PollConfiguration& config,
+			const std::vector<string>& opts,
+			std::function<void(const schema::MatchPollUpdate&)> onUpdateCallback,
+			std::function<void(const schema::MatchPollUpdate&)> onFinishCallback
+		);
+
+		// Stops a poll in a match
+		RequestId StopMatchPoll(const string& matchId, const string& pollId);
+
+		/// Sends a broadcast to all viewers on all channels in the match
+		template<typename T>
+		RequestId SendMatchBroadcast(const string& matchId, const string& topic, const T& value)
+		{
+			schema::BroadcastMatchRequest<T> payload(matchId, topic, value);
+			return queuePayload(payload);
+		}
+
+		/// Sends a broadcast to all viewers on all channels in the match
+		RequestId SendMatchBroadcast(const string& matchId, const string& topic, const nlohmann::json& message);
+#pragma endregion
+
 		/// Sends a request to set your games metadata. You're expected to fill out a gamelink::GameMetadata struct with your games metadata
 		/// and provide it.
 		/// @return RequestId of the generated request
@@ -1683,6 +1740,8 @@ namespace gamelink
 		Event<schema::GetDropsResponse> _onGetDrops;
 
 		Event<schema::MatchmakingUpdate> _onMatchmakingUpdate;
+
+		Event<schema::MatchPollUpdate> _onMatchPollUpdate;
 	};
 
 	// Implementation of Event::Remove is here because of completeness requirements of SDK.
