@@ -93,6 +93,12 @@ namespace gateway
 		bool IsFinal;
 	};
 
+	struct MatchPollUpdate
+	{
+		PollUpdate overall;
+		std::unordered_map<string, PollUpdate> perChannel;
+	};
+
 	struct PollConfiguration
 	{
 		string Prompt;
@@ -115,6 +121,30 @@ namespace gateway
 		// Called after the poll completes. This is called right after
 		std::function<void(const PollUpdate&)> OnComplete;
 	};
+
+	struct MatchPollConfiguration
+	{
+		string Prompt;
+		std::vector<string> Options;
+
+		PollMode Mode = PollMode::Order;
+		PollLocation Location = PollLocation::Default;
+
+		// Duration of the poll, in seconds.
+		// If set to a negative or zero duration, the poll lasts until a call
+		// to StopPoll
+		int32_t Duration = 0;
+
+		// Arbitrary user data to send. Should be small.
+		nlohmann::json UserData;
+
+		// Called regularly as poll results are streamed in from the server
+		std::function<void(const MatchPollUpdate&)> OnUpdate;
+
+		// Called after the poll completes. This is called right after
+		std::function<void(const MatchPollUpdate&)> OnComplete;
+	};
+
 
 	enum class ActionCategory
 	{
@@ -291,6 +321,18 @@ namespace gateway
 
 		void AcceptAction(const gateway::ActionUsed& used, const gamelink::string& Details);
 		void RefundAction(const gateway::ActionUsed& used, const gamelink::string& Details);
+
+		// Matches
+		void CreateMatch(const string& match);
+		void KeepMatchAlive(const string& match);
+		void AddChannelsToMatch(const string& match, const string* start, const string* end);
+		void RemoveChannelsFromMatch(const string& match, const string* start, const string* end);
+
+		void RunMatchPoll(const string& match, const MatchPollConfiguration& cfg);
+		void StopMatchPoll(const string& match);
+
+		void RunMatchPollWithID(const string& match, const string& id, const MatchPollConfiguration& cfg);
+		void StopMatchPollWithID(const string& match, const string& id);
 	private:
 		gamelink::SDK Base;
 

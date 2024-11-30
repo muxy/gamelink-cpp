@@ -22,9 +22,16 @@ struct std::hash<gamelink::string>
 {
 	inline std::size_t operator()(const gamelink::string& str) const
 	{
-		return std::hash<
-			std::string_view
-		>()(std::string_view(str.c_str(), str.size()));
+		// FNV-1a hash
+		uint64_t hash = 14695981039346656037ull;
+		const char* data = str.c_str();
+		for (size_t i = 0; i < str.size(); ++i)
+		{
+			hash ^= static_cast<uint32_t>(data[i]);
+			hash *= 1099511628211;
+		}
+
+		return static_cast<std::size_t>(hash);
 	}
 };
 #endif
