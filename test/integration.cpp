@@ -373,7 +373,6 @@ TEST_CASE_METHOD(IntegrationTestFixture, "Transactions Support", "[.][integratio
 	REQUIRE(calls == 6);
 }
 
-
 TEST_CASE_METHOD(IntegrationTestFixture, "Transactions Support through gateway", "[.][integration][t]")
 {
 	Connect();
@@ -384,14 +383,14 @@ TEST_CASE_METHOD(IntegrationTestFixture, "Transactions Support through gateway",
 		// This should get 1 call, to purchase 50 coins.
 		REQUIRE(used.SKU == "muxy-bits-50");
 		REQUIRE(used.Bits == 50);
-		
+
 		bitsCalls++;
 	});
 
 	size_t coinCalls = 0;
 	gateway.OnActionUsed([&](const gateway::ActionUsed& used)
 	{
-		// This should get 5 calls, which are all coins 
+		// This should get 5 calls, which are all coins
 		REQUIRE(used.ActionID == "costs-ten");
 		REQUIRE(used.Cost == 10);
 
@@ -517,6 +516,53 @@ TEST_CASE_METHOD(IntegrationTestFixture, "Datastream operations", "[.][integrati
 
 	Sleep();
 	REQUIRE(events == 6);
+}
+
+TEST_CASE_METHOD(IntegrationTestFixture, "Matches and polls", "[.][integration]")
+{
+	Connect();
+
+	sdk.CreateMatch("my-cool-match");
+
+	sdk.AddChannelsToMatch("my-cool-match", {
+		"26052853", "89319907", "89368629", "89368745", "124708734"
+	});
+
+	size_t updateCalls = 0;
+	auto update = [&updateCalls](const gamelink::schema::MatchPollUpdate& update)
+	{
+		updateCalls++;
+	};
+
+	size_t finishCalls = 0;
+	auto finish = [&finishCalls](const gamelink::schema::MatchPollUpdate& finish)
+	{
+		finishCalls++;
+	};
+
+	gamelink::PollConfiguration config;
+	config.startsIn = 0;
+	config.endsIn = 5;
+
+	gamelink::RequestId waiter = sdk.RunMatchPoll("my-cool-match", "what-to-eat",
+		"How many pizzas should I buy?",
+		config,
+		{ "one", "two", "twenty" },
+		update,
+		finish
+	);
+
+	Sleep(1);
+
+	nlohmann::json voteValue;
+	voteValue["value"] = 1;
+	nlohmann::json unused;
+
+	Request("POST", "vote?id=what-to-eat", &voteValue, &unused);
+	Sleep(6);
+
+	REQUIRE(updateCalls > 0);
+	REQUIRE(finishCalls == 1);
 }
 
 TEST_CASE_METHOD(IntegrationTestFixture, "Client IP access", "[.][integration]")

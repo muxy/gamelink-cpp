@@ -45,7 +45,7 @@ size_t writeResponse(char* ptr, size_t size, size_t nmemb, void* data)
 
 	char* start = impl->messageFragment.data() + oldSize;
 	memcpy(start, ptr, size * nmemb);
-	
+
 	curl_ws_frame* frame = curl_ws_meta(impl->connection);
 	if (frame->bytesleft > 0)
 	{
@@ -94,6 +94,11 @@ WebsocketConnection::WebsocketConnection(const std::string& url, uint16_t port)
 	CURL* curl = curl_easy_init();
 
 	std::string protocolURL = "wss://" + url;
+	if (url.rfind("localhost", 0) == 0)
+	{
+		protocolURL = "ws://" + url;
+	}
+
 	curl_easy_setopt(curl, CURLOPT_URL, protocolURL.c_str());
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeResponse);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, impl);
@@ -185,11 +190,11 @@ int WebsocketConnection::run()
 
 		size_t sent = 0;
 		CURLcode result = curl_ws_send(
-			impl->connection, 
-			msg->data.data(), 
-			msg->data.size(), 
-			&sent, 
-			0, 
+			impl->connection,
+			msg->data.data(),
+			msg->data.size(),
+			&sent,
+			0,
 			flags
 		);
 
@@ -218,7 +223,7 @@ void WebsocketConnection::send(const char* bytes, uint32_t length)
 	std::unique_ptr<Message> msg = std::unique_ptr<Message>(new Message());
 	msg->binary = false;
 	msg->data = std::vector<char>(bytes, bytes + length);
-	
+
 	std::lock_guard<std::mutex> lock(impl->lock);
 	impl->messages.push_back(std::move(msg));
 }

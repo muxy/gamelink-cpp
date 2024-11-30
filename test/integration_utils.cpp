@@ -59,7 +59,7 @@ void IntegrationTestFixture::Connect()
 		std::string token = resp["token"];
 
 		gamelink::RequestId req = sdk.AuthenticateWithGameIDAndPIN(
-			gamelink::string(client.c_str()), 
+			gamelink::string(client.c_str()),
 			gamelink::string("Mystery Fun House"),
 			gamelink::string(token.c_str())
 		);
@@ -68,7 +68,7 @@ void IntegrationTestFixture::Connect()
 	else
 	{
 		gamelink::RequestId req = sdk.AuthenticateWithGameIDAndRefreshToken(
-			gamelink::string(client.c_str()), 
+			gamelink::string(client.c_str()),
 			gamelink::string("Mystery Fun House"),
 			gamelink::string(refreshToken.c_str())
 		);
@@ -251,28 +251,28 @@ void IntegrationTestFixture::LoadEnvironment()
 	}
 
 	target = "sandbox";
-	targetDomain = "sandbox.muxy.io";
+	apiUrl = "https://sandbox.muxy.io";
+	websocketUrl = "gamelink.sandbox.muxy.io";
+
 	const char * targetEnv = std::getenv("MUXY_INTEGRATION_TARGET");
 	if (targetEnv)
 	{
-		if (std::string(targetEnv) != "production")
+		target = std::string(targetEnv);
+		if (target == "localhost")
 		{
-			target = std::string(targetEnv);
-			targetDomain = target + ".muxy.io";
-		} else
-		{
-			target = "production";
-			targetDomain = "muxy.io";
+			apiUrl = "http://localhost:5050";
+			websocketUrl = "localhost:5051";
 		}
-	}
-	REQUIRE(targetDomain.size());
-
-	targetPrefix = "";
-	const char * prefixEnv = std::getenv("MUXY_INTEGRATION_OLD_URLS");
-	if (prefixEnv && std::string(prefixEnv) == "true")
-	{
-		targetPrefix = target + ".";
-		targetDomain = "muxy.io";
+		else if (std::string(targetEnv) != "production")
+		{
+			apiUrl = "https://" + target + ".muxy.io";
+			websocketUrl = "gamelink." + target + ".muxy.io";
+		}
+		else
+		{
+			apiUrl = "https://api.muxy.io";
+			websocketUrl = "gamelink.muxy.io";
+		}
 	}
 
 	signature = "";
@@ -288,9 +288,8 @@ void IntegrationTestFixture::Reconnect()
 	ForceDisconnect();
 
 	char buffer[256];
-	int output = snprintf(buffer, 256, "%sgamelink.%s/%d.%d.%d/%s",
-		targetPrefix.c_str(),
-		targetDomain.c_str(),
+	int output = snprintf(buffer, 256, "%s/%d.%d.%d/%s",
+		websocketUrl.c_str(),
 		MUXY_GAMELINK_VERSION_MAJOR, MUXY_GAMELINK_VERSION_MINOR, MUXY_GAMELINK_VERSION_PATCH,
 		client.c_str());
 
@@ -342,9 +341,8 @@ int IntegrationTestFixture::Request(const char* method, const char* endpoint, co
 	}
 
 	char buffer[256];
-	int writtenBytes = snprintf(buffer, 256, "https://%sapi.%s/v1/e/%s",
-		targetPrefix.c_str(),
-		targetDomain.c_str(),
+	int writtenBytes = snprintf(buffer, 256, "%s/v1/e/%s",
+		apiUrl.c_str(),
 		endpoint);
 
 	REQUIRE(writtenBytes > 0);

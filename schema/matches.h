@@ -210,7 +210,6 @@ namespace gamelink
 		struct MUXY_GAMELINK_API MatchPollUpdate : ReceiveEnvelope<MatchPollUpdateInformation>
 		{};
 
-
 		struct MatchPollUpdateInformationInternal
 		{
 			string matchId;

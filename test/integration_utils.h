@@ -40,9 +40,8 @@ private:
 	void LoadEnvironment();
 
 	std::string target;
-
-	std::string targetDomain;
-	std::string targetPrefix;
+	std::string apiUrl;
+	std::string websocketUrl;
 
 	std::string authenticationHeader;
 	std::unique_ptr<WebsocketConnection> connection;
