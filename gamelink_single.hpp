@@ -10,6 +10,10 @@
 #define MUXY_GAMELINK_VERSION_MINOR 2
 #define MUXY_GAMELINK_VERSION_PATCH 0
 
+#include <vector>
+#include <unordered_map>
+#include <string_view>
+
 /*
 	Do this:
 	  #define MUXY_GAMELINK_SINGLE_IMPL
@@ -26162,7 +26166,59 @@ namespace nlohmann
 		}
 	};
 }
+
+template<>
+struct std::hash<gamelink::string>
+{
+	inline std::size_t operator()(const gamelink::string& str) const
+	{
+		// FNV-1a hash
+		uint64_t hash = 14695981039346656037ull;
+		const char* data = str.c_str();
+		for (size_t i = 0; i < str.size(); ++i)
+		{
+			hash ^= static_cast<uint32_t>(data[i]);
+			hash *= 1099511628211;
+		}
+
+		return static_cast<std::size_t>(hash);
+	}
+};
 #endif
+
+namespace nlohmann
+{
+	template<typename T>
+	struct adl_serializer<std::unordered_map<gamelink::string, T>>
+	{
+		static inline void to_json(json& js, const std::unordered_map<gamelink::string, T>& s)
+		{
+			for (auto it = s.begin(); it != s.end(); ++it)
+			{
+				js[json::string_t(it->first.c_str())] = it->second;
+			}
+		}
+
+		static inline void from_json(const json& j, std::unordered_map<gamelink::string, T>& s)
+		{
+			if (!j.is_object())
+			{
+				return;
+			}
+
+			s.clear();
+			for (auto it = j.begin(); it != j.end(); ++it)
+			{
+				gamelink::string key(it.key().c_str());
+
+				T value;
+				it.value().get_to(value);
+
+				s.insert(std::make_pair(key, std::move(value)));
+			}
+		}
+	};
+}
 #endif
 
 #ifndef MUXY_GAMELINK_SCHEMA_SERIALIZATION_H
@@ -27358,7 +27414,13 @@ namespace gamelink
 			/// Number of responses, including ones that outside the [0, 32) range.
 			int32_t count;
 
-			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_5(PollUpdateBody, "poll", poll, "results", results, "mean", mean, "sum", sum, "count", count);
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_5(PollUpdateBody,
+				"poll", poll,
+				"results", results,
+				"mean", mean,
+				"sum", sum,
+				"count", count
+			);
 		};
 
 		template<typename T>
@@ -27938,6 +28000,268 @@ namespace gamelink
 		};
 	}
 }
+#endif
+
+#ifndef MUXY_GAMELINK_SCHEMA_MATCHES_H
+#define MUXY_GAMELINK_SCHEMA_MATCHES_H
+
+namespace gamelink
+{
+    namespace schema
+    {
+        struct CreateMatchRequestBody
+        {
+            gamelink::string matchId;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(CreateMatchRequestBody,
+				"id", matchId
+			);
+        };
+
+        struct MUXY_GAMELINK_API CreateMatchRequest : SendEnvelope<CreateMatchRequestBody>
+        {
+			explicit inline CreateMatchRequest(const string& id)
+			{
+				this->action = string("create");
+                this->params.target = string("match");
+
+				this->data.matchId = id;
+			}
+        };
+
+		struct KeepMatchAliveBody
+        {
+            gamelink::string matchId;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_1(KeepMatchAliveBody,
+				"id", matchId
+			);
+        };
+
+        struct MUXY_GAMELINK_API KeepMatchAliveRequest : SendEnvelope<KeepMatchAliveBody>
+        {
+			explicit inline KeepMatchAliveRequest(const string& id)
+			{
+				this->action = string("keepalive");
+                this->params.target = string("match");
+
+				this->data.matchId = id;
+			}
+        };
+
+        struct AddOrRemoveMatchChannelsRequestBody
+        {
+            gamelink::string matchId;
+            std::vector<gamelink::string> channels;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(AddOrRemoveMatchChannelsRequestBody,
+				"id", matchId,
+				"channel_ids", channels
+			);
+        };
+
+        struct MUXY_GAMELINK_API AddMatchChannelsRequest : SendEnvelope<AddOrRemoveMatchChannelsRequestBody>
+        {
+			explicit inline AddMatchChannelsRequest(const string& id, const std::vector<string>& channels)
+			{
+				this->action = string("add_channels");
+                this->params.target = string("match");
+
+				this->data.matchId = id;
+				this->data.channels = channels;
+			}
+        };
+
+        struct MUXY_GAMELINK_API RemoveMatchChannelsRequest : SendEnvelope<AddOrRemoveMatchChannelsRequestBody>
+        {
+			explicit inline RemoveMatchChannelsRequest(const string& id, const std::vector<string>& channels)
+			{
+				this->action = string("remove_channels");
+                this->params.target = string("match");
+
+				this->data.matchId = id;
+				this->data.channels = channels;
+			}
+        };
+
+        struct CreateMatchPollRequestBody
+        {
+            gamelink::string matchId;
+            CreatePollWithConfigurationRequestBody poll;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(CreateMatchPollRequestBody,
+				"id", matchId,
+				"poll", poll
+			);
+        };
+
+        struct MUXY_GAMELINK_API CreateMatchPollRequest : SendEnvelope<CreateMatchPollRequestBody>
+        {
+			explicit inline CreateMatchPollRequest(const string& match, const CreatePollWithConfigurationRequestBody& poll)
+			{
+				this->action = string("create");
+                this->params.target = string("match_poll");
+
+				this->data.matchId = match;
+				this->data.poll = poll;
+			}
+        };
+
+        struct DeleteMatchPollRequestBody
+        {
+            gamelink::string matchId;
+            gamelink::string pollId;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(DeleteMatchPollRequestBody,
+				"id", matchId,
+				"poll_id", pollId
+			);
+        };
+
+		struct MUXY_GAMELINK_API DeleteMatchPollRequest : SendEnvelope<DeleteMatchPollRequestBody>
+        {
+			explicit inline DeleteMatchPollRequest(const string& match, const string& poll)
+			{
+				this->action = string("delete");
+                this->params.target = string("match_poll");
+
+				this->data.matchId = match;
+				this->data.pollId = poll;
+			}
+        };
+
+		template<typename Config>
+		struct ReconfigureMatchPollRequestBody
+        {
+            gamelink::string matchId;
+			gamelink::string pollId;
+			Config config;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(ReconfigureMatchPollRequestBody,
+				"id", matchId,
+				"poll_id", pollId,
+				"config", config
+			);
+        };
+
+        struct MUXY_GAMELINK_API ExpireMatchPollRequest : SendEnvelope<ReconfigureMatchPollRequestBody<ExpireConfig>>
+        {
+			explicit inline ExpireMatchPollRequest(const string& id, const string& pollId)
+			{
+				this->action = string("reconfigure");
+                this->params.target = string("match_poll");
+
+				this->data.matchId = id;
+				this->data.pollId = pollId;
+				this->data.config.endsAt = -1;
+			}
+        };
+
+		 struct MUXY_GAMELINK_API SetMatchPollDisableRequest : SendEnvelope<ReconfigureMatchPollRequestBody<DisableConfig>>
+        {
+			explicit inline SetMatchPollDisableRequest(const string& id, const string& pollId, bool status)
+			{
+				this->action = string("reconfigure");
+                this->params.target = string("match_poll");
+
+				this->data.matchId = id;
+				this->data.pollId = pollId;
+				this->data.config.disabled = status;
+			}
+        };
+
+        struct MUXY_GAMELINK_API SubscribeMatchPollRequest : SendEnvelope<SubscribeTopicRequestBody>
+        {
+            explicit inline SubscribeMatchPollRequest(const string& matchId)
+			{
+				this->action = string("subscribe");
+				this->params.target = string("match_poll");
+				this->data.topic_id = string(matchId);
+			}
+        };
+
+        struct MUXY_GAMELINK_API UnsubscribeMatchPollRequest : SendEnvelope<UnsubscribeTopicRequestBody>
+        {
+            explicit inline UnsubscribeMatchPollRequest(const string& matchId)
+			{
+				this->action = string("unsubscribe");
+				this->params.target = string("match_poll");
+				this->data.topic_id = string(matchId);
+			}
+        };
+
+		struct MatchPollUpdateInformation
+		{
+			string matchId;
+			string pollId;
+			string status;
+
+			std::unordered_map<gamelink::string, PollUpdateBody> results;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_4(MatchPollUpdateInformation,
+				"match_id", matchId,
+				"poll_id", pollId,
+				"status", status,
+				"results", results
+			);
+		};
+
+		struct MUXY_GAMELINK_API MatchPollUpdate : ReceiveEnvelope<MatchPollUpdateInformation>
+		{};
+
+		struct MatchPollUpdateInformationInternal
+		{
+			string matchId;
+			string pollId;
+			string status;
+
+			nlohmann::json results;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_4(MatchPollUpdateInformationInternal,
+				"match_id", matchId,
+				"poll_id", pollId,
+				"status", status,
+				"results", results
+			);
+		};
+
+		struct MUXY_GAMELINK_API MatchPollUpdateInternal : ReceiveEnvelope<MatchPollUpdateInformationInternal>
+		{};
+
+		template<typename T>
+        struct BroadcastMatchRequestBody
+        {
+            string matchId;
+            string topic;
+
+			T data;
+
+            MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(BroadcastMatchRequestBody,
+                "match_id", matchId,
+                "topic", topic,
+                "data", data
+            );
+        };
+
+        template<typename T>
+        struct BroadcastMatchRequest : SendEnvelope<BroadcastMatchRequestBody<T>>
+        {
+            BroadcastMatchRequest(const string& matchId, const string& topic, const T& data)
+            {
+                this->action = string("broadcast");
+                this->params.target = string("match");
+
+                this->data.matchId = matchId;
+                this->data.topic = topic;
+                this->data.data = data;
+            }
+        };
+
+        struct MUXY_GAMELINK_API BroadcastMatchResponse : ReceiveEnvelope<OKResponseBody>
+        {};
+    }
+}
+
 #endif
 
 #ifndef MUXY_GAMELINK_SCHEMA_MATCHMAKING_H
@@ -29675,6 +29999,63 @@ namespace gamelink
 		Event<schema::MatchmakingUpdate>& OnMatchmakingQueueInvite();
 #pragma endregion
 
+#pragma region Matches
+		// Creates a match, which is a collection of users that can have some operations performed on them
+		// as an entire collection, instead of channel by channel.
+		// Match manipulation functions are only supported by a server Gamelink connection. Calling these
+		// from a client will result in an authorization faiure.
+
+		// Creates a match with the given ID
+		RequestId CreateMatch(const string& id);
+
+		// Keeps a match alive
+		RequestId KeepMatchAlive(const string& id);
+
+		// Adds channels to a match
+		RequestId AddChannelsToMatch(const string& id, const std::vector<string>& channels);
+
+		// Removes channels from a match.
+		RequestId RemoveChannelsFromMatch(const string& id, const std::vector<string>& channels);
+
+		// Runs a poll in a match. Very similar to RunPoll, except for the callback type, as it receives
+		// information for all matches.
+
+		RequestId RunMatchPoll(
+			const string& matchId,
+			const string& pollId,
+			const string& prompt,
+			const PollConfiguration& config,
+			const string* optionsBegin,
+			const string* optionsEnd,
+			std::function<void(const schema::MatchPollUpdate&)> onUpdateCallback,
+			std::function<void(const schema::MatchPollUpdate&)> onFinishCallback
+		);
+
+		RequestId RunMatchPoll(
+			const string& matchId,
+			const string& pollId,
+			const string& prompt,
+			const PollConfiguration& config,
+			const std::vector<string>& opts,
+			std::function<void(const schema::MatchPollUpdate&)> onUpdateCallback,
+			std::function<void(const schema::MatchPollUpdate&)> onFinishCallback
+		);
+
+		// Stops a poll in a match
+		RequestId StopMatchPoll(const string& matchId, const string& pollId);
+
+		/// Sends a broadcast to all viewers on all channels in the match
+		template<typename T>
+		RequestId SendMatchBroadcast(const string& matchId, const string& topic, const T& value)
+		{
+			schema::BroadcastMatchRequest<T> payload(matchId, topic, value);
+			return queuePayload(payload);
+		}
+
+		/// Sends a broadcast to all viewers on all channels in the match
+		RequestId SendMatchBroadcast(const string& matchId, const string& topic, const nlohmann::json& message);
+#pragma endregion
+
 		/// Sends a request to set your games metadata. You're expected to fill out a gamelink::GameMetadata struct with your games metadata
 		/// and provide it.
 		/// @return RequestId of the generated request
@@ -29742,6 +30123,8 @@ namespace gamelink
 		Event<schema::GetDropsResponse> _onGetDrops;
 
 		Event<schema::MatchmakingUpdate> _onMatchmakingUpdate;
+
+		Event<schema::MatchPollUpdate> _onMatchPollUpdate;
 	};
 
 	// Implementation of Event::Remove is here because of completeness requirements of SDK.
@@ -29862,6 +30245,12 @@ namespace gateway
 		bool IsFinal;
 	};
 
+	struct MatchPollUpdate
+	{
+		PollUpdate overall;
+		std::unordered_map<string, PollUpdate> perChannel;
+	};
+
 	struct PollConfiguration
 	{
 		string Prompt;
@@ -29883,6 +30272,29 @@ namespace gateway
 
 		// Called after the poll completes. This is called right after
 		std::function<void(const PollUpdate&)> OnComplete;
+	};
+
+	struct MatchPollConfiguration
+	{
+		string Prompt;
+		std::vector<string> Options;
+
+		PollMode Mode = PollMode::Order;
+		PollLocation Location = PollLocation::Default;
+
+		// Duration of the poll, in seconds.
+		// If set to a negative or zero duration, the poll lasts until a call
+		// to StopPoll
+		int32_t Duration = 0;
+
+		// Arbitrary user data to send. Should be small.
+		nlohmann::json UserData;
+
+		// Called regularly as poll results are streamed in from the server
+		std::function<void(const MatchPollUpdate&)> OnUpdate;
+
+		// Called after the poll completes. This is called right after
+		std::function<void(const MatchPollUpdate&)> OnComplete;
 	};
 
 	enum class ActionCategory
@@ -30037,14 +30449,14 @@ namespace gateway
 		template<typename T>
 		void UpdateGameStatePathWithArray(const string& path, const T* begin, const T* end)
 		{
-			Base.UpdateStateWithArray(gamelink::StateTarget::Channel, path, begin, end);
+			Base.UpdateStateWithArray(gamelink::StateTarget::Channel, gamelink::Operation::Add, path, begin, end);
 		}
 
 		// Low level set game access. Sets an serializable object to the json path.
 		template<typename T>
 		void UpdateGameStatePathWithObject(const string& path, const T& obj)
 		{
-			Base.UpdateStateWithObject(gamelink::StateTarget::Channel, path, obj);
+			Base.UpdateStateWithObject(gamelink::StateTarget::Channel, gamelink::Operation::Add, path, obj);
 		}
 
 		RequestID SetGameMetadata(GameMetadata Meta);
@@ -30060,6 +30472,18 @@ namespace gateway
 
 		void AcceptAction(const gateway::ActionUsed& used, const gamelink::string& Details);
 		void RefundAction(const gateway::ActionUsed& used, const gamelink::string& Details);
+
+		// Matches
+		void CreateMatch(const string& match);
+		void KeepMatchAlive(const string& match);
+		void AddChannelsToMatch(const string& match, const string* start, const string* end);
+		void RemoveChannelsFromMatch(const string& match, const string* start, const string* end);
+
+		void RunMatchPoll(const string& match, const MatchPollConfiguration& cfg);
+		void StopMatchPoll(const string& match);
+
+		void RunMatchPollWithID(const string& match, const string& id, const MatchPollConfiguration& cfg);
+		void StopMatchPollWithID(const string& match, const string& id);
 	private:
 		gamelink::SDK Base;
 
@@ -30749,6 +31173,7 @@ namespace gamelink
 		, _onGetOutstandingTransactions(this, "OnGetOutstandingTransactions", 11)
 		, _onGetDrops(this, "OnGetDrops", 12)
 		, _onMatchmakingUpdate(this, "OnMatchmakingUpdate", 13)
+		, _onMatchPollUpdate(this, "OnMatchPollUpdate", 14)
 	{}
 
 	SDK::~SDK()
@@ -31082,6 +31507,15 @@ namespace gamelink
 				if (success)
 				{
 					_onMatchmakingUpdate.Invoke(resp);
+				}
+			}
+			else if (env.meta.target == "match_poll")
+			{
+				schema::MatchPollUpdate resp;
+				success = schema::ParseResponse(bytes, length, resp);
+				if (success)
+				{
+					_onMatchPollUpdate.Invoke(resp);
 				}
 			}
 		}
@@ -31670,6 +32104,121 @@ namespace gamelink
 	{
 		schema::ValidateDropsRequest request(id);
 		return queuePayload(request);
+	}
+}
+
+namespace gamelink
+{
+	RequestId SDK::CreateMatch(const string& id)
+	{
+		schema::CreateMatchRequest req(id);
+		return queuePayload(req);
+	}
+
+	RequestId SDK::KeepMatchAlive(const string& id)
+	{
+		schema::KeepMatchAliveRequest req(id);
+		return queuePayload(req);
+	}
+
+	RequestId SDK::AddChannelsToMatch(const string& id, const std::vector<string>& channels)
+	{
+		schema::AddMatchChannelsRequest req(id, channels);
+		return queuePayload(req);
+	}
+
+	RequestId SDK::RemoveChannelsFromMatch(const string& id, const std::vector<string>& channels)
+	{
+		schema::RemoveMatchChannelsRequest req(id, channels);
+		return queuePayload(req);
+	}
+
+	RequestId SDK::StopMatchPoll(const string& id, const string& pollId)
+	{
+		schema::ExpireMatchPollRequest req(id, pollId);
+		return queuePayload(req);
+	}
+
+	RequestId SDK::SendMatchBroadcast(const string& matchId, const string& topic, const nlohmann::json& message)
+	{
+		schema::BroadcastMatchRequest<nlohmann::json> payload(matchId, topic, message);
+		return queuePayload(payload);
+	}
+
+	RequestId SDK::RunMatchPoll(
+		const string& matchId,
+		const string& pollId,
+		const string& prompt,
+		const PollConfiguration& config,
+		const std::vector<string>& opts,
+		std::function<void(const schema::MatchPollUpdate&)> onUpdateCallback,
+		std::function<void(const schema::MatchPollUpdate&)> onFinishCallback)
+	{
+		schema::DeleteMatchPollRequest delRequest(matchId, pollId);
+		RequestId del = queuePayload(delRequest);
+		WaitForResponse(del);
+
+		schema::SubscribeMatchPollRequest subRequest(matchId);
+		WaitForResponse(queuePayload(subRequest));
+
+		if (!VerifyPollLimits(prompt, opts))
+		{
+			return gamelink::REJECTED_REQUEST_ID;
+		}
+
+		schema::CreatePollWithConfigurationRequest createPollRequest(pollId, prompt, config, opts);
+		schema::CreateMatchPollRequest createMatchPollRequest(matchId, createPollRequest.data);
+
+		RequestId create = queuePayload(createMatchPollRequest);
+
+		char buffer[128];
+		snprintf(buffer, 128, "<run_match_poll>_%s", pollId.c_str());
+
+		gamelink::string callbackName = gamelink::string(buffer);
+
+		bool hasCalledOnFinish = false;
+		_onMatchPollUpdate.AddUnique(callbackName, [=](const schema::MatchPollUpdate& update) mutable
+		{
+			bool matches = update.data.matchId == matchId && update.data.pollId == pollId;
+			if (!matches)
+			{
+				return;
+			}
+
+			if (update.data.status == gamelink::string("expired"))
+			{
+				if (!hasCalledOnFinish)
+				{
+					onFinishCallback(update);
+
+					schema::UnsubscribeMatchPollRequest unsubRequest(matchId);
+					this->queuePayload(unsubRequest);
+					this->_onMatchPollUpdate.RemoveByName(callbackName);
+					hasCalledOnFinish = true;
+				}
+			}
+			else
+			{
+				onUpdateCallback(update);
+			}
+		});
+
+		return ANY_REQUEST_ID;
+	}
+
+	RequestId SDK::RunMatchPoll(
+		const string& matchId,
+		const string& pollId,
+		const string& prompt,
+		const PollConfiguration& config,
+		const string* optionsBegin,
+		const string* optionsEnd,
+		std::function<void(const schema::MatchPollUpdate&)> onUpdateCallback,
+		std::function<void(const schema::MatchPollUpdate&)> onFinishCallback
+	)
+	{
+		std::vector<string> opts(optionsBegin, optionsEnd);
+		return RunMatchPoll(matchId, pollId,  prompt, config, opts, std::move(onUpdateCallback), std::move(onFinishCallback));
 	}
 }
 
@@ -32973,6 +33522,191 @@ namespace gateway
 		};
 
 		SetGameVector4(label, arr);
+	}
+}
+
+namespace gateway
+{
+	void SDK::CreateMatch(const string& str)
+	{
+		Base.CreateMatch(str);
+	}
+
+	void SDK::KeepMatchAlive(const string& str)
+	{
+		Base.KeepMatchAlive(str);
+	}
+
+	void SDK::AddChannelsToMatch(const string& id, const string* start, const string* end)
+	{
+		std::vector<string> channels(start, end);
+		Base.AddChannelsToMatch(id, channels);
+	}
+
+	void SDK::RemoveChannelsFromMatch(const string& id, const string* start, const string* end)
+	{
+		std::vector<string> channels(start, end);
+		Base.RemoveChannelsFromMatch(id, channels);
+	}
+
+	void SDK::RunMatchPoll(const string& match, const MatchPollConfiguration& cfg)
+	{
+		RunMatchPollWithID(match, string("default"), cfg);
+	}
+
+	void SDK::StopMatchPoll(const string& match)
+	{
+		StopMatchPollWithID(match, string("default"));
+	}
+
+	void SDK::StopMatchPollWithID(const string& match, const string& id)
+	{
+		Base.StopMatchPoll(match, id);
+	}
+
+	void SDK::RunMatchPollWithID(const string& match, const string& id, const MatchPollConfiguration& cfg)
+	{
+		gamelink::PollConfiguration config;
+
+		config.userIdVoting = true;
+		if (cfg.Mode == PollMode::Chaos)
+		{
+			config.totalVotesPerUser = 1024;
+			config.distinctOptionsPerUser = 258;
+			config.votesPerOption = 1024;
+		}
+		else if (cfg.Mode == PollMode::Order)
+		{
+			config.totalVotesPerUser = 1;
+			config.distinctOptionsPerUser = 1;
+			config.votesPerOption = 1;
+		}
+
+		if (cfg.Duration > 0)
+		{
+			config.endsIn = cfg.Duration;
+		}
+
+		config.userData = cfg.UserData;
+
+		Base.RunMatchPoll(
+			match,
+			id,
+			cfg.Prompt,
+			config,
+			cfg.Options,
+			[=](const gamelink::schema::MatchPollUpdate& response)
+			{
+				MatchPollUpdate matchUpdate;
+
+				std::vector<int32_t> overall;
+				overall.resize(32);
+
+				for (auto it = response.data.results.begin(); it != response.data.results.end(); ++it)
+				{
+					const gamelink::schema::PollUpdateBody& upd = it->second;
+					PollUpdate update;
+
+					uint32_t idx = gamelink::GetPollWinnerIndex(upd.results);
+					update.Winner = static_cast<int>(idx);
+					update.WinningVoteCount = upd.results[idx];
+					update.Results = upd.results;
+					update.Mean = upd.mean;
+					update.Count = upd.count;
+					update.IsFinal = false;
+
+					for (size_t i = 0; i < upd.results.size(); ++i)
+					{
+						if (i < overall.size())
+						{
+							overall[i] += upd.results[i];
+						}
+					}
+
+					matchUpdate.perChannel.insert(std::make_pair(it->first, std::move(update)));
+				}
+
+				uint32_t idx = gamelink::GetPollWinnerIndex(overall);
+				matchUpdate.overall.Winner = idx;
+				matchUpdate.overall.WinningVoteCount = overall[idx];
+				matchUpdate.overall.Results = std::move(overall);
+
+				double accumulator = 0;
+				uint32_t count = 0;
+				for (size_t i = 0; i < matchUpdate.overall.Results.size(); ++i)
+				{
+					count += matchUpdate.overall.Results[i];
+					accumulator += matchUpdate.overall.Results[i] * i;
+				}
+
+				matchUpdate.overall.Mean = accumulator / static_cast<double>(count);
+				matchUpdate.overall.Count = count;
+				matchUpdate.overall.IsFinal = false;
+
+				if (cfg.OnUpdate)
+				{
+					cfg.OnUpdate(matchUpdate);
+				}
+			},
+			[=](const gamelink::schema::MatchPollUpdate& response)
+			{
+				MatchPollUpdate matchFinish;
+
+				std::vector<int32_t> overall;
+				overall.resize(32);
+
+				for (auto it = response.data.results.begin(); it != response.data.results.end(); ++it)
+				{
+					const gamelink::schema::PollUpdateBody& upd = it->second;
+					PollUpdate update;
+
+					uint32_t idx = gamelink::GetPollWinnerIndex(upd.results);
+					update.Winner = static_cast<int>(idx);
+					update.WinningVoteCount = upd.results[idx];
+					update.Results = upd.results;
+					update.Mean = upd.mean;
+					update.Count = upd.count;
+					update.IsFinal = false;
+
+					for (size_t i = 0; i < upd.results.size(); ++i)
+					{
+						if (i < overall.size())
+						{
+							overall[i] += upd.results[i];
+						}
+					}
+
+					matchFinish.perChannel.insert(std::make_pair(it->first, std::move(update)));
+				}
+
+				uint32_t idx = gamelink::GetPollWinnerIndex(overall);
+				matchFinish.overall.Winner = idx;
+				matchFinish.overall.WinningVoteCount = overall[idx];
+				matchFinish.overall.Results = std::move(overall);
+
+				double accumulator = 0;
+				uint32_t count = 0;
+				for (size_t i = 0; i < matchFinish.overall.Results.size(); ++i)
+				{
+					count += matchFinish.overall.Results[i];
+					accumulator += matchFinish.overall.Results[i] * i;
+				}
+
+				matchFinish.overall.Mean = accumulator / static_cast<double>(count);
+				matchFinish.overall.Count = count;
+				matchFinish.overall.IsFinal = true;
+
+				if (cfg.OnUpdate)
+				{
+					cfg.OnUpdate(matchFinish);
+				}
+
+				if (cfg.OnComplete)
+				{
+					cfg.OnComplete(matchFinish);
+				}
+			}
+		);
 	}
 }
 

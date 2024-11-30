@@ -4,6 +4,10 @@
 #define MUXY_GAMELINK_VERSION_MINOR 2
 #define MUXY_GAMELINK_VERSION_PATCH 0
 
+#include <vector>
+#include <unordered_map>
+#include <string_view>
+
 /*
 	Do this:
 	  #define MUXY_GAMELINK_SINGLE_IMPL
