@@ -191,18 +191,48 @@ namespace gamelink
 			}
         };
 
+		struct MatchPollResult
+		{
+			/// Array of vote counts for each poll option. This array may not be the same size as the
+			/// options array.
+			std::vector<int> results;
+
+			// Standard deviation of all poll values.
+			double stddev;
+
+			/// Arithmetic mean of all poll values, including ones that outside the [0, 32) range.
+			double mean;
+
+			/// Sum of all poll values, including ones that outside the [0, 32) range.
+			double sum;
+
+			/// Number of responses, including ones that outside the [0, 32) range.
+			int32_t count;
+
+			string status;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_6(MatchPollResult,
+				"results", results,
+				"stddev", stddev,
+				"mean", mean,
+				"sum", sum,
+				"count", count,
+				"status", status
+			);
+		};
+
 		struct MatchPollUpdateInformation
 		{
 			string matchId;
 			string pollId;
-			string status;
 
-			std::unordered_map<gamelink::string, PollUpdateBody> results;
+			MatchPollResult overall;
+			std::unordered_map<gamelink::string, MatchPollResult> results;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_4(MatchPollUpdateInformation,
 				"match_id", matchId,
 				"poll_id", pollId,
-				"status", status,
+				"overall", overall,
 				"results", results
 			);
 		};

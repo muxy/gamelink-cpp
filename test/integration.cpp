@@ -1,5 +1,4 @@
 #include "integration_utils.h"
-
 #ifdef MUXY_GAMELINK_ENABLE_INTEGRATION_TESTS
 #include "catch2/catch.hpp"
 #include "util.h"
@@ -531,6 +530,11 @@ TEST_CASE_METHOD(IntegrationTestFixture, "Matches and polls", "[.][integration]"
 	size_t updateCalls = 0;
 	auto update = [&updateCalls](const gamelink::schema::MatchPollUpdate& update)
 	{
+		REQUIRE(update.data.overall.count == 1);
+		REQUIRE(update.data.results.size() == 5);
+		REQUIRE(update.data.overall.results.size() == 32);
+		REQUIRE(update.data.overall.results[1] == 1);
+
 		updateCalls++;
 	};
 

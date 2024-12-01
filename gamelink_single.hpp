@@ -28190,18 +28190,48 @@ namespace gamelink
 			}
         };
 
+		struct MatchPollResult
+		{
+			/// Array of vote counts for each poll option. This array may not be the same size as the
+			/// options array.
+			std::vector<int> results;
+
+			// Standard deviation of all poll values.
+			double stddev;
+
+			/// Arithmetic mean of all poll values, including ones that outside the [0, 32) range.
+			double mean;
+
+			/// Sum of all poll values, including ones that outside the [0, 32) range.
+			double sum;
+
+			/// Number of responses, including ones that outside the [0, 32) range.
+			int32_t count;
+
+			string status;
+
+			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_6(MatchPollResult,
+				"results", results,
+				"stddev", stddev,
+				"mean", mean,
+				"sum", sum,
+				"count", count,
+				"status", status
+			);
+		};
+
 		struct MatchPollUpdateInformation
 		{
 			string matchId;
 			string pollId;
-			string status;
 
-			std::unordered_map<gamelink::string, PollUpdateBody> results;
+			MatchPollResult overall;
+			std::unordered_map<gamelink::string, MatchPollResult> results;
 
 			MUXY_GAMELINK_SERIALIZE_INTRUSIVE_4(MatchPollUpdateInformation,
 				"match_id", matchId,
 				"poll_id", pollId,
-				"status", status,
+				"overall", overall,
 				"results", results
 			);
 		};
@@ -32179,13 +32209,14 @@ namespace gamelink
 		bool hasCalledOnFinish = false;
 		_onMatchPollUpdate.AddUnique(callbackName, [=](const schema::MatchPollUpdate& update) mutable
 		{
+
 			bool matches = update.data.matchId == matchId && update.data.pollId == pollId;
 			if (!matches)
 			{
 				return;
 			}
 
-			if (update.data.status == gamelink::string("expired"))
+			if (update.data.overall.status == gamelink::string("expired"))
 			{
 				if (!hasCalledOnFinish)
 				{
@@ -33599,12 +33630,9 @@ namespace gateway
 			{
 				MatchPollUpdate matchUpdate;
 
-				std::vector<int32_t> overall;
-				overall.resize(32);
-
 				for (auto it = response.data.results.begin(); it != response.data.results.end(); ++it)
 				{
-					const gamelink::schema::PollUpdateBody& upd = it->second;
+					const gamelink::schema::MatchPollResult& upd = it->second;
 					PollUpdate update;
 
 					uint32_t idx = gamelink::GetPollWinnerIndex(upd.results);
@@ -33615,32 +33643,15 @@ namespace gateway
 					update.Count = upd.count;
 					update.IsFinal = false;
 
-					for (size_t i = 0; i < upd.results.size(); ++i)
-					{
-						if (i < overall.size())
-						{
-							overall[i] += upd.results[i];
-						}
-					}
-
 					matchUpdate.perChannel.insert(std::make_pair(it->first, std::move(update)));
 				}
 
-				uint32_t idx = gamelink::GetPollWinnerIndex(overall);
+				uint32_t idx = gamelink::GetPollWinnerIndex(response.data.overall.results);
 				matchUpdate.overall.Winner = idx;
-				matchUpdate.overall.WinningVoteCount = overall[idx];
-				matchUpdate.overall.Results = std::move(overall);
-
-				double accumulator = 0;
-				uint32_t count = 0;
-				for (size_t i = 0; i < matchUpdate.overall.Results.size(); ++i)
-				{
-					count += matchUpdate.overall.Results[i];
-					accumulator += matchUpdate.overall.Results[i] * i;
-				}
-
-				matchUpdate.overall.Mean = accumulator / static_cast<double>(count);
-				matchUpdate.overall.Count = count;
+				matchUpdate.overall.WinningVoteCount = response.data.overall.results[idx];
+				matchUpdate.overall.Results = response.data.overall.results;
+				matchUpdate.overall.Mean = response.data.overall.mean;
+				matchUpdate.overall.Count = response.data.overall.count;
 				matchUpdate.overall.IsFinal = false;
 
 				if (cfg.OnUpdate)
@@ -33650,14 +33661,11 @@ namespace gateway
 			},
 			[=](const gamelink::schema::MatchPollUpdate& response)
 			{
-				MatchPollUpdate matchFinish;
-
-				std::vector<int32_t> overall;
-				overall.resize(32);
+				MatchPollUpdate matchUpdate;
 
 				for (auto it = response.data.results.begin(); it != response.data.results.end(); ++it)
 				{
-					const gamelink::schema::PollUpdateBody& upd = it->second;
+					const gamelink::schema::MatchPollResult& upd = it->second;
 					PollUpdate update;
 
 					uint32_t idx = gamelink::GetPollWinnerIndex(upd.results);
@@ -33666,44 +33674,27 @@ namespace gateway
 					update.Results = upd.results;
 					update.Mean = upd.mean;
 					update.Count = upd.count;
-					update.IsFinal = false;
+					update.IsFinal = true;
 
-					for (size_t i = 0; i < upd.results.size(); ++i)
-					{
-						if (i < overall.size())
-						{
-							overall[i] += upd.results[i];
-						}
-					}
-
-					matchFinish.perChannel.insert(std::make_pair(it->first, std::move(update)));
+					matchUpdate.perChannel.insert(std::make_pair(it->first, std::move(update)));
 				}
 
-				uint32_t idx = gamelink::GetPollWinnerIndex(overall);
-				matchFinish.overall.Winner = idx;
-				matchFinish.overall.WinningVoteCount = overall[idx];
-				matchFinish.overall.Results = std::move(overall);
-
-				double accumulator = 0;
-				uint32_t count = 0;
-				for (size_t i = 0; i < matchFinish.overall.Results.size(); ++i)
-				{
-					count += matchFinish.overall.Results[i];
-					accumulator += matchFinish.overall.Results[i] * i;
-				}
-
-				matchFinish.overall.Mean = accumulator / static_cast<double>(count);
-				matchFinish.overall.Count = count;
-				matchFinish.overall.IsFinal = true;
+				uint32_t idx = gamelink::GetPollWinnerIndex(response.data.overall.results);
+				matchUpdate.overall.Winner = idx;
+				matchUpdate.overall.WinningVoteCount = response.data.overall.results[idx];
+				matchUpdate.overall.Results = response.data.overall.results;
+				matchUpdate.overall.Mean = response.data.overall.mean;
+				matchUpdate.overall.Count = response.data.overall.count;
+				matchUpdate.overall.IsFinal = true;
 
 				if (cfg.OnUpdate)
 				{
-					cfg.OnUpdate(matchFinish);
+					cfg.OnUpdate(matchUpdate);
 				}
 
 				if (cfg.OnComplete)
 				{
-					cfg.OnComplete(matchFinish);
+					cfg.OnComplete(matchUpdate);
 				}
 			}
 		);
