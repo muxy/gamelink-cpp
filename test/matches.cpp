@@ -107,6 +107,7 @@ TEST_CASE("Match polls operations", "[matches]")
 	int updateCalls = 0;
 	std::function<void (const gs::MatchPollUpdate&)> update = [&updateCalls](const gs::MatchPollUpdate& resp)
 	{
+		REQUIRE(resp.data.overall.status == "active");
 		REQUIRE(resp.data.pollId == "test-poll");
 		REQUIRE(resp.data.matchId == "my-cool-match");
 
@@ -133,7 +134,14 @@ TEST_CASE("Match polls operations", "[matches]")
 		"data": {
 			"poll_id": "test-poll",
 			"match_id": "my-cool-match",
-			"status": "active",
+
+			"overall": {
+				"count": 4,
+				"mean": 0.0,
+				"sum": 0.0,
+				"results": [1, 3],
+				"status": "active"
+			},
 
 			"results": {
 				"1001": {
@@ -142,12 +150,7 @@ TEST_CASE("Match polls operations", "[matches]")
 					"sum": 0.0,
 
 					"results": [1, 3],
-					"poll": {
-						"poll_id": "test-poll",
-						"prompt": "Is a hot dog a sandwich?",
-						"options": ["Yes", "No"],
-						"status": "active"
-					}
+					"status": "active"
 				}
 			}
 		}
@@ -161,7 +164,13 @@ TEST_CASE("Match polls operations", "[matches]")
 		"data": {
 			"poll_id": "test-poll",
 			"match_id": "my-cool-match",
-			"status": "expired",
+			"overall": {
+				"count": 4,
+				"mean": 0.0,
+				"sum": 0.0,
+				"results": [1, 3],
+				"status": "expired"
+			},
 
 			"results": {
 				"1001": {
@@ -170,12 +179,7 @@ TEST_CASE("Match polls operations", "[matches]")
 					"sum": 0.0,
 
 					"results": [1, 3],
-					"poll": {
-						"poll_id": "test-poll",
-						"prompt": "Is a hot dog a sandwich?",
-						"options": ["Yes", "No"],
-						"status": "expired"
-					}
+					"status": "expired"
 				}
 			}
 		}

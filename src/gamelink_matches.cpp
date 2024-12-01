@@ -72,13 +72,14 @@ namespace gamelink
 		bool hasCalledOnFinish = false;
 		_onMatchPollUpdate.AddUnique(callbackName, [=](const schema::MatchPollUpdate& update) mutable
 		{
+
 			bool matches = update.data.matchId == matchId && update.data.pollId == pollId;
 			if (!matches)
 			{
 				return;
 			}
 
-			if (update.data.status == gamelink::string("expired"))
+			if (update.data.overall.status == gamelink::string("expired"))
 			{
 				if (!hasCalledOnFinish)
 				{
