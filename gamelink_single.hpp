@@ -30304,7 +30304,8 @@ namespace gateway
 		std::function<void(const PollUpdate&)> OnComplete;
 	};
 
-	struct MatchPollConfiguration
+	template<typename T>
+	struct GenericMatchPollConfiguration
 	{
 		string Prompt;
 		std::vector<string> Options;
@@ -30318,7 +30319,7 @@ namespace gateway
 		int32_t Duration = 0;
 
 		// Arbitrary user data to send. Should be small.
-		nlohmann::json UserData;
+		T UserData;
 
 		// Called regularly as poll results are streamed in from the server
 		std::function<void(const MatchPollUpdate&)> OnUpdate;
@@ -30326,6 +30327,44 @@ namespace gateway
 		// Called after the poll completes. This is called right after
 		std::function<void(const MatchPollUpdate&)> OnComplete;
 	};
+
+	typedef GenericMatchPollConfiguration<nlohmann::json> MatchPollConfiguration;
+
+	struct GamechangerTier
+	{
+		string IncrementalText;
+		double IncrementalValue;
+
+		string EffectText;
+		double EffectValue;
+
+		// In seconds
+		int64_t TierDuration;
+
+		int64_t TierThreshold;
+
+		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_6(GamechangerTier,
+			"incremental_effect_text", IncrementalText,
+			"incremental_effect_value", IncrementalValue,
+			"effect_text", EffectText,
+			"effect_value", EffectValue,
+			"tier_duration", TierDuration,
+			"tier_threshold", TierThreshold
+		);
+	};
+
+	struct GamechangerPollData
+	{
+		string Name;
+		std::vector<GamechangerTier> Tiers;
+
+		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(GamechangerPollData,
+			"name", Name,
+			"tiers", Tiers
+		);
+	};
+
+	typedef GenericMatchPollConfiguration<GamechangerPollData> GamechangerMatchPollConfiguration;
 
 	enum class ActionCategory
 	{
@@ -30509,8 +30548,40 @@ namespace gateway
 		void AddChannelsToMatch(const string& match, const string* start, const string* end);
 		void RemoveChannelsFromMatch(const string& match, const string* start, const string* end);
 
+		template<typename T>
+		void RunMatchPoll(const string& match, const GenericMatchPollConfiguration<T>& cfg)
+		{
+			MatchPollConfiguration proxy;
+			proxy.Prompt = cfg.Prompt;
+			proxy.Options = cfg.Options;
+			proxy.Mode = cfg.Mode;
+			proxy.Location = cfg.Location;
+			proxy.Duration = cfg.Duration;
+			proxy.UserData = cfg.UserData;
+			proxy.OnUpdate = cfg.OnUpdate;
+			proxy.OnComplete = cfg.OnComplete;
+
+			return RunMatchPoll(match, proxy);
+		}
+
 		void RunMatchPoll(const string& match, const MatchPollConfiguration& cfg);
 		void StopMatchPoll(const string& match);
+
+		template<typename T>
+		void RunMatchPollWithID(const string& match, const string& id, const GenericMatchPollConfiguration<T>& cfg)
+		{
+			MatchPollConfiguration proxy;
+			proxy.Prompt = cfg.Prompt;
+			proxy.Options = cfg.Options;
+			proxy.Mode = cfg.Mode;
+			proxy.Location = cfg.Location;
+			proxy.Duration = cfg.Duration;
+			proxy.UserData = cfg.UserData;
+			proxy.OnUpdate = cfg.OnUpdate;
+			proxy.OnComplete = cfg.OnComplete;
+
+			return RunMatchPollWithID(match, id, proxy);
+		}
 
 		void RunMatchPollWithID(const string& match, const string& id, const MatchPollConfiguration& cfg);
 		void StopMatchPollWithID(const string& match, const string& id);

@@ -165,6 +165,24 @@ inline void validateSinglePayload(gateway::SDK& sdk, const std::string& p)
 	REQUIRE(!sdk.HasPayloads());
 }
 
+
+inline void validateMultiplePayloads(gateway::SDK& sdk, const std::vector<std::string>& p)
+{
+	REQUIRE(sdk.HasPayloads());
+
+	uint32_t count = 0;
+	sdk.ForeachPayload([p, &count](const gateway::Payload* payload) {
+		REQUIRE(count < p.size());
+
+		ConstrainedString str(reinterpret_cast<const char *>(payload->GetData()));
+		REQUIRE(JSONEquals(str, ConstrainedString(p[count].c_str())));
+		count++;
+	});
+
+	REQUIRE(count == p.size());
+	REQUIRE(!sdk.HasPayloads());
+}
+
 inline void validateSinglePayload(MGW_SDK sdk, const std::string& p)
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(sdk.SDK);
