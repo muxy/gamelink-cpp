@@ -30358,8 +30358,12 @@ namespace gateway
 		string Name;
 		std::vector<GamechangerTier> Tiers;
 
-		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_2(GamechangerPollData,
+		// Shouldn't need to be changed, a marker to signal for special-case handling
+		string Type = string("gamechanger");
+
+		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(GamechangerPollData,
 			"name", Name,
+			"type", Type,
 			"tiers", Tiers
 		);
 	};
