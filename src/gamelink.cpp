@@ -372,7 +372,7 @@ namespace gamelink
 			success = schema::ParseResponse(bytes, length, authResp);
 			if (success)
 			{
-				const schema::Error * err = FirstError(authResp);
+				const schema::Error* err = FirstError(authResp);
 				if (!err)
 				{
 					_lock.lock();
@@ -380,7 +380,7 @@ namespace gamelink
 					{
 						delete _user;
 					}
-					_user = new schema::User(authResp.data.jwt, authResp.data.refresh, authResp.data.twitch_name);
+					_user = new schema::User(authResp.data.jwt, authResp.data.refresh, authResp.data.twitch_name, authResp.data.twitch_id);
 					_lock.unlock();
 
 					_storedJWT = authResp.data.jwt;

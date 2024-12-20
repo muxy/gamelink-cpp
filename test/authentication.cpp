@@ -245,3 +245,47 @@ TEST_CASE("SDK Gateway auth", "[sdk][authentication]")
 		})");
 	}
 }
+
+
+TEST_CASE("SDK Gateway auth fills user", "[sdk][authentication]")
+{
+	gamelink::SDK sdk;
+	sdk.AuthenticateWithGameIDAndPIN("client_id", "game", "pin");
+
+	REQUIRE(sdk.HasPayloads());
+	validateSinglePayload(sdk, R"({
+		"action":"authenticate",
+		"data": {
+			"client_id":"client_id",
+			"pin":"pin",
+			"game_id": "game"
+		},
+
+		"params":{
+			"request_id": 1
+		}
+	})");
+
+	const char* msg = R"({
+		"meta": {
+			"request_id": 1,
+			"action": "authenticate"
+		},
+
+		"data": {
+			"jwt": "test-jwt",
+			"refresh": "some-refresh",
+			"twitch_name": "notauser",
+			"twitch_id": "123456"
+		}
+	})";
+
+	sdk.ReceiveMessage(msg, strlen(msg));
+
+	const gamelink::schema::User* usr = sdk.GetUser();
+	REQUIRE(usr);
+	REQUIRE(usr->GetJWT() == "test-jwt");
+	REQUIRE(usr->GetRefreshToken() == "some-refresh");
+	REQUIRE(usr->GetTwitchName() == "notauser");
+	REQUIRE(usr->GetTwitchID() == "123456");
+}

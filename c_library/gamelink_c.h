@@ -27,7 +27,7 @@ extern "C"
 	typedef uint16_t MGL_RequestId;
 	static const MGL_RequestId ANY_REQUEST_ID = UINT16_MAX;
 	static const MGL_RequestId REJECTED_REQUEST_ID = UINT16_MAX-1;
-	
+
 	typedef struct
 	{
 		void* SDK;
@@ -260,6 +260,7 @@ extern "C"
 	MUXY_CLIB_API const char* MuxyGameLink_Schema_User_GetJWT(MGL_Schema_User User);
 	MUXY_CLIB_API const char* MuxyGameLink_Schema_User_GetRefreshToken(MGL_Schema_User User);
 	MUXY_CLIB_API const char* MuxyGameLink_Schema_User_GetTwitchName(MGL_Schema_User User);
+	MUXY_CLIB_API const char* MuxyGameLink_Schema_User_GetTwitchID(MGL_Schema_User User);
 
 	/*
 		State functions
@@ -475,7 +476,7 @@ extern "C"
 	MUXY_CLIB_API uint32_t MuxyGameLink_PatchList_Empty(MGL_PatchList PList);
 	MUXY_CLIB_API void MuxyGameLink_PatchList_Clear(MGL_PatchList PList);
 
-	/* 
+	/*
 		Drops
 	*/
 	MUXY_CLIB_API MGL_RequestId MuxyGameLink_GetDrops(MuxyGameLink GameLink, const char* Status, MGL_DropsCallback Callback, void* User);
