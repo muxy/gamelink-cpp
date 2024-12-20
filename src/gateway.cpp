@@ -40,7 +40,7 @@ namespace gateway
 		return Base.HasPayloads();
 	}
 
-	void SDK::OnDebugMessage(std::function<void (const gateway::string&)> callback)
+	void SDK::OnDebugMessage(std::function<void(const gateway::string&)> callback)
 	{
 		return Base.OnDebugMessage(std::move(callback));
 	}
@@ -65,17 +65,19 @@ namespace gateway
 
 	RequestID SDK::AuthenticateWithPIN(const string& PIN, std::function<void(const gateway::AuthenticateResponse&)> Callback)
 	{
-		return Base.AuthenticateWithGameIDAndPIN(this->ClientID, this->GameID, PIN, [=](const gamelink::schema::AuthenticateResponse& Resp) {
-			gateway::AuthenticateResponse Auth(Resp.data.jwt, Resp.data.refresh, Resp.data.twitch_name, gamelink::FirstError(Resp) != NULL);
-			Callback(Auth);
-		});
+		return Base.AuthenticateWithGameIDAndPIN(
+			this->ClientID, this->GameID, PIN, [=](const gamelink::schema::AuthenticateResponse& Resp) {
+				gateway::AuthenticateResponse Auth(Resp.data.jwt, Resp.data.refresh, Resp.data.twitch_name, Resp.data.twitch_id,
+												   gamelink::FirstError(Resp) != NULL);
+				Callback(Auth);
+			});
 	}
 
 	RequestID SDK::AuthenticateWithRefreshToken(const string& JWT, std::function<void(const gateway::AuthenticateResponse&)> Callback)
 	{
 		return Base.AuthenticateWithGameIDAndRefreshToken(
 			this->ClientID, this->GameID, JWT, [=](const gamelink::schema::AuthenticateResponse& Resp) {
-				gateway::AuthenticateResponse Auth(Resp.data.jwt, Resp.data.refresh, Resp.data.twitch_name,
+				gateway::AuthenticateResponse Auth(Resp.data.jwt, Resp.data.refresh, Resp.data.twitch_name, Resp.data.twitch_id,
 												   gamelink::FirstError(Resp) != NULL);
 				Callback(Auth);
 			});
@@ -112,22 +114,12 @@ namespace gateway
 
 	string SDK::GetProjectionSandboxURL(const string& projection, int major, int minor, int patch) const
 	{
-		return gamelink::ProjectionWebsocketConnectionURL(
-			ClientID,
-			gamelink::ConnectionStage::Sandbox,
-			projection,
-			major, minor, patch
-		);
+		return gamelink::ProjectionWebsocketConnectionURL(ClientID, gamelink::ConnectionStage::Sandbox, projection, major, minor, patch);
 	}
 
 	string SDK::GetProjectionProductionURL(const string& projection, int major, int minor, int patch) const
 	{
-		return gamelink::ProjectionWebsocketConnectionURL(
-			ClientID,
-			gamelink::ConnectionStage::Production,
-			projection,
-			major, minor, patch
-		);
+		return gamelink::ProjectionWebsocketConnectionURL(ClientID, gamelink::ConnectionStage::Production, projection, major, minor, patch);
 	}
 
 	void SDK::StopPoll()
@@ -171,12 +163,8 @@ namespace gateway
 		config.userData = cfg.UserData;
 
 		Base.RunPoll(
-			id,
-			cfg.Prompt,
-			config,
-			cfg.Options,
-			[=](const gamelink::schema::PollUpdateResponse& response)
-			{
+			id, cfg.Prompt, config, cfg.Options,
+			[=](const gamelink::schema::PollUpdateResponse& response) {
 				PollUpdate update;
 
 				uint32_t idx = gamelink::GetPollWinnerIndex(response.data.results);
@@ -192,8 +180,7 @@ namespace gateway
 					cfg.OnUpdate(update);
 				}
 			},
-			[=](const gamelink::schema::PollUpdateResponse& response)
-			{
+			[=](const gamelink::schema::PollUpdateResponse& response) {
 				PollUpdate finish;
 
 				uint32_t idx = gamelink::GetPollWinnerIndex(response.data.results);
@@ -213,7 +200,6 @@ namespace gateway
 				{
 					cfg.OnComplete(finish);
 				}
-			}
-		);
+			});
 	}
 }

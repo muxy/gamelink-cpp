@@ -10,7 +10,7 @@ namespace gamelink
 			params.target = string("authentication");
 		}
 
-	
+
 		AuthenticateWithPINRequest::AuthenticateWithPINRequest(const string& clientId, const string& pin)
 		{
 			action = string("authenticate");
@@ -45,13 +45,14 @@ namespace gamelink
 			data.game_id = gameId;
 		}
 
-		User::User(string jwt, string refreshToken, string twitchName)
+		User::User(string jwt, string refreshToken, string twitchName, string twitchID)
 			: jwt(std::move(jwt))
 			, refreshToken(std::move(refreshToken))
 			, twitchName(std::move(twitchName))
+			, twitchID(std::move(twitchID))
 		{
 		}
-		
+
 		const string& User::GetJWT() const
 		{
 			return jwt;
@@ -65,6 +66,11 @@ namespace gamelink
 		const string& User::GetTwitchName() const
 		{
 			return twitchName;
+		}
+
+		const string& User::GetTwitchID() const
+		{
+			return twitchID;
 		}
 	}
 }

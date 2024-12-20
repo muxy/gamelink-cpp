@@ -27025,7 +27025,7 @@ namespace gamelink
 			/// Game ID, assigned by Muxy.
 			string game_id;
 		};
-		
+
 		MUXY_GAMELINK_SERIALIZE_3(AuthenticateWithGameAndPINRequestBody, "pin", pin, "client_id", client_id, "game_id", game_id);
 
 		struct MUXY_GAMELINK_API AuthenticateWithGameAndPINRequest : SendEnvelope<AuthenticateWithGameAndPINRequestBody>
@@ -27057,7 +27057,7 @@ namespace gamelink
 			/// @param[in] RefreshToken Refresh token obtained from authorization.
 			AuthenticateWithRefreshTokenRequest(const string& clientId, const string& refreshToken);
 		};
-		
+
 		struct MUXY_GAMELINK_API AuthenticateWithRefreshTokenAndGameRequestBody
 		{
 			string refresh;
@@ -27104,8 +27104,11 @@ namespace gamelink
 
 			/// Information about the channel the auth was done with
 			string twitch_name;
+
+			/// The twitch id of the user in question
+			string twitch_id;
 		};
-		MUXY_GAMELINK_SERIALIZE_3(AuthenticateResponseBody, "jwt", jwt, "refresh", refresh, "twitch_name", twitch_name);
+		MUXY_GAMELINK_SERIALIZE_4(AuthenticateResponseBody, "jwt", jwt, "refresh", refresh, "twitch_name", twitch_name, "twitch_id", twitch_id);
 
 		struct MUXY_GAMELINK_API AuthenticateResponse : ReceiveEnvelope<AuthenticateResponseBody>
 		{
@@ -27116,16 +27119,18 @@ namespace gamelink
 		class MUXY_GAMELINK_API User
 		{
 		public:
-			User(string jwt, string refreshToken, string twitchName);
+			User(string jwt, string refreshToken, string twitchName, string twtichID);
 
 			const string& GetJWT() const;
 			const string& GetRefreshToken() const;
 			const string& GetTwitchName() const;
+			const string& GetTwitchID() const;
 			// string GetOpaqueID();
 		private:
 			string jwt;
 			string refreshToken;
 			string twitchName;
+			string twitchID;
 		};
 	}
 }
@@ -30217,10 +30222,11 @@ namespace gateway
 	class AuthenticateResponse
 	{
 	public:
-		AuthenticateResponse(string JWT, string RefreshToken, string TwitchName, bool DidError)
+		AuthenticateResponse(string JWT, string RefreshToken, string TwitchName, string TwitchID, bool DidError)
 			: JWT(JWT)
 			, RefreshToken(RefreshToken)
 			, TwitchName(TwitchName)
+			, TwitchID(TwitchID)
 			, DidError(DidError)
 		{
 		}
@@ -30233,6 +30239,9 @@ namespace gateway
 
 		/// Information about the channel the auth was done with
 		string TwitchName;
+
+		// Information about the channel the auth was done with
+		string TwitchID;
 
 		bool HasError() const
 		{
@@ -30611,7 +30620,7 @@ namespace gamelink
 			params.target = string("authentication");
 		}
 
-	
+
 		AuthenticateWithPINRequest::AuthenticateWithPINRequest(const string& clientId, const string& pin)
 		{
 			action = string("authenticate");
@@ -30646,13 +30655,14 @@ namespace gamelink
 			data.game_id = gameId;
 		}
 
-		User::User(string jwt, string refreshToken, string twitchName)
+		User::User(string jwt, string refreshToken, string twitchName, string twitchID)
 			: jwt(std::move(jwt))
 			, refreshToken(std::move(refreshToken))
 			, twitchName(std::move(twitchName))
+			, twitchID(std::move(twitchID))
 		{
 		}
-		
+
 		const string& User::GetJWT() const
 		{
 			return jwt;
@@ -30666,6 +30676,11 @@ namespace gamelink
 		const string& User::GetTwitchName() const
 		{
 			return twitchName;
+		}
+
+		const string& User::GetTwitchID() const
+		{
+			return twitchID;
 		}
 	}
 }
@@ -31477,7 +31492,7 @@ namespace gamelink
 			success = schema::ParseResponse(bytes, length, authResp);
 			if (success)
 			{
-				const schema::Error * err = FirstError(authResp);
+				const schema::Error* err = FirstError(authResp);
 				if (!err)
 				{
 					_lock.lock();
@@ -31485,7 +31500,7 @@ namespace gamelink
 					{
 						delete _user;
 					}
-					_user = new schema::User(authResp.data.jwt, authResp.data.refresh, authResp.data.twitch_name);
+					_user = new schema::User(authResp.data.jwt, authResp.data.refresh, authResp.data.twitch_name, authResp.data.twitch_id);
 					_lock.unlock();
 
 					_storedJWT = authResp.data.jwt;
@@ -33238,7 +33253,7 @@ namespace gateway
 		return Base.HasPayloads();
 	}
 
-	void SDK::OnDebugMessage(std::function<void (const gateway::string&)> callback)
+	void SDK::OnDebugMessage(std::function<void(const gateway::string&)> callback)
 	{
 		return Base.OnDebugMessage(std::move(callback));
 	}
@@ -33263,17 +33278,19 @@ namespace gateway
 
 	RequestID SDK::AuthenticateWithPIN(const string& PIN, std::function<void(const gateway::AuthenticateResponse&)> Callback)
 	{
-		return Base.AuthenticateWithGameIDAndPIN(this->ClientID, this->GameID, PIN, [=](const gamelink::schema::AuthenticateResponse& Resp) {
-			gateway::AuthenticateResponse Auth(Resp.data.jwt, Resp.data.refresh, Resp.data.twitch_name, gamelink::FirstError(Resp) != NULL);
-			Callback(Auth);
-		});
+		return Base.AuthenticateWithGameIDAndPIN(
+			this->ClientID, this->GameID, PIN, [=](const gamelink::schema::AuthenticateResponse& Resp) {
+				gateway::AuthenticateResponse Auth(Resp.data.jwt, Resp.data.refresh, Resp.data.twitch_name, Resp.data.twitch_id,
+												   gamelink::FirstError(Resp) != NULL);
+				Callback(Auth);
+			});
 	}
 
 	RequestID SDK::AuthenticateWithRefreshToken(const string& JWT, std::function<void(const gateway::AuthenticateResponse&)> Callback)
 	{
 		return Base.AuthenticateWithGameIDAndRefreshToken(
 			this->ClientID, this->GameID, JWT, [=](const gamelink::schema::AuthenticateResponse& Resp) {
-				gateway::AuthenticateResponse Auth(Resp.data.jwt, Resp.data.refresh, Resp.data.twitch_name,
+				gateway::AuthenticateResponse Auth(Resp.data.jwt, Resp.data.refresh, Resp.data.twitch_name, Resp.data.twitch_id,
 												   gamelink::FirstError(Resp) != NULL);
 				Callback(Auth);
 			});
@@ -33310,22 +33327,12 @@ namespace gateway
 
 	string SDK::GetProjectionSandboxURL(const string& projection, int major, int minor, int patch) const
 	{
-		return gamelink::ProjectionWebsocketConnectionURL(
-			ClientID,
-			gamelink::ConnectionStage::Sandbox,
-			projection,
-			major, minor, patch
-		);
+		return gamelink::ProjectionWebsocketConnectionURL(ClientID, gamelink::ConnectionStage::Sandbox, projection, major, minor, patch);
 	}
 
 	string SDK::GetProjectionProductionURL(const string& projection, int major, int minor, int patch) const
 	{
-		return gamelink::ProjectionWebsocketConnectionURL(
-			ClientID,
-			gamelink::ConnectionStage::Production,
-			projection,
-			major, minor, patch
-		);
+		return gamelink::ProjectionWebsocketConnectionURL(ClientID, gamelink::ConnectionStage::Production, projection, major, minor, patch);
 	}
 
 	void SDK::StopPoll()
@@ -33369,12 +33376,8 @@ namespace gateway
 		config.userData = cfg.UserData;
 
 		Base.RunPoll(
-			id,
-			cfg.Prompt,
-			config,
-			cfg.Options,
-			[=](const gamelink::schema::PollUpdateResponse& response)
-			{
+			id, cfg.Prompt, config, cfg.Options,
+			[=](const gamelink::schema::PollUpdateResponse& response) {
 				PollUpdate update;
 
 				uint32_t idx = gamelink::GetPollWinnerIndex(response.data.results);
@@ -33390,8 +33393,7 @@ namespace gateway
 					cfg.OnUpdate(update);
 				}
 			},
-			[=](const gamelink::schema::PollUpdateResponse& response)
-			{
+			[=](const gamelink::schema::PollUpdateResponse& response) {
 				PollUpdate finish;
 
 				uint32_t idx = gamelink::GetPollWinnerIndex(response.data.results);
@@ -33411,8 +33413,7 @@ namespace gateway
 				{
 					cfg.OnComplete(finish);
 				}
-			}
-		);
+			});
 	}
 }
 

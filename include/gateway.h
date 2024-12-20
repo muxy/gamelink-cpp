@@ -35,10 +35,11 @@ namespace gateway
 	class AuthenticateResponse
 	{
 	public:
-		AuthenticateResponse(string JWT, string RefreshToken, string TwitchName, bool DidError)
+		AuthenticateResponse(string JWT, string RefreshToken, string TwitchName, string TwitchID, bool DidError)
 			: JWT(JWT)
 			, RefreshToken(RefreshToken)
 			, TwitchName(TwitchName)
+			, TwitchID(TwitchID)
 			, DidError(DidError)
 		{
 		}
@@ -51,6 +52,9 @@ namespace gateway
 
 		/// Information about the channel the auth was done with
 		string TwitchName;
+
+		// Information about the channel the auth was done with
+		string TwitchID;
 
 		bool HasError() const
 		{

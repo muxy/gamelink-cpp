@@ -119,7 +119,7 @@ MGL_RequestId MuxyGameLink_AuthenticateWithGameIDAndRefreshToken(MuxyGameLink Ga
 		MGL_RequestId res = SDK->AuthenticateWithGameIDAndRefreshToken(ClientId, GameId, RefreshToken,
 														  C_CALLBACK(Callback, UserData, AuthenticateResponse));
 		return res;
-	} 
+	}
 	else
 	{
 		MGL_RequestId res = SDK->AuthenticateWithRefreshToken(ClientId, RefreshToken,
@@ -180,6 +180,18 @@ const char* MuxyGameLink_Schema_User_GetTwitchName(MGL_Schema_User User)
 	if (MGLUser)
 	{
 		return MGLUser->GetTwitchName().c_str();
+	}
+
+	return "";
+}
+
+
+const char* MuxyGameLink_Schema_User_GetTwitchID(MGL_Schema_User User)
+{
+	const gamelink::schema::User* MGLUser = static_cast<const gamelink::schema::User*>(User.Obj);
+	if (MGLUser)
+	{
+		return MGLUser->GetTwitchID().c_str();
 	}
 
 	return "";

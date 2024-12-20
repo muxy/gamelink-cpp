@@ -181,11 +181,12 @@ TEST_CASE_METHOD(ParityFixture, "GameMetaData parity", "[sdk][c]")
 
 TEST_CASE_METHOD(ParityFixture, "User operations", "[sdk][c]")
 {
-	gamelink::schema::User user("jwt", "refresh", "username");
+	gamelink::schema::User user("jwt", "refresh", "username", "id");
 	MGL_Schema_User cuser;
 	cuser.Obj = &user;
 
 	REQUIRE(ConstrainedString(MuxyGameLink_Schema_User_GetJWT(cuser)) == user.GetJWT());
 	REQUIRE(ConstrainedString(MuxyGameLink_Schema_User_GetRefreshToken(cuser)) == user.GetRefreshToken());
 	REQUIRE(ConstrainedString(MuxyGameLink_Schema_User_GetTwitchName(cuser)) == user.GetTwitchName());
+	REQUIRE(ConstrainedString(MuxyGameLink_Schema_User_GetTwitchID(cuser)) == user.GetTwitchID());
 }

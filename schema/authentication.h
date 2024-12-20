@@ -40,7 +40,7 @@ namespace gamelink
 			/// Game ID, assigned by Muxy.
 			string game_id;
 		};
-		
+
 		MUXY_GAMELINK_SERIALIZE_3(AuthenticateWithGameAndPINRequestBody, "pin", pin, "client_id", client_id, "game_id", game_id);
 
 		struct MUXY_GAMELINK_API AuthenticateWithGameAndPINRequest : SendEnvelope<AuthenticateWithGameAndPINRequestBody>
@@ -72,7 +72,7 @@ namespace gamelink
 			/// @param[in] RefreshToken Refresh token obtained from authorization.
 			AuthenticateWithRefreshTokenRequest(const string& clientId, const string& refreshToken);
 		};
-		
+
 		struct MUXY_GAMELINK_API AuthenticateWithRefreshTokenAndGameRequestBody
 		{
 			string refresh;
@@ -119,8 +119,11 @@ namespace gamelink
 
 			/// Information about the channel the auth was done with
 			string twitch_name;
+
+			/// The twitch id of the user in question
+			string twitch_id;
 		};
-		MUXY_GAMELINK_SERIALIZE_3(AuthenticateResponseBody, "jwt", jwt, "refresh", refresh, "twitch_name", twitch_name);
+		MUXY_GAMELINK_SERIALIZE_4(AuthenticateResponseBody, "jwt", jwt, "refresh", refresh, "twitch_name", twitch_name, "twitch_id", twitch_id);
 
 		struct MUXY_GAMELINK_API AuthenticateResponse : ReceiveEnvelope<AuthenticateResponseBody>
 		{
@@ -131,16 +134,18 @@ namespace gamelink
 		class MUXY_GAMELINK_API User
 		{
 		public:
-			User(string jwt, string refreshToken, string twitchName);
+			User(string jwt, string refreshToken, string twitchName, string twtichID);
 
 			const string& GetJWT() const;
 			const string& GetRefreshToken() const;
 			const string& GetTwitchName() const;
+			const string& GetTwitchID() const;
 			// string GetOpaqueID();
 		private:
 			string jwt;
 			string refreshToken;
 			string twitchName;
+			string twitchID;
 		};
 	}
 }
