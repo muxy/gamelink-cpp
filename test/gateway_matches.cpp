@@ -17,6 +17,8 @@ TEST_CASE("Create a gamechanger", "[gateway][matches]")
 
 	cfg.Mode = gateway::PollMode::Chaos;
 	cfg.UserData.Name = "Delivery Budget";
+	cfg.UserData.InitiatorID = "0001234";
+	cfg.UserData.InitiatorUsername = "DeliveryDude";
 	cfg.UserData.Tiers = {
 		gateway::GamechangerTier{
 			.IncrementalText = "Spend $1 more",
@@ -128,6 +130,8 @@ TEST_CASE("Create a gamechanger", "[gateway][matches]")
 			"prompt": "Empower my snacks",
 			"user_data": {
 				"name": "Delivery Budget",
+				"initiator_id": "0001234",
+				"initiator_username": "DeliveryDude",
 				"type": "gamechanger",
 				"tiers": [
 				{

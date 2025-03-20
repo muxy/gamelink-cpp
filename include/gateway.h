@@ -178,13 +178,17 @@ namespace gateway
 	struct GamechangerPollData
 	{
 		string Name;
+		string InitiatorID;
+		string InitiatorUsername;
 		std::vector<GamechangerTier> Tiers;
 
 		// Shouldn't need to be changed, a marker to signal for special-case handling
 		string Type = string("gamechanger");
 
-		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(GamechangerPollData,
+		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_5(GamechangerPollData,
 			"name", Name,
+			"initiator_id", InitiatorID,
+			"initiator_username", InitiatorUsername,
 			"type", Type,
 			"tiers", Tiers
 		);
