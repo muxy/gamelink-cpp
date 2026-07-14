@@ -80,7 +80,7 @@ TEST_CASE("SDK PIN Authentication", "[sdk][authentication][pin]")
 
 	// Test initial state
 	REQUIRE(!sdk.IsAuthenticated());
-	REQUIRE(sdk.GetUser() == NULL);
+	REQUIRE(sdk.GetUser() == nullptr);
 	REQUIRE(!sdk.HasPayloads());
 
 	// Verify generated auth request
@@ -136,7 +136,7 @@ TEST_CASE("SDK Authentication callback", "[sdk][authentication]")
 
 	// Test initial state
 	REQUIRE(!sdk.IsAuthenticated());
-	REQUIRE(sdk.GetUser() == NULL);
+	REQUIRE(sdk.GetUser() == nullptr);
 	REQUIRE(!sdk.HasPayloads());
 
 	uint32_t calls = 0;

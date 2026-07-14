@@ -22,6 +22,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: lukka/get-cmake@latest
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
       - uses: lukka/run-vcpkg@v11
         with:
           runVcpkgInstall: true
@@ -45,7 +47,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p release
-          find build -type f \( -name 'cgamelink.dll' -o -name 'libcgamelink.dylib' -o -name 'libcgamelink.so' \) -exec cp {} release/ \;
+          find build -type f \( -name 'cgamelink.dll' -o -name 'cgamelink.lib' -o -name 'libcgamelink.dylib' -o -name 'libcgamelink.so' \) -exec cp {} release/ \;
           if [ "${RUNNER_OS}" = "Linux" ]; then
             cp build/generated/gamelink_single.hpp release/
           fi
