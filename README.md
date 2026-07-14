@@ -3,6 +3,9 @@
 This repo contains a C++ library that provides access to Muxy’s GameLink API.
 The library is distributed as a single-file, header-only library for ease of integration.
 
+The supported release line is `0.2.x`. Release artifacts include the generated single header and
+the `cgamelink` C ABI library for Windows, macOS, and Linux.
+
 ## Integrating the library
 
 The repo contains a pre-compiled version of the single header library in the root
@@ -28,28 +31,24 @@ and lock types must satisfy.
 
 The test suite can be built through the CMake target `tests`.
 
-If libcurl and libwebsockets are availiable, the tests suite will also build
-the integration tests. To run the integration tests, generate a valid JWT and
+If libcurl is available, you can opt into the network integration tests. To run them, generate a valid JWT and
 run the tests binary with the environment variables MUXY_INTEGRATION_JWT and
 MUXY_INTEGRATION_ID with the test filter "[integration]"
 
 ### Building Test Suite
 
-You must install vcpkg first:
-[https://github.com/microsoft/vcpkg#quick-start-unix].
-
-The test runner can then be compiled using CMake:
+Configure and build the verified public surfaces with CMake:
 
 ```sh
-rm -rf build \
-  && mkdir -p build \
-  && cmake \
-      -B ./build \
-      -S . \
-      "-DCMAKE_TOOLCHAIN_FILE=<path to vcpkg>/scripts/buildsystems/vcpkg.cmake" \
-      --preset tests \
-  && cmake --build ./build
-  && ln -s tests build/Debug/tests
+cmake -S . -B build \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_TOOLCHAIN_FILE=<path-to-vcpkg>/scripts/buildsystems/vcpkg.cmake \
+  -DGAMELINK_BUILD_TESTS=ON \
+  -DGAMELINK_BUILD_EXAMPLES=ON
+cmake --build build --target \
+  gamelink_tests amalgam_compile_check amalgam_drift cgamelink_compile_check examples
+ctest --test-dir build --output-on-failure
 ```
 
-You can then run the tests: `./tests`
+The current protocol and native API guides are published at
+[docs.muxy.io](https://docs.muxy.io/reference/gamelink-library/).

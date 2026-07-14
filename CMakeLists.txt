@@ -1,140 +1,126 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.20)
+
+project(MuxyGameLink VERSION 0.2.0 LANGUAGES C CXX)
+
+option(GAMELINK_BUILD_TESTS "Build the GameLink unit tests" ON)
+option(GAMELINK_BUILD_EXAMPLES "Compile the GameLink examples" ON)
+option(GAMELINK_BUILD_SHARED "Build the C ABI shared library" ON)
+option(BUILD_INTEGRATION_TESTS "Compile network integration tests" OFF)
+option(GENERATE_COVERAGE "Enable Clang source coverage for tests" OFF)
+
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Project
-project(Gamelink)
+find_package(Threads REQUIRED)
 
-# Global settings. Note we're compiling without exceptions to show that the library
-# works without exception support.
-
-add_compile_definitions("FMT_HEADER_ONLY=1" "JSON_NOEXCEPTION" "_HAS_EXCEPTIONS=0")
-if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    set(CMAKE_CXX_FLAGS "/EHs-c- /GR-")
+add_compile_definitions(FMT_HEADER_ONLY=1 JSON_NOEXCEPTION _HAS_EXCEPTIONS=0)
+if(MSVC)
+    add_compile_options(/W4 /EHs-c- /GR-)
 else()
-    set(CMAKE_CXX_FLAGS "-Wall -fno-exceptions -Wno-unknown-pragmas -Wno-unused-variable")
-    set(CMAKE_CXX_FLAGS_DEBUG "-g")
+    add_compile_options(-Wall -fno-exceptions -Wno-unknown-pragmas -Wno-unused-variable)
 endif()
 
+file(GLOB SCHEMA_SOURCES CONFIGURE_DEPENDS "schema/*.cpp")
+file(GLOB SDK_SOURCES CONFIGURE_DEPENDS "src/*.cpp")
+file(GLOB C_SOURCES CONFIGURE_DEPENDS "c_library/*.cpp")
+file(GLOB TEST_SOURCES CONFIGURE_DEPENDS "test/*.cpp")
+file(GLOB WEBSOCKET_SOURCES CONFIGURE_DEPENDS "websocket_network/*.cpp")
+file(GLOB SCHEMA_PUBLIC_HEADERS CONFIGURE_DEPENDS "schema/*.h")
+file(GLOB SDK_PUBLIC_HEADERS CONFIGURE_DEPENDS "include/*.h")
+set(PUBLIC_HEADERS ${SCHEMA_PUBLIC_HEADERS} ${SDK_PUBLIC_HEADERS})
 
-include_directories(.)
-include_directories(include)
-include_directories(third_party)
+set(GAMELINK_INCLUDE_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/third_party"
+)
 
-## Grab all the source files
-file(GLOB SCHEMA_SOURCES "schema/*.cpp")
-file(GLOB SDK_TEST_SOURCES "test/*.cpp")
-file(GLOB SDK_SOURCES "src/*.cpp")
-file(GLOB C_SOURCES "c_library/*.cpp")
-file(GLOB WEBSOCKET_SOURCES "websocket_network/*.cpp")
+if(GAMELINK_BUILD_TESTS)
+    enable_testing()
+    add_executable(gamelink_tests ${SCHEMA_SOURCES} ${TEST_SOURCES} ${SDK_SOURCES} ${C_SOURCES})
+    target_include_directories(gamelink_tests PRIVATE ${GAMELINK_INCLUDE_DIRS} test c_library)
+    target_compile_definitions(gamelink_tests PRIVATE
+        MUXY_GAMELINK_CUSTOM_STRING_TYPE=ConstrainedString
+        MUXY_GAMELINK_CUSTOM_LOCK_TYPE=ConstrainedLock
+        MUXY_GAMELINK_CUSTOM_STRING_INCLUDE="constrained_types.h"
+    )
+    target_link_libraries(gamelink_tests PRIVATE Threads::Threads)
 
-## Check if we have CURL and LIB_WEBSOCKETS.
-find_package(CURL)
+    if(BUILD_INTEGRATION_TESTS)
+        find_package(CURL REQUIRED)
+        target_sources(gamelink_tests PRIVATE ${WEBSOCKET_SOURCES})
+        target_compile_definitions(gamelink_tests PRIVATE MUXY_GAMELINK_ENABLE_INTEGRATION_TESTS=1)
+        target_include_directories(gamelink_tests PRIVATE websocket_network)
+        target_link_libraries(gamelink_tests PRIVATE CURL::libcurl)
+    endif()
 
-## Unit tests
-add_executable(tests ${SCHEMA_SOURCES} ${SDK_TEST_SOURCES} ${SDK_SOURCES} ${C_SOURCES})
-target_include_directories(tests PRIVATE "test" "c_library")
-target_compile_definitions(tests PRIVATE "MUXY_GAMELINK_CUSTOM_STRING_TYPE=ConstrainedString" "MUXY_GAMELINK_CUSTOM_LOCK_TYPE=ConstrainedLock" "MUXY_GAMELINK_CUSTOM_STRING_INCLUDE=\"constrained_types.h\"")
+    if(GENERATE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        target_compile_options(gamelink_tests PRIVATE -fprofile-instr-generate -fcoverage-mapping)
+        target_link_options(gamelink_tests PRIVATE -fprofile-instr-generate)
+    endif()
 
-IF(GENERATE_COVERAGE)
-	target_compile_options(tests PRIVATE "-fprofile-instr-generate" "-fcoverage-mapping")
-	target_link_options(tests PRIVATE "-fprofile-instr-generate")
+    add_test(NAME gamelink-tests COMMAND gamelink_tests)
 endif()
 
-IF(BUILD_INTEGRATION_TESTS)
-	message("Configuring with integration tests")
-	IF(CURL_FOUND)
-		target_sources(tests PRIVATE ${WEBSOCKET_SOURCES})
-		target_compile_definitions(tests PRIVATE "MUXY_GAMELINK_ENABLE_INTEGRATION_TESTS=1")
-		target_include_directories(tests PRIVATE "./websocket_network")
-		target_link_libraries(tests CURL::libcurl)
-	ENDIF()
-ENDIF()
-
-# Amalgamation
-set(AMALGAM_IN "${CMAKE_CURRENT_SOURCE_DIR}/amalgamate.in")
-set(AMALGAM_OUT "${CMAKE_CURRENT_SOURCE_DIR}/amalgamate.sh")
-
+set(AMALGAM_SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/amalgamate.sh")
+set(AMALGAM_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(AMALGAM_HEADER "${AMALGAM_GENERATED_DIR}/gamelink_single.hpp")
 set(AMALGAM_SOURCES ${SCHEMA_SOURCES} ${SDK_SOURCES})
-
-string(REPLACE ";" " " AMALGAM_PUBLIC_HEADERS "${PUBLIC_HEADERS}")
 string(REPLACE ";" " " AMALGAM_PUBLIC_SOURCES "${AMALGAM_SOURCES}")
+configure_file(amalgamate.in "${AMALGAM_SCRIPT}" @ONLY)
 
-configure_file(${AMALGAM_IN} ${AMALGAM_OUT} @ONLY)
-add_custom_target(amalgam ALL
-    COMMAND
-    ${AMALGAM_OUT}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMENT "Generating Amalgam file")
+add_custom_command(
+    OUTPUT "${AMALGAM_HEADER}"
+    COMMAND "${CMAKE_COMMAND}" -E make_directory "${AMALGAM_GENERATED_DIR}"
+    COMMAND bash "${AMALGAM_SCRIPT}" "${AMALGAM_HEADER}"
+    DEPENDS amalgamate.in ${PUBLIC_HEADERS} ${AMALGAM_SOURCES} include/config.h include/config_footer.h third_party/nlohmann/json.hpp
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    VERBATIM
+)
+add_custom_target(amalgam ALL DEPENDS "${AMALGAM_HEADER}")
 
-# Amalgamation compilation checked
-add_executable(amalgam_compile_check "amalgam_check.cpp")
+add_executable(amalgam_compile_check amalgam_check.cpp)
 add_dependencies(amalgam_compile_check amalgam)
+target_include_directories(amalgam_compile_check PRIVATE "${AMALGAM_GENERATED_DIR}")
+target_link_libraries(amalgam_compile_check PRIVATE Threads::Threads)
 
-# Shared library
-add_library(cgamelink SHARED ${SDK_SOURCES} ${SCHEMA_SOURCES} ${C_SOURCES})
-target_compile_definitions(cgamelink PRIVATE "MUXY_CLIB_EXPORT")
+add_custom_target(amalgam_drift
+    COMMAND "${CMAKE_COMMAND}" -E compare_files "${AMALGAM_HEADER}" "${CMAKE_CURRENT_SOURCE_DIR}/gamelink_single.hpp"
+    DEPENDS amalgam
+    COMMENT "Checking committed amalgamated header"
+)
 
-add_executable(cgamelink_compile_check "clibrary_check.cpp")
-target_link_libraries(cgamelink_compile_check cgamelink)
-add_dependencies(cgamelink_compile_check cgamelink)
+if(GAMELINK_BUILD_SHARED)
+    add_library(cgamelink SHARED ${SDK_SOURCES} ${SCHEMA_SOURCES} ${C_SOURCES})
+    target_include_directories(cgamelink PUBLIC ${GAMELINK_INCLUDE_DIRS} c_library)
+    target_compile_definitions(cgamelink PRIVATE MUXY_CLIB_EXPORT)
+    target_link_libraries(cgamelink PRIVATE Threads::Threads)
 
-## Examples
-if(LIB_WEBSOCKETS_INCLUDE_DIRS)
-    add_subdirectory("examples/01-authenticate")
-    add_subdirectory("examples/02-voting")
-    add_subdirectory("examples/03-state")
-    add_subdirectory("examples/04-broadcast")
-	add_subdirectory("examples/05-transaction")
-
-    add_custom_target(examples ALL)
-    add_dependencies(authenticate amalgam)
-    add_dependencies(voting amalgam)
-    add_dependencies(state amalgam)
-    add_dependencies(broadcast amalgam)
-    add_dependencies(transaction amalgam)
-    add_dependencies(examples authenticate voting state broadcast transaction)
+    add_executable(cgamelink_compile_check clibrary_check.cpp)
+    target_include_directories(cgamelink_compile_check PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+    target_link_libraries(cgamelink_compile_check PRIVATE cgamelink)
 endif()
 
-# Documentation
-find_package(Doxygen)
+if(GAMELINK_BUILD_EXAMPLES)
+    find_package(CURL REQUIRED)
+    add_subdirectory(examples)
+endif()
 
-file(GLOB SCHEMA_PUBLIC_HEADERS "schema/*.h")
-file(GLOB SRC_PUBLIC_HEADERS "include/*.h")
-
-set(PUBLIC_HEADERS ${SCHEMA_PUBLIC_HEADERS} ${SRC_PUBLIC_HEADERS})
-set(DOXYGEN_INDEX_FILE "doxygen/html/index.html")
-set(DOXYFILE_IN "${CMAKE_CURRENT_SOURCE_DIR}/doxygen/Doxyfile.in")
-set(DOXYFILE_OUT "${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile")
-SET(DOXYGEN_STRIP_PATH ${CMAKE_CURRENT_SOURCE_DIR})
-string(REPLACE ";" " " DOXYGEN_INPUTS "${PUBLIC_HEADERS}")
-set(DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/doxygen")
-
-configure_file(${DOXYFILE_IN} ${DOXYFILE_OUT} @ONLY)
-
-add_custom_command(OUTPUT ${DOXYGEN_INDEX_FILE}
-                   DEPENDS ${PUBLIC_HEADERS}
-                   COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
-                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                   MAIN_DEPENDENCY ${DOXYFILE_OUT} ${DOXYFILE_IN}
-                   COMMENT "Generating docs")
-
-add_custom_target(doxygen DEPENDS ${DOXYGEN_INDEX_FILE})
-
-find_program(SPHINX_EXECUTABLE
-             NAMES sphinx-build
-             DOC "Path to sphinx-build executable")
-
-set(SPHINX_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/docs)
-set(SPHINX_BUILD ${CMAKE_CURRENT_SOURCE_DIR}/docs/sphinx)
-
-add_custom_target(sphinx
-    COMMAND
-    ${SPHINX_EXECUTABLE} -b html
-    -Dbreathe_projects.gamelink=${DOXYGEN_OUTPUT_DIRECTORY}/xml
-    ${SPHINX_SOURCE} ${SPHINX_BUILD}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMENT "Generating sphinx documentation")
-
-add_dependencies(sphinx doxygen)
+find_package(Doxygen QUIET)
+if(DOXYGEN_FOUND)
+    set(DOXYGEN_INDEX_FILE "${CMAKE_CURRENT_BINARY_DIR}/doxygen/html/index.html")
+    set(DOXYFILE_OUT "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile")
+    set(DOXYGEN_STRIP_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
+    set(DOXYGEN_INPUTS ${PUBLIC_HEADERS})
+    set(DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/doxygen")
+    configure_file(doxygen/Doxyfile.in "${DOXYFILE_OUT}" @ONLY)
+    add_custom_command(
+        OUTPUT "${DOXYGEN_INDEX_FILE}"
+        COMMAND "${DOXYGEN_EXECUTABLE}" "${DOXYFILE_OUT}"
+        DEPENDS ${PUBLIC_HEADERS} "${DOXYFILE_OUT}"
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        VERBATIM
+    )
+    add_custom_target(doxygen DEPENDS "${DOXYGEN_INDEX_FILE}")
+endif()
