@@ -2,7 +2,7 @@
   "version": 2,
   "cmakeMinimumRequired": {
     "major": 3,
-    "minor": 7,
+    "minor": 20,
     "patch": 0
   },
   "configurePresets": [
@@ -18,9 +18,12 @@
           "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
         }, 
         "BUILD_INTEGRATION_TESTS": {
-          "value": "TRUE"
+          "value": "FALSE"
         },
         "GENERATE_COVERAGE": {
+          "value": "FALSE"
+        },
+        "GAMELINK_BUILD_EXAMPLES": {
           "value": "TRUE"
         }
       }
@@ -40,6 +43,12 @@
           "value": "FALSE"
         },
         "GENERATE_COVERAGE": {
+          "value": "FALSE"
+        },
+        "GAMELINK_BUILD_TESTS": {
+          "value": "FALSE"
+        },
+        "GAMELINK_BUILD_EXAMPLES": {
           "value": "FALSE"
         },
         "CMAKE_OSX_ARCHITECTURES": {
@@ -63,6 +72,12 @@
         },
         "GENERATE_COVERAGE": {
           "value": "FALSE"
+        },
+        "GAMELINK_BUILD_TESTS": {
+          "value": "FALSE"
+        },
+        "GAMELINK_BUILD_EXAMPLES": {
+          "value": "FALSE"
         }
       }
     }
@@ -73,7 +88,7 @@
       "configurePreset": "tests",
       "displayName": "Build tests, but without integrations",
       "description": "Build tests Configurations",
-      "targets": ["tests"]
+      "targets": ["gamelink_tests", "amalgam_compile_check", "amalgam_drift", "cgamelink_compile_check", "examples"]
     },
   	{
       "name": "x64-cgamelink",

@@ -24,7 +24,6 @@
 	#include ...
 	#define MUXY_GAMELINK_SINGLE_IMPL
 	
-
 	This file also automatically includes nlohmann::json.
 	If you have an existing version of nlohmann::json, #define MUXY_NO_JSON_INCLUDE
 	to remove the one included in this file.
@@ -26949,7 +26948,6 @@ namespace gamelink
 
 	static const char* OPERATION_STRINGS[] = {"add", "remove", "replace", "copy", "move", "test"};
 
-
 	enum class StateTarget
 	{
 		Channel = 0,
@@ -26979,14 +26977,12 @@ namespace gamelink
 		return static_cast<int>(ct) >= 0 && static_cast<int>(ct) < static_cast<int>(ConfigTarget::ConfigTargetCount);
 	}
 
-
 	static const char* TARGET_STRINGS[] = {"channel", "extension", "combined"};
 }
 #endif
 
 #ifndef MUXY_GAMELINK_SCHEMA_AUTHENTICATION_H
 #define MUXY_GAMELINK_SCHEMA_AUTHENTICATION_H
-
 
 namespace gamelink
 {
@@ -30365,13 +30361,17 @@ namespace gateway
 	struct GamechangerPollData
 	{
 		string Name;
+		string InitiatorID;
+		string InitiatorUsername;
 		std::vector<GamechangerTier> Tiers;
 
 		// Shouldn't need to be changed, a marker to signal for special-case handling
 		string Type = string("gamechanger");
 
-		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_3(GamechangerPollData,
+		MUXY_GAMELINK_SERIALIZE_INTRUSIVE_5(GamechangerPollData,
 			"name", Name,
+			"initiator_id", InitiatorID,
+			"initiator_username", InitiatorUsername,
 			"type", Type,
 			"tiers", Tiers
 		);
@@ -30609,7 +30609,6 @@ namespace gateway
 #endif
 #ifdef MUXY_GAMELINK_SINGLE_IMPL
 
-
 namespace gamelink
 {
 	namespace schema
@@ -30619,7 +30618,6 @@ namespace gamelink
 			action = string("subscribe");
 			params.target = string("authentication");
 		}
-
 
 		AuthenticateWithPINRequest::AuthenticateWithPINRequest(const string& clientId, const string& pin)
 		{

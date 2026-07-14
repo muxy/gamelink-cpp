@@ -3,6 +3,27 @@
 
 #include "gateway.h"
 
+namespace
+{
+	gateway::GamechangerTier MakeGamechangerTier(
+		const char* incrementalText,
+		double incrementalValue,
+		const char* effectText,
+		double effectValue,
+		int64_t duration,
+		int64_t threshold)
+	{
+		gateway::GamechangerTier tier = {};
+		tier.IncrementalText = incrementalText;
+		tier.IncrementalValue = incrementalValue;
+		tier.EffectText = effectText;
+		tier.EffectValue = effectValue;
+		tier.TierDuration = duration;
+		tier.TierThreshold = threshold;
+		return tier;
+	}
+}
+
 
 TEST_CASE("Create a gamechanger", "[gateway][matches]")
 {
@@ -20,49 +41,10 @@ TEST_CASE("Create a gamechanger", "[gateway][matches]")
 	cfg.UserData.InitiatorID = "0001234";
 	cfg.UserData.InitiatorUsername = "DeliveryDude";
 	cfg.UserData.Tiers = {
-		gateway::GamechangerTier{
-			.IncrementalText = "Spend $1 more",
-			.IncrementalValue = 1,
-
-			.EffectText = "Spend $10 more",
-			.EffectValue = 10,
-
-			.TierDuration = 120,
-			.TierThreshold = 0
-		},
-
-		gateway::GamechangerTier{
-			.EffectText = "Spend $100 more",
-			.EffectValue = 100,
-
-			.IncrementalText = "Spend $10 more",
-			.IncrementalValue = 10,
-
-			.TierDuration = 60,
-			.TierThreshold = 200
-		},
-
-		gateway::GamechangerTier{
-			.EffectText = "Spend $200 more",
-			.EffectValue = 200,
-
-			.IncrementalText = "Spend $20 more",
-			.IncrementalValue = 20,
-
-			.TierDuration = 30,
-			.TierThreshold = 400
-		},
-
-		gateway::GamechangerTier{
-			.EffectText = "Go for broke!!",
-			.EffectValue = 1000,
-
-			.IncrementalText = "Please no more :(",
-			.IncrementalValue = 5,
-
-			.TierDuration = 15,
-			.TierThreshold = 1000
-		},
+		MakeGamechangerTier("Spend $1 more", 1, "Spend $10 more", 10, 120, 0),
+		MakeGamechangerTier("Spend $10 more", 10, "Spend $100 more", 100, 60, 200),
+		MakeGamechangerTier("Spend $20 more", 20, "Spend $200 more", 200, 30, 400),
+		MakeGamechangerTier("Please no more :(", 5, "Go for broke!!", 1000, 15, 1000),
 	};
 
 	sdk.RunMatchPoll("my-cool-match", cfg);

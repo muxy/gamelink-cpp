@@ -46,7 +46,7 @@ size_t writeResponse(char* ptr, size_t size, size_t nmemb, void* data)
 	char* start = impl->messageFragment.data() + oldSize;
 	memcpy(start, ptr, size * nmemb);
 
-	curl_ws_frame* frame = curl_ws_meta(impl->connection);
+	const curl_ws_frame* frame = curl_ws_meta(impl->connection);
 	if (frame->bytesleft > 0)
 	{
 		return size * nmemb;
