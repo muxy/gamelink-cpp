@@ -70,5 +70,8 @@ done
 
 echo "#endif" >> "$OUTPUT_HEADER"
 
-awk 'NF { blank = 0; print; next } !blank { print; blank = 1 }' "$OUTPUT_HEADER" > "$OUTPUT_HEADER.tmp"
+# Git may check source files out with CRLF on Windows. Strip the carriage return
+# before collapsing blank lines so the generated artifact is byte-identical on
+# every supported build host.
+awk '{ sub(/\r$/, "") } NF { blank = 0; print; next } !blank { print; blank = 1 }' "$OUTPUT_HEADER" > "$OUTPUT_HEADER.tmp"
 mv "$OUTPUT_HEADER.tmp" "$OUTPUT_HEADER"

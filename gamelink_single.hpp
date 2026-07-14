@@ -26948,7 +26948,6 @@ namespace gamelink
 
 	static const char* OPERATION_STRINGS[] = {"add", "remove", "replace", "copy", "move", "test"};
 
-
 	enum class StateTarget
 	{
 		Channel = 0,
@@ -26978,14 +26977,12 @@ namespace gamelink
 		return static_cast<int>(ct) >= 0 && static_cast<int>(ct) < static_cast<int>(ConfigTarget::ConfigTargetCount);
 	}
 
-
 	static const char* TARGET_STRINGS[] = {"channel", "extension", "combined"};
 }
 #endif
 
 #ifndef MUXY_GAMELINK_SCHEMA_AUTHENTICATION_H
 #define MUXY_GAMELINK_SCHEMA_AUTHENTICATION_H
-
 
 namespace gamelink
 {
@@ -30612,7 +30609,6 @@ namespace gateway
 #endif
 #ifdef MUXY_GAMELINK_SINGLE_IMPL
 
-
 namespace gamelink
 {
 	namespace schema
@@ -30622,7 +30618,6 @@ namespace gamelink
 			action = string("subscribe");
 			params.target = string("authentication");
 		}
-
 
 		AuthenticateWithPINRequest::AuthenticateWithPINRequest(const string& clientId, const string& pin)
 		{
