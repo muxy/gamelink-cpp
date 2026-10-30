@@ -16,10 +16,11 @@ jobs:
           clang++ -std=c++11 -O2 -fno-exceptions -Wno-unknown-pragmas -DFMT_HEADER_ONLY=1 -DJSON_NOEXCEPTION -D_HAS_EXCEPTIONS=0 -DMUXY_CLIB_EXPORT -I. -Iinclude -Ithird_party -arch arm64 -arch x86_64 -dynamiclib src/*.cpp schema/*.cpp c_library/*.cpp -o output/libcgamelink.dylib
       - name: Verify both architectures and native calls
         run: |
-          lipo -verify_arch x86_64 arm64 output/libcgamelink.dylib
+          lipo output/libcgamelink.dylib -verify_arch x86_64 arm64
           python3 test/unity_binary_smoke.py "$(pwd)/output/libcgamelink.dylib"
       - uses: actions/upload-artifact@v4
         with:
           name: native-macos-direct
           path: output/libcgamelink.dylib
           if-no-files-found: error
+

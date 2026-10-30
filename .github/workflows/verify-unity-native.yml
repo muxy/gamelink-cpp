@@ -37,7 +37,7 @@ jobs:
           fi
       - name: Check macOS architectures
         if: runner.os == 'macOS'
-        run: lipo -verify_arch x86_64 arm64 build/libcgamelink.dylib
+        run: lipo build/libcgamelink.dylib -verify_arch x86_64 arm64
       - uses: actions/upload-artifact@v4
         with:
           name: native-${{ matrix.os }}
@@ -46,3 +46,4 @@ jobs:
             build/libcgamelink.so
             build/libcgamelink.dylib
           if-no-files-found: error
+
