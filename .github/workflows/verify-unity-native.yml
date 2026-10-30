@@ -8,7 +8,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-14]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -22,13 +22,18 @@ jobs:
           fi
       - name: Build library and tests
         run: cmake --build build --config Release --target cgamelink tests --parallel 2
-      - name: Run tests
+      - name: Run tests and exercise the built library
         shell: bash
         run: |
           if [[ "$RUNNER_OS" == "Windows" ]]; then
             ./build/Release/tests.exe
+            python test/unity_binary_smoke.py "$(pwd)/build/Release/cgamelink.dll"
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            ./build/tests
+            python3 test/unity_binary_smoke.py "$(pwd)/build/libcgamelink.dylib"
           else
             ./build/tests
+            python3 test/unity_binary_smoke.py "$(pwd)/build/libcgamelink.so"
           fi
       - name: Check macOS architectures
         if: runner.os == 'macOS'
