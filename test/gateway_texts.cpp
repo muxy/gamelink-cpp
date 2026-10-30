@@ -4,6 +4,19 @@
 #include "gateway.h"
 #include "gateway_c.h"
 
+TEST_CASE("Empty text list clears channel game text through C", "[gateway][text][c]")
+{
+	MGW_SDK sdk = MGW_MakeSDK("some game");
+	MGW_SDK_SetGameTexts(sdk, nullptr, 0);
+	validateSinglePayload(sdk, R"({
+		"action": "patch", "params": {"request_id": 65535, "target": "state"},
+		"data": {"state_id": "channel", "state": [{"op": "add", "path": "/game/text/game_data", "value": []}]}
+	})");
+	MGW_SDK_SetGameTexts(sdk, nullptr, 1);
+	REQUIRE_FALSE(MGW_SDK_HasPayloads(sdk));
+	MGW_KillSDK(sdk);
+}
+
 TEST_CASE("Set text", "[gateway][text]")
 {
 	gateway::SDK sdk("some game");

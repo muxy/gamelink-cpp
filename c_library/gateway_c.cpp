@@ -218,8 +218,14 @@ void MGW_SDK_SetActions(MGW_SDK Gateway, const MGW_Action* Actions, uint64_t Cou
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
 	
-	if (!Actions || Count == 0)
+	if (!Actions && Count != 0)
 	{
+		return;
+	}
+	if (Count == 0)
+	{
+		gateway::Action empty;
+		SDK->SetActions(&empty, &empty);
 		return;
 	}
 
@@ -337,7 +343,7 @@ void MGW_SDK_DecrementActionCount(MGW_SDK Gateway, const char* id, int32_t count
 void MGW_SDK_SetGameTexts(MGW_SDK Gateway, const MGW_GameText* Texts, uint64_t count)
 {
 	gateway::SDK* SDK = static_cast<gateway::SDK*>(Gateway.SDK);
-	if (!Texts || count == 0)
+	if (!Texts && count != 0)
 	{
 		return;
 	}

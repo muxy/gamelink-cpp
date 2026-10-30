@@ -4,6 +4,19 @@
 #include "gateway.h"
 #include "gateway_c.h"
 
+TEST_CASE("Empty action list clears channel actions through C", "[gateway][actions][c]")
+{
+	MGW_SDK sdk = MGW_MakeSDK("some game");
+	MGW_SDK_SetActions(sdk, nullptr, 0);
+	validateSinglePayload(sdk, R"({
+		"action": "set", "params": {"request_id": 65535, "target": "gatewayActions"},
+		"data": {"actions": []}
+	})");
+	MGW_SDK_SetActions(sdk, nullptr, 1);
+	REQUIRE_FALSE(MGW_SDK_HasPayloads(sdk));
+	MGW_KillSDK(sdk);
+}
+
 TEST_CASE("Set action list", "[gateway][actions]")
 {
 	gateway::SDK sdk("This is a game");

@@ -1,0 +1,43 @@
+name: Verify Unity native libraries
+on:
+  push:
+    branches: [codex/clear-empty-unity]
+  workflow_dispatch:
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        shell: bash
+        run: |
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES='x86_64;arm64'
+          else
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          fi
+      - name: Build library and tests
+        run: cmake --build build --config Release --target cgamelink tests --parallel 2
+      - name: Run tests
+        shell: bash
+        run: |
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            ./build/Release/tests.exe
+          else
+            ./build/tests
+          fi
+      - name: Check macOS architectures
+        if: runner.os == 'macOS'
+        run: lipo -verify_arch x86_64 arm64 build/libcgamelink.dylib
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.os }}
+          path: |
+            build/Release/cgamelink.dll
+            build/libcgamelink.so
+            build/libcgamelink.dylib
+          if-no-files-found: error

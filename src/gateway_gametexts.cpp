@@ -6,10 +6,12 @@ namespace gateway
 
 	void SDK::SetGameTexts(const GameTexts& texts)
 	{
+		GameText empty;
+		const GameText* begin = texts.Texts.empty() ? &empty : texts.Texts.data();
 		Base.UpdateStateWithArray(gamelink::StateTarget::Channel, 
 			gamelink::Operation::Add, 
 			gamelink::string("/game/text/game_data"), 
-			texts.Texts.data(), 
-			texts.Texts.data() + texts.Texts.size());
+			begin,
+			begin + texts.Texts.size());
 	}
 }
